@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+  <br>
+  <form method="post" action="./">
+    {% csrf_token %}
+    {{ form.media }}
+    {{ form.as_p }}
+    <p><input type="submit" value="post"></p>
+  </form>
+{% endblock content %}

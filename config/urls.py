@@ -18,6 +18,9 @@ urlpatterns = [
 
     # Your stuff: custom urls includes go here
 
+    # Blog
+    url(r'^blogs/', include('homepage.blogs.urls', namespace='blogs')),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

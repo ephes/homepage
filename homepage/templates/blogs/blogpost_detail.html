@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+<a href="{% url "blogs:blogpost-list" slug=blogpost.blog.slug %}">back..</a>
+<h1>{{ blogpost.title }}</h1>
+{{ blogpost.content|safe }}
+{% endblock content %}

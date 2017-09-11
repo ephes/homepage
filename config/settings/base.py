@@ -49,12 +49,14 @@ THIRD_PARTY_APPS = [
     'allauth',  # registration
     'allauth.account',  # registration
     'allauth.socialaccount',  # registration
+    'ckeditor',  # editor
 ]
 
 # Apps specific for this project go here.
 LOCAL_APPS = [
     # custom users app
     'homepage.users.apps.UsersConfig',
+    'homepage.blogs.apps.BlogsConfig',
     # Your stuff: custom apps go here
 ]
 
@@ -252,7 +254,8 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
-ACCOUNT_ALLOW_REGISTRATION = env.bool('DJANGO_ACCOUNT_ALLOW_REGISTRATION', True)
+# ACCOUNT_ALLOW_REGISTRATION = env.bool('DJANGO_ACCOUNT_ALLOW_REGISTRATION', True)
+ACCOUNT_ALLOW_REGISTRATION = False
 ACCOUNT_ADAPTER = 'homepage.users.adapters.AccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'homepage.users.adapters.SocialAccountAdapter'
 

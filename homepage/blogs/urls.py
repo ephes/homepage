@@ -14,7 +14,7 @@ urlpatterns = [
         name='blogpost-detail'
     ),
     url(
-        regex=r'^(?P<slug>[^/]+)/',
+        regex=r'^(?P<slug>[^/]+)/$',
         view=views.PostsListView.as_view(),
         name='blogpost-list'
     ),

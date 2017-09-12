@@ -35,7 +35,7 @@ class PostsListView(ListView):
 
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        return BlogPost.objects.filter(blog=self.blog)
+        return BlogPost.objects.filter(blog=self.blog).order_by('-created')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

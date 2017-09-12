@@ -29,5 +29,4 @@ services:
       - postgres_backup_local:/backups
     environment:
       - POSTGRES_USER=homepage
-
-
+      - POSTGRES_PASSWORD=homepage

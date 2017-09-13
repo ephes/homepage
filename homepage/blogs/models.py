@@ -24,6 +24,7 @@ class BlogPost(TimeStampedModel):
     author= models.ForeignKey(User)
     blog = models.ForeignKey(Blog)
     title = models.CharField(max_length=255)
+    published = models.BooleanField(default=False)
 
     content = RichTextUploadingField()
     slug = models.SlugField(max_length=50)

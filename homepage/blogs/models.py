@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.urlresolvers import reverse
 
-from ckeditor.fields import RichTextField
+from ckeditor_uploader.fields import RichTextUploadingField
 
 from model_utils.models import TimeStampedModel
 
@@ -21,7 +21,8 @@ class BlogPost(TimeStampedModel):
     author= models.ForeignKey(User)
     blog = models.ForeignKey(Blog)
     title = models.CharField(max_length=255)
-    content = RichTextField()
+
+    content = RichTextUploadingField()
     slug = models.SlugField(max_length=50)
 
     def get_absolute_url(self):

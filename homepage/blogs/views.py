@@ -35,7 +35,10 @@ class PostsListView(ListView):
 
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        return BlogPost.objects.filter(blog=self.blog).filter(published=True).order_by('-created')
+        queryset = BlogPost.objects.filter(blog=self.blog).order_by('-created')
+        if not self.request.user.is_authenticated():
+            queryset = queryset.filter(published=True)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

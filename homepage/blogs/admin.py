@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import Blog
 from .models import BlogPost
+from .models import Image
 
 
 class BlogModelAdmin(admin.ModelAdmin):
@@ -16,3 +17,9 @@ class BlogPostModelAdmin(admin.ModelAdmin):
            js = ('js/ckeditor_fix.js',)
 
 admin.site.register(BlogPost, BlogPostModelAdmin)
+
+
+class ImageModelAdmin(admin.ModelAdmin):
+       list_display = ('original', 'user')
+
+admin.site.register(Image, ImageModelAdmin)

@@ -41,3 +41,11 @@ class BlogPost(TimeStampedModel):
 
     def get_slug(self):
         return slugify(self.title)
+
+
+class Image(TimeStampedModel):
+    user = models.ForeignKey(User)
+    original = models.ImageField(upload_to='blogs_images')
+
+    def __str__(self):
+        return 'foo'

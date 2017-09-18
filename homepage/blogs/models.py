@@ -55,13 +55,15 @@ class BlogPost(TimeStampedModel):
         images = re.findall('img_\d+', processed)
         for image in images:
             pk = int(image.split('_')[-1])
-            img = Image.objects.get(pk=pk)
+            img = BlogImage.objects.get(pk=pk)
             processed = processed.replace(image, img.get_img_tag())
         return processed
 
 
-class Image(TimeStampedModel):
+class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)
+    portrait = models.BooleanField(default=False)
+
     original = models.ImageField(
         upload_to='blogs_images/originals',
         height_field='original_height',
@@ -123,16 +125,25 @@ class Image(TimeStampedModel):
     ]
 
     def create_resized_images(self):
-        for size, attr_name in self.sizes:
-            img_size = size, size
-            im = PILImage.open(self.original)
-            im.thumbnail(img_size)
+        original = PILImage.open(self.original)
+        for width, attr_name in self.sizes:
+            if self.portrait:
+                height = int((width / self.original_height) * self.original_width)
+            else:
+                height = int((width / self.original_width) * self.original_height)
+            im = original.copy()
+            if self.portrait:
+                im = im.resize((height, width))
+            else:
+                im = im.resize((width, height))
+            if self.portrait:
+                im = im.transpose(PILImage.ROTATE_270)
             im_io = BytesIO()
-            im.save(im_io, format='JPEG')
+            im.save(im_io, format='JPEG', quality=60, optimize=True, progressive=True)
             original_name = (self.original.name
                              .split('/')[-1]
                              .replace('.JPG', ''))
-            resized_name = '{}_resized_{}.JPG'.format(original_name, img_size[0])
+            resized_name = '{}_resized_{}.JPG'.format(original_name, width)
             img_attr = getattr(self, attr_name)
             img_attr.save(resized_name, im_io, save=False)
 
@@ -145,9 +156,10 @@ class Image(TimeStampedModel):
 
     def get_srcset(self):
         sources = []
-        for size, attr_name in self.sizes:
+        for width, attr_name in self.sizes:
             img = getattr(self, attr_name)
             sources.append(img.url)
+            sources.append('{}w'.format(width))
         return ' '.join(sources)
 
     def get_img_tag(self):

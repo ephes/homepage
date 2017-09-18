@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import Blog
 from .models import BlogPost
-from .models import Image
+from .models import BlogImage
 
 
 class BlogModelAdmin(admin.ModelAdmin):
@@ -21,7 +21,7 @@ admin.site.register(BlogPost, BlogPostModelAdmin)
 
 
 class ImageModelAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'original', 'user')
+    list_display = ('pk', 'portrait', 'original', 'user')
 
 
-admin.site.register(Image, ImageModelAdmin)
+admin.site.register(BlogImage, ImageModelAdmin)

@@ -52,7 +52,7 @@ class BlogPost(TimeStampedModel):
     @property
     def processed_content(self):
         processed = self.content
-        images = re.findall('img_\d+', processed)
+        images = re.findall('blog_img_\d+', processed)
         for image in images:
             pk = int(image.split('_')[-1])
             img = BlogImage.objects.get(pk=pk)

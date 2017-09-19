@@ -55,8 +55,11 @@ class BlogPost(TimeStampedModel):
         images = re.findall('blog_img_\d+', processed)
         for image in images:
             pk = int(image.split('_')[-1])
-            img = BlogImage.objects.get(pk=pk)
-            processed = processed.replace(image, img.get_img_tag())
+            try:
+                img = BlogImage.objects.get(pk=pk)
+                processed = processed.replace(image, img.get_img_tag())
+            except BlogImage.DoesNotExist:
+                pass
         return processed
 
 

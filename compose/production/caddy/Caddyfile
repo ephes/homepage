@@ -8,6 +8,7 @@ www.{$DOMAIN_NAME} {
         header_upstream X-Real-IP {remote}
         header_upstream X-Forwarded-Proto {scheme}
     }
+    timeouts 10m
     log stdout
     errors stdout
     gzip

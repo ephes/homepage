@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import Blog
 from .models import BlogPost
 from .models import BlogImage
+from .models import BlogVideo
 
 
 class BlogModelAdmin(admin.ModelAdmin):
@@ -25,3 +26,10 @@ class ImageModelAdmin(admin.ModelAdmin):
 
 
 admin.site.register(BlogImage, ImageModelAdmin)
+
+
+class VideoModelAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'user')
+
+
+admin.site.register(BlogVideo, VideoModelAdmin)

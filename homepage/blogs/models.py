@@ -49,17 +49,36 @@ class BlogPost(TimeStampedModel):
     def get_slug(self):
         return slugify(self.title)
 
-    @property
-    def processed_content(self):
-        processed = self.content
-        images = re.findall('blog_img_\d+', processed)
+    def replace_images(self, content):
+        images = re.findall('blog_img_\d+', content)
         for image in images:
             pk = int(image.split('_')[-1])
             try:
                 img = BlogImage.objects.get(pk=pk)
-                processed = processed.replace(image, img.get_img_tag())
+                content = content.replace(image, img.get_img_tag())
             except BlogImage.DoesNotExist:
                 pass
+        return content
+
+    def replace_videos(self, content):
+        print(content)
+        videos= re.findall('blog_video_\d+', content)
+        print(videos)
+        for video in videos:
+            pk = int(video.split('_')[-1])
+            try:
+                video_obj = BlogVideo.objects.get(pk=pk)
+                #print(video)
+                #print(video.get_video_tag())
+                content = content.replace(video, video_obj.get_video_tag())
+            except BlogVideo.DoesNotExist as e:
+                print(e)
+        return content
+
+    @property
+    def processed_content(self):
+        processed = self.replace_images(self.content)
+        processed = self.replace_videos(processed)
         return processed
 
     @property
@@ -174,3 +193,15 @@ class BlogImage(TimeStampedModel):
             '<img width="100%" srcset="{srcset}" src="{src}"'
             '</img>'
         ).format(srcset=self.get_srcset(), src=self.img_xl.url)
+
+
+class BlogVideo(TimeStampedModel):
+    user = models.ForeignKey(User)
+    original = models.FileField(upload_to='blogs_videos/')
+
+    def get_video_tag(self):
+        return (
+            '<video width="100%" controls>'
+            '  <source src="{src}" type="video/mp4">'
+            '</video>'
+        ).format(src=self.original.url)

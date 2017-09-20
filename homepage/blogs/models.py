@@ -62,6 +62,10 @@ class BlogPost(TimeStampedModel):
                 pass
         return processed
 
+    @property
+    def description(self):
+        return self.processed_content
+
 
 class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)

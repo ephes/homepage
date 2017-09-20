@@ -6,6 +6,7 @@
   <p class="lead">
     {{ blog.description }}
   </p>
+  <a href="{% url "blogs:blogpost-feed" slug=blog.slug %}"><img src='/static/images/Feed-icon.svg'></img></a>
   {% if user.is_authenticated %}
       <a class="btn btn-primary btn-lg" role="button" href="{% url "blogs:blogpost-create" slug=blog.slug %}">Create Arcticle</a>
   {% endif %}
@@ -14,7 +15,7 @@
 {% for blogpost in blogposts %}
   <h1>{{ blogpost.title }}</h1>
   {{ blogpost.created }}
-  <a href="{% url "blogs:blogpost-detail" blog_slug=blogpost.blog.slug slug=blogpost.slug %}">
+  <a href="{% url "blogs:blogpost-detail" blog_slug=blog.slug slug=blogpost.slug %}">
     permalink
   </a>
 

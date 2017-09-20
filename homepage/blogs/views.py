@@ -4,6 +4,7 @@ from django.views.generic import ListView
 from django.views.generic import DetailView
 from django.views.generic import CreateView
 
+from django.contrib.syndication.views import Feed
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.http import HttpResponseRedirect
@@ -44,6 +45,30 @@ class PostsListView(ListView):
         context = super().get_context_data(**kwargs)
         context['blog'] = self.blog
         return context
+
+
+class LatestEntriesFeed(Feed):
+    def get_object(self, request, *args, **kwargs):
+        self.object = get_object_or_404(Blog, slug=kwargs['slug'])
+
+    def title(self):
+        return self.object.title
+
+    def description(self):
+        return self.object.description
+
+    def link(self):
+        return reverse('blogs:blogpost-feed', kwargs={'slug': self.object.slug})
+
+    def items(self):
+        queryset = BlogPost.objects.filter(blog=self.object).order_by('-created')
+        return queryset[:5]
+
+    def item_title(self, item):
+        return item.title
+
+    def item_description(self, item):
+        return item.description
 
 
 class PostDetailView(DetailView):

@@ -14,6 +14,11 @@ urlpatterns = [
         name='blogpost-detail'
     ),
     url(
+        regex=r'^(?P<slug>[^/]+)/feed.xml$',
+        view=views.LatestEntriesFeed(),
+        name='blogpost-feed'
+    ),
+    url(
         regex=r'^(?P<slug>[^/]+)/$',
         view=views.PostsListView.as_view(),
         name='blogpost-list'

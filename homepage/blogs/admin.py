@@ -23,6 +23,7 @@ admin.site.register(BlogPost, BlogPostModelAdmin)
 
 class ImageModelAdmin(admin.ModelAdmin):
     list_display = ('pk', 'portrait', 'original', 'user')
+    fields = ('user', 'original',)
 
 
 admin.site.register(BlogImage, ImageModelAdmin)

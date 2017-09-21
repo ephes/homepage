@@ -4,5 +4,7 @@
 {% block content %}
 <a href="{% url "blogs:blogpost-list" slug=blogpost.blog.slug %}">back..</a>
 <h1>{{ blogpost.title }}</h1>
-{{ blogpost.processed_content|safe }}
+<article>
+  {{ blogpost.processed_content|safe }}
+</article>
 {% endblock content %}

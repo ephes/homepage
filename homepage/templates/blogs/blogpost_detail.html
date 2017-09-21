@@ -2,9 +2,16 @@
 {% load staticfiles %}
 
 {% block content %}
-<a href="{% url "blogs:blogpost-list" slug=blogpost.blog.slug %}">back..</a>
-<h1>{{ blogpost.title }}</h1>
 <article>
-  {{ blogpost.processed_content|safe }}
+  <header>
+    <h1>{{ blogpost.title }}</h1>
+    <a href="{% url "blogs:blogpost-detail" blog_slug=blogpost.blog.slug slug=blogpost.slug %}">
+      <time date-time="{{ blogpost.created|date:"c" }}">{{ blogpost.created }}</time>
+    </a>
+    <a href="{% url "blogs:blogpost-list" slug=blogpost.blog.slug %}">back..</a>
+  </header>
+  <section>
+    {{ blogpost.processed_content|safe }}
+  </section>
 </article>
 {% endblock content %}

@@ -13,14 +13,16 @@
   <hr class="my-4">
 
 {% for blogpost in blogposts %}
-  <h1>{{ blogpost.title }}</h1>
-  {{ blogpost.created }}
-  <a href="{% url "blogs:blogpost-detail" blog_slug=blog.slug slug=blogpost.slug %}">
-    permalink
-  </a>
-
   <article>
-    {{ blogpost.processed_content|safe }}
+    <header>
+      <h1>{{ blogpost.title }}</h1>
+      <a href="{% url "blogs:blogpost-detail" blog_slug=blog.slug slug=blogpost.slug %}">
+        <time date-time="{{ blogpost.created|date:"c" }}">{{ blogpost.created }}</time>
+      </a>
+    </header>
+    <section>
+      {{ blogpost.processed_content|safe }}
+    </section>
   </article>
   <hr class="my-4">
 {% endfor %}

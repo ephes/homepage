@@ -61,18 +61,14 @@ class BlogPost(TimeStampedModel):
         return content
 
     def replace_videos(self, content):
-        print(content)
         videos= re.findall('blog_video_\d+', content)
-        print(videos)
         for video in videos:
             pk = int(video.split('_')[-1])
             try:
                 video_obj = BlogVideo.objects.get(pk=pk)
-                #print(video)
-                #print(video.get_video_tag())
                 content = content.replace(video, video_obj.get_video_tag())
             except BlogVideo.DoesNotExist as e:
-                print(e)
+                pass
         return content
 
     @property

@@ -186,7 +186,7 @@ class BlogImage(TimeStampedModel):
 
     def get_img_tag(self):
         return (
-            '<img width="100%" srcset="{srcset}" src="{src}"'
+                '<img style="max-height: 1100px;max-width: 100%"" srcset="{srcset}" src="{src}"'
             '</img>'
         ).format(srcset=self.get_srcset(), src=self.img_xl.url)
 

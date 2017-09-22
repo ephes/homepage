@@ -33,6 +33,7 @@ class PostsListView(ListView):
     model = BlogPost
     template_name = 'blogs/blogpost_list.html'
     context_object_name = 'blogposts'
+    paginate_by = 5
 
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])

@@ -197,7 +197,7 @@ class BlogVideo(TimeStampedModel):
 
     def get_video_tag(self):
         return (
-            '<video width="100%" controls>'
+            '<video max-width="100%" max-height="1100px" preload="auto" controls>'
             '  <source src="{src}" type="video/mp4">'
             '</video>'
         ).format(src=self.original.url)

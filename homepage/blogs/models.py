@@ -201,3 +201,8 @@ class BlogVideo(TimeStampedModel):
             '  <source src="{src}" type="video/mp4">'
             '</video>'
         ).format(src=self.original.url)
+
+
+class BlogGallery(TimeStampedModel):
+    user = models.ForeignKey(User)
+    images = models.ManyToManyField(BlogImage)

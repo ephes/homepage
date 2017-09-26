@@ -4,6 +4,7 @@ from .models import Blog
 from .models import BlogPost
 from .models import BlogImage
 from .models import BlogVideo
+from .models import BlogGallery
 
 
 class AdminUserMixin:
@@ -37,3 +38,10 @@ class VideoModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk', 'user')
 
 admin.site.register(BlogVideo, VideoModelAdmin)
+
+
+class GalleryModelAdmin(AdminUserMixin, admin.ModelAdmin):
+    list_display = ('pk',)
+    fields = ('user', 'images')
+
+admin.site.register(BlogGallery, GalleryModelAdmin)

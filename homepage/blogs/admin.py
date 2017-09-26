@@ -7,14 +7,8 @@ from .models import BlogVideo
 
 
 class AdminUserMixin:
-    user_fields = ['user', 'author']
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        for field_name in self.user_fields:
-            if field_name in form.base_fields:
-                form.base_fields[field_name].initial = request.user
-        return form
+    def get_changeform_initial_data(self, request):
+        return {'user': request.user, 'author': request.user}
 
 
 class BlogModelAdmin(AdminUserMixin, admin.ModelAdmin):

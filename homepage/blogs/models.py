@@ -186,7 +186,7 @@ class BlogImage(TimeStampedModel):
 
     def get_img_tag(self):
         return (
-                '<img style="max-height: 1100px;max-width: 100%"" srcset="{srcset}" src="{src}"'
+            '<img class="blog-image" srcset="{srcset}" src="{src}"'
             '</img>'
         ).format(srcset=self.get_srcset(), src=self.img_xl.url)
 
@@ -197,7 +197,7 @@ class BlogVideo(TimeStampedModel):
 
     def get_video_tag(self):
         return (
-            '<video style="max-height: 800px;max-width: 100%" "preload="auto" controls>'
+            '<video class="blog-video" preload="auto" controls>'
             '  <source src="{src}" type="video/mp4">'
             '</video>'
         ).format(src=self.original.url)

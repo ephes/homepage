@@ -281,3 +281,9 @@ CKEDITOR_UPLOAD_PATH = 'uploads/ckeditor/'
 CKEDITOR_IMAGE_BACKEND = 'pillow'
 AWS_QUERYSTRING_AUTH = False
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+CKEDITOR_CONFIGS = {
+  'default': {
+    'removePlugins': 'stylesheetparser',
+    'allowedContent': True,
+  },
+}

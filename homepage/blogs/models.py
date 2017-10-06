@@ -71,10 +71,22 @@ class BlogPost(TimeStampedModel):
                 pass
         return content
 
+    def replace_galleries(self, content):
+        galleries = re.findall('blog_gallery_\d+', content)
+        for gallery in galleries:
+            pk = int(gallery.split('_')[-1])
+            try:
+                gallery_obj = BlogGallery.objects.get(pk=pk)
+                content = content.replace(gallery, gallery_obj.get_gallery_tag())
+            except BlogGallery.DoesNotExist as e:
+                pass
+        return content
+
     @property
     def processed_content(self):
         processed = self.replace_images(self.content)
         processed = self.replace_videos(processed)
+        processed = self.replace_galleries(processed)
         return processed
 
     @property
@@ -181,14 +193,15 @@ class BlogImage(TimeStampedModel):
         for width, attr_name in self.sizes:
             img = getattr(self, attr_name)
             sources.append(img.url)
-            sources.append('{}w'.format(width))
+            sources.append('{}w,'.format(width))
         return ' '.join(sources)
 
     def get_img_tag(self):
         return (
-            '<img class="blog-image" srcset="{srcset}" src="{src}"'
-            '</img>'
-        ).format(srcset=self.get_srcset(), src=self.img_xl.url)
+            '<a href="{original}">'
+            '  <img class="blog-image" src="{src}" srcset="{srcset}" sizes="100vw"></img>'
+            '</a>'
+        ).format(srcset=self.get_srcset(), src=self.img_xs.url, original=self.original.url)
 
 
 class BlogVideo(TimeStampedModel):
@@ -206,3 +219,75 @@ class BlogVideo(TimeStampedModel):
 class BlogGallery(TimeStampedModel):
     user = models.ForeignKey(User)
     images = models.ManyToManyField(BlogImage)
+
+    def get_modal_tmpl(self):
+        return '''
+	    <!-- Button trigger modal -->
+	    <a data-toggle="modal" data-target="#galleryModal{pk}">
+	      {thumbnail_tag}
+	    </a>
+
+	    <!-- Modal -->
+	    <div class="modal" id="galleryModal{pk}" tabindex="-1" role="dialog" aria-labelledby="galleryModalLabel" aria-hidden="true">
+	      <div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+		  <div class="modal-header">
+		    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+		      <span aria-hidden="true">&times;</span>
+		    </button>
+		  </div>
+		  <div class="modal-body">
+		    {img_tag}
+		  </div>
+		  <div class="modal-footer">
+                    {prev_button}
+                    {next_button}
+		  </div>
+		</div>
+	      </div>
+	    </div>
+        '''
+
+    def get_prev_button(self, prev_pk):
+        return (
+            '<button type="button" class="btn btn-primary" '
+            'data-toggle="modal" data-target="#galleryModal{prev_pk}" data-dismiss="modal">'
+            'Previous</button>'
+        ).format(prev_pk=prev_pk)
+
+    def get_next_button(self, next_pk):
+        return (
+            '<button type="button" class="btn btn-primary" '
+            'data-toggle="modal" data-target="#galleryModal{next_pk}" data-dismiss="modal">'
+            'Next</button>'
+        ).format(next_pk=next_pk)
+
+    def get_gallery_tag(self):
+        image_tags = []
+        prev_img, next_img = None, None
+        images = list(self.images.all())
+        for num, image in enumerate(images, 1):
+            if num < len(images):
+                next_img = images[num]
+            else:
+                next_img = None
+            srcset = image.get_srcset()
+            thumbnail_tmpl = '<img class="gallery-thumbnail" src={src} srcset="{srcset}"></img>'
+            thumbnail_tag = thumbnail_tmpl.format(srcset=srcset, src=image.img_xs.url)
+            img_tag = image.get_img_tag()
+            modal_tmpl= self.get_modal_tmpl()
+
+            if prev_img is not None:
+                prev_button = self.get_prev_button(prev_img.pk)
+            else:
+                prev_button = ""
+            if next_img is not None:
+                next_button = self.get_next_button(next_img.pk)
+            else:
+                next_button = ""
+            modal_tag = modal_tmpl.format(
+                pk=image.pk, thumbnail_tag=thumbnail_tag, img_tag=img_tag,
+                prev_button=prev_button, next_button=next_button)
+            image_tags.append(modal_tag)
+            prev_img = image
+        return '\n'.join(image_tags)

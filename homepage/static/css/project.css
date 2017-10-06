@@ -113,6 +113,12 @@
     max-width: 100%;
 }
 
+.gallery-thumbnail {
+    max-width: 10em;
+    max-height: 10em;
+    height: 5em;
+}
+
 .blog-video {
     max-height: 800px;
     max-width: 100%;

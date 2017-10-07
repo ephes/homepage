@@ -3,18 +3,11 @@ import os
 from django.core.management.base import BaseCommand
 from django.core.files.storage import get_storage_class
 
+from blogs.utils import storage_walk_paths
+
+
 class Command(BaseCommand):
     help = 'shows size of media on s3'
-
-    def walk(self, storage, cur_dir=''):
-        dirs, files = storage.listdir(cur_dir)
-        for directory in dirs:
-            new_dir = os.path.join(cur_dir, directory)
-            for path in self.walk(storage, cur_dir=new_dir):
-                yield path
-        for fname in files:
-            path = os.path.join(cur_dir, fname)
-            yield path
 
     def show_usage(self, paths):
         video_endings = {'mov', 'mp4'}
@@ -37,7 +30,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         s3 = get_storage_class('storages.backends.s3boto3.S3Boto3Storage')()
         paths = {}
-        for path in self.walk(s3):
+        for path in storage_walk_paths(s3):
             size = s3.size(path)
             paths[path] = size
             print(path, size / 2 ** 20)

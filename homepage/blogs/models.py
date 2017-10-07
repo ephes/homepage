@@ -250,14 +250,14 @@ class BlogGallery(TimeStampedModel):
 
     def get_prev_button(self, prev_pk):
         return (
-            '<button type="button" class="btn btn-primary" '
+            '<button id="prev" type="button" class="btn btn-primary" '
             'data-toggle="modal" data-target="#galleryModal{prev_pk}" data-dismiss="modal">'
             'Previous</button>'
         ).format(prev_pk=prev_pk)
 
     def get_next_button(self, next_pk):
         return (
-            '<button type="button" class="btn btn-primary" '
+            '<button id="next" type="button" class="btn btn-primary" '
             'data-toggle="modal" data-target="#galleryModal{next_pk}" data-dismiss="modal">'
             'Next</button>'
         ).format(next_pk=next_pk)

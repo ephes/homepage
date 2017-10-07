@@ -38,3 +38,17 @@
   </ul>
 </nav>
 {% endblock content %}
+
+{% block template_script %}
+<script>
+$(document).keydown(function (e) {
+    if (e.keyCode == 37) {
+        $('#prev').click();
+        return false;
+    }
+    if (e.keyCode == 39) {
+        $('#next').click();
+    }
+});
+</script>
+{% endblock template_script %}

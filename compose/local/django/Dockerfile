@@ -24,4 +24,6 @@ RUN chmod +x /start-celerybeat.sh
 
 WORKDIR /app
 
+ENV DJANGO_READ_DOT_ENV_FILE=True
+
 ENTRYPOINT ["/entrypoint.sh"]

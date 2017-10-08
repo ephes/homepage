@@ -42,7 +42,6 @@ class Command(BaseCommand):
         return paths
 
     def handle(self, *args, **options):
-        print(args, options)
         paths_from_models = self.get_models_paths()
 
         print('stale s3')

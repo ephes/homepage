@@ -32,11 +32,10 @@ class Command(BaseCommand):
         return paths
 
     def get_models_paths(self):
-        image_fields = ['original', 'img_xl', 'img_lg', 'img_md', 'img_sm', 'img_xs']
         paths = set()
         for image in BlogImage.objects.all():
-            for field in image_fields:
-                paths.add(getattr(image, field))
+            for path in image.get_all_paths():
+                paths.add(path)
         for video in BlogVideo.objects.all():
             paths.add(video.original.name)
         return paths
@@ -64,7 +63,7 @@ class Command(BaseCommand):
         print('stale locale size: {} Mb'.format(sum(stale_locale.values()) / 2 ** 20))
 
         if options['delete']:
-            for path in stale_s3.keys():
-                s3.delete(path)
+            # for path in stale_s3.keys():
+            #     s3.delete(path)
             for path in stale_locale.keys():
                 default_storage.delete(path)

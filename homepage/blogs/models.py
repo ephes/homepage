@@ -287,11 +287,12 @@ class BlogGallery(TimeStampedModel):
         srcset = image.get_srcset()
         prev_id = 'img-{}'.format(prev_img.pk) if prev_img is not None else 'false'
         next_id = 'img-{}'.format(next_img.pk) if next_img is not None else 'false'
-        thumbnail_tmpl = (
-            '<img id="img-{img_id}" class="gallery-thumbnail" src={{src}} '
-            'srcset="{{srcset}}" data-prev="{prev}" data-next="{next}"></img>'
-        ).format(img_id=image.pk, prev=prev_id, next=next_id)
-        thumbnail_tag = thumbnail_tmpl.format(srcset=srcset, src=image.img_xs.url)
+        thumbnail_tag = (
+            '<img id="img-{img_id}" class="gallery-thumbnail" src={src} '
+            'srcset="{srcset}" data-prev="{prev}" data-next="{next}" '
+            'data-full="{full}"></img>'
+        ).format(img_id=image.pk, prev=prev_id, next=next_id, srcset=srcset,
+                 src=image.img_xs.url, full=image.img_full.url)
         return '''
             <a class="gallery-modal" data-toggle="modal" data-target="#galleryModal">
                 {thumbnail_tag}

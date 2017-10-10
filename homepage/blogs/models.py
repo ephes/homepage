@@ -240,79 +240,12 @@ class BlogImage(TimeStampedModel):
             sources.append('{}w,'.format(width))
         return ' '.join(sources)
 
-    def get_img_tag(self):
-        return (
-            '<a href="{full}">'
-            '  <img class="blog-image" src="{src}" srcset="{srcset}" sizes="100vw"></img>'
-            '</a>'
-        ).format(srcset=self.get_srcset(), src=self.img_xs.url, full=self.img_full.url)
-
 
 class BlogVideo(TimeStampedModel):
     user = models.ForeignKey(User)
     original = models.FileField(upload_to='blogs_videos/')
 
-    def get_video_tag(self):
-        return (
-            '<video class="blog-video" preload="auto" controls>'
-            '  <source src="{src}" type="video/mp4">'
-            '</video>'
-        ).format(src=self.original.url)
-
 
 class BlogGallery(TimeStampedModel):
     user = models.ForeignKey(User)
     images = models.ManyToManyField(BlogImage)
-
-    def get_modal_tmpl(self):
-        return '''
-            {thumbs}
-            <!-- Modal -->
-            <div class="modal fade" id="galleryModal" tabindex="-1" role="dialog" aria-labelledby="galleryModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-	                        </button>
-	                    </div>
-	                    <div class="modal-body">
-                            <a href=""><img class="modal-image blog-image" src="" srcset="" sizes="100vw"></img></a>
-                        </div>
-                        <div class="modal-footer">
-	                    </div>
-	                </div>
-                </div>
-            </div>
-        '''
-
-    def get_modal_trigger(self, image, prev_img, next_img):
-        srcset = image.get_srcset()
-        prev_id = 'img-{}'.format(prev_img.pk) if prev_img is not None else 'false'
-        next_id = 'img-{}'.format(next_img.pk) if next_img is not None else 'false'
-        thumbnail_tag = (
-            '<img id="img-{img_id}" class="gallery-thumbnail" src={src} '
-            'srcset="{srcset}" data-prev="{prev}" data-next="{next}" '
-            'data-full="{full}"></img>'
-        ).format(img_id=image.pk, prev=prev_id, next=next_id, srcset=srcset,
-                 src=image.img_xs.url, full=image.img_full.url)
-        return '''
-            <a class="gallery-modal" data-toggle="modal" data-target="#galleryModal">
-                {thumbnail_tag}
-            </a>
-        '''.format(thumbnail_tag=thumbnail_tag)
-
-    def get_gallery_tag(self):
-        image_thumbs = ['<!-- Button trigger modal -->']
-
-        prev_img, next_img = None, None
-        images = list(self.images.all())
-        for num, image in enumerate(images, 1):
-            if num < len(images):
-                next_img = images[num]
-            else:
-                next_img = None
-            image_thumbs.append(self.get_modal_trigger(image, prev_img, next_img))
-            prev_img = image
-        thumbs = '\n'.join(image_thumbs)
-        return self.get_modal_tmpl().format(thumbs=thumbs)

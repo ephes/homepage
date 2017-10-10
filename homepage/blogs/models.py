@@ -199,7 +199,10 @@ class BlogImage(TimeStampedModel):
         original = PILImage.open(self.original)
         original_name = os.path.basename(self.original.name)
 
-        exif = self.get_exif_tags(original)
+        try:
+            exif = self.get_exif_tags(original)
+        except AttributeError as e:
+            exif = {}
 
         for size, attr_name in self.sizes:
             im = self.adjust_orientation(exif, original.copy())

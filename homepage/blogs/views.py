@@ -11,6 +11,9 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 
+from django.template import Context
+from django.template import Template
+
 from .forms import BlogPostForm
 
 from .models import Blog
@@ -29,7 +32,16 @@ class BlogDetailView(DetailView):
     context_object_name = 'blog'
 
 
-class PostsListView(ListView):
+class RenderPostMixin:
+    def render_post(self, blogpost):
+        content = '{}\n{}'.format(
+            '{% load blogs_extras %}', blogpost.processed_content)
+        template = Template(content)
+        blog_context = Context({})
+        blogpost.entry_content = template.render(blog_context)
+
+
+class PostsListView(RenderPostMixin, ListView):
     model = BlogPost
     template_name = 'blogs/blogpost_list.html'
     context_object_name = 'blogposts'
@@ -45,6 +57,8 @@ class PostsListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['blog'] = self.blog
+        for blogpost in context[self.context_object_name]:
+            self.render_post(blogpost)
         return context
 
 
@@ -72,12 +86,18 @@ class LatestEntriesFeed(Feed):
         return item.description
 
 
-class PostDetailView(DetailView):
+class PostDetailView(RenderPostMixin, DetailView):
     model = BlogPost
     template_name = 'blogs/blogpost_detail.html'
     context_object_name = 'blogpost'
     slug_url_kwarg = 'slug'
     query_pk_and_slug = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        blogpost = context[self.context_object_name]
+        self.render_post(blogpost)
+        return context
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):

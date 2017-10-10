@@ -21,7 +21,7 @@ lint:
 
 ## Run tests
 test:
-	py.test .
+	docker-compose -f local.yml run django py.test homepage
 
 ## Measure test coverage
 coverage:

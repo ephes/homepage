@@ -285,5 +285,6 @@ CKEDITOR_CONFIGS = {
   'default': {
     'removePlugins': 'stylesheetparser',
     'allowedContent': True,
+    'enterMode': 2,
   },
 }

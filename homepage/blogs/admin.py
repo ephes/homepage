@@ -15,6 +15,7 @@ class AdminUserMixin:
 class BlogModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('title', 'user')
 
+
 admin.site.register(Blog, BlogModelAdmin)
 
 
@@ -24,6 +25,7 @@ class BlogPostModelAdmin(AdminUserMixin, admin.ModelAdmin):
     class Media:
         js = ('js/ckeditor_fix.js',)
 
+
 admin.site.register(BlogPost, BlogPostModelAdmin)
 
 
@@ -31,11 +33,13 @@ class ImageModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk', 'portrait', 'original', 'user')
     fields = ('user', 'original', 'portrait')
 
+
 admin.site.register(BlogImage, ImageModelAdmin)
 
 
 class VideoModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk', 'user')
+
 
 admin.site.register(BlogVideo, VideoModelAdmin)
 
@@ -43,5 +47,6 @@ admin.site.register(BlogVideo, VideoModelAdmin)
 class GalleryModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk',)
     fields = ('user', 'images')
+
 
 admin.site.register(BlogGallery, GalleryModelAdmin)

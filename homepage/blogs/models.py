@@ -1,11 +1,9 @@
 import os
-import re
 
 from io import BytesIO
 
 from django.db import models
 from django.core.urlresolvers import reverse
-from django.core.files.images import ImageFile
 
 from ckeditor_uploader.fields import RichTextUploadingField
 
@@ -30,7 +28,7 @@ class Blog(TimeStampedModel):
 
 
 class BlogPost(TimeStampedModel):
-    author= models.ForeignKey(User)
+    author = models.ForeignKey(User)
     blog = models.ForeignKey(Blog)
     title = models.CharField(max_length=255)
     published = models.BooleanField(default=False)
@@ -65,7 +63,7 @@ class BlogImage(TimeStampedModel):
         height_field='original_height',
         width_field='original_width')
     original_height = models.PositiveIntegerField(blank=True, null=True)
-    original_width= models.PositiveIntegerField(blank=True, null=True)
+    original_width = models.PositiveIntegerField(blank=True, null=True)
 
     img_full = models.ImageField(
         upload_to='blogs_images/resized',

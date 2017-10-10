@@ -1,12 +1,6 @@
-import os
-
 from django.core.management.base import BaseCommand
 from django.core.files.storage import default_storage
 from django.core.files.storage import get_storage_class
-
-from django.conf import settings
-
-from blogs.utils import storage_walk_paths
 
 
 class Command(BaseCommand):

@@ -1,4 +1,3 @@
-import datetime
 from django import template
 from django.utils.safestring import mark_safe
 
@@ -31,7 +30,7 @@ def blog_video(pk):
     return mark_safe(video_tag)
 
 
-## blog_gallery tag
+# blog_gallery tag
 
 def get_modal_trigger(image, prev_img, next_img):
     srcset = image.get_srcset()
@@ -54,7 +53,8 @@ def get_modal_tmpl():
     return '''
         {thumbs}
         <!-- Modal -->
-        <div class="modal fade" id="galleryModal" tabindex="-1" role="dialog" aria-labelledby="galleryModalLabel" aria-hidden="true">
+        <div class="modal fade" id="galleryModal" tabindex="-1" role="dialog"
+             aria-labelledby="galleryModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">

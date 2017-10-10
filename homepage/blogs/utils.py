@@ -1,7 +1,5 @@
 import os
 
-from django.core.files.storage import get_storage_class
-
 
 def storage_walk_paths(storage, cur_dir=''):
     dirs, files = storage.listdir(cur_dir)

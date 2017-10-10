@@ -263,48 +263,44 @@ class BlogGallery(TimeStampedModel):
 
     def get_modal_tmpl(self):
         return '''
-	    <!-- Button trigger modal -->
-	    <a data-toggle="modal" data-target="#galleryModal{pk}">
-	      {thumbnail_tag}
-	    </a>
-
-	    <!-- Modal -->
-	    <div class="modal" id="galleryModal{pk}" tabindex="-1" role="dialog" aria-labelledby="galleryModalLabel" aria-hidden="true">
-	      <div class="modal-dialog modal-lg" role="document">
-		<div class="modal-content">
-		  <div class="modal-header">
-		    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-		      <span aria-hidden="true">&times;</span>
-		    </button>
-		  </div>
-		  <div class="modal-body">
-		    {img_tag}
-		  </div>
-		  <div class="modal-footer">
-                    {prev_button}
-                    {next_button}
-		  </div>
-		</div>
-	      </div>
-	    </div>
+            {thumbs}
+            <!-- Modal -->
+            <div class="modal fade" id="galleryModal" tabindex="-1" role="dialog" aria-labelledby="galleryModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+	                        </button>
+	                    </div>
+	                    <div class="modal-body">
+                            <a href=""><img class="modal-image blog-image" src="" srcset="" sizes="100vw"></img></a>
+                        </div>
+                        <div class="modal-footer">
+	                    </div>
+	                </div>
+                </div>
+            </div>
         '''
 
-    def get_prev_button(self, prev_pk):
-        return (
-            '<button id="prev" type="button" class="btn btn-primary" '
-            'data-toggle="modal" data-target="#galleryModal{prev_pk}" data-dismiss="modal">'
-            'Previous</button>'
-        ).format(prev_pk=prev_pk)
-
-    def get_next_button(self, next_pk):
-        return (
-            '<button id="next" type="button" class="btn btn-primary" '
-            'data-toggle="modal" data-target="#galleryModal{next_pk}" data-dismiss="modal">'
-            'Next</button>'
-        ).format(next_pk=next_pk)
+    def get_modal_trigger(self, image, prev_img, next_img):
+        srcset = image.get_srcset()
+        prev_id = 'img-{}'.format(prev_img.pk) if prev_img is not None else 'false'
+        next_id = 'img-{}'.format(next_img.pk) if next_img is not None else 'false'
+        thumbnail_tmpl = (
+            '<img id="img-{img_id}" class="gallery-thumbnail" src={{src}} '
+            'srcset="{{srcset}}" data-prev="{prev}" data-next="{next}"></img>'
+        ).format(img_id=image.pk, prev=prev_id, next=next_id)
+        thumbnail_tag = thumbnail_tmpl.format(srcset=srcset, src=image.img_xs.url)
+        return '''
+            <a class="gallery-modal" data-toggle="modal" data-target="#galleryModal">
+                {thumbnail_tag}
+            </a>
+        '''.format(thumbnail_tag=thumbnail_tag)
 
     def get_gallery_tag(self):
-        image_tags = []
+        image_thumbs = ['<!-- Button trigger modal -->']
+
         prev_img, next_img = None, None
         images = list(self.images.all())
         for num, image in enumerate(images, 1):
@@ -312,23 +308,7 @@ class BlogGallery(TimeStampedModel):
                 next_img = images[num]
             else:
                 next_img = None
-            srcset = image.get_srcset()
-            thumbnail_tmpl = '<img class="gallery-thumbnail" src={src} srcset="{srcset}"></img>'
-            thumbnail_tag = thumbnail_tmpl.format(srcset=srcset, src=image.img_xs.url)
-            img_tag = image.get_img_tag()
-            modal_tmpl= self.get_modal_tmpl()
-
-            if prev_img is not None:
-                prev_button = self.get_prev_button(prev_img.pk)
-            else:
-                prev_button = ""
-            if next_img is not None:
-                next_button = self.get_next_button(next_img.pk)
-            else:
-                next_button = ""
-            modal_tag = modal_tmpl.format(
-                pk=image.pk, thumbnail_tag=thumbnail_tag, img_tag=img_tag,
-                prev_button=prev_button, next_button=next_button)
-            image_tags.append(modal_tag)
+            image_thumbs.append(self.get_modal_trigger(image, prev_img, next_img))
             prev_img = image
-        return '\n'.join(image_tags)
+        thumbs = '\n'.join(image_thumbs)
+        return self.get_modal_tmpl().format(thumbs=thumbs)

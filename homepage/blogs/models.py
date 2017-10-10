@@ -51,46 +51,6 @@ class BlogPost(TimeStampedModel):
     def get_slug(self):
         return slugify(self.title)
 
-    def replace_images(self, content):
-        images = re.findall('blog_img_\d+', content)
-        for image in images:
-            pk = int(image.split('_')[-1])
-            try:
-                img = BlogImage.objects.get(pk=pk)
-                content = content.replace(image, img.get_img_tag())
-            except BlogImage.DoesNotExist:
-                pass
-        return content
-
-    def replace_videos(self, content):
-        videos= re.findall('blog_video_\d+', content)
-        for video in videos:
-            pk = int(video.split('_')[-1])
-            try:
-                video_obj = BlogVideo.objects.get(pk=pk)
-                content = content.replace(video, video_obj.get_video_tag())
-            except BlogVideo.DoesNotExist as e:
-                pass
-        return content
-
-    def replace_galleries(self, content):
-        galleries = re.findall('blog_gallery_\d+', content)
-        for gallery in galleries:
-            pk = int(gallery.split('_')[-1])
-            try:
-                gallery_obj = BlogGallery.objects.get(pk=pk)
-                content = content.replace(gallery, gallery_obj.get_gallery_tag())
-            except BlogGallery.DoesNotExist as e:
-                pass
-        return content
-
-    @property
-    def processed_content(self):
-        processed = self.replace_images(self.content)
-        processed = self.replace_videos(processed)
-        processed = self.replace_galleries(processed)
-        return processed
-
     @property
     def description(self):
         return self.processed_content

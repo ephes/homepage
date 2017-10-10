@@ -35,7 +35,7 @@ class BlogDetailView(DetailView):
 class RenderPostMixin:
     def render_post(self, blogpost):
         content = '{}\n{}'.format(
-            '{% load blogs_extras %}', blogpost.processed_content)
+            '{% load blogs_extras %}', blogpost.content)
         template = Template(content)
         blog_context = Context({})
         blogpost.entry_content = template.render(blog_context)

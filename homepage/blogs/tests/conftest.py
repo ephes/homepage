@@ -7,7 +7,8 @@ from ..models import (
     BlogPost,
     BlogImage
 )
-from ...users.models import User
+
+from ...users.tests.factories import UserFactory
 
 
 @pytest.fixture(scope='module')
@@ -24,9 +25,8 @@ def image_1px():
 
 
 @pytest.fixture(scope='module')
-def user(scope='module'):
-    test_user = User.objects.create(name='testuser', password='password')
-    return test_user
+def user():
+    return UserFactory()
 
 
 @pytest.fixture(scope='module')

@@ -68,17 +68,17 @@ def get_modal_tmpl():
         <!-- Modal -->
         <div class="modal fade" id="galleryModal" tabindex="-1" role="dialog"
              aria-labelledby="galleryModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div class="modal-dialog modal-lg gallery-lg" role="document">
+                <div class="modal-content gallery-content">
+                    <div class="modal-header gallery-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body gallery-body">
                         <a href=""><img class="modal-image blog-image" src="" srcset="" sizes="100vw"></img></a>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer gallery-footer">
                         </div>
                     </div>
             </div>

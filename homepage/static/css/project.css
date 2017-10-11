@@ -113,28 +113,28 @@
     max-width: 100%;
 }
 
-.modal-content {
+.gallery-content {
     background-color:rgba(0, 0, 0, 0);
 }
 
-.modal-body {
+.gallery-body {
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
 }
 
-.modal-header {
+.gallery-header {
     background-color: rgba(255, 255, 255, 1);
     border-radius: .3rem .3rem 0rem 0rem
 }
 
-.modal-footer {
+.gallery-footer {
     background-color:rgba(255, 255, 255, 1);
     border-radius: 0rem 0rem .3rem .3rem
 }
 
-.modal-lg {
+.gallery-lg {
     min-width: 71%;
 }
 

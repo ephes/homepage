@@ -23,6 +23,10 @@ lint:
 test:
 	docker-compose -f local.yml run django py.test homepage
 
+## Django shell
+shell_plus:
+	docker-compose -f local.yml run django ./manage.py shell_plus
+
 ## Measure test coverage
 coverage:
 	coverage run --source='.' `which pytest` && coverage report

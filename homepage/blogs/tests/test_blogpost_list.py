@@ -4,7 +4,7 @@ from django.urls import reverse
 
 class TestBlogpostList:
     @pytest.mark.django_db
-    def test_get_feed(self, client, blogpost):
+    def test_get_blogpost_list(self, client, blogpost):
         blog_url = reverse('blogs:blogpost-list', kwargs={'slug': blogpost.blog.slug})
 
         r = client.get(blog_url)

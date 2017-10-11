@@ -37,7 +37,8 @@ class RenderPostMixin:
         content = '{}\n{}'.format(
             '{% load blogs_extras %}', blogpost.content)
         template = Template(content)
-        blog_context = Context({'javascript': javascript})
+        blog_context = Context(
+            {'javascript': javascript, 'blogpost': blogpost})
         blogpost.description = template.render(blog_context)
 
 

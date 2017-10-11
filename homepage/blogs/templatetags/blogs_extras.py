@@ -32,7 +32,7 @@ def blog_video(pk):
 
 # blog_gallery tag
 
-def get_modal_trigger(image, prev_img, next_img):
+def get_modal_trigger(gallery_key, image, prev_img, next_img):
     srcset = image.get_srcset()
     prev_id = 'img-{}'.format(prev_img.pk) if prev_img is not None else 'false'
     next_id = 'img-{}'.format(next_img.pk) if next_img is not None else 'false'
@@ -43,10 +43,10 @@ def get_modal_trigger(image, prev_img, next_img):
     ).format(img_id=image.pk, prev=prev_id, next=next_id, srcset=srcset,
              src=image.img_xs.url, full=image.img_full.url)
     return '''
-        <a class="gallery-modal" data-toggle="modal" data-target="#galleryModal">
+        <a class="gallery-modal" data-toggle="modal" data-target="#galleryModal{key}">
             {thumbnail_tag}
         </a>
-    '''.format(thumbnail_tag=thumbnail_tag)
+    '''.format(thumbnail_tag=thumbnail_tag, key=gallery_key)
 
 
 def get_image_thumb(image):
@@ -66,7 +66,7 @@ def get_modal_tmpl():
     return '''
         {thumbs}
         <!-- Modal -->
-        <div class="modal fade" id="galleryModal" tabindex="-1" role="dialog"
+        <div class="modal fade" id="galleryModal{key}" tabindex="-1" role="dialog"
              aria-labelledby="galleryModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg gallery-lg" role="document">
                 <div class="modal-content gallery-content">
@@ -86,10 +86,11 @@ def get_modal_tmpl():
     '''
 
 
-def blog_gallery_with_javascript(pk):
+def blog_gallery_with_javascript(pk, blogpost):
     image_thumbs = ['<!-- Button trigger modal -->']
 
     gallery = BlogGallery.objects.get(pk=pk)
+    gallery_key = '{}_{}'.format(blogpost.pk, pk)
     prev_img, next_img = None, None
     images = list(gallery.images.all())
     for num, image in enumerate(images, 1):
@@ -97,10 +98,10 @@ def blog_gallery_with_javascript(pk):
             next_img = images[num]
         else:
             next_img = None
-        image_thumbs.append(get_modal_trigger(image, prev_img, next_img))
+        image_thumbs.append(get_modal_trigger(gallery_key, image, prev_img, next_img))
         prev_img = image
     thumbs = '\n'.join(image_thumbs)
-    return get_modal_tmpl().format(thumbs=thumbs)
+    return get_modal_tmpl().format(thumbs=thumbs, key=gallery_key)
 
 
 def blog_gallery_without_javascript(pk):
@@ -114,8 +115,9 @@ def blog_gallery_without_javascript(pk):
 @register.simple_tag(takes_context=True)
 def blog_gallery(context, pk):
     use_javascript = context.get('javascript', True)
+    blogpost = context['blogpost']
     if use_javascript:
-        gallery_html = blog_gallery_with_javascript(pk)
+        gallery_html = blog_gallery_with_javascript(pk, blogpost)
     else:
         gallery_html = blog_gallery_without_javascript(pk)
 

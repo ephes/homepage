@@ -1,8 +1,6 @@
 import pytest
 from django.urls import reverse
 
-from ..views import LatestEntriesFeed
-
 
 class TestFeed:
     @pytest.mark.django_db

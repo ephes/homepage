@@ -106,7 +106,6 @@ def blog_gallery_with_javascript(pk):
 def blog_gallery_without_javascript(pk):
     image_thumbs = []
     gallery = BlogGallery.objects.get(pk=pk)
-    images = list(gallery.images.all())
     for image in gallery.images.all():
         image_thumbs.append(get_image_thumb(image))
     return '\n'.join(image_thumbs)

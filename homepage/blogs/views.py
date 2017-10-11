@@ -33,12 +33,12 @@ class BlogDetailView(DetailView):
 
 
 class RenderPostMixin:
-    def render_post(self, blogpost):
+    def render_post(self, blogpost, javascript=True):
         content = '{}\n{}'.format(
             '{% load blogs_extras %}', blogpost.content)
         template = Template(content)
-        blog_context = Context({})
-        blogpost.entry_content = template.render(blog_context)
+        blog_context = Context({'javascript': javascript})
+        blogpost.description = template.render(blog_context)
 
 
 class PostsListView(RenderPostMixin, ListView):
@@ -62,7 +62,7 @@ class PostsListView(RenderPostMixin, ListView):
         return context
 
 
-class LatestEntriesFeed(Feed):
+class LatestEntriesFeed(RenderPostMixin, Feed):
     def get_object(self, request, *args, **kwargs):
         self.object = get_object_or_404(Blog, slug=kwargs['slug'])
 
@@ -83,6 +83,7 @@ class LatestEntriesFeed(Feed):
         return item.title
 
     def item_description(self, item):
+        self.render_post(item, javascript=False)
         return item.description
 
 

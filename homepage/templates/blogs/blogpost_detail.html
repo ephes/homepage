@@ -11,7 +11,7 @@
     <a href="{% url "blogs:blogpost-list" slug=blogpost.blog.slug %}">back..</a>
   </header>
   <section>
-    {{ blogpost.entry_content|safe }}
+    {{ blogpost.description|safe }}
   </section>
 </article>
 {% endblock content %}

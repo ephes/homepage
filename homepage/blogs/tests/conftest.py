@@ -2,7 +2,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 import pytest
 
-from ..models import BlogImage
+from ..models import (
+    Blog,
+    BlogPost,
+    BlogImage
+)
 from ...users.models import User
 
 
@@ -19,14 +23,12 @@ def image_1px():
     return simple_png
 
 
-@pytest.mark.django_db()
 @pytest.fixture(scope='module')
 def user(scope='module'):
     test_user = User.objects.create(name='testuser', password='password')
     return test_user
 
 
-@pytest.mark.django_db()
 @pytest.fixture(scope='module')
 def blog_image(user, image_1px):
     image = BlogImage(user=user, original=image_1px)
@@ -34,6 +36,18 @@ def blog_image(user, image_1px):
         setattr(image, attr_name, image_1px)
     image.save(resize=False)
     return image
+
+
+@pytest.fixture(scope='module')
+def blog(user):
+    return Blog.objects.create(user=user, title='testblog', slug='testblog')
+
+
+@pytest.fixture(scope='module')
+def blogpost(blog):
+    return BlogPost.objects.create(
+        author=blog.user, blog=blog, title='test entry',
+        slug='test-entry', published=True, content='foobar')
 
 
 @pytest.fixture(scope='module')

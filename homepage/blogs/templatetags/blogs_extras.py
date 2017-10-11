@@ -49,6 +49,19 @@ def get_modal_trigger(image, prev_img, next_img):
     '''.format(thumbnail_tag=thumbnail_tag)
 
 
+def get_image_thumb(image):
+    srcset = image.get_srcset()
+    thumbnail_tag = (
+        '<img class="gallery-thumbnail" src={src} '
+        'srcset="{srcset}"</img>'
+    ).format(src=image.img_xs.url, srcset=srcset)
+    return '''
+        <a href="{full}"">
+            {thumbnail_tag}
+        </a>
+    '''.format(thumbnail_tag=thumbnail_tag, full=image.img_full.url)
+
+
 def get_modal_tmpl():
     return '''
         {thumbs}
@@ -73,8 +86,7 @@ def get_modal_tmpl():
     '''
 
 
-@register.simple_tag
-def blog_gallery(pk):
+def blog_gallery_with_javascript(pk):
     image_thumbs = ['<!-- Button trigger modal -->']
 
     gallery = BlogGallery.objects.get(pk=pk)
@@ -88,6 +100,24 @@ def blog_gallery(pk):
         image_thumbs.append(get_modal_trigger(image, prev_img, next_img))
         prev_img = image
     thumbs = '\n'.join(image_thumbs)
-    gallery_html = get_modal_tmpl().format(thumbs=thumbs)
+    return get_modal_tmpl().format(thumbs=thumbs)
+
+
+def blog_gallery_without_javascript(pk):
+    image_thumbs = []
+    gallery = BlogGallery.objects.get(pk=pk)
+    images = list(gallery.images.all())
+    for image in gallery.images.all():
+        image_thumbs.append(get_image_thumb(image))
+    return '\n'.join(image_thumbs)
+
+
+@register.simple_tag(takes_context=True)
+def blog_gallery(context, pk):
+    use_javascript = context.get('javascript', True)
+    if use_javascript:
+        gallery_html = blog_gallery_with_javascript(pk)
+    else:
+        gallery_html = blog_gallery_without_javascript(pk)
 
     return mark_safe(gallery_html)

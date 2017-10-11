@@ -49,10 +49,6 @@ class BlogPost(TimeStampedModel):
     def get_slug(self):
         return slugify(self.title)
 
-    @property
-    def description(self):
-        return self.processed_content
-
 
 class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)

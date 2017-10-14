@@ -24,3 +24,6 @@ django-storages==1.6.5
 
 # linting
 flake8
+
+# coreapi
+coreapi-cli

@@ -1,12 +1,19 @@
-from __future__ import absolute_import
+import logging
 
-from django.views.generic import ListView
-from django.views.generic import DetailView
-from django.views.generic import CreateView
+from collections import OrderedDict
+
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+)
+
+from django.views.decorators.http import require_http_methods
 
 from django.contrib.syndication.views import Feed
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
@@ -14,10 +21,27 @@ from django.shortcuts import get_object_or_404
 from django.template import Context
 from django.template import Template
 
-from .forms import BlogPostForm
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.schemas import AutoSchema
+from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 
-from .models import Blog
-from .models import BlogPost
+from .serializers import BlogImageSerializer
+
+from .forms import (
+    BlogPostForm,
+    BlogImageForm,
+)
+
+from .models import (
+    Blog,
+    BlogPost,
+    BlogImage,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class BlogsListView(ListView):
@@ -115,3 +139,51 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         self.object.blog = blog
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
+
+
+@require_http_methods(['POST'])
+def upload_file(request):
+    '''Get Images via XmlHttpRequest'''
+    form = BlogImageForm(request.POST, request.FILES)
+    if form.is_valid() and request.user.is_authenticated():
+        image = form.save(commit=False)
+        image.user = request.user
+        image.save()
+    else:
+        logger.warning(form.errors, request.user.is_authenticated())
+    return HttpResponse('{}'.format(image.pk))
+
+
+# rest
+
+@api_view(['GET'])
+def api_root(request):
+    """
+    Show API contents.
+    If you add any object types, add them here!
+    """
+    return Response(OrderedDict((
+        ('images',
+         request.build_absolute_uri(reverse('api:image-list'))),
+    )))
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'pageSize'
+    max_page_size = 10000
+
+
+class BlogImageListView(generics.ListCreateAPIView):
+    schema = AutoSchema()
+    queryset = BlogImage.objects.all()
+    serializer_class = BlogImageSerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = (IsAuthenticated,)
+
+
+class BlogImageDetailView(generics.RetrieveDestroyAPIView):
+    schema = AutoSchema()
+    queryset = BlogImage.objects.all()
+    serializer_class = BlogImageSerializer
+    permission_classes = (IsAuthenticated,)

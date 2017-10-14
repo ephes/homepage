@@ -2,6 +2,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 import pytest
 
+from rest_framework.test import APIClient
+
 from ..models import (
     Blog,
     BlogPost,
@@ -9,6 +11,11 @@ from ..models import (
 )
 
 from ...users.tests.factories import UserFactory
+
+
+@pytest.fixture(scope='module')
+def api_client():
+    return APIClient()
 
 
 @pytest.fixture(scope='module')

@@ -3,10 +3,118 @@
 
 {% block content %}
   <br>
-  <form method="post" action="./">
+  <form id="create-form" method="post" action="./" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.media }}
     {{ form.as_p }}
     <p><input type="submit" value="post"></p>
   </form>
+  <input type="file" id="input" onchange="handleFiles(this.files)" multiple>
+  <div id='preview'></div>
 {% endblock content %}
+
+{% block template_script %}
+<script src="{% static 'rest_framework/js/coreapi-0.1.1.js' %}"></script>
+<script src="{% url 'api-docs:schema-js' %}"></script>
+<script>
+
+const coreapi = window.coreapi;
+const schema = window.schema;
+
+let auth = new coreapi.auth.SessionAuthentication({
+    csrfCookieName: 'csrftoken',
+    csrfHeaderName: 'X-CSRFToken'
+})
+let client = new coreapi.Client({auth: auth});
+console.log(client);
+
+let action = ["api", "images", "list"]
+client.action(schema, action).then(function(result) {
+    console.log(result)
+})
+
+var csrf_token = $('input[name=csrfmiddlewaretoken]').attr('value');
+console.log(csrf_token);
+
+function fileUpload(img, file) {
+    var xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener("progress", function(e) {
+        if (e.lengthComputable) {
+            var percentage = Math.round((e.loaded * 100) / e.total);
+            //self.ctrl.update(percentage);
+            console.log('progress: ' + percentage);
+            img.progress_bar.setAttribute("aria-valuenow", percentage);
+            img.progress_bar.setAttribute("style", "width: " + percentage + "%");
+        }
+    }, false);
+
+    xhr.open("POST", "/blogs/upload/");
+    xhr.setRequestHeader('X-CSRFToken', csrf_token);
+    var formData = new FormData();
+    formData.append('original', file);
+    xhr.enctype = 'mutlipart/form-data';
+
+    xhr.onreadystatechange = function() {
+        if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+            console.log('request finished:');
+            console.log(xhr.responseText);
+            img.progress_bar.setAttribute("aria-valuenow", 100);
+            img.progress_bar.setAttribute("style", "width: " + 100 + "%");
+        }
+    }
+
+    xhr.send(formData);
+}
+
+
+function sendFiles() {
+  var imgs = document.querySelectorAll(".obj");
+
+  for (var i = 0; i < imgs.length; i++) {
+    new FileUpload(imgs[i], imgs[i].file);
+  }
+}
+
+//var inputElement = document.getElementById("input");
+//inputElement.addEventListener("change", handleFiles, false);
+function handleFiles(files) {
+    console.log(files);
+    var preview = $("#preview");
+    for (var i = 0, numFiles = files.length; i < numFiles; i++) {
+        var file = files[i];
+        console.log(file.name);
+        console.log(file.size);
+        console.log(file.type);
+        var imageType = /^image\//;
+        
+        if (!imageType.test(file.type)) {
+          continue;
+        }
+        
+        var img = document.createElement("img");
+        img.classList.add("gallery-thumbnail");
+        img.classList.add("obj");
+        img.file = file;
+        preview.append(img); // Assuming that "preview" is the div output where the content will be displayed.
+
+        var progress_div = document.createElement("div");
+        progress_div.classList.add("progress");
+        progress_div.classList.add("gallery-thumbnail");
+        var progress_bar = document.createElement("div");
+        progress_bar.classList.add("progress-bar");
+        progress_bar.setAttribute("role", "progressbar");
+        progress_bar.setAttribute("aria-valuenow", "0");
+        progress_bar.setAttribute("aria-valuemin", "0");
+        progress_bar.setAttribute("aria-valuemax", "100");
+        progress_div.append(progress_bar);
+        preview.append(progress_div);
+        img.progress_bar = progress_bar;
+        
+        var reader = new FileReader();
+        reader.onload = (function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
+        reader.readAsDataURL(file);
+    }
+    sendFiles();
+}
+</script>
+{% endblock template_script %}

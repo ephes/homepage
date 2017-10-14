@@ -51,6 +51,8 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount',  # registration
     'ckeditor',  # editor
     'ckeditor_uploader',  # file upload for ckeditor
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 # Apps specific for this project go here.
@@ -287,4 +289,17 @@ CKEDITOR_CONFIGS = {
     'allowedContent': True,
     'enterMode': 2,
   },
+}
+
+# REST
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+#    'DEFAULT_PERMISSION_CLASSES': [
+#        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+#    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    )
 }

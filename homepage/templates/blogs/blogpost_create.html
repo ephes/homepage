@@ -71,7 +71,7 @@ function sendFiles() {
   var imgs = document.querySelectorAll(".obj");
 
   for (var i = 0; i < imgs.length; i++) {
-    new FileUpload(imgs[i], imgs[i].file);
+    new fileUpload(imgs[i], imgs[i].file);
   }
 }
 
@@ -95,11 +95,14 @@ function handleFiles(files) {
         img.classList.add("gallery-thumbnail");
         img.classList.add("obj");
         img.file = file;
-        preview.append(img); // Assuming that "preview" is the div output where the content will be displayed.
+        //preview.append(img); // Assuming that "preview" is the div output where the content will be displayed.
 
+        var thumb_div = document.createElement("div");
+        thumb_div.classList.add("gallery-preview");
         var progress_div = document.createElement("div");
         progress_div.classList.add("progress");
-        progress_div.classList.add("gallery-thumbnail");
+        //progress_div.classList.add("gallery-thumbnail");
+        progress_div.classList.add("gallery-progress-bar");
         var progress_bar = document.createElement("div");
         progress_bar.classList.add("progress-bar");
         progress_bar.setAttribute("role", "progressbar");
@@ -107,7 +110,9 @@ function handleFiles(files) {
         progress_bar.setAttribute("aria-valuemin", "0");
         progress_bar.setAttribute("aria-valuemax", "100");
         progress_div.append(progress_bar);
-        preview.append(progress_div);
+        thumb_div.append(img);
+        thumb_div.append(progress_div);
+        preview.append(thumb_div);
         img.progress_bar = progress_bar;
         
         var reader = new FileReader();

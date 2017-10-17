@@ -144,6 +144,16 @@
     height: 5em;
 }
 
+.gallery-preview {
+    position: relative;
+    float: left;
+    margin-right: 10px;
+}
+
+.gallery-progress-bar {
+    width: 100%;
+}
+
 .blog-video {
     max-height: 800px;
     max-width: 100%;

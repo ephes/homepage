@@ -1,9 +1,11 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 
 from .models import Blog
 from .models import BlogPost
 from .models import BlogImage
 from .models import BlogVideo
+from .models import BlogMedia
 from .models import BlogGallery
 
 
@@ -19,8 +21,15 @@ class BlogModelAdmin(AdminUserMixin, admin.ModelAdmin):
 admin.site.register(Blog, BlogModelAdmin)
 
 
+class MediaInline(GenericTabularInline):
+    model = BlogMedia
+
+
 class BlogPostModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('title', 'author', 'blog')
+    inlines = [
+        MediaInline,
+    ]
 
     class Media:
         js = ('js/ckeditor_fix.js',)
@@ -50,3 +59,10 @@ class GalleryModelAdmin(AdminUserMixin, admin.ModelAdmin):
 
 
 admin.site.register(BlogGallery, GalleryModelAdmin)
+
+
+class BlogMediaModelAdmin(AdminUserMixin, admin.ModelAdmin):
+    list_display = ('pk',)
+    # fields = ('blogpost'
+
+admin.site.register(BlogMedia, BlogMediaModelAdmin)

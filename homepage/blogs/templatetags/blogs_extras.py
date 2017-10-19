@@ -1,16 +1,12 @@
 from django import template
 from django.utils.safestring import mark_safe
 
-from ..models import BlogImage
-from ..models import BlogVideo
-from ..models import BlogGallery
-
 register = template.Library()
 
 
-@register.simple_tag
-def blog_image(pk):
-    image = BlogImage.objects.get(pk=pk)
+@register.simple_tag(takes_context=True)
+def blog_image(context, pk):
+    image = context['image'][pk]
     image_tag = (
         '<a href="{full}">'
         '  <img class="blog-image" src="{src}" srcset="{srcset}" sizes="100vw"></img>'
@@ -19,9 +15,9 @@ def blog_image(pk):
     return mark_safe(image_tag)
 
 
-@register.simple_tag
-def blog_video(pk):
-    video = BlogVideo.objects.get(pk=pk)
+@register.simple_tag(takes_context=True)
+def blog_video(context, pk):
+    video = context['video'][pk]
     video_tag = (
         '<video class="blog-video" preload="auto" controls>'
         '  <source src="{src}" type="video/mp4">'
@@ -86,10 +82,10 @@ def get_modal_tmpl():
     '''
 
 
-def blog_gallery_with_javascript(pk, blogpost):
+def blog_gallery_with_javascript(context, pk, blogpost):
     image_thumbs = ['<!-- Button trigger modal -->']
 
-    gallery = BlogGallery.objects.get(pk=pk)
+    gallery = context['gallery'][pk]
     gallery_key = '{}_{}'.format(blogpost.pk, pk)
     prev_img, next_img = None, None
     images = list(gallery.images.all())
@@ -117,7 +113,7 @@ def blog_gallery(context, pk):
     use_javascript = context.get('javascript', True)
     blogpost = context['blogpost']
     if use_javascript:
-        gallery_html = blog_gallery_with_javascript(pk, blogpost)
+        gallery_html = blog_gallery_with_javascript(context, pk, blogpost)
     else:
         gallery_html = blog_gallery_without_javascript(pk)
 

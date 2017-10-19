@@ -5,6 +5,9 @@ from io import BytesIO
 from django.db import models
 from django.core.urlresolvers import reverse
 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+
 from ckeditor_uploader.fields import RichTextUploadingField
 
 from model_utils.models import TimeStampedModel
@@ -124,6 +127,8 @@ class BlogImage(TimeStampedModel):
         (300, 'img_xs'),
     ]
 
+    blogpost_context_key = 'image'
+
     def get_all_paths(self):
         paths = set()
         paths.add(self.original.name)
@@ -198,8 +203,17 @@ class BlogImage(TimeStampedModel):
 class BlogVideo(TimeStampedModel):
     user = models.ForeignKey(User)
     original = models.FileField(upload_to='blogs_videos/')
+    blogpost_context_key = 'video'
 
 
 class BlogGallery(TimeStampedModel):
     user = models.ForeignKey(User)
     images = models.ManyToManyField(BlogImage)
+    blogpost_context_key = 'gallery'
+
+
+class BlogMedia(models.Model):
+    blogpost = models.ForeignKey(BlogPost, related_name='media')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')

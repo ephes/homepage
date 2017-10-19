@@ -1,6 +1,7 @@
 import logging
 
 from collections import OrderedDict
+from collections import defaultdict
 
 from django.views.generic import (
     ListView,
@@ -57,12 +58,24 @@ class BlogDetailView(DetailView):
 
 
 class RenderPostMixin:
+    def add_media_context(self, blogpost):
+        media_context = defaultdict(dict)
+        media = list(blogpost.media.all().prefetch_related('content_object'))
+        for item in media:
+            obj = item.content_object
+            media_context[obj.blogpost_context_key][obj.pk] = obj
+        return media_context
+
     def render_post(self, blogpost, javascript=True):
         content = '{}\n{}'.format(
             '{% load blogs_extras %}', blogpost.content)
         template = Template(content)
-        blog_context = Context(
-            {'javascript': javascript, 'blogpost': blogpost})
+        blog_context = Context({
+            'javascript': javascript,
+            'blogpost': blogpost,
+            'media': blogpost.media.all(),
+        })
+        blog_context.update(self.add_media_context(blogpost))
         blogpost.description = template.render(blog_context)
 
 

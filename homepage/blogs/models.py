@@ -1,4 +1,8 @@
 import os
+import re
+import logging
+
+from collections import defaultdict
 
 from io import BytesIO
 
@@ -19,6 +23,8 @@ from PIL import ExifTags
 
 from ..users.models import User
 
+logger = logging.getLogger(__name__)
+
 
 class Blog(TimeStampedModel):
     user = models.ForeignKey(User)
@@ -28,29 +34,6 @@ class Blog(TimeStampedModel):
 
     def __str__(self):
         return self.title
-
-
-class BlogPost(TimeStampedModel):
-    author = models.ForeignKey(User)
-    blog = models.ForeignKey(Blog)
-    title = models.CharField(max_length=255)
-    published = models.BooleanField(default=False)
-
-    content = RichTextUploadingField()
-    slug = models.SlugField(max_length=50)
-
-    def __str__(self):
-        return self.title
-
-    def get_absolute_url(self):
-        params = {
-            "slug": self.slug,
-            "blog_slug": self.blog.slug,
-        }
-        return reverse("blogs:blogpost-detail", kwargs=params)
-
-    def get_slug(self):
-        return slugify(self.title)
 
 
 class BlogImage(TimeStampedModel):
@@ -210,6 +193,65 @@ class BlogGallery(TimeStampedModel):
     user = models.ForeignKey(User)
     images = models.ManyToManyField(BlogImage)
     blogpost_context_key = 'gallery'
+
+
+class BlogPost(TimeStampedModel):
+    author = models.ForeignKey(User)
+    blog = models.ForeignKey(Blog)
+    title = models.CharField(max_length=255)
+    published = models.BooleanField(default=False)
+
+    content = RichTextUploadingField()
+    slug = models.SlugField(max_length=50)
+
+    media_model_lookup = {
+        'image': BlogImage,
+        'video': BlogVideo,
+        'gallery': BlogGallery,
+    }
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        params = {
+            "slug": self.slug,
+            "blog_slug": self.blog.slug,
+        }
+        return reverse("blogs:blogpost-detail", kwargs=params)
+
+    def get_slug(self):
+        return slugify(self.title)
+
+    @property
+    def media_lookup(self):
+        lookup = defaultdict(dict)
+        media = list(self.media.all().prefetch_related('content_object'))
+        for item in media:
+            obj = item.content_object
+            lookup[obj.blogpost_context_key][obj.pk] = obj
+        return lookup
+
+    @property
+    def media_from_content(self):
+        regex = re.compile('{% blog_(\w+) (\d+) %}')
+        groups = regex.findall(self.content)
+        media = []
+        for name, pk in groups:
+            media.append((name, int(pk)))
+        return media
+
+    def add_missing_media_objects(self):
+        media_lookup = self.media_lookup
+        model_lookup = self.media_model_lookup
+        for model_name, model_pk in self.media_from_content:
+            try:
+                model = media_lookup[model_name][model_pk]
+                logger.info("found: {} {} {}".format(model_name, model_pk, model))
+            except KeyError:
+                media_object = model_lookup[model_name].objects.get(pk=model_pk)
+                bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)
+                logger.info('added: {} {} {}'.format(model_name, model_pk, media_object))
 
 
 class BlogMedia(models.Model):

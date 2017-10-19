@@ -21,15 +21,8 @@ class BlogModelAdmin(AdminUserMixin, admin.ModelAdmin):
 admin.site.register(Blog, BlogModelAdmin)
 
 
-class MediaInline(GenericTabularInline):
-    model = BlogMedia
-
-
 class BlogPostModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('title', 'author', 'blog')
-    inlines = [
-        MediaInline,
-    ]
 
     class Media:
         js = ('js/ckeditor_fix.js',)
@@ -63,6 +56,5 @@ admin.site.register(BlogGallery, GalleryModelAdmin)
 
 class BlogMediaModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk',)
-    # fields = ('blogpost'
 
 admin.site.register(BlogMedia, BlogMediaModelAdmin)

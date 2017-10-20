@@ -253,6 +253,11 @@ class BlogPost(TimeStampedModel):
                 bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)
                 logger.info('added: {} {} {}'.format(model_name, model_pk, media_object))
 
+    def save(self, *args, **kwargs):
+        save_return = super().save(*args, **kwargs)
+        self.add_missing_media_objects()
+        return save_return
+
 
 class BlogMedia(models.Model):
     blogpost = models.ForeignKey(BlogPost, related_name='media')

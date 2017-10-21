@@ -33,7 +33,7 @@ def get_modal_trigger(gallery_key, image, prev_img, next_img):
     prev_id = 'img-{}'.format(prev_img.pk) if prev_img is not None else 'false'
     next_id = 'img-{}'.format(next_img.pk) if next_img is not None else 'false'
     thumbnail_tag = (
-        '<img id="img-{img_id}" class="gallery-thumbnail" src={src} '
+        '<img id="img-{img_id}" class="gallery-thumbnail" src="{src}" '
         'srcset="{srcset}" data-prev="{prev}" data-next="{next}" '
         'data-full="{full}"></img>'
     ).format(img_id=image.pk, prev=prev_id, next=next_id, srcset=srcset,

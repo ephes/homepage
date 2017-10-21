@@ -29,7 +29,10 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
-from .serializers import BlogImageSerializer
+from .serializers import (
+    BlogImageSerializer,
+    BlogGallerySerializer,
+)
 
 from .forms import (
     BlogPostForm,
@@ -40,6 +43,7 @@ from .models import (
     Blog,
     BlogPost,
     BlogImage,
+    BlogGallery,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,7 +142,8 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
-        self.object.slug = self.object.get_slug()
+        if len(form.cleaned_data['slug']) == 0:
+            self.object.slug = self.object.get_slug()
         self.object.author = self.request.user
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         self.object.blog = blog
@@ -167,10 +172,14 @@ def api_root(request):
     Show API contents.
     If you add any object types, add them here!
     """
-    return Response(OrderedDict((
+    root_api_urls = (
         ('images',
          request.build_absolute_uri(reverse('api:image-list'))),
-    )))
+        ('galleries',
+         request.build_absolute_uri(reverse('api:gallery-list'))),
+    )
+    print(root_api_urls)
+    return Response(OrderedDict(root_api_urls))
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -181,14 +190,35 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class BlogImageListView(generics.ListCreateAPIView):
     schema = AutoSchema()
-    queryset = BlogImage.objects.all()
     serializer_class = BlogImageSerializer
     pagination_class = StandardResultsSetPagination
     permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = BlogImage.objects.all().filter(user=user)
+        return qs.order_by('-created')
 
 
 class BlogImageDetailView(generics.RetrieveDestroyAPIView):
     schema = AutoSchema()
     queryset = BlogImage.objects.all()
     serializer_class = BlogImageSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class BlogGalleryListView(generics.ListCreateAPIView):
+    serializer_class = BlogGallerySerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = BlogGallery.objects.all().filter(user=user)
+        return qs.order_by('-created')
+
+
+class BlogGalleryDetailView(generics.RetrieveDestroyAPIView):
+    queryset = BlogGallery.objects.all()
+    serializer_class = BlogGallerySerializer
     permission_classes = (IsAuthenticated,)

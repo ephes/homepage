@@ -182,6 +182,18 @@ class BlogImage(TimeStampedModel):
             sources.append('{}w,'.format(width))
         return ' '.join(sources)
 
+    @property
+    def srcset(self):
+        return self.get_srcset()
+
+    @property
+    def thumbnail_src(self):
+        return self.img_xs.url
+
+    @property
+    def full_src(self):
+        return self.full.url
+
 
 class BlogVideo(TimeStampedModel):
     user = models.ForeignKey(User)
@@ -193,6 +205,10 @@ class BlogGallery(TimeStampedModel):
     user = models.ForeignKey(User)
     images = models.ManyToManyField(BlogImage)
     blogpost_context_key = 'gallery'
+
+    @property
+    def image_ids(self):
+        return set([i.pk for i in self.images.all()])
 
 
 class BlogPost(TimeStampedModel):

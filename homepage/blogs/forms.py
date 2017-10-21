@@ -9,9 +9,11 @@ from .models import (
 
 
 class BlogPostForm(forms.ModelForm):
+    slug = forms.CharField(required=False)
+
     class Meta:
         model = BlogPost
-        fields = ['title', 'content']
+        fields = ['title', 'content', 'published', 'slug']
 
 
 class BlogImageForm(forms.ModelForm):

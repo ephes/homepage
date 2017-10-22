@@ -31,18 +31,21 @@ from rest_framework.pagination import PageNumberPagination
 
 from .serializers import (
     BlogImageSerializer,
+    BlogVideoSerializer,
     BlogGallerySerializer,
 )
 
 from .forms import (
     BlogPostForm,
     BlogImageForm,
+    BlogVideoForm,
 )
 
 from .models import (
     Blog,
     BlogPost,
     BlogImage,
+    BlogVideo,
     BlogGallery,
 )
 
@@ -152,8 +155,8 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 
 @require_http_methods(['POST'])
-def upload_file(request):
-    '''Get Images via XmlHttpRequest'''
+def upload_image(request):
+    '''Get image via XmlHttpRequest'''
     form = BlogImageForm(request.POST, request.FILES)
     if form.is_valid() and request.user.is_authenticated():
         image = form.save(commit=False)
@@ -162,6 +165,19 @@ def upload_file(request):
     else:
         logger.warning(form.errors, request.user.is_authenticated())
     return HttpResponse('{}'.format(image.pk))
+
+
+@require_http_methods(['POST'])
+def upload_video(request):
+    '''Get video via XmlHttpRequest'''
+    form = BlogVideoForm(request.POST, request.FILES)
+    if form.is_valid() and request.user.is_authenticated():
+        video = form.save(commit=False)
+        video.user = request.user
+        video.save()
+    else:
+        logger.warning(form.errors, request.user.is_authenticated())
+    return HttpResponse('{}'.format(video.pk))
 
 
 # rest
@@ -177,6 +193,8 @@ def api_root(request):
          request.build_absolute_uri(reverse('api:image-list'))),
         ('galleries',
          request.build_absolute_uri(reverse('api:gallery-list'))),
+        ('videos',
+         request.build_absolute_uri(reverse('api:video-list'))),
     )
     print(root_api_urls)
     return Response(OrderedDict(root_api_urls))
@@ -189,7 +207,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class BlogImageListView(generics.ListCreateAPIView):
-    schema = AutoSchema()
     serializer_class = BlogImageSerializer
     pagination_class = StandardResultsSetPagination
     permission_classes = (IsAuthenticated,)
@@ -201,9 +218,25 @@ class BlogImageListView(generics.ListCreateAPIView):
 
 
 class BlogImageDetailView(generics.RetrieveDestroyAPIView):
-    schema = AutoSchema()
     queryset = BlogImage.objects.all()
     serializer_class = BlogImageSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class BlogVideoListView(generics.ListCreateAPIView):
+    serializer_class = BlogVideoSerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = BlogVideo.objects.all().filter(user=user)
+        return qs.order_by('-created')
+
+
+class BlogVideoDetailView(generics.RetrieveDestroyAPIView):
+    queryset = BlogVideo.objects.all()
+    serializer_class = BlogVideoSerializer
     permission_classes = (IsAuthenticated,)
 
 

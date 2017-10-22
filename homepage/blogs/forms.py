@@ -4,7 +4,8 @@ from django import forms
 
 from .models import (
     BlogPost,
-    BlogImage
+    BlogImage,
+    BlogVideo,
 )
 
 
@@ -19,4 +20,10 @@ class BlogPostForm(forms.ModelForm):
 class BlogImageForm(forms.ModelForm):
     class Meta:
         model = BlogImage
+        fields = ['original']
+
+
+class BlogVideoForm(forms.ModelForm):
+    class Meta:
+        model = BlogVideo
         fields = ['original']

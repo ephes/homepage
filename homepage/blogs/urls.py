@@ -4,9 +4,14 @@ from . import views
 
 urlpatterns = [
     url(
-        regex=r'^upload/$',
-        view=views.upload_file,
-        name='upload-file'
+        regex=r'^upload_image/$',
+        view=views.upload_image,
+        name='upload-image'
+    ),
+    url(
+        regex=r'^upload_video/$',
+        view=views.upload_video,
+        name='upload-video'
     ),
     url(
         regex=r'^(?P<slug>[^/]+)/$',

@@ -2,8 +2,11 @@ import logging
 
 from rest_framework import serializers
 
-from .models import BlogImage
-from .models import BlogGallery
+from .models import (
+    BlogImage,
+    BlogVideo,
+    BlogGallery,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +22,13 @@ class BlogImageSerializer(serializers.HyperlinkedModelSerializer):
         model = BlogImage
         fields = ('id', 'url', 'original', 'srcset', 'thumbnail_src', 'full_src')
 
+class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='api:video-detail')
+
+    class Meta:
+        model = BlogVideo
+        fields = ('id', 'url', 'original')
     
 class BlogGallerySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(

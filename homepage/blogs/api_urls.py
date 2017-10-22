@@ -23,4 +23,11 @@ urlpatterns = [
         name='gallery-list'),
     url(r'^gallery/(?P<pk>\d+)/?$', views.BlogGalleryDetailView.as_view(),
         name='gallery-detail'),
+
+    # video
+    url(r'^videos/?$', views.BlogVideoListView.as_view(),
+        name='video-list'),
+    url(r'^videos/(?P<pk>\d+)/?$', views.BlogVideoDetailView.as_view(),
+        name='video-detail'),
+
 ]

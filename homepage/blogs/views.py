@@ -1,7 +1,6 @@
 import logging
 
 from collections import OrderedDict
-from collections import defaultdict
 
 from django.views.generic import (
     ListView,
@@ -24,7 +23,6 @@ from django.template import Template
 
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.schemas import AutoSchema
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination

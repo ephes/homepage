@@ -22,6 +22,7 @@ class BlogImageSerializer(serializers.HyperlinkedModelSerializer):
         model = BlogImage
         fields = ('id', 'url', 'original', 'srcset', 'thumbnail_src', 'full_src')
 
+
 class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='api:video-detail')
@@ -29,7 +30,8 @@ class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BlogVideo
         fields = ('id', 'url', 'original')
-    
+
+
 class BlogGallerySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='api:gallery-detail')

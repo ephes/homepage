@@ -266,7 +266,7 @@ class BlogPost(TimeStampedModel):
                 logger.info("found: {} {} {}".format(model_name, model_pk, model))
             except KeyError:
                 media_object = model_lookup[model_name].objects.get(pk=model_pk)
-                bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)
+                bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)  # noqa
                 logger.info('added: {} {} {}'.format(model_name, model_pk, media_object))
 
     def save(self, *args, **kwargs):

@@ -82,11 +82,10 @@ def get_modal_tmpl():
     '''
 
 
-def blog_gallery_with_javascript(context, pk, blogpost):
+def blog_gallery_with_javascript(gallery, blogpost):
     image_thumbs = ['<!-- Button trigger modal -->']
 
-    gallery = context['gallery'][pk]
-    gallery_key = '{}_{}'.format(blogpost.pk, pk)
+    gallery_key = '{}_{}'.format(blogpost.pk, gallery.pk)
     prev_img, next_img = None, None
     images = list(gallery.images.all())
     for num, image in enumerate(images, 1):
@@ -100,9 +99,8 @@ def blog_gallery_with_javascript(context, pk, blogpost):
     return get_modal_tmpl().format(thumbs=thumbs, key=gallery_key)
 
 
-def blog_gallery_without_javascript(pk):
+def blog_gallery_without_javascript(gallery):
     image_thumbs = []
-    gallery = BlogGallery.objects.get(pk=pk)
     for image in gallery.images.all():
         image_thumbs.append(get_image_thumb(image))
     return '\n'.join(image_thumbs)
@@ -112,9 +110,10 @@ def blog_gallery_without_javascript(pk):
 def blog_gallery(context, pk):
     use_javascript = context.get('javascript', True)
     blogpost = context['blogpost']
+    gallery = context['gallery'][pk]
     if use_javascript:
-        gallery_html = blog_gallery_with_javascript(context, pk, blogpost)
+        gallery_html = blog_gallery_with_javascript(gallery, blogpost)
     else:
-        gallery_html = blog_gallery_without_javascript(pk)
+        gallery_html = blog_gallery_without_javascript(gallery)
 
     return mark_safe(gallery_html)

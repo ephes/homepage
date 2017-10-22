@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericTabularInline
 
 from .models import Blog
 from .models import BlogPost
@@ -56,5 +55,6 @@ admin.site.register(BlogGallery, GalleryModelAdmin)
 
 class BlogMediaModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk',)
+
 
 admin.site.register(BlogMedia, BlogMediaModelAdmin)

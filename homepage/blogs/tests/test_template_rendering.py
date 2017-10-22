@@ -14,8 +14,8 @@ def test_template_render(test_templ):
 def test_blogimage_render_without_context(img_templ, blog_image):
     template = Template(img_templ)
     context = Context({})
-    with pytest.raises(KeyError) as excinfo:
-        result = template.render(context)
+    with pytest.raises(KeyError):
+        template.render(context)
 
 
 @pytest.mark.django_db()

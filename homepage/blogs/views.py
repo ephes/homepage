@@ -136,6 +136,10 @@ class PostCreateView(LoginRequiredMixin, AddRequestUserMixin, CreateView):
         self.object.blog = blog
         return super().form_valid(form)
 
+    def form_invalid(self, form):
+        logger.info('form invalid: {}'.format(form.errors))
+        return super().form_invalid(form)
+
 
 class FileUploadResponseMixin:
     def get_success_url(self):

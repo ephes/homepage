@@ -5,7 +5,7 @@ from django.urls import reverse
 class TestFeed:
     @pytest.mark.django_db
     def test_get_feed(self, client, blogpost):
-        feed_url = reverse('blogs:blogpost-feed', kwargs={'slug': blogpost.blog.slug})
+        feed_url = reverse('blogs:blogpost_feed', kwargs={'slug': blogpost.blog.slug})
 
         r = client.get(feed_url)
         assert r.status_code == 200

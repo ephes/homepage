@@ -234,7 +234,7 @@ class BlogPost(TimeStampedModel):
             "slug": self.slug,
             "blog_slug": self.blog.slug,
         }
-        return reverse("blogs:blogpost-detail", kwargs=params)
+        return reverse("blogs:blogpost_detail", kwargs=params)
 
     def get_slug(self):
         return slugify(self.title)

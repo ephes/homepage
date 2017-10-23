@@ -45,11 +45,11 @@ def api_root(request):
     """
     root_api_urls = (
         ('images',
-         request.build_absolute_uri(reverse('api:image-list'))),
+         request.build_absolute_uri(reverse('api:image_list'))),
         ('galleries',
-         request.build_absolute_uri(reverse('api:gallery-list'))),
+         request.build_absolute_uri(reverse('api:gallery_list'))),
         ('videos',
-         request.build_absolute_uri(reverse('api:video-list'))),
+         request.build_absolute_uri(reverse('api:video_list'))),
     )
     print(root_api_urls)
     return Response(OrderedDict(root_api_urls))

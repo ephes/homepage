@@ -4,7 +4,7 @@
 {% block content %}
 {% for blog in blogs %}
   <ul>
-      <li> <a href="{% url "blogs:blog-detail" slug=blog.slug %}">{{ blog.title }}</a></li>
+      <li> <a href="{% url "blogs:blog_detail" slug=blog.slug %}">{{ blog.title }}</a></li>
   </ul>
 {% endfor %}
 {% endblock content %}

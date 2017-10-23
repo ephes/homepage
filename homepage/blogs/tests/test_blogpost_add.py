@@ -10,7 +10,7 @@ from .factories import BlogFactory
 class TestBlogpostAdd:
     @pytest.mark.django_db
     def test_get_blogpost_add_not_authenticated(self, client, blog):
-        create_url = reverse('blogs:blogpost-create', kwargs={'slug': blog.slug})
+        create_url = reverse('blogs:blogpost_create', kwargs={'slug': blog.slug})
 
         r = client.get(create_url)
         # redirect to login
@@ -18,7 +18,7 @@ class TestBlogpostAdd:
 
     @pytest.mark.django_db
     def test_get_blogpost_add_authenticated(self, client, blog):
-        create_url = reverse('blogs:blogpost-create', kwargs={'slug': blog.slug})
+        create_url = reverse('blogs:blogpost_create', kwargs={'slug': blog.slug})
         user = UserFactory()
         r = client.login(username=user.username, password="password")
         r = client.get(create_url)
@@ -31,7 +31,7 @@ class TestBlogpostAdd:
     @pytest.mark.django_db
     def test_blogpost_create_not_authenticated(self, client):
         blog = BlogFactory(user=UserFactory())
-        create_url = reverse('blogs:blogpost-create', kwargs={'slug': blog.slug})
+        create_url = reverse('blogs:blogpost_create', kwargs={'slug': blog.slug})
         data = {
             'title': 'test title',
             'content': 'foo bar baz',
@@ -50,7 +50,7 @@ class TestBlogpostAdd:
         r = client.login(username=user.username, password="password")
 
         blog = BlogFactory(user=user)
-        create_url = reverse('blogs:blogpost-create', kwargs={'slug': blog.slug})
+        create_url = reverse('blogs:blogpost_create', kwargs={'slug': blog.slug})
         data = {
             'title': 'test title',
             'content': 'foo bar baz',

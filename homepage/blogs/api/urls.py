@@ -14,29 +14,29 @@ urlpatterns = [
 
     # image
     url(r'^images/?$', views.BlogImageListView.as_view(),
-        name='image-list'),
+        name='image_list'),
     url(r'^images/(?P<pk>\d+)/?$', views.BlogImageDetailView.as_view(),
-        name='image-detail'),
+        name='image_detail'),
     url(
         regex=r'^upload_image/$',
         view=views.ImageCreateView.as_view(),
-        name='upload-image'
+        name='upload_image'
     ),
 
     # gallery
     url(r'^gallery/?$', views.BlogGalleryListView.as_view(),
-        name='gallery-list'),
+        name='gallery_list'),
     url(r'^gallery/(?P<pk>\d+)/?$', views.BlogGalleryDetailView.as_view(),
-        name='gallery-detail'),
+        name='gallery_detail'),
 
     # video
     url(r'^videos/?$', views.BlogVideoListView.as_view(),
-        name='video-list'),
+        name='video_list'),
     url(r'^videos/(?P<pk>\d+)/?$', views.BlogVideoDetailView.as_view(),
-        name='video-detail'),
+        name='video_detail'),
     url(
         regex=r'^upload_video/$',
         view=views.VideoCreateView.as_view(),
-        name='upload-video'
+        name='upload_video'
     ),
 ]

@@ -5,7 +5,7 @@ from django.urls import reverse
 class TestBlogpostList:
     @pytest.mark.django_db
     def test_get_blogpost_list(self, client, blogpost):
-        blog_url = reverse('blogs:blogpost-list', kwargs={'slug': blogpost.blog.slug})
+        blog_url = reverse('blogs:blogpost_list', kwargs={'slug': blogpost.blog.slug})
 
         r = client.get(blog_url)
         assert r.status_code == 200

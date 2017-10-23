@@ -8,8 +8,8 @@ from ....users.tests.factories import UserFactory
 class TestBlogImage:
     @classmethod
     def setup_class(cls):
-        cls.list_url = reverse('api:image-list')
-        cls.detail_url = reverse('api:image-detail', kwargs={'pk': 1})
+        cls.list_url = reverse('api:image_list')
+        cls.detail_url = reverse('api:image_detail', kwargs={'pk': 1})
 
     @pytest.mark.django_db
     def test_image_list_endpoint_without_authentication(self, api_client):
@@ -43,8 +43,8 @@ class TestBlogImage:
 class TestBlogGallery:
     @classmethod
     def setup_class(cls):
-        cls.list_url = reverse('api:gallery-list')
-        cls.detail_url = reverse('api:gallery-detail', kwargs={'pk': 1})
+        cls.list_url = reverse('api:gallery_list')
+        cls.detail_url = reverse('api:gallery_detail', kwargs={'pk': 1})
 
     @pytest.mark.django_db
     def test_gallery_list_endpoint_without_authentication(self, api_client):
@@ -78,8 +78,8 @@ class TestBlogGallery:
 class TestBlogVideo:
     @classmethod
     def setup_class(cls):
-        cls.list_url = reverse('api:video-list')
-        cls.detail_url = reverse('api:video-detail', kwargs={'pk': 1})
+        cls.list_url = reverse('api:video_list')
+        cls.detail_url = reverse('api:video_detail', kwargs={'pk': 1})
 
     @pytest.mark.django_db
     def test_video_list_endpoint_without_authentication(self, api_client):

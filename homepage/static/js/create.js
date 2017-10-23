@@ -141,11 +141,11 @@ function fileUpload(thumb, file, progressBar) {
         }
     }, false);
 
-    var uploadUrl = "/blogs/upload_image/";
+    var uploadUrl = "/api/upload_image/";
     let tagName = $(thumb).prop("tagName");
     console.log("tagname: ", tagName);
     if (tagName == "VIDEO") {
-        uploadUrl = "/blogs/upload_video/";
+        uploadUrl = "/api/upload_video/";
     }
 
     xhr.open("POST", uploadUrl);

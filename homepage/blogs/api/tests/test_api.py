@@ -2,7 +2,7 @@ import pytest
 
 from django.urls import reverse
 
-from ...users.tests.factories import UserFactory
+from ....users.tests.factories import UserFactory
 
 
 class TestBlogImage:

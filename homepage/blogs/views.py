@@ -8,13 +8,10 @@ from django.views.generic import (
     CreateView,
 )
 
-from django.views.decorators.http import require_http_methods
-
 from django.contrib.syndication.views import Feed
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 
@@ -166,7 +163,7 @@ class FileUploadResponseMixin:
 
     def form_valid(self, form):
         model = form.save(commit=False)
-        respoonse = super().form_valid(form)
+        super().form_valid(form)
         return HttpResponse('{}'.format(model.pk))
 
 

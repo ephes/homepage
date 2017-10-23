@@ -76,6 +76,15 @@ class RenderPostMixin:
         blogpost.description = template.render(blog_context)
 
 
+class AddRequestUserMixin:
+    user_field_name = 'user'
+
+    def form_valid(self, form):
+        model = form.save(commit=False)
+        setattr(model, self.user_field_name, self.request.user)
+        return super().form_valid(form)
+
+
 class PostsListView(RenderPostMixin, ListView):
     model = BlogPost
     template_name = 'blogs/blogpost_list.html'
@@ -136,46 +145,43 @@ class PostDetailView(RenderPostMixin, DetailView):
         return context
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
+class PostCreateView(LoginRequiredMixin, AddRequestUserMixin, CreateView):
     model = BlogPost
     form_class = BlogPostForm
     template_name = 'blogs/blogpost_create.html'
+    user_field_name = 'author'
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
         if len(form.cleaned_data['slug']) == 0:
             self.object.slug = self.object.get_slug()
-        self.object.author = self.request.user
         blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         self.object.blog = blog
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
+        return super().form_valid(form)
 
 
-@require_http_methods(['POST'])
-def upload_image(request):
-    '''Get image via XmlHttpRequest'''
-    form = BlogImageForm(request.POST, request.FILES)
-    if form.is_valid() and request.user.is_authenticated():
-        image = form.save(commit=False)
-        image.user = request.user
-        image.save()
-    else:
-        logger.warning(form.errors, request.user.is_authenticated())
-    return HttpResponse('{}'.format(image.pk))
+class FileUploadResponseMixin:
+    def get_success_url(self):
+        return None
+
+    def form_valid(self, form):
+        model = form.save(commit=False)
+        respoonse = super().form_valid(form)
+        return HttpResponse('{}'.format(model.pk))
 
 
-@require_http_methods(['POST'])
-def upload_video(request):
-    '''Get video via XmlHttpRequest'''
-    form = BlogVideoForm(request.POST, request.FILES)
-    if form.is_valid() and request.user.is_authenticated():
-        video = form.save(commit=False)
-        video.user = request.user
-        video.save()
-    else:
-        logger.warning(form.errors, request.user.is_authenticated())
-    return HttpResponse('{}'.format(video.pk))
+class ImageCreateView(LoginRequiredMixin, AddRequestUserMixin,
+                      FileUploadResponseMixin, CreateView):
+    model = BlogImage
+    form_class = BlogImageForm
+    user_field_name = 'user'
+
+
+class VideoCreateView(LoginRequiredMixin, AddRequestUserMixin,
+                      FileUploadResponseMixin, CreateView):
+    model = BlogVideo
+    form_class = BlogVideoForm
+    user_field_name = 'user'
 
 
 # rest

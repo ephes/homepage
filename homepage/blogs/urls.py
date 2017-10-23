@@ -5,12 +5,12 @@ from . import views
 urlpatterns = [
     url(
         regex=r'^upload_image/$',
-        view=views.upload_image,
+        view=views.ImageCreateView.as_view(),
         name='upload-image'
     ),
     url(
         regex=r'^upload_video/$',
-        view=views.upload_video,
+        view=views.VideoCreateView.as_view(),
         name='upload-video'
     ),
     url(

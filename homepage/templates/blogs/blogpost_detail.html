@@ -2,6 +2,9 @@
 {% load staticfiles %}
 
 {% block content %}
+{% if user.is_authenticated %}
+  <a class="btn btn-primary btn-lg" role="button" href="{% url "blogs:blogpost_update" blog_slug=blogpost.blog.slug slug=blogpost.slug %}">Update Entry</a>
+{% endif %}
 <article>
   <header>
     <h1>{{ blogpost.title }}</h1>

@@ -4,6 +4,7 @@ from django.views.generic import (
     ListView,
     DetailView,
     CreateView,
+    UpdateView,
 )
 
 from django.contrib.syndication.views import Feed
@@ -23,6 +24,7 @@ from .models import (
 from .viewmixins import (
     RenderPostMixin,
     AddRequestUserMixin,
+    PostChangeMixin,
 )
 
 logger = logging.getLogger(__name__)
@@ -100,20 +102,19 @@ class PostDetailView(RenderPostMixin, DetailView):
         return context
 
 
-class PostCreateView(LoginRequiredMixin, AddRequestUserMixin, CreateView):
+class PostCreateView(LoginRequiredMixin, PostChangeMixin,
+                     AddRequestUserMixin, CreateView):
     model = BlogPost
     form_class = BlogPostForm
-    template_name = 'blogs/blogpost_create.html'
+    template_name = 'blogs/blogpost_edit.html'
     user_field_name = 'author'
+    success_msg = "Blogentry created!"
 
-    def form_valid(self, form):
-        self.object = form.save(commit=False)
-        if len(form.cleaned_data['slug']) == 0:
-            self.object.slug = self.object.get_slug()
-        blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        self.object.blog = blog
-        return super().form_valid(form)
 
-    def form_invalid(self, form):
-        logger.info('form invalid: {}'.format(form.errors))
-        return super().form_invalid(form)
+class PostUpdateView(LoginRequiredMixin, PostChangeMixin,
+                     AddRequestUserMixin, UpdateView):
+    model = BlogPost
+    form_class = BlogPostForm
+    template_name = 'blogs/blogpost_edit.html'
+    user_field_name = 'author'
+    success_msg = "Blogentry updated!"

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class BlogImageSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name='api:image-detail')
+        view_name='api:image_detail')
     srcset = serializers.ReadOnlyField()
     thumbnail_src = serializers.ReadOnlyField()
     full_src = serializers.ReadOnlyField()
@@ -25,7 +25,7 @@ class BlogImageSerializer(serializers.HyperlinkedModelSerializer):
 
 class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name='api:video-detail')
+        view_name='api:video_detail')
 
     class Meta:
         model = BlogVideo
@@ -34,7 +34,7 @@ class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
 
 class BlogGallerySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name='api:gallery-detail')
+        view_name='api:gallery_detail')
     images = serializers.PrimaryKeyRelatedField(
         many=True, queryset=BlogImage.objects.all())
 

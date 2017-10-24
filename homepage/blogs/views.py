@@ -110,6 +110,10 @@ class PostCreateView(LoginRequiredMixin, PostChangeMixin,
     user_field_name = 'author'
     success_msg = "Blogentry created!"
 
+    def form_valid(self, form):
+        self.blog_slug = self.kwargs['slug']
+        return super().form_valid(form)
+
 
 class PostUpdateView(LoginRequiredMixin, PostChangeMixin,
                      AddRequestUserMixin, UpdateView):
@@ -118,3 +122,7 @@ class PostUpdateView(LoginRequiredMixin, PostChangeMixin,
     template_name = 'blogs/blogpost_edit.html'
     user_field_name = 'author'
     success_msg = "Blogentry updated!"
+
+    def form_valid(self, form):
+        self.blog_slug = self.kwargs['blog_slug']
+        return super().form_valid(form)

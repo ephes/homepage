@@ -1,1 +1,1 @@
-window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/';
+window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/'

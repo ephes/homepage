@@ -2,6 +2,14 @@ FROM python:3.5
 
 ENV PYTHONUNBUFFERED 1
 
+# being able to use apt
+RUN apt update
+RUN apt -y upgrade
+
+# requirements for ffmpeg (need it to get thumbnails for videos)
+RUN apt install -y software-properties-common
+RUN apt-add-repository -y ppa:ubuntugis/ppa
+
 # Requirements have to be pulled and installed here, otherwise caching won't work
 COPY ./requirements /requirements
 RUN pip install -r /requirements/local.txt

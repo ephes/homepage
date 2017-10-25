@@ -2,13 +2,15 @@ FROM python:3.5
 
 ENV PYTHONUNBUFFERED 1
 
+# add jessie backports (ffmpeg)
+COPY ./compose/local/django/backports.list /etc/apt/sources.list.d
+
 # being able to use apt
 RUN apt update
 RUN apt -y upgrade
 
 # requirements for ffmpeg (need it to get thumbnails for videos)
-RUN apt install -y software-properties-common
-RUN apt-add-repository -y ppa:ubuntugis/ppa
+RUN apt -y install ffmpeg
 
 # Requirements have to be pulled and installed here, otherwise caching won't work
 COPY ./requirements /requirements

@@ -3,6 +3,10 @@ const CKEDITOR = window.CKEDITOR
 const coreapi = window.coreapi
 const schema = window.schema
 
+var csrfToken = $('input[name=csrfmiddlewaretoken]').attr('value')
+console.log('csrftoken: ', csrfToken)
+document.cookie = "csrftoken=" + csrfToken
+
 let auth = new coreapi.auth.SessionAuthentication({
   csrfCookieName: 'csrftoken',
   csrfHeaderName: 'X-CSRFToken'
@@ -97,9 +101,6 @@ client.action(schema, videosAction).then(function (result) {
   console.log(result)
   showExistingVideos(result.results)
 })
-
-var csrfToken = $('input[name=csrfmiddlewaretoken]').attr('value')
-console.log(csrfToken)
 
 function replaceWithUploadedImage (imagePk, img) {
   let action = ['api', 'images', 'read']

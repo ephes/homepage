@@ -38,10 +38,7 @@ class PostChangeMixin:
         post = form.save(commit=False)
         if len(form.cleaned_data['slug']) == 0:
             post.slug = post.get_slug()
-        blog_slug = self.kwargs.get('blog_slug')
-        if blog_slug is None:
-            blog_slug = self.kwargs.get('slug')
-        blog = get_object_or_404(Blog, slug=blog_slug)
+        blog = get_object_or_404(Blog, slug=self.blog_slug)
         post.blog = blog
         return super().form_valid(form)
 

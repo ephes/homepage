@@ -1,6 +1,9 @@
 import factory
 
 from ..models import Blog
+from ..models import BlogImage
+from ..models import BlogVideo
+from ..models import BlogGallery
 
 
 class BlogFactory(factory.django.DjangoModelFactory):
@@ -11,3 +14,26 @@ class BlogFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Blog
         django_get_or_create = ('slug',)
+
+
+class BlogImageFactory(factory.django.DjangoModelFactory):
+    user = None
+    original = factory.django.ImageField(color='blue')
+
+    class Meta:
+        model = BlogImage
+
+
+class BlogVideoFactory(factory.django.DjangoModelFactory):
+    user = None
+    original = factory.django.ImageField(color='blue')
+
+    class Meta:
+        model = BlogVideo
+
+
+class BlogGalleryFactory(factory.django.DjangoModelFactory):
+    user = None
+
+    class Meta:
+        model = BlogGallery

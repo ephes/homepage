@@ -9,9 +9,6 @@ from io import BytesIO
 from django.db import models
 from django.core.urlresolvers import reverse
 
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
-
 from ckeditor_uploader.fields import RichTextUploadingField
 
 from model_utils.models import TimeStampedModel
@@ -220,6 +217,10 @@ class BlogPost(TimeStampedModel):
     content = RichTextUploadingField()
     slug = models.SlugField(max_length=50)
 
+    images = models.ManyToManyField(BlogImage)
+    videos = models.ManyToManyField(BlogVideo)
+    galleries = models.ManyToManyField(BlogGallery)
+
     media_model_lookup = {
         'image': BlogImage,
         'video': BlogVideo,
@@ -240,13 +241,21 @@ class BlogPost(TimeStampedModel):
         return slugify(self.title)
 
     @property
-    def media_lookup(self):
+    def media_lookup_old(self):
         lookup = defaultdict(dict)
         media = list(self.media.all().prefetch_related('content_object'))
         for item in media:
             obj = item.content_object
             lookup[obj.blogpost_context_key][obj.pk] = obj
         return lookup
+
+    @property
+    def media_lookup(self):
+        return {
+            "image": {i.pk: i for i in self.images.all()},
+            "video": {v.pk: v for v in self.videos.all()},
+            "gallery": {g.pk: g for g in self.galleries.all()}
+        }
 
     @property
     def media_from_content(self):
@@ -258,6 +267,12 @@ class BlogPost(TimeStampedModel):
         return media
 
     def add_missing_media_objects(self):
+        media_attr_lookup = {
+            'image': self.images,
+            'video': self.videos,
+            'gallery': self.galleries,
+        }
+
         media_lookup = self.media_lookup
         model_lookup = self.media_model_lookup
         for model_name, model_pk in self.media_from_content:
@@ -266,17 +281,12 @@ class BlogPost(TimeStampedModel):
                 logger.info("found: {} {} {}".format(model_name, model_pk, model))
             except KeyError:
                 media_object = model_lookup[model_name].objects.get(pk=model_pk)
-                bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)  # noqa
+                print(model_name, media_object, media_attr_lookup[model_name])
+                # bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)  # noqa
+                media_attr_lookup[model_name].add(media_object)
                 logger.info('added: {} {} {}'.format(model_name, model_pk, media_object))
 
     def save(self, *args, **kwargs):
         save_return = super().save(*args, **kwargs)
         self.add_missing_media_objects()
         return save_return
-
-
-class BlogMedia(models.Model):
-    blogpost = models.ForeignKey(BlogPost, related_name='media')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')

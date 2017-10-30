@@ -12,6 +12,7 @@ def test_template_render(test_templ):
 
 @pytest.mark.django_db()
 def test_blogimage_render_without_context(img_templ, blog_image):
+    img_templ = img_templ.format(blog_image.pk)
     template = Template(img_templ)
     context = Context({})
     with pytest.raises(KeyError):
@@ -20,6 +21,7 @@ def test_blogimage_render_without_context(img_templ, blog_image):
 
 @pytest.mark.django_db()
 def test_blogimage_render_with_context(img_templ, blog_image):
+    img_templ = img_templ.format(blog_image.pk)
     template = Template(img_templ)
     context = Context({'image': {blog_image.pk: blog_image}})
     result = template.render(context)

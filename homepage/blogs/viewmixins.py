@@ -18,7 +18,6 @@ class RenderPostMixin:
         blog_context = Context({
             'javascript': javascript,
             'blogpost': blogpost,
-            'media': blogpost.media.all(),
         })
         blog_context.update(blogpost.media_lookup)
         blogpost.description = template.render(blog_context)

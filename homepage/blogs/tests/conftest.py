@@ -11,8 +11,7 @@ from ..models import (
 from ...users.tests.factories import UserFactory
 
 
-@pytest.fixture(scope='module')
-def image_1px():
+def create_1pximage():
     # This is a 1x1 black png
     png = (
          b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00'
@@ -20,6 +19,12 @@ def image_1px():
          b'\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc````'
          b'\x00\x00\x00\x05\x00\x01\xa5\xf6E@\x00\x00'
          b'\x00\x00IEND\xaeB`\x82')
+    return png
+
+
+@pytest.fixture(scope='module')
+def image_1px():
+    png = create_1pximage()
     simple_png = SimpleUploadedFile(name='test.png', content=png, content_type='image/png')
     return simple_png
 
@@ -60,6 +65,6 @@ def test_templ():
 @pytest.fixture(scope='module')
 def img_templ():
     return '''
-        {% load blogs_extras %}
-        {% blog_image 1 %}
+        {{% load blogs_extras %}}
+        {{% blog_image {} %}}
     '''

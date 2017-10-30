@@ -4,7 +4,6 @@ from .models import Blog
 from .models import BlogPost
 from .models import BlogImage
 from .models import BlogVideo
-from .models import BlogMedia
 from .models import BlogGallery
 
 
@@ -51,10 +50,3 @@ class GalleryModelAdmin(AdminUserMixin, admin.ModelAdmin):
 
 
 admin.site.register(BlogGallery, GalleryModelAdmin)
-
-
-class BlogMediaModelAdmin(AdminUserMixin, admin.ModelAdmin):
-    list_display = ('pk',)
-
-
-admin.site.register(BlogMedia, BlogMediaModelAdmin)

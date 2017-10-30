@@ -203,13 +203,21 @@ class BlogVideo(TimeStampedModel):
     poster_seconds = models.FloatField(default=1)
 
     blogpost_context_key = 'video'
+    calc_poster = True
 
     def create_poster(self):
+        if self.poster != '' or not self.calc_poster:
+            # poster is not null
+            logger.info('skip creating poster')
+            return
         fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
+        video_url = self.original.url
+        if not video_url.startswith('http'):
+            video_url = self.original.path
         poster_cmd = (
             'ffmpeg -i "{video_path}" -ss {seconds} -vframes 1'
             ' -y -f image2 {poster_path}'
-        ).format(video_path=self.original.url, seconds=self.poster_seconds,
+        ).format(video_path=video_url, seconds=self.poster_seconds,
                  poster_path=tmp_path)
         logger.info(poster_cmd)
         result = check_output(poster_cmd, shell=True)

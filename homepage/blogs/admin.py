@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import admin
 
 from .models import Blog
@@ -5,6 +7,8 @@ from .models import BlogPost
 from .models import BlogImage
 from .models import BlogVideo
 from .models import BlogGallery
+
+logger = logging.getLogger(__name__)
 
 
 class AdminUserMixin:
@@ -39,6 +43,14 @@ admin.site.register(BlogImage, ImageModelAdmin)
 
 class VideoModelAdmin(AdminUserMixin, admin.ModelAdmin):
     list_display = ('pk', 'user')
+
+    def save_model(self, request, obj, form, change):
+        logger.info('poster: {}'.format(obj.poster))
+        logger.info('form: {}'.format(form.cleaned_data))
+        if change and not form.cleaned_data['poster']:
+            logger.info('poster was cleared')
+            obj.calc_poster = False
+        super().save_model(request, obj, form, change)
 
 
 admin.site.register(BlogVideo, VideoModelAdmin)

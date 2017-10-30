@@ -209,7 +209,7 @@ class BlogVideo(TimeStampedModel):
         poster_cmd = (
             'ffmpeg -i "{video_path}" -ss {seconds} -vframes 1'
             ' -y -f image2 {poster_path}'
-        ).format(video_path=self.original.path, seconds=self.poster_seconds,
+        ).format(video_path=self.original.url, seconds=self.poster_seconds,
                  poster_path=tmp_path)
         logger.info(poster_cmd)
         result = check_output(poster_cmd, shell=True)

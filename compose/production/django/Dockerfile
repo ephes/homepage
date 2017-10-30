@@ -2,6 +2,16 @@ FROM python:3.5
 
 ENV PYTHONUNBUFFERED 1
 
+# add jessie backports (ffmpeg)
+COPY ./compose/local/django/backports.list /etc/apt/sources.list.d
+
+# being able to use apt
+RUN apt update
+RUN apt -y upgrade
+
+# requirements for ffmpeg (need it to get thumbnails for videos)
+RUN apt -y install ffmpeg
+
 RUN groupadd -r django \
     && useradd -r -g django django
 

@@ -205,9 +205,7 @@ class BlogVideo(TimeStampedModel):
     blogpost_context_key = 'video'
 
     def create_poster(self):
-        print(self.original.path)
         fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
-        print(tmp_path)
         poster_cmd = (
             'ffmpeg -i "{video_path}" -ss {seconds} -vframes 1'
             ' -y -f image2 {poster_path}'

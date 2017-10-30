@@ -29,7 +29,7 @@ class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BlogVideo
-        fields = ('id', 'url', 'original')
+        fields = ('id', 'url', 'original', 'poster')
 
 
 class BlogGallerySerializer(serializers.HyperlinkedModelSerializer):

@@ -19,10 +19,10 @@ def blog_image(context, pk):
 def blog_video(context, pk):
     video = context['video'][pk]
     video_tag = (
-        '<video class="blog-video" preload="auto" controls>'
+        '<video class="blog-video" preload="auto" controls poster="{poster}">'
         '  <source src="{src}" type="video/mp4">'
         '</video>'
-    ).format(src=video.original.url)
+    ).format(src=video.original.url, poster=video.poster.url)
     return mark_safe(video_tag)
 
 

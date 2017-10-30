@@ -86,7 +86,7 @@ function showExistingVideos (videos) {
     var videoEl = $('<video></video>')
       .addClass('gallery-thumbnail')
       .addClass('gallery-video-markable')
-      .attr({src: video.original, id: video.id})
+      .attr({src: video.original, id: video.id, poster: video.poster})
 
     var thumbDiv = $('<div></div>')
       .addClass('gallery-preview')

@@ -1,12 +1,16 @@
 import os
 import re
 import logging
+import tempfile
+
+from subprocess import check_output
 
 from collections import defaultdict
 
 from io import BytesIO
 
 from django.db import models
+from django.core.files import File
 from django.core.urlresolvers import reverse
 
 from ckeditor_uploader.fields import RichTextUploadingField
@@ -195,7 +199,35 @@ class BlogImage(TimeStampedModel):
 class BlogVideo(TimeStampedModel):
     user = models.ForeignKey(User)
     original = models.FileField(upload_to='blogs_videos/')
+    poster = models.ImageField(upload_to='blogs_videos/poster/', null=True, blank=True)
+    poster_seconds = models.FloatField(default=1)
+
     blogpost_context_key = 'video'
+
+    def create_poster(self):
+        print(self.original.path)
+        fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
+        print(tmp_path)
+        poster_cmd = (
+            'ffmpeg -i "{video_path}" -ss {seconds} -vframes 1'
+            ' -y -f image2 {poster_path}'
+        ).format(video_path=self.original.path, seconds=self.poster_seconds,
+                 poster_path=tmp_path)
+        logger.info(poster_cmd)
+        result = check_output(poster_cmd, shell=True)
+        self.poster.save(
+            os.path.basename(tmp_path), File(open(tmp_path, 'rb')),
+            save=False)
+        os.unlink(tmp_path)
+        logger.info(self.pk)
+        logger.info(self.poster)
+
+    def save(self, *args, **kwargs):
+        if kwargs.pop('poster', True):
+            # generate poster thumbnail by default, but make it optional
+            # for recalc management command
+            self.create_poster()
+        return super().save(*args, **kwargs)
 
 
 class BlogGallery(TimeStampedModel):

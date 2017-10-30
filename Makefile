@@ -27,6 +27,10 @@ test:
 shell_plus:
 	docker-compose -f local.yml run django ./manage.py shell_plus
 
+## Draw entity relationship diagram
+graph_models:
+	docker-compose -f local.yml run django ./manage.py graph_models blogs -g -o blogs.png
+
 ## Measure test coverage
 coverage:
 	coverage run --source='.' `which pytest` && coverage report

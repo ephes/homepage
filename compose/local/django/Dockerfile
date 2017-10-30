@@ -12,6 +12,9 @@ RUN apt -y upgrade
 # requirements for ffmpeg (need it to get thumbnails for videos)
 RUN apt -y install ffmpeg
 
+# install graphviz to get dot for pygraphviz
+RUN apt -y install graphviz
+
 # Requirements have to be pulled and installed here, otherwise caching won't work
 COPY ./requirements /requirements
 RUN pip install -r /requirements/local.txt

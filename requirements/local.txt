@@ -33,3 +33,6 @@ paramiko
 
 # read env from .env
 python-dotenv
+
+# graph models
+pygraphviz

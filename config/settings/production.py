@@ -82,6 +82,7 @@ AWS_QUERYSTRING_AUTH = False
 AWS_S3_REGION_NAME = 'eu-central-1'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_FILE_OVERWRITE = True
+AWS_S3_CUSTOM_DOMAIN = env('CLOUDFRONT_DOMAIN')
 
 # AWS cache settings, don't change unless you know what you're doing:
 AWS_EXPIRY = 60 * 60 * 24 * 7

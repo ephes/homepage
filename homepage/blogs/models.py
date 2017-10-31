@@ -220,7 +220,7 @@ class BlogVideo(TimeStampedModel):
         ).format(video_path=video_url, seconds=self.poster_seconds,
                  poster_path=tmp_path)
         logger.info(poster_cmd)
-        result = check_output(poster_cmd, shell=True)
+        check_output(poster_cmd, shell=True)
         self.poster.save(
             os.path.basename(tmp_path), File(open(tmp_path, 'rb')),
             save=False)

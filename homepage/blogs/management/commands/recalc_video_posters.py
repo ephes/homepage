@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for video in BlogVideo.objects.all():
-            orig = video.original
+            # orig = video.original
             video.create_poster()
             video.save(poster=False)
             # break

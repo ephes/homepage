@@ -235,6 +235,13 @@ class BlogVideo(TimeStampedModel):
             except Exception as e:
                 logger.info('create poster failed')
 
+    def get_all_paths(self):
+        paths = set()
+        paths.add(self.original.name)
+        if self.poster:
+            paths.add(self.poster.name)
+        return paths
+
     def save(self, *args, **kwargs):
         print('called save')
         print(kwargs)

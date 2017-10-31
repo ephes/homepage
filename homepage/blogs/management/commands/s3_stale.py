@@ -36,7 +36,8 @@ class Command(BaseCommand):
             for path in image.get_all_paths():
                 paths.add(path)
         for video in BlogVideo.objects.all():
-            paths.add(video.original.name)
+            for path in video.get_all_paths():
+                paths.add(path)
         return paths
 
     def handle(self, *args, **options):

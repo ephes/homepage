@@ -56,6 +56,13 @@ def blogpost(blog):
 
 
 @pytest.fixture(scope='module')
+def unpublished_blogpost(blog):
+    return BlogPost.objects.create(
+        author=blog.user, blog=blog, title='test entry',
+        slug='test-entry', published=False, content='foobar')
+
+
+@pytest.fixture(scope='module')
 def test_templ():
     return '''
         {% lorem %}

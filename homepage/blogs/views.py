@@ -77,7 +77,10 @@ class LatestEntriesFeed(RenderPostMixin, Feed):
         return reverse('blogs:blogpost_feed', kwargs={'slug': self.object.slug})
 
     def items(self):
-        queryset = BlogPost.objects.filter(blog=self.object).order_by('-created')
+        queryset = (BlogPost.objects
+                            .filter(blog=self.object)
+                            .filter(published=True)
+                            .order_by('-created'))
         return queryset[:5]
 
     def item_title(self, item):

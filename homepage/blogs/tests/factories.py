@@ -1,6 +1,7 @@
 import factory
 
 from ..models import Blog
+from ..models import BlogPost
 from ..models import BlogImage
 from ..models import BlogVideo
 from ..models import BlogGallery
@@ -37,3 +38,12 @@ class BlogGalleryFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = BlogGallery
+
+
+class BlogPostFactory(factory.django.DjangoModelFactory):
+    author = None
+    blog = None
+    published = None
+
+    class Meta:
+        model = BlogPost

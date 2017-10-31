@@ -1,3 +1,5 @@
+import io
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 import pytest
@@ -27,6 +29,32 @@ def image_1px():
     png = create_1pximage()
     simple_png = SimpleUploadedFile(name='test.png', content=png, content_type='image/png')
     return simple_png
+
+
+@pytest.fixture(scope='module')
+def image_1px_io():
+    png = create_1pximage()
+    bio_file = io.BytesIO(png)
+    bio_file.name = 'testimage.png'
+    bio_file.seek(0)
+    return bio_file
+
+
+def create_small_rgb():
+    # this is a small test jpeg
+    from PIL import Image
+    img = Image.new('RGB', (200, 200), (255, 0, 0, 0))
+    return img
+
+
+@pytest.fixture(scope='module')
+def small_jpeg_io():
+    rgb = create_small_rgb()
+    im_io = io.BytesIO()
+    rgb.save(im_io, format='JPEG', quality=60, optimize=True, progressive=True)
+    im_io.name = 'testimage.jpg'
+    im_io.seek(0)
+    return im_io
 
 
 @pytest.fixture(scope='module')

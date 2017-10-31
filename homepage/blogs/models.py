@@ -205,11 +205,8 @@ class BlogVideo(TimeStampedModel):
     blogpost_context_key = 'video'
     calc_poster = True
 
-    def create_poster(self):
-        if self.poster != '' or not self.calc_poster:
-            # poster is not null
-            logger.info('skip creating poster')
-            return
+    def _create_poster(self):
+        """Moved into own method to make it mockable in tests."""
         fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
         video_url = self.original.url
         if not video_url.startswith('http'):
@@ -228,8 +225,21 @@ class BlogVideo(TimeStampedModel):
         logger.info(self.pk)
         logger.info(self.poster)
 
+    def create_poster(self):
+        if self.poster or not self.calc_poster:
+            # poster is not null
+            logger.info('skip creating poster')
+        else:
+            try:
+                self._create_poster()
+            except Exception as e:
+                logger.info('create poster failed')
+
     def save(self, *args, **kwargs):
+        print('called save')
+        print(kwargs)
         if kwargs.pop('poster', True):
+            print('generate poster thumbnail')
             # generate poster thumbnail by default, but make it optional
             # for recalc management command
             self.create_poster()

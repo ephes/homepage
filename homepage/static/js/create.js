@@ -83,10 +83,10 @@ function showExistingVideos (videos) {
   var preview = $('#preview-videos')
   for (var i = 0; i < videos.length; i++) {
     var video = videos[i]
-    var videoEl = $('<video></video>')
+    var videoEl = $('<img></img>')
       .addClass('gallery-thumbnail')
       .addClass('gallery-video-markable')
-      .attr({src: video.original, id: video.id, poster: video.poster})
+      .attr({src: video.poster, id: video.id})
 
     var thumbDiv = $('<div></div>')
       .addClass('gallery-preview')

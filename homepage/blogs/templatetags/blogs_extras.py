@@ -39,7 +39,7 @@ def get_modal_trigger(gallery_key, image, prev_img, next_img):
     ).format(img_id=image.pk, prev=prev_id, next=next_id, srcset=srcset,
              src=image.img_xs.url, full=image.img_full.url)
     return '''
-        <a class="gallery-modal" data-toggle="modal" data-target="#galleryModal{key}">
+        <a src="#" class="gallery-modal" data-toggle="modal" data-target="#galleryModal{key}">
             {thumbnail_tag}
         </a>
     '''.format(thumbnail_tag=thumbnail_tag, key=gallery_key)

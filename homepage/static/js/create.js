@@ -86,7 +86,8 @@ function showExistingVideos (videos) {
     var videoEl = $('<img></img>')
       .addClass('gallery-thumbnail')
       .addClass('gallery-video-markable')
-      .attr({src: video.poster, id: video.id})
+      .attr({src: video.poster_thumbnail, id: video.id})
+      //.attr({src: video.poster, id: video.id})
 
     var thumbDiv = $('<div></div>')
       .addClass('gallery-preview')
@@ -156,7 +157,7 @@ function fileUpload (thumb, file, progressBar) {
   xhr.enctype = 'mutlipart/form-data'
 
   xhr.onreadystatechange = function () {
-    if (xhr.readyState === window.XMLHttpRequest.DONE && xhr.status === 200) {
+    if (xhr.readyState === window.XMLHttpRequest.DONE && xhr.status === 201) {
       console.log('request finished:')
       var mediaPk = xhr.responseText
       console.log('media id: ', mediaPk)
@@ -332,7 +333,7 @@ $('#insert-images').click(handleImageInsert)
 
 function handleVideoInsert () {
   console.log('handle video insert')
-  var marked = $('video.border')
+  var marked = $('.gallery-video-markable.border')
   var videoPks = []
   for (var i = 0; i < marked.length; i++) {
     videoPks.push(parseInt($(marked[i]).attr('id')))

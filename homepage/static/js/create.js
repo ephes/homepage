@@ -5,7 +5,7 @@ const schema = window.schema
 
 var csrfToken = $('input[name=csrfmiddlewaretoken]').attr('value')
 console.log('csrftoken: ', csrfToken)
-document.cookie = "csrftoken=" + csrfToken
+document.cookie = 'csrftoken=' + csrfToken
 
 let auth = new coreapi.auth.SessionAuthentication({
   csrfCookieName: 'csrftoken',
@@ -87,7 +87,7 @@ function showExistingVideos (videos) {
       .addClass('gallery-thumbnail')
       .addClass('gallery-video-markable')
       .attr({src: video.poster_thumbnail, id: video.id})
-      //.attr({src: video.poster, id: video.id})
+      // .attr({src: video.poster, id: video.id})
 
     var thumbDiv = $('<div></div>')
       .addClass('gallery-preview')

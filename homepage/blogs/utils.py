@@ -1,18 +1,5 @@
 import os
 
-from imagekit.models import ImageSpecField
-from imagekit.processors import Thumbnail
-
-class ImageSpecField2(ImageSpecField):
-    pass
-
-
-class Thumbnail2(Thumbnail):
-    def process(self, img):
-        print('foo bar baz asldfkjasldfkjasldfkja ____________________________')
-        result = super().process(img)
-        return result
-
 
 def storage_walk_paths(storage, cur_dir=''):
     dirs, files = storage.listdir(cur_dir)

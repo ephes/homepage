@@ -26,10 +26,12 @@ class BlogImageSerializer(serializers.HyperlinkedModelSerializer):
 class BlogVideoSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='api:video_detail')
+    poster = serializers.ImageField(read_only=True, allow_empty_file=True)
+    poster_thumbnail = serializers.ImageField(read_only=True, allow_empty_file=True)
 
     class Meta:
         model = BlogVideo
-        fields = ('id', 'url', 'original', 'poster')
+        fields = ('id', 'url', 'original', 'poster', 'poster_thumbnail')
 
 
 class BlogGallerySerializer(serializers.HyperlinkedModelSerializer):

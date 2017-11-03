@@ -57,3 +57,6 @@ coreapi
 markdown
 django-filter
 djangorestframework
+
+# imagekit for resized images, thumbnails..
+django-imagekit

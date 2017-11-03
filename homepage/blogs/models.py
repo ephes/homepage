@@ -15,6 +15,9 @@ from django.core.urlresolvers import reverse
 
 from ckeditor_uploader.fields import RichTextUploadingField
 
+from imagekit.models import ImageSpecField
+from imagekit.processors import Thumbnail
+
 from model_utils.models import TimeStampedModel
 
 from slugify import slugify
@@ -202,12 +205,21 @@ class BlogVideo(TimeStampedModel):
     poster = models.ImageField(upload_to='blogs_videos/poster/', null=True, blank=True)
     poster_seconds = models.FloatField(default=1)
 
+    poster_thumbnail = ImageSpecField(source='poster',
+                                      processors=[Thumbnail(300, 300, crop=False)],
+                                      format='JPEG',
+                                      options={'quality': 60})
+
     blogpost_context_key = 'video'
     calc_poster = True
 
     def _create_poster(self):
         """Moved into own method to make it mockable in tests."""
         fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
+        original = self.original.open()
+        logger.info(original)
+        logger.info('original url: {}'.format(self.original.url))
+        logger.info('original path: {}'.format(self.original.path))
         video_url = self.original.url
         if not video_url.startswith('http'):
             video_url = self.original.path
@@ -243,14 +255,17 @@ class BlogVideo(TimeStampedModel):
         return paths
 
     def save(self, *args, **kwargs):
-        print('called save')
-        print(kwargs)
-        if kwargs.pop('poster', True):
-            print('generate poster thumbnail')
+        generate_poster = kwargs.pop('poster', True)
+        # need to save original first - django file handling is driving me nuts
+        result = super().save(*args, **kwargs)
+        if generate_poster:
+            logger.info('generate video poster')
             # generate poster thumbnail by default, but make it optional
             # for recalc management command
             self.create_poster()
-        return super().save(*args, **kwargs)
+            # save again after adding poster
+            result = super().save(*args, **kwargs)
+        return result
 
 
 class BlogGallery(TimeStampedModel):

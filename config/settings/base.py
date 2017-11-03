@@ -53,6 +53,7 @@ THIRD_PARTY_APPS = [
     'ckeditor_uploader',  # file upload for ckeditor
     'rest_framework',
     'rest_framework.authtoken',
+    'imagekit',
 ]
 
 # Apps specific for this project go here.

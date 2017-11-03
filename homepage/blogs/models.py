@@ -252,6 +252,8 @@ class BlogVideo(TimeStampedModel):
         paths.add(self.original.name)
         if self.poster:
             paths.add(self.poster.name)
+            if self.poster_thumbnail:
+                paths.add(self.poster_thumbnail.name)
         return paths
 
     def save(self, *args, **kwargs):

@@ -15,8 +15,10 @@ from django.core.urlresolvers import reverse
 
 from ckeditor_uploader.fields import RichTextUploadingField
 
-from imagekit.models import ImageSpecField
-from imagekit.processors import Thumbnail
+# from imagekit.models import ImageSpecField
+from .utils import ImageSpecField2 as ImageSpecField
+from .utils import Thumbnail2 as Thumbnail
+# from imagekit.processors import Thumbnail
 
 from model_utils.models import TimeStampedModel
 

@@ -34,8 +34,8 @@ admin.site.register(BlogPost, BlogPostModelAdmin)
 
 
 class ImageModelAdmin(AdminUserMixin, admin.ModelAdmin):
-    list_display = ('pk', 'portrait', 'original', 'user')
-    fields = ('user', 'original', 'portrait')
+    list_display = ('pk', 'original', 'user')
+    fields = ('user', 'original')
 
 
 admin.site.register(BlogImage, ImageModelAdmin)

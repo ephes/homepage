@@ -93,7 +93,12 @@ class TestBlogpostAdd:
         r = client.login(username=user.username, password="password")
 
         blog = BlogFactory(user=user)
-        video = BlogVideoFactory(user=user)
+
+        # use build strategy to avoid duplicate insert due to create poster
+        video = BlogVideoFactory.build()
+        video.user = user
+        video.save(poster=False)
+
         content = 'with video: {{% blog_video {} %}}'.format(video.pk)
         create_url = reverse('blogs:blogpost_create', kwargs={'slug': blog.slug})
         data = {

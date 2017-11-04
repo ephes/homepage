@@ -304,3 +304,6 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     )
 }
+
+# django imagekit
+IMAGEKIT_DEFAULT_CACHEFILE_STRATEGY='imagekit.cachefiles.strategies.Optimistic'

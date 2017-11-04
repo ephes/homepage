@@ -51,59 +51,33 @@ class BlogImage(TimeStampedModel):
     original_height = models.PositiveIntegerField(blank=True, null=True)
     original_width = models.PositiveIntegerField(blank=True, null=True)
 
-    img_full = models.ImageField(
-        upload_to='blogs_images/resized',
-        height_field='full_height',
-        width_field='full_width',
-        null=True,
-        blank=True,)
-    full_height = models.PositiveIntegerField(blank=True, null=True)
-    full_width = models.PositiveIntegerField(blank=True, null=True)
+    img_full = ImageSpecField(source='original', processors=[],
+                              format='JPEG', options={'quality': 60})
 
-    img_xl = models.ImageField(
-        upload_to='blogs_images/resized',
-        height_field='xl_height',
-        width_field='xl_width',
-        null=True,
-        blank=True,)
-    xl_height = models.PositiveIntegerField(blank=True, null=True)
-    xl_width = models.PositiveIntegerField(blank=True, null=True)
+    img_xl = ImageSpecField(source='original',
+                            processors=[Thumbnail(2200, 2200, crop=False)],
+                            format='JPEG',
+                            options={'quality': 60})
 
-    img_lg = models.ImageField(
-        upload_to='blogs_images/resized',
-        height_field='lg_height',
-        width_field='lg_width',
-        null=True,
-        blank=True,)
-    lg_height = models.PositiveIntegerField(blank=True, null=True)
-    lg_width = models.PositiveIntegerField(blank=True, null=True)
+    img_lg = ImageSpecField(source='original',
+                            processors=[Thumbnail(1100, 1100, crop=False)],
+                            format='JPEG',
+                            options={'quality': 60})
 
-    img_md = models.ImageField(
-        upload_to='blogs_images/resized',
-        height_field='md_height',
-        width_field='md_width',
-        null=True,
-        blank=True,)
-    md_height = models.PositiveIntegerField(blank=True, null=True)
-    md_width = models.PositiveIntegerField(blank=True, null=True)
+    img_md = ImageSpecField(source='original',
+                            processors=[Thumbnail(768, 768, crop=False)],
+                            format='JPEG',
+                            options={'quality': 60})
 
-    img_sm = models.ImageField(
-        upload_to='blogs_images/resized',
-        height_field='sm_height',
-        width_field='sm_width',
-        null=True,
-        blank=True,)
-    sm_height = models.PositiveIntegerField(blank=True, null=True)
-    sm_width = models.PositiveIntegerField(blank=True, null=True)
+    img_sm = ImageSpecField(source='original',
+                            processors=[Thumbnail(500, 500, crop=False)],
+                            format='JPEG',
+                            options={'quality': 60})
 
-    img_xs = models.ImageField(
-        upload_to='blogs_images/resized',
-        height_field='xs_height',
-        width_field='xs_width',
-        null=True,
-        blank=True,)
-    xs_height = models.PositiveIntegerField(blank=True, null=True)
-    xs_width = models.PositiveIntegerField(blank=True, null=True)
+    img_xs = ImageSpecField(source='original',
+                            processors=[Thumbnail(300, 300, crop=False)],
+                            format='JPEG',
+                            options={'quality': 60})
 
     sizes = [
         (None, 'img_full'),
@@ -180,9 +154,10 @@ class BlogImage(TimeStampedModel):
         sources = []
         for size, attr_name in self.sizes:
             prefix = attr_name.split('_')[-1]
-            width = getattr(self, '{}_width'.format(prefix))
             img = getattr(self, attr_name)
-            sources.append(img.url)
+            width = self.original_width if size is None else size
+            url = img.url
+            sources.append(url)
             sources.append('{}w,'.format(width))
         return ' '.join(sources)
 

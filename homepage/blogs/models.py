@@ -43,7 +43,6 @@ class Blog(TimeStampedModel):
 
 class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)
-    portrait = models.BooleanField(default=False)
 
     original = models.ImageField(
         upload_to='blogs_images/originals',

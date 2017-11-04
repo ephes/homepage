@@ -7,8 +7,6 @@ from subprocess import check_output
 
 from collections import defaultdict
 
-from io import BytesIO
-
 from django.db import models
 from django.core.files import File
 from django.core.urlresolvers import reverse
@@ -22,9 +20,6 @@ from imagekit.processors import Transpose
 from model_utils.models import TimeStampedModel
 
 from slugify import slugify
-
-from PIL import Image as PILImage
-from PIL import ExifTags
 
 from ..users.models import User
 
@@ -90,7 +85,6 @@ class BlogImage(TimeStampedModel):
     def get_srcset(self):
         sources = []
         for size, attr_name in self.sizes:
-            prefix = attr_name.split('_')[-1]
             img = getattr(self, attr_name)
             width = self.original_width if size is None else size
             url = img.url

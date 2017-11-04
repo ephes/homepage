@@ -41,6 +41,12 @@ class Blog(TimeStampedModel):
         return self.title
 
 
+def image_spec_thumbnail(size):
+    processors = [Transpose(), Thumbnail(size, size, crop=False)]
+    return ImageSpecField(source='original', processors=processors,
+                          format='JPEG', options={'quality': 60})
+
+
 class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)
 
@@ -54,40 +60,11 @@ class BlogImage(TimeStampedModel):
     img_full = ImageSpecField(source='original', processors=[Transpose()],
                               format='JPEG', options={'quality': 60})
 
-    img_xl = ImageSpecField(source='original',
-                            processors=[
-                                Transpose(),
-                                Thumbnail(2200, 2200, crop=False)],
-                            format='JPEG',
-                            options={'quality': 60})
-
-    img_lg = ImageSpecField(source='original',
-                            processors=[
-                                Transpose(),
-                                Thumbnail(1100, 1100, crop=False)],
-                            format='JPEG',
-                            options={'quality': 60})
-
-    img_md = ImageSpecField(source='original',
-                            processors=[
-                                Transpose(),
-                                Thumbnail(768, 768, crop=False)],
-                            format='JPEG',
-                            options={'quality': 60})
-
-    img_sm = ImageSpecField(source='original',
-                            processors=[
-                                Transpose(),
-                                Thumbnail(500, 500, crop=False)],
-                            format='JPEG',
-                            options={'quality': 60})
-
-    img_xs = ImageSpecField(source='original',
-                            processors=[
-                                Transpose(),
-                                Thumbnail(300, 300, crop=False)],
-                            format='JPEG',
-                            options={'quality': 60})
+    img_xl = image_spec_thumbnail(2200)
+    img_lg = image_spec_thumbnail(1100)
+    img_md = image_spec_thumbnail(768)
+    img_sm = image_spec_thumbnail(500)
+    img_xs = image_spec_thumbnail(300)
 
     sizes = [
         (None, 'img_full'),

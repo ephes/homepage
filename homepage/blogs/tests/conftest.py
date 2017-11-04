@@ -65,9 +65,7 @@ def user():
 @pytest.fixture(scope='module')
 def blog_image(user, image_1px):
     image = BlogImage(user=user, original=image_1px)
-    for size, attr_name in image.sizes:
-        setattr(image, attr_name, image_1px)
-    image.save(resize=False)
+    image.save()
     return image
 
 

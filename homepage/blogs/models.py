@@ -17,6 +17,7 @@ from ckeditor_uploader.fields import RichTextUploadingField
 
 from imagekit.models import ImageSpecField
 from imagekit.processors import Thumbnail
+from imagekit.processors import Transpose
 
 from model_utils.models import TimeStampedModel
 
@@ -51,31 +52,41 @@ class BlogImage(TimeStampedModel):
     original_height = models.PositiveIntegerField(blank=True, null=True)
     original_width = models.PositiveIntegerField(blank=True, null=True)
 
-    img_full = ImageSpecField(source='original', processors=[],
+    img_full = ImageSpecField(source='original', processors=[Transpose()],
                               format='JPEG', options={'quality': 60})
 
     img_xl = ImageSpecField(source='original',
-                            processors=[Thumbnail(2200, 2200, crop=False)],
+                            processors=[
+                                Transpose(),
+                                Thumbnail(2200, 2200, crop=False)],
                             format='JPEG',
                             options={'quality': 60})
 
     img_lg = ImageSpecField(source='original',
-                            processors=[Thumbnail(1100, 1100, crop=False)],
+                            processors=[
+                                Transpose(),
+                                Thumbnail(1100, 1100, crop=False)],
                             format='JPEG',
                             options={'quality': 60})
 
     img_md = ImageSpecField(source='original',
-                            processors=[Thumbnail(768, 768, crop=False)],
+                            processors=[
+                                Transpose(),
+                                Thumbnail(768, 768, crop=False)],
                             format='JPEG',
                             options={'quality': 60})
 
     img_sm = ImageSpecField(source='original',
-                            processors=[Thumbnail(500, 500, crop=False)],
+                            processors=[
+                                Transpose(),
+                                Thumbnail(500, 500, crop=False)],
                             format='JPEG',
                             options={'quality': 60})
 
     img_xs = ImageSpecField(source='original',
-                            processors=[Thumbnail(300, 300, crop=False)],
+                            processors=[
+                                Transpose(),
+                                Thumbnail(300, 300, crop=False)],
                             format='JPEG',
                             options={'quality': 60})
 
@@ -97,58 +108,8 @@ class BlogImage(TimeStampedModel):
             paths.add(getattr(self, attr_name).name)
         return paths
 
-    def get_exif_tags(self, image):
-        exif = {}
-        for k, v in image._getexif().items():
-            if k in ExifTags.TAGS:
-                exif[ExifTags.TAGS[k]] = v
-        return exif
-
-    def adjust_orientation(self, exif, image):
-        rotate_lookup = {3: 180, 6: 270, 8: 90}
-        orientation = exif.get('Orientation')
-        rotate = rotate_lookup.get(orientation)
-
-        if rotate is not None:
-            return image.rotate(rotate, expand=True)
-        else:
-            return image
-
-    def create_resized_images(self):
-        self.original.open()
-        original = PILImage.open(self.original)
-        original_name = os.path.basename(self.original.name)
-
-        try:
-            exif = self.get_exif_tags(original)
-        except AttributeError as e:
-            exif = {}
-
-        for size, attr_name in self.sizes:
-            im = self.adjust_orientation(exif, original.copy())
-
-            if size is None:
-                width, height = im.width, im.height
-            else:
-                width, height = size, size
-
-            im.thumbnail((width, height))
-            im_io = BytesIO()
-            im.save(im_io, format='JPEG', quality=60, optimize=True, progressive=True)
-            suffix = size if size is not None else 'full'
-            resized_name = '{}_resized_{}.JPG'.format(original_name, suffix)
-            img_attr = getattr(self, attr_name)
-            img_attr.save(resized_name, im_io, save=False)
-
     def __str__(self):
         return self.original.name
-
-    def save(self, *args, **kwargs):
-        if kwargs.pop('resize', True):
-            # resize by default, but make it optional for recalc
-            # management command
-            self.create_resized_images()
-        return super().save(*args, **kwargs)
 
     def get_srcset(self):
         sources = []

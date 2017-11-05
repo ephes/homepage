@@ -2,6 +2,7 @@ import os
 import re
 import logging
 import tempfile
+import subprocess
 
 from subprocess import check_output
 
@@ -119,21 +120,35 @@ class BlogVideo(TimeStampedModel):
     blogpost_context_key = 'video'
     calc_poster = True
 
+    def _get_video_dimensions(self, video_url):
+        ffprobe_cmd = 'ffprobe -i "{}"'.format(video_url)
+        result = subprocess.check_output(ffprobe_cmd, shell=True, stderr=subprocess.STDOUT)
+        lines = result.decode('utf8').split("\n")
+        width, height = None, None
+        for line in lines:
+            if 'SAR' in line:
+                data = line.split(', ')[3]
+                r1, r2 = map(int, data.split(' ')[0].split('x'))
+                o1, o2 = map(int, data.rstrip(']').split(' ')[-1].split(':'))
+                portrait = o1 < o2
+                width, height = (r2, r1) if portrait else (r1, r2)
+                break
+        return width, height
+
     def _create_poster(self):
         """Moved into own method to make it mockable in tests."""
         fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
-        original = self.original.open()
-        logger.info(original)
         logger.info('original url: {}'.format(self.original.url))
         logger.info('original path: {}'.format(self.original.path))
         video_url = self.original.url
         if not video_url.startswith('http'):
             video_url = self.original.path
+        width, height = self._get_video_dimensions(video_url)
         poster_cmd = (
-            'ffmpeg -i "{video_path}" -ss {seconds} -vframes 1'
-            ' -y -f image2 {poster_path}'
+            'ffmpeg -ss {seconds} -i "{video_path}" -vframes 1'
+            ' -y -f image2 -s {width}x{height} {poster_path}'
         ).format(video_path=video_url, seconds=self.poster_seconds,
-                 poster_path=tmp_path)
+                 poster_path=tmp_path, width=width, height=height)
         logger.info(poster_cmd)
         check_output(poster_cmd, shell=True)
         self.poster.save(
@@ -151,6 +166,7 @@ class BlogVideo(TimeStampedModel):
             try:
                 self._create_poster()
             except Exception as e:
+                logger.info(e)
                 logger.info('create poster failed')
 
     def get_all_paths(self):

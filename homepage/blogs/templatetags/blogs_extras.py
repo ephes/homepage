@@ -18,6 +18,10 @@ def blog_image(context, pk):
 @register.simple_tag(takes_context=True)
 def blog_video(context, pk):
     video = context['video'][pk]
+    if video.poster:
+        poster_url = video.poster.url
+    else:
+        poster_url = '/static/images/Video-icon.svg'
     video_tag = (
         '<video class="blog-video" preload="auto" controls poster="{poster}">'
         '  <source src="{src}" type="video/mp4">'

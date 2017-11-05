@@ -26,7 +26,7 @@ def blog_video(context, pk):
         '<video class="blog-video" preload="auto" controls poster="{poster}">'
         '  <source src="{src}" type="video/mp4">'
         '</video>'
-    ).format(src=video.original.url, poster=video.poster.url)
+    ).format(src=video.original.url, poster=poster_url)
     return mark_safe(video_tag)
 
 

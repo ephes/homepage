@@ -29,7 +29,7 @@ shell_plus:
 
 ## Draw entity relationship diagram
 graph_models:
-	docker-compose -f local.yml run django ./manage.py graph_models blogs -g -o blogs.png
+	docker-compose -f local.yml run django ./manage.py graph_models blogs -g -o blogs.png -X TimeStampedModel -x created,modified
 
 ## Measure test coverage
 coverage:

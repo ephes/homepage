@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.django_db()
 def test_blogpost_media_sync(blogpost, blog_image):
     print(blogpost.media_lookup)

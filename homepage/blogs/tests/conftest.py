@@ -1,4 +1,5 @@
 import io
+import os
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -66,7 +67,9 @@ def user():
 def blog_image(user, image_1px):
     image = BlogImage(user=user, original=image_1px)
     image.save()
-    return image
+    yield image
+    # teardown
+    os.unlink(image.original.path)
 
 
 @pytest.fixture(scope='module')

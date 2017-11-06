@@ -262,12 +262,16 @@ class BlogPost(TimeStampedModel):
             media.append((name, int(pk)))
         return media
 
-    def add_missing_media_objects(self):
-        media_attr_lookup = {
+    @property
+    def media_attr_lookup(self):
+        return {
             'image': self.images,
             'video': self.videos,
             'gallery': self.galleries,
         }
+
+    def add_missing_media_objects(self):
+        media_attr_lookup = self.media_attr_lookup
 
         media_lookup = self.media_lookup
         model_lookup = self.media_model_lookup
@@ -277,12 +281,28 @@ class BlogPost(TimeStampedModel):
                 logger.info("found: {} {} {}".format(model_name, model_pk, model))
             except KeyError:
                 media_object = model_lookup[model_name].objects.get(pk=model_pk)
-                print(model_name, media_object, media_attr_lookup[model_name])
+                # print(model_name, media_object, media_attr_lookup[model_name])
                 # bm = BlogMedia.objects.create(blogpost=self, content_object=media_object)  # noqa
                 media_attr_lookup[model_name].add(media_object)
                 logger.info('added: {} {} {}'.format(model_name, model_pk, media_object))
 
+    def remove_obsolete_media_objects(self):
+        media_from_db = {k: set(v.keys()) for k, v in self.media_lookup.items()}
+
+        # media from content
+        media_content_lookup = defaultdict(set)
+        for model_name, model_pk in self.media_from_content:
+            media_content_lookup[model_name].add(model_pk)
+
+        # remove all PKs which are in db but not in content
+        media_attr_lookup = self.media_attr_lookup
+        for media_type, media_pks in media_from_db.items():
+            for media_pk in media_pks:
+                if media_pk not in media_content_lookup.get(media_type, set()):
+                    media_attr_lookup[media_type].remove(media_pk)
+
     def save(self, *args, **kwargs):
         save_return = super().save(*args, **kwargs)
         self.add_missing_media_objects()
+        self.remove_obsolete_media_objects()
         return save_return

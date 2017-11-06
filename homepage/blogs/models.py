@@ -139,7 +139,6 @@ class BlogVideo(TimeStampedModel):
         """Moved into own method to make it mockable in tests."""
         fp, tmp_path = tempfile.mkstemp(prefix='poster_', suffix='.jpg')
         logger.info('original url: {}'.format(self.original.url))
-        logger.info('original path: {}'.format(self.original.path))
         video_url = self.original.url
         if not video_url.startswith('http'):
             video_url = self.original.path

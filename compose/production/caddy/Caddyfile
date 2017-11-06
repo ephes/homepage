@@ -3,6 +3,7 @@ www.{$DOMAIN_NAME} {
 }
 
 {$DOMAIN_NAME} {
+    rewrite /favicon.ico /static/images/favicon.ico
     proxy / django:5000 {
         header_upstream Host {host}
         header_upstream X-Real-IP {remote}

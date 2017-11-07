@@ -4,6 +4,7 @@ from django.contrib import admin
 
 from .models import Blog
 from .models import BlogPost
+from .models import BlogFile
 from .models import BlogImage
 from .models import BlogVideo
 from .models import BlogGallery
@@ -39,6 +40,14 @@ class ImageModelAdmin(AdminUserMixin, admin.ModelAdmin):
 
 
 admin.site.register(BlogImage, ImageModelAdmin)
+
+
+class BlogFileAdmin(AdminUserMixin, admin.ModelAdmin):
+    list_display = ('original', 'user')
+    fields = ('user', 'original')
+
+
+admin.site.register(BlogFile, BlogFileAdmin)
 
 
 class VideoModelAdmin(AdminUserMixin, admin.ModelAdmin):

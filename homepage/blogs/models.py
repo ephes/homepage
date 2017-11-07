@@ -204,6 +204,11 @@ class BlogGallery(TimeStampedModel):
         return set([i.pk for i in self.images.all()])
 
 
+class BlogFile(TimeStampedModel):
+    user = models.ForeignKey(User)
+    original = models.FileField(upload_to='blogs_files/')
+
+
 class BlogPost(TimeStampedModel):
     author = models.ForeignKey(User)
     blog = models.ForeignKey(Blog)

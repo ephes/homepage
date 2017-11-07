@@ -83,15 +83,15 @@ function showExistingVideos (videos) {
   var preview = $('#preview-videos')
   for (var i = 0; i < videos.length; i++) {
     var video = videos[i]
-    var video_thumbnail = video.poster_thumbnail
-    if (!video_thumbnail) {
-        video_thumbnail = '/static/images/Video-icon.svg'
+    var videoThumbnail = video.poster_thumbnail
+    if (!videoThumbnail) {
+      videoThumbnail = '/static/images/Video-icon.svg'
     }
-    // console.log('video thumbnail: ' + video_thumbnail)
+    // console.log('video thumbnail: ' + videoThumbnail)
     var videoEl = $('<img></img>')
       .addClass('gallery-thumbnail')
       .addClass('gallery-video-markable')
-      .attr({src: video_thumbnail, id: video.id})
+      .attr({src: videoThumbnail, id: video.id})
       // .attr({src: video.poster_thumbnail, id: video.id})
 
     var thumbDiv = $('<div></div>')

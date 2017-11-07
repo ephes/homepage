@@ -26,6 +26,8 @@ local_path = os.path.join('backups', file_name)
 sftp = client.open_sftp()
 sftp.get(remote_path, 'backups/{}'.format(file_name))
 
+# recreate local docker environment from production
+
 # restore backup dump to database
 docker_id_cmd = 'docker ps | grep postgres | cut -d " " -f 1'
 postgres_id = (check_output(docker_id_cmd, shell=True)
@@ -66,4 +68,20 @@ print(result)
 backup_s3_cmd = 'docker-compose -f local.yml run django ./manage.py s3_backup'
 print(backup_s3_cmd)
 result = check_output(backup_s3_cmd, shell=True)
+print(result)
+
+# recreate local db from production
+dropdb_cmd = 'dropdb homepage'
+print(dropdb_cmd)
+result = check_output(dropdb_cmd, shell=True)
+print(result)
+
+createdb_cmd = 'createdb homepage'
+print(createdb_cmd)
+result = check_output(createdb_cmd, shell=True)
+print(result)
+
+local_restore_cmd = 'gunzip -c {} | psql homepage -U homepage'.format(local_path)
+print(local_restore_cmd)
+result = check_output(local_restore_cmd, shell=True)
 print(result)

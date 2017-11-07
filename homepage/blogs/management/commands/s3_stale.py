@@ -38,6 +38,9 @@ class Command(BaseCommand):
         for video in BlogVideo.objects.all():
             for path in video.get_all_paths():
                 paths.add(path)
+        for misc_file in BlogFile.objects.all():
+            for path in misc_file.get_all_paths():
+                paths.add(path)
         return paths
 
     def handle(self, *args, **options):

@@ -208,6 +208,11 @@ class BlogFile(TimeStampedModel):
     user = models.ForeignKey(User)
     original = models.FileField(upload_to='blogs_files/')
 
+    def get_all_paths(self):
+        paths = set()
+        paths.add(self.original.name)
+        return paths
+
 
 class BlogPost(TimeStampedModel):
     author = models.ForeignKey(User)

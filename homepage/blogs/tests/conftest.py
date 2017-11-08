@@ -25,14 +25,14 @@ def create_1pximage():
     return png
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def image_1px():
     png = create_1pximage()
     simple_png = SimpleUploadedFile(name='test.png', content=png, content_type='image/png')
     return simple_png
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def image_1px_io():
     png = create_1pximage()
     bio_file = io.BytesIO(png)
@@ -48,7 +48,7 @@ def create_small_rgb():
     return img
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def small_jpeg_io():
     rgb = create_small_rgb()
     im_io = io.BytesIO()
@@ -58,12 +58,12 @@ def small_jpeg_io():
     return im_io
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def user():
     return UserFactory()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def blog_image(user, image_1px):
     image = BlogImage(user=user, original=image_1px)
     image.save()
@@ -72,33 +72,33 @@ def blog_image(user, image_1px):
     os.unlink(image.original.path)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def blog(user):
     return Blog.objects.create(user=user, title='testblog', slug='testblog')
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def blogpost(blog):
     return BlogPost.objects.create(
         author=blog.user, blog=blog, title='test entry',
         slug='test-entry', published=True, content='foobar')
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def unpublished_blogpost(blog):
     return BlogPost.objects.create(
         author=blog.user, blog=blog, title='test entry',
         slug='test-entry', published=False, content='foobar')
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def test_templ():
     return '''
         {% lorem %}
     '''
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def img_templ():
     return '''
         {{% load blogs_extras %}}

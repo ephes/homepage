@@ -11,6 +11,9 @@ from ..models import (
     BlogImage
 )
 
+from .factories import BlogVideoFactory
+from .factories import BlogGalleryFactory
+
 from ...users.tests.factories import UserFactory
 
 
@@ -60,7 +63,9 @@ def small_jpeg_io():
 
 @pytest.fixture()
 def user():
-    return UserFactory()
+    user = UserFactory()
+    user._password = "password"
+    return user
 
 
 @pytest.fixture()
@@ -104,3 +109,18 @@ def img_templ():
         {{% load blogs_extras %}}
         {{% blog_image {} %}}
     '''
+
+
+@pytest.fixture()
+def video(user):
+    video = BlogVideoFactory.build()
+    video.user = user
+    video.save(poster=False)
+    return video
+
+
+@pytest.fixture()
+def gallery(user, blog_image):
+    gallery = BlogGalleryFactory(user=user)
+    gallery.images.add(blog_image)
+    return gallery

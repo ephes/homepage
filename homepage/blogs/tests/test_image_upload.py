@@ -2,8 +2,6 @@ import pytest
 
 from django.urls import reverse
 
-from ...users.tests.factories import UserFactory
-
 
 class TestImageUpload:
     @pytest.mark.django_db
@@ -16,10 +14,9 @@ class TestImageUpload:
         assert r.status_code == 302
 
     @pytest.mark.django_db
-    def test_upload_image_authenticated(self, client, small_jpeg_io):
+    def test_upload_image_authenticated(self, client, user, small_jpeg_io):
         # login
-        user = UserFactory()
-        r = client.login(username=user.username, password="password")
+        r = client.login(username=user.username, password=user._password)
 
         # upload
         upload_url = reverse('api:upload_image')

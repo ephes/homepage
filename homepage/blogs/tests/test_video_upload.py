@@ -2,8 +2,6 @@ import pytest
 
 from django.urls import reverse
 
-from ...users.tests.factories import UserFactory
-
 from ..models import BlogVideo
 
 
@@ -18,10 +16,9 @@ class TestVideoUpload:
         assert r.status_code == 302
 
     @pytest.mark.django_db
-    def test_upload_video_authenticated(self, client, image_1px_io):
+    def test_upload_video_authenticated(self, client, user, image_1px_io):
         # login
-        user = UserFactory()
-        r = client.login(username=user.username, password="password")
+        r = client.login(username=user.username, password=user._password)
 
         self.called_create_poster = False
 

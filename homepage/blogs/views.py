@@ -98,6 +98,12 @@ class PostDetailView(RenderPostMixin, DetailView):
     slug_url_kwarg = 'slug'
     query_pk_and_slug = True
 
+    def get_queryset(self):
+        queryset = BlogPost.objects.all()
+        if not self.request.user.is_authenticated():
+            queryset = queryset.filter(published=True)
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         blogpost = context[self.context_object_name]

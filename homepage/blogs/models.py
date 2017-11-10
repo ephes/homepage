@@ -9,6 +9,7 @@ from subprocess import check_output
 from collections import defaultdict
 
 from django.db import models
+from django.utils import timezone
 from django.core.files import File
 from django.core.urlresolvers import reverse
 
@@ -214,10 +215,19 @@ class BlogFile(TimeStampedModel):
         return paths
 
 
+class PublishedManager(models.Manager):
+    use_for_related_fields = True
+
+    def get_queryset(self):
+        return (super().get_queryset()
+                       .filter(pub_date__lte=timezone.now()))
+
+
 class BlogPost(TimeStampedModel):
     author = models.ForeignKey(User)
     blog = models.ForeignKey(Blog)
     title = models.CharField(max_length=255)
+    pub_date = models.DateTimeField(null=True, blank=True)
     published = models.BooleanField(default=False)
 
     content = RichTextUploadingField()
@@ -232,6 +242,9 @@ class BlogPost(TimeStampedModel):
         'video': BlogVideo,
         'gallery': BlogGallery,
     }
+
+    objects = models.Manager()
+    publishedm = PublishedManager()
 
     def __str__(self):
         return self.title

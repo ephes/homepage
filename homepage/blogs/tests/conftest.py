@@ -1,6 +1,7 @@
 import io
 import os
 
+from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 import pytest
@@ -86,14 +87,14 @@ def blog(user):
 def blogpost(blog):
     return BlogPost.objects.create(
         author=blog.user, blog=blog, title='test entry',
-        slug='test-entry', published=True, content='foobar')
+        slug='test-entry', pub_date=timezone.now(), content='foobar')
 
 
 @pytest.fixture()
 def unpublished_blogpost(blog):
     return BlogPost.objects.create(
         author=blog.user, blog=blog, title='test entry',
-        slug='test-entry', published=False, content='foobar')
+        slug='test-entry', pub_date=None, content='foobar')
 
 
 @pytest.fixture()

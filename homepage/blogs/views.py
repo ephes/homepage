@@ -50,9 +50,10 @@ class PostsListView(RenderPostMixin, ListView):
 
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        queryset = BlogPost.objects.filter(blog=self.blog).order_by('-created')
         if not self.request.user.is_authenticated():
-            queryset = queryset.filter(published=True)
+            queryset = BlogPost.publishedm.filter(blog=self.blog).order_by('-pub_date')
+        else:
+            queryset = BlogPost.objects.filter(blog=self.blog).order_by('-created')
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -77,10 +78,9 @@ class LatestEntriesFeed(RenderPostMixin, Feed):
         return reverse('blogs:blogpost_feed', kwargs={'slug': self.object.slug})
 
     def items(self):
-        queryset = (BlogPost.objects
+        queryset = (BlogPost.publishedm
                             .filter(blog=self.object)
-                            .filter(published=True)
-                            .order_by('-created'))
+                            .order_by('-pub_date'))
         return queryset[:5]
 
     def item_title(self, item):
@@ -99,9 +99,10 @@ class PostDetailView(RenderPostMixin, DetailView):
     query_pk_and_slug = True
 
     def get_queryset(self):
-        queryset = BlogPost.objects.all()
         if not self.request.user.is_authenticated():
-            queryset = queryset.filter(published=True)
+            queryset = BlogPost.publishedm.order_by('-pub_date')
+        else:
+            queryset = BlogPost.objects.order_by('-created')
         return queryset
 
     def get_context_data(self, **kwargs):

@@ -228,7 +228,6 @@ class BlogPost(TimeStampedModel):
     blog = models.ForeignKey(Blog)
     title = models.CharField(max_length=255)
     pub_date = models.DateTimeField(null=True, blank=True)
-    published = models.BooleanField(default=False)
 
     content = RichTextUploadingField()
     slug = models.SlugField(max_length=50)
@@ -244,7 +243,11 @@ class BlogPost(TimeStampedModel):
     }
 
     objects = models.Manager()
-    publishedm = PublishedManager()
+    published = PublishedManager()
+
+    @property
+    def is_published(self):
+        return self.pub_date < timezone.now()
 
     def __str__(self):
         return self.title

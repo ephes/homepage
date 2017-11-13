@@ -51,7 +51,7 @@ class PostsListView(RenderPostMixin, ListView):
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         if not self.request.user.is_authenticated():
-            queryset = BlogPost.publishedm.filter(blog=self.blog).order_by('-pub_date')
+            queryset = BlogPost.published.filter(blog=self.blog).order_by('-pub_date')
         else:
             queryset = BlogPost.objects.filter(blog=self.blog).order_by('-created')
         return queryset
@@ -78,7 +78,7 @@ class LatestEntriesFeed(RenderPostMixin, Feed):
         return reverse('blogs:blogpost_feed', kwargs={'slug': self.object.slug})
 
     def items(self):
-        queryset = (BlogPost.publishedm
+        queryset = (BlogPost.published
                             .filter(blog=self.object)
                             .order_by('-pub_date'))
         return queryset[:5]
@@ -100,7 +100,7 @@ class PostDetailView(RenderPostMixin, DetailView):
 
     def get_queryset(self):
         if not self.request.user.is_authenticated():
-            queryset = BlogPost.publishedm.order_by('-pub_date')
+            queryset = BlogPost.published.order_by('-pub_date')
         else:
             queryset = BlogPost.objects.order_by('-created')
         return queryset

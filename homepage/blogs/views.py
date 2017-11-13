@@ -133,6 +133,11 @@ class PostUpdateView(LoginRequiredMixin, PostChangeMixin,
     user_field_name = 'author'
     success_msg = "Blogentry updated!"
 
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['is_published'] = self.object.is_published
+        return initial
+
     def form_valid(self, form):
         self.blog_slug = self.kwargs['blog_slug']
         return super().form_valid(form)

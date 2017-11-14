@@ -134,6 +134,8 @@ function replaceWithUploadedVideo (videoPk, video) {
   })
 }
 
+var runningUploads = 0
+
 function fileUpload (thumb, file, progressBar) {
   var xhr = new window.XMLHttpRequest()
   console.log('file upload:', thumb, file)
@@ -176,10 +178,22 @@ function fileUpload (thumb, file, progressBar) {
       } else {
         replaceWithUploadedImage(mediaPk, thumb)
       }
+      runningUploads = runningUploads - 1
     }
   }
 
   xhr.send(formData)
+}
+
+function waitForUpload (thumb, file, progressBar) {
+  if (runningUploads < 2) {
+    runningUploads = runningUploads + 1
+    console.log('wait for upload: upload')
+    fileUpload(thumb, file, progressBar)
+  } else {
+    setTimeout(waitForUpload, 500, thumb, file, progressBar)
+    console.log('wait for upload: wait')
+  }
 }
 
 function sendFiles (uploadFiles, uploadProgress, className) {
@@ -188,7 +202,8 @@ function sendFiles (uploadFiles, uploadProgress, className) {
   for (var i = 0; i < files.length; i++) {
     var file = uploadFiles[i]
     var progressBar = uploadProgress[i]
-    fileUpload(files[i], file, progressBar)
+    waitForUpload(files[i], file, progressBar)
+    // fileUpload(files[i], file, progressBar)
   }
 }
 

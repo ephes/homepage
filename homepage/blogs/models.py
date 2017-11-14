@@ -247,7 +247,7 @@ class BlogPost(TimeStampedModel):
 
     @property
     def is_published(self):
-        return self.pub_date < timezone.now()
+        return self.pub_date is not None and self.pub_date < timezone.now()
 
     def __str__(self):
         return self.title

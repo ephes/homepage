@@ -44,6 +44,15 @@ def image_spec_thumbnail(size):
                           format='JPEG', options={'quality': 60})
 
 
+IMAGE_SIZES = {
+    'img_full': None,
+    'img_xl': 2200,
+    'img_lg': 1100,
+    'img_md': 768,
+    'img_sm': 500,
+    'img_xs': 300,
+}
+
 class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)
 
@@ -57,20 +66,13 @@ class BlogImage(TimeStampedModel):
     img_full = ImageSpecField(source='original', processors=[Transpose()],
                               format='JPEG', options={'quality': 60})
 
-    img_xl = image_spec_thumbnail(2200)
-    img_lg = image_spec_thumbnail(1100)
-    img_md = image_spec_thumbnail(768)
-    img_sm = image_spec_thumbnail(500)
-    img_xs = image_spec_thumbnail(300)
+    img_xl = image_spec_thumbnail(IMAGE_SIZES['img_xl'])
+    img_lg = image_spec_thumbnail(IMAGE_SIZES['img_lg'])
+    img_md = image_spec_thumbnail(IMAGE_SIZES['img_md'])
+    img_sm = image_spec_thumbnail(IMAGE_SIZES['img_sm'])
+    img_xs = image_spec_thumbnail(IMAGE_SIZES['img_xs'])
 
-    sizes = [
-        (None, 'img_full'),
-        (2200, 'img_xl'),
-        (1100, 'img_lg'),
-        (768, 'img_md'),
-        (500, 'img_sm'),
-        (300, 'img_xs'),
-    ]
+    sizes = [(v, k) for k, v in IMAGE_SIZES.items()]
 
     blogpost_context_key = 'image'
 

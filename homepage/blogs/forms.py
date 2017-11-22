@@ -38,7 +38,6 @@ class BlogPostForm(forms.ModelForm):
         fields = ['title', 'content', 'pub_date', 'is_published', 'slug']
 
 
-
 class BlogImageForm(forms.ModelForm):
     class Meta:
         model = BlogImage

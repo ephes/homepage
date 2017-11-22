@@ -44,7 +44,6 @@ def image_spec_thumbnail(size):
                           format='JPEG', options={'quality': 60})
 
 
-
 class BlogImage(TimeStampedModel):
     user = models.ForeignKey(User)
 

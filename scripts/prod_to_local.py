@@ -53,11 +53,6 @@ print(restore_cmd)
 result = check_output(restore_cmd, shell=True)
 print(result)
 
-restore_cmd = 'docker-compose -f local.yml run postgres restore {}'.format(file_name)
-print(restore_cmd)
-result = check_output(restore_cmd, shell=True)
-print(result)
-
 # remove stale media files
 delete_stale_cmd = 'docker-compose -f local.yml run django ./manage.py s3_stale --delete'
 print(delete_stale_cmd)

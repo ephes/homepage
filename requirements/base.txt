@@ -61,3 +61,6 @@ djangorestframework
 # imagekit for resized images, thumbnails..
 # django-imagekit
 git+git://github.com/ephes/django-imagekit
+
+# pip
+pip

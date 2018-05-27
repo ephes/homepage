@@ -15,6 +15,7 @@ services:
       - .:/app
     environment:
       - POSTGRES_USER=homepage
+      - POSTGRES_PASSWORD=homepage
       - USE_DOCKER=yes
     ports:
       - "8000:8000"

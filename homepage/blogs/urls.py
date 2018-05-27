@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from . import views
 
+app_name = 'blogs'
 urlpatterns = [
     url(
         regex=r'^(?P<slug>[^/]+)/add/$',

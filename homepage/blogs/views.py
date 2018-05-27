@@ -10,7 +10,7 @@ from django.views.generic import (
 from django.contrib.syndication.views import Feed
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404
 
 
@@ -50,7 +50,7 @@ class PostsListView(RenderPostMixin, ListView):
 
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             queryset = BlogPost.published.filter(blog=self.blog).order_by('-pub_date')
         else:
             queryset = BlogPost.objects.filter(blog=self.blog).order_by('-created')
@@ -99,7 +99,7 @@ class PostDetailView(RenderPostMixin, DetailView):
     query_pk_and_slug = True
 
     def get_queryset(self):
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             queryset = BlogPost.published.order_by('-pub_date')
         else:
             queryset = BlogPost.objects.order_by('-created')

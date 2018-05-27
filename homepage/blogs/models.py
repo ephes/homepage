@@ -11,7 +11,7 @@ from collections import defaultdict
 from django.db import models
 from django.utils import timezone
 from django.core.files import File
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ckeditor_uploader.fields import RichTextUploadingField
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class Blog(TimeStampedModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.CharField(max_length=500)
     slug = models.SlugField(max_length=50)
@@ -45,7 +45,7 @@ def image_spec_thumbnail(size):
 
 
 class BlogImage(TimeStampedModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     original = models.ImageField(
         upload_to='blogs_images/originals',
@@ -110,7 +110,7 @@ class BlogImage(TimeStampedModel):
 
 
 class BlogVideo(TimeStampedModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     original = models.FileField(upload_to='blogs_videos/')
     poster = models.ImageField(upload_to='blogs_videos/poster/', null=True, blank=True)
     poster_seconds = models.FloatField(default=1)
@@ -198,7 +198,7 @@ class BlogVideo(TimeStampedModel):
 
 
 class BlogGallery(TimeStampedModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     images = models.ManyToManyField(BlogImage)
     blogpost_context_key = 'gallery'
 
@@ -208,7 +208,7 @@ class BlogGallery(TimeStampedModel):
 
 
 class BlogFile(TimeStampedModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     original = models.FileField(upload_to='blogs_files/')
 
     def get_all_paths(self):
@@ -226,8 +226,8 @@ class PublishedManager(models.Manager):
 
 
 class BlogPost(TimeStampedModel):
-    author = models.ForeignKey(User)
-    blog = models.ForeignKey(Blog)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     pub_date = models.DateTimeField(null=True, blank=True)
 

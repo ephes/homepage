@@ -6,7 +6,7 @@ from django.views.generic import CreateView
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from rest_framework import generics
 from rest_framework.response import Response

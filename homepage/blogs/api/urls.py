@@ -4,6 +4,7 @@ from rest_framework.schemas import get_schema_view
 
 from . import views
 
+app_name = 'api'
 schema_view = get_schema_view(
     title="Blog API",
 )

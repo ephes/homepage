@@ -310,3 +310,6 @@ homepage/media/
 !/compose/local/
 
 backups/
+
+# pytest
+.pytest_cache

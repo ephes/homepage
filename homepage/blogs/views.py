@@ -147,3 +147,9 @@ class PostUpdateView(LoginRequiredMixin, PostChangeMixin,
     def form_valid(self, form):
         self.blog_slug = self.kwargs['blog_slug']
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # needed for back button
+        context['blog_slug'] = self.kwargs['blog_slug']
+        return context

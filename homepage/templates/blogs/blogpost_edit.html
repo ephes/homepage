@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
-<p><a class="btn btn-secondary btn-lg" href="{% url "blogs:blogpost_list" slug=blogpost.blog.slug %}" role ="button">Back to Blog</a></p>
+<p><a class="btn btn-secondary btn-lg" href="{% url "blogs:blogpost_list" slug=blog_slug %}" role ="button">Back to Blog</a></p>
 {% if form.errors %}
   <!-- Error messaging -->
   <div id="errors">

@@ -13,6 +13,7 @@ from .models import (
 
 class BlogPostForm(forms.ModelForm):
     is_published = forms.BooleanField(required=False)
+    pub_date = forms.DateTimeField(input_formats=['%Y-%m-%dT%H:%M'])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,10 +23,10 @@ class BlogPostForm(forms.ModelForm):
         self.fields['pub_date'].widget = forms.DateTimeInput(
             attrs={'type': 'datetime-local'})
         self.fields['pub_date'].label = _('Publication date')
-        self.fields['pub_date'].help_text = _('Article will be published after this date.')
+        self.fields['pub_date'].help_text = _(
+            'Article will be published after this date/time.')
         self.fields['visible_date'].required = False
-        self.fields['visible_date'].widget = forms.DateTimeInput(
-            attrs={'type': 'datetime-local'})
+        self.fields['visible_date'].widget = forms.DateInput(attrs={'type': 'date'})
         self.fields['visible_date'].label = _('Visible date')
         self.fields['visible_date'].help_text = _('Date to be shown above article.')
 

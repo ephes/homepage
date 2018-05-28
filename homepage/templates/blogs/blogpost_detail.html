@@ -9,7 +9,7 @@
   <header>
     <h1>{{ blogpost.title }}</h1>
     <a href="{% url "blogs:blogpost_detail" blog_slug=blogpost.blog.slug slug=blogpost.slug %}">
-      <time date-time="{{ blogpost.created|date:"c" }}">{{ blogpost.created }}</time>
+        <time date-time="{{ blogpost.visible_date|date:"c" }}">{{ blogpost.visible_date}}</time>
     </a>
     <a href="{% url "blogs:blogpost_list" slug=blogpost.blog.slug %}">back..</a>
   </header>

@@ -51,7 +51,7 @@ class PostsListView(RenderPostMixin, ListView):
     def get_queryset(self):
         self.blog = get_object_or_404(Blog, slug=self.kwargs['slug'])
         if not self.request.user.is_authenticated:
-            queryset = BlogPost.published.filter(blog=self.blog).order_by('-pub_date')
+            queryset = BlogPost.published.filter(blog=self.blog).order_by('-visible_date')
         else:
             queryset = BlogPost.objects.filter(blog=self.blog).order_by('-created')
         return queryset

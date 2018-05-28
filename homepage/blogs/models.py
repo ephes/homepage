@@ -9,9 +9,9 @@ from subprocess import check_output
 from collections import defaultdict
 
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.core.files import File
-from django.urls import reverse
 
 from ckeditor_uploader.fields import RichTextUploadingField
 
@@ -230,6 +230,7 @@ class BlogPost(TimeStampedModel):
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     pub_date = models.DateTimeField(null=True, blank=True)
+    visible_date = models.DateTimeField(default=timezone.now(), blank=True)
 
     content = RichTextUploadingField()
     slug = models.SlugField(max_length=50)

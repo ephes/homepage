@@ -142,6 +142,7 @@
     max-width: 10em;
     max-height: 10em;
     height: 5em;
+    margin-bottom: 5px;
 }
 
 .gallery-preview {

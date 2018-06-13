@@ -113,6 +113,10 @@
     max-width: 100%;
 }
 
+.blog-gallery-container {
+    padding: 30px 0px 30px 0px;
+}
+
 .gallery-content {
     background-color:rgba(0, 0, 0, 0);
 }

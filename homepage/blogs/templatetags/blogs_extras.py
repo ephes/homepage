@@ -87,7 +87,7 @@ def get_modal_tmpl():
 
 
 def blog_gallery_with_javascript(gallery, blogpost):
-    image_thumbs = ['<!-- Button trigger modal -->']
+    image_thumbs = ['<!-- Button trigger modal -->', '<div class="blog-gallery-container">']
 
     gallery_key = '{}_{}'.format(blogpost.pk, gallery.pk)
     prev_img, next_img = None, None
@@ -99,6 +99,7 @@ def blog_gallery_with_javascript(gallery, blogpost):
             next_img = None
         image_thumbs.append(get_modal_trigger(gallery_key, image, prev_img, next_img))
         prev_img = image
+    image_thumbs.append('</div>')
     thumbs = '\n'.join(image_thumbs)
     return get_modal_tmpl().format(thumbs=thumbs, key=gallery_key)
 

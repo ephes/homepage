@@ -9,7 +9,7 @@ wheel==0.31.1
 django
 
 # Configuration
-django-environ==0.4.4
+django-environ==0.4.5
 whitenoise==3.3.1
 
 
@@ -20,7 +20,7 @@ django-crispy-forms==1.7.2
 django-model-utils==3.1.2
 
 # Images
-Pillow==5.1.0
+Pillow==5.2.0
 
 # Password storage
 argon2-cffi==18.1.0
@@ -31,20 +31,20 @@ django-allauth==0.36.0
 
 
 # Python-PostgreSQL Database Adapter
-psycopg2==2.7.4
+psycopg2==2.7.5
 
 # Unicode slugification
 awesome-slugify==1.6.5
 
 # Time zones support
-pytz==2018.4
+pytz==2018.5
 
 # Redis support
 django-redis==4.9.0
 redis>=2.10.5
 
 # Static and Media Storage
-boto3==1.7.29
+boto3==1.7.48
 django-storages==1.6.6
 
 # Your custom requirements go here

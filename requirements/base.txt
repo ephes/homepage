@@ -44,7 +44,7 @@ django-redis==4.9.0
 redis>=2.10.5
 
 # Static and Media Storage
-boto3==1.7.48
+boto3==1.7.58
 django-storages==1.6.6
 
 # Your custom requirements go here

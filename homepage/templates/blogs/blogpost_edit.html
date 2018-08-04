@@ -5,7 +5,7 @@
 <p><a class="btn btn-secondary btn-lg" href="{% url "blogs:blogpost_list" slug=blog_slug %}" role ="button">Back to Blog</a></p>
 {% if form.errors %}
   <!-- Error messaging -->
-  <div id="errors">
+  <div id="errors" class="alert alert-danger" role="alert">
     <div class="inner">
       <p>There were some errors in the information you entered. Please correct the following:</p>
         {{ form.non_field_errors }}

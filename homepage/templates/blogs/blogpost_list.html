@@ -18,6 +18,7 @@
       <h1>{{ blogpost.title }}</h1>
       <a href="{% url "blogs:blogpost_detail" blog_slug=blog.slug slug=blogpost.slug %}">
         <time date-time="{{ blogpost.visible_date|date:"c" }}">{{ blogpost.visible_date|date}}</time>
+        - {{ blogpost.author.username | title}}
       </a>
     </header>
     <section>

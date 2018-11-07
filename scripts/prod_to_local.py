@@ -54,10 +54,11 @@ result = check_output(restore_cmd, shell=True)
 print(result)
 
 # remove stale media files
-delete_stale_cmd = 'docker-compose -f local.yml run django ./manage.py s3_stale --delete'
-print(delete_stale_cmd)
-result = check_output(delete_stale_cmd, shell=True)
-print(result)
+#delete_stale_cmd = 'docker-compose -f local.yml run django ./manage.py s3_stale --delete'
+#delete_stale_cmd = 'docker-compose -f local.yml run django ./manage.py s3_stale'
+#print(delete_stale_cmd)
+#result = check_output(delete_stale_cmd, shell=True)
+#print(result)
 
 # get new media files from s3
 backup_s3_cmd = 'docker-compose -f local.yml run django ./manage.py s3_backup'

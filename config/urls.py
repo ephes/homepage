@@ -29,7 +29,7 @@ urlpatterns = [
     url(r'^blogs/', include('cast.urls', namespace='cast')),
 
     # Blog-Old
-    url(r'^blogs_old/', include('homepage.blogs.urls', namespace='blogs')),
+    # url(r'^blogs_old/', include('homepage.blogs.urls', namespace='blogs')),
 
     # rest
     url(r'^api/api-token-auth/', authtokenviews.obtain_auth_token),

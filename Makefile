@@ -35,6 +35,10 @@ graph_models:
 coverage:
 	coverage run --source='.' `which pytest` && coverage report
 
+## Start notebook server
+notebook:
+	cd notebooks;../manage.py --shell_plus --notebook
+
 #################################################################################
 # Self Documenting Commands                                                                #
 #################################################################################

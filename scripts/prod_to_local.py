@@ -23,6 +23,8 @@ print(remote_path)
 file_name = os.path.basename(remote_path)
 local_path = os.path.join('backups', file_name)
 
+if not os.path.exists('backups'):
+    os.mkdir('backups')
 sftp = client.open_sftp()
 sftp.get(remote_path, 'backups/{}'.format(file_name))
 

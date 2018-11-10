@@ -66,4 +66,4 @@ git+git://github.com/ephes/django-imagekit
 pip
 
 # blogging package
-django-cast
+# django-cast

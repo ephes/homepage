@@ -61,7 +61,6 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     # custom users app
     'homepage.users.apps.UsersConfig',
-    # 'homepage.blogs.apps.BlogsConfig',
     # Your stuff: custom apps go here
 ]
 

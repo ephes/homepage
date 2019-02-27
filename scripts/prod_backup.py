@@ -1,9 +1,9 @@
 from subprocess import check_output
 
-docker_id_cmd = 'docker ps | grep postgres | cut -d " " -f 1'
+docker_id_cmd = 'docker ps | grep site_postgres | cut -d " " -f 1'
 postgres_id = (check_output(docker_id_cmd, shell=True)
                .decode('utf-8')
-               .replace("\n", ""))
+               .replace("\n", "")[:12])
 print(postgres_id)
 
 backup_cmd = 'docker-compose -f production.yml run postgres backup | cut -d " " -f 4'

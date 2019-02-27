@@ -54,13 +54,13 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'imagekit',
+    'cast',  # blog/podcast package
 ]
 
 # Apps specific for this project go here.
 LOCAL_APPS = [
     # custom users app
     'homepage.users.apps.UsersConfig',
-    'homepage.blogs.apps.BlogsConfig',
     # Your stuff: custom apps go here
 ]
 

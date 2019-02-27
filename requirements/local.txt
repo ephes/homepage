@@ -31,7 +31,10 @@ paramiko
 python-dotenv
 
 # graph models
-pygraphviz
+#pygraphviz --global-option="-I/usr/local/Cellar/graphviz/2.40.1/include/"
 
 # edit vim
 jedi
+
+# jupyter notebooks
+notebook

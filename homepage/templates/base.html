@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
 
     <!-- Your stuff: Third-party CSS libraries go here -->
+    <link href="{% static 'css/cast.css' %}" rel="stylesheet">
     
     <!-- This file stores project-specific CSS -->
     <link href="{% static 'css/project.css' %}" rel="stylesheet">
@@ -38,16 +39,8 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
-            <!--
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Blogs</a>
-              <div class="dropdown-menu">
-                <a class="dropdown-item" href="/blogs/ephes_blog/">Ephes</a>
-              </div>
-            </li>
-            -->
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'blogs:blogpost_list' 'ephes_blog' %}">Blog</a>
+                <a class="nav-link" href="{% url 'cast:post_list' 'ephes_blog' %}">Blog</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'about' %}">About</a>

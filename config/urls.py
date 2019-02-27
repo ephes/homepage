@@ -22,15 +22,18 @@ urlpatterns = [
 
     # Your stuff: custom urls includes go here
 
-    # Blog
-    url(r'^blogs/', include('homepage.blogs.urls', namespace='blogs')),
-
     # CKEditor upload
     url(r'^ckeditor/', include('ckeditor_uploader.urls')),
 
+    # Cast Blog
+    url(r'^blogs/', include('cast.urls', namespace='cast')),
+
+    # Blog-Old
+    # url(r'^blogs_old/', include('homepage.blogs.urls', namespace='blogs')),
+
     # rest
     url(r'^api/api-token-auth/', authtokenviews.obtain_auth_token),
-    url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
+    # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^docs/', include_docs_urls(title='My Blog API service')),
 

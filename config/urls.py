@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include, path
+from django.conf.urls import url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
@@ -36,6 +37,8 @@ urlpatterns = [
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^docs/', include_docs_urls(title='My Blog API service')),
+    # Uploads
+    path("uploads/", include("filepond.urls", namespace="filepond")),
 
     # robots.txt
     url(r'^robots.txt',

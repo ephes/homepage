@@ -55,6 +55,7 @@ THIRD_PARTY_APPS = [
     'rest_framework.authtoken',
     'imagekit',
     'cast',  # blog/podcast package
+    'filepond',  # uploading files via filepond
 ]
 
 # Apps specific for this project go here.

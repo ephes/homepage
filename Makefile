@@ -37,7 +37,7 @@ coverage:
 
 ## Start notebook server
 notebook:
-	cd notebooks;../manage.py --shell_plus --notebook
+	cd notebooks;../manage.py shell_plus --notebook
 
 #################################################################################
 # Self Documenting Commands                                                                #

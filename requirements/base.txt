@@ -6,7 +6,7 @@ wheel==0.33.1
 
 
 # Bleeding edge Django
-django==2.1.7
+django==2.2
 
 # Configuration
 django-environ==0.4.5
@@ -20,7 +20,7 @@ django-crispy-forms==1.7.2
 django-model-utils==3.1.2
 
 # Images
-Pillow==5.4.1
+Pillow==6.0.0
 
 # Password storage
 argon2-cffi==19.1.0
@@ -31,20 +31,20 @@ django-allauth==0.39.1
 
 
 # Python-PostgreSQL Database Adapter
-psycopg2==2.7.7
+psycopg2==2.8.2
 
 # Unicode slugification
-python-slugify==2.0.1
+python-slugify==3.0.2
 
 # Time zones support
-pytz==2018.9
+pytz==2019.1
 
 # Redis support
 django-redis==4.10.0
 redis>=2.10.5
 
 # Static and Media Storage
-boto3==1.9.104
+boto3==1.9.131
 django-storages==1.7.1
 
 # Your custom requirements go here

@@ -1,9 +1,6 @@
-FROM python:3.7
+FROM python:3.7-strech
 
 ENV PYTHONUNBUFFERED 1
-
-# add jessie backports (ffmpeg)
-COPY ./compose/local/django/backports.list /etc/apt/sources.list.d
 
 # being able to use apt
 RUN apt update

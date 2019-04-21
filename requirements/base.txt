@@ -66,6 +66,6 @@ git+git://github.com/ephes/django-imagekit
 pip
 
 # blogging package
-django-cast
+# django-cast
 django-filepond
-# git+git://github.com/ephes/django-cast.git#egg=django-cast
+git+git://github.com/ephes/django-cast.git#egg=django-cast

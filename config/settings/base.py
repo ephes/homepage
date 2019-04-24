@@ -53,6 +53,8 @@ THIRD_PARTY_APPS = [
     'ckeditor_uploader',  # file upload for ckeditor
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',  # filter posts
+    'watson',  # fulltext search
     'imagekit',
     'cast',  # blog/podcast package
     'filepond',  # uploading files via filepond

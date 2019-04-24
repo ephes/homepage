@@ -29,6 +29,9 @@ urlpatterns = [
     # Cast Blog
     url(r'^blogs/', include('cast.urls', namespace='cast')),
 
+    # Fulltext Search
+    url(r"^search/", include("watson.urls", namespace="watson")),
+
     # Blog-Old
     # url(r'^blogs_old/', include('homepage.blogs.urls', namespace='blogs')),
 

@@ -56,6 +56,7 @@ THIRD_PARTY_APPS = [
     'django_filters',  # filter posts
     'watson',  # fulltext search
     'imagekit',
+    'indieweb',  # indieauth etc
     'cast',  # blog/podcast package
     'filepond',  # uploading files via filepond
 ]

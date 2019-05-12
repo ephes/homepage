@@ -55,6 +55,8 @@ django-ckeditor
 # fulltext search
 django-watson
 
+django-braces
+
 # rest
 coreapi
 markdown

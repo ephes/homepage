@@ -73,3 +73,4 @@ pip
 django-filepond
 # git+git://github.com/ephes/django-cast.git#egg=django-cast
 django-cast
+git+git://github.com/ephes/django-indieweb.git#egg=django-indieweb

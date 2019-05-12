@@ -34,6 +34,9 @@ urlpatterns = [
     # Fulltext Search
     url(r"^search/", include("watson.urls", namespace="watson")),
 
+    # Indieweb
+    url(r"^indieweb/", include("indieweb.urls")),
+
     # Blog-Old
     # url(r'^blogs_old/', include('homepage.blogs.urls', namespace='blogs')),
 

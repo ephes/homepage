@@ -2,7 +2,7 @@
 # like Pillow and psycopg2
 # See http://bitly.com/wheel-building-fails-CPython-35
 # Verified bug on Python 3.5.1
-wheel==0.33.1
+wheel==0.33.4
 
 
 # Bleeding edge Django
@@ -44,7 +44,7 @@ django-redis==4.10.0
 redis>=2.10.5
 
 # Static and Media Storage
-boto3==1.9.132
+boto3==1.9.151
 django-storages==1.7.1
 
 # Your custom requirements go here

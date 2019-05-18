@@ -109,6 +109,16 @@ LOGGING = {
             'propagate': True,
             'level': 'DEBUG',
         },
+        'cast': {
+            'handlers': ['console',],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'indieweb': {
+            'handlers': ['console',],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
     },
 }
 

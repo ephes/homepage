@@ -203,6 +203,16 @@ LOGGING = {
             'handlers': ['console', 'sentry', ],
             'propagate': False,
         },
+        'cast': {
+            'handlers': ['console',],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'indieweb': {
+            'handlers': ['console',],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
     },
 }
 SENTRY_CELERY_LOGLEVEL = env.int('DJANGO_SENTRY_LOG_LEVEL', logging.INFO)

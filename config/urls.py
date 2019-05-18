@@ -37,9 +37,6 @@ urlpatterns = [
     # Indieweb
     url(r"^indieweb/", include("indieweb.urls")),
 
-    # Blog-Old
-    # url(r'^blogs_old/', include('homepage.blogs.urls', namespace='blogs')),
-
     # rest
     url(r'^api/api-token-auth/', authtokenviews.obtain_auth_token),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),

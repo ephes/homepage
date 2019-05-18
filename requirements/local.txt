@@ -38,3 +38,6 @@ jedi
 
 # jupyter notebooks
 notebook
+
+# code format
+black

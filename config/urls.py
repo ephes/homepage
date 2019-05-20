@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.conf.urls import url
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -30,6 +30,9 @@ urlpatterns = [
 
     # Cast Blog
     url(r'^blogs/', include('cast.urls', namespace='cast')),
+
+    # Threadedcomments
+    re_path(r'^show/comments/', include('fluent_comments.urls')),
 
     # Fulltext Search
     url(r"^search/", include("watson.urls", namespace="watson")),

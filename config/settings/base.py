@@ -59,6 +59,8 @@ THIRD_PARTY_APPS = [
     'indieweb',  # indieauth etc
     'cast',  # blog/podcast package
     'filepond',  # uploading files via filepond
+    'threadedcomments',
+    'django_comments',
 ]
 
 # Apps specific for this project go here.

@@ -55,6 +55,10 @@ django-ckeditor
 # fulltext search
 django-watson
 
+# comments
+django-fluent-comments
+django-threadedcomments
+
 django-braces
 
 # rest

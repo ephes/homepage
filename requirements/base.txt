@@ -6,7 +6,7 @@ wheel==0.33.4
 
 
 # Bleeding edge Django
-django==2.2.1
+django==2.2.2
 
 # Configuration
 django-environ==0.4.5
@@ -68,8 +68,7 @@ django-filter
 djangorestframework
 
 # imagekit for resized images, thumbnails..
-# django-imagekit
-git+git://github.com/ephes/django-imagekit
+django-imagekit
 
 # pip
 pip

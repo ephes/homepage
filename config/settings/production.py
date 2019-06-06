@@ -109,7 +109,6 @@ class CustomS3Boto3Storage(S3Boto3Storage):
         https://github.com/matthewwithanm/django-imagekit/issues/391
         """
 
-        location = "media"
         file_overwrite = False
         default_acl = "public-read"
 

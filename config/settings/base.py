@@ -58,7 +58,10 @@ THIRD_PARTY_APPS = [
     'imagekit',
     'indieweb',  # indieauth etc
     'cast',  # blog/podcast package
+    'fluent_comments',
     'filepond',  # uploading files via filepond
+    'threadedcomments',
+    'django_comments',
 ]
 
 # Apps specific for this project go here.
@@ -311,3 +314,8 @@ REST_FRAMEWORK = {
 
 # django imagekit
 IMAGEKIT_DEFAULT_CACHEFILE_STRATEGY='imagekit.cachefiles.strategies.Optimistic'
+
+# Comments
+COMMENTS_APP = 'fluent_comments'
+FLUENT_COMMENTS_EXCLUDE_FIELDS = ('email', 'url', "title")
+CAST_COMMENTS_ENABLED = True

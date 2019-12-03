@@ -6,7 +6,7 @@ wheel==0.33.4
 
 
 # Bleeding edge Django
-django==2.2
+django==2.2.2
 
 # Configuration
 django-environ==0.4.5
@@ -44,7 +44,7 @@ django-redis==4.10.0
 redis>=2.10.5
 
 # Static and Media Storage
-boto3==1.9.151
+boto3==1.9.152
 django-storages==1.7.1
 
 # Your custom requirements go here
@@ -55,6 +55,10 @@ django-ckeditor
 # fulltext search
 django-watson
 
+# comments
+django-fluent-comments
+django-threadedcomments
+
 django-braces
 
 # rest
@@ -64,8 +68,7 @@ django-filter
 djangorestframework
 
 # imagekit for resized images, thumbnails..
-# django-imagekit
-git+git://github.com/ephes/django-imagekit
+django-imagekit
 
 # pip
 pip
@@ -73,6 +76,6 @@ pip
 # blogging package
 # django-cast
 django-filepond
-# git+git://github.com/ephes/django-cast.git#egg=django-cast
-django-cast
+git+git://github.com/ephes/django-cast.git#egg=django-cast
+# django-cast
 git+git://github.com/ephes/django-indieweb.git#egg=django-indieweb

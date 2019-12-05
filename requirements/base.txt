@@ -2,50 +2,51 @@
 # like Pillow and psycopg2
 # See http://bitly.com/wheel-building-fails-CPython-35
 # Verified bug on Python 3.5.1
-wheel==0.33.4
+wheel==0.33.6
 
 
 # Bleeding edge Django
-django==2.2.2
+django==3.0
 
 # Configuration
 django-environ==0.4.5
-whitenoise==4.1.2
+whitenoise==4.1.4
 
 
 # Forms
-django-crispy-forms==1.7.2
+django-crispy-forms==1.8.1
 
 # Models
-django-model-utils==3.1.2
+# django-model-utils==3.2.0
+git+git://github.com/jazzband/django-model-utils.git#egg=django-model-utils
 
 # Images
-Pillow==6.0.0
+Pillow==6.2.1
 
 # Password storage
-argon2-cffi==19.1.0
+argon2-cffi==19.2.0
 
 # For user registration, either via email or social
 # Well-built with regular release cycles!
-django-allauth==0.39.1
+django-allauth==0.40.0
 
 
 # Python-PostgreSQL Database Adapter
-psycopg2==2.8.2
+psycopg2==2.8.4
 
 # Unicode slugification
-python-slugify==3.0.2
+python-slugify==4.0.0
 
 # Time zones support
-pytz==2019.1
+pytz==2019.3
 
 # Redis support
 django-redis==4.10.0
 redis>=2.10.5
 
 # Static and Media Storage
-boto3==1.9.152
-django-storages==1.7.1
+boto3==1.10.30
+django-storages==1.8
 
 # Your custom requirements go here
 
@@ -53,13 +54,18 @@ django-storages==1.7.1
 django-ckeditor
 
 # fulltext search
-django-watson
+# django-watson
+git+git://github.com/ephes/django-watson.git#egg=django-watson
 
 # comments
+# git+git://github.com/ephes/django-contrib-comments.git#egg=django-contrib-comments
+# tag_parser is required by fluentcomments and has django 3.0 issues
+git+git://github.com/ephes/django-tag-parser.git#egg=django-tag-parser
 django-fluent-comments
 django-threadedcomments
 
-django-braces
+# django-braces
+git+git://github.com/ephes/django-braces.git#egg=django-braces
 
 # rest
 coreapi

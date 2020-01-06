@@ -53,7 +53,8 @@ django-storages==1.8
 django-ckeditor
 
 # fulltext search
-django-watson
+# django-watson
+git+git://github.com/ephes/django-watson.git#egg=django-watson	
 
 # comments
 django-tag-parser

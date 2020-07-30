@@ -15,8 +15,7 @@ services:
       - postgres
       - redis
     env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
+      - ./.env
     command: /start
     ports:
       - "127.0.0.1:8080:5000"
@@ -30,7 +29,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backup:/backups
     env_file:
-      - ./.envs/.production/.postgres
+      - ./.env
 
 #  caddy:
 #    build:

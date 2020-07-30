@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 volumes:
   postgres_data_local: {}
@@ -9,25 +9,25 @@ services:
     build:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
+    image: homepage_local_django
     depends_on:
       - postgres
     volumes:
-      - .:/app
-    environment:
-      - POSTGRES_USER=homepage
-      - POSTGRES_PASSWORD=homepage
-      - USE_DOCKER=yes
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
     ports:
       - "8000:8000"
-    command: /start.sh
+    command: /start
 
   postgres:
     build:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
+    image: homepage_production_postgres
     volumes:
-      - postgres_data_local:/var/lib/postgresql/data
-      - postgres_backup_local:/backups
-    environment:
-      - POSTGRES_USER=homepage
-      - POSTGRES_PASSWORD=homepage
+      - postgres_data_local:/var/lib/postgresql/data:z
+      - postgres_backup_local:/backups:z
+    env_file:
+      - ./.envs/.local/.postgres

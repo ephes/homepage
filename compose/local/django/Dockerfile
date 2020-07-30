@@ -2,39 +2,41 @@ FROM python:3.8-buster
 
 ENV PYTHONUNBUFFERED 1
 
-# being able to use apt
-RUN apt update
-RUN apt -y upgrade
+RUN apt update \
+  && apt -y upgrade \
+  # postgres client psql for python manage.py dbshell
+  && apt-get install -y postgresql-client \
+  # gettexts for compilemessages + fluent comments
+  && apt-get install -y gettext \
+  # ffmpeg/ffprobe for audio length etc
+  && apt-get install -y ffmpeg \
+  # bash for pipefail option
+  && apt -y install bash \
+  && chsh -s /bin/bash
 
-# requirements for ffmpeg (need it to get thumbnails for videos)
-RUN apt -y install ffmpeg
+# Install Poetry
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python \
+  && mkdir -p /etc/bash_completion.d \
+  && /root/.poetry/bin/poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# install graphviz to get dot for pygraphviz
-RUN apt -y install graphviz
+# Project Initialization
+COPY poetry.lock pyproject.toml /app/
+WORKDIR /app
+RUN /root/.poetry/bin/poetry config virtualenvs.create false \
+    && /root/.poetry/bin/poetry install --no-interaction --no-ansi --no-root
 
-# Requirements have to be pulled and installed here, otherwise caching won't work
-COPY ./requirements /requirements
-RUN pip install --upgrade pip
-RUN pip install -r /requirements/local.txt
+COPY ./compose/production/django/entrypoint /entrypoint
+RUN sed -i 's/\r//' /entrypoint
+RUN chmod +x /entrypoint
 
-COPY ./compose/production/django/entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r//' /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY ./compose/local/django/start /start
+RUN sed -i 's/\r//' /start
+RUN chmod +x /start
 
-COPY ./compose/local/django/start.sh /start.sh
-RUN sed -i 's/\r//' /start.sh
-RUN chmod +x /start.sh
-
-COPY ./compose/local/django/celery/worker/start.sh /start-celeryworker.sh
-RUN sed -i 's/\r//' /start-celeryworker.sh
-RUN chmod +x /start-celeryworker.sh
-
-COPY ./compose/local/django/celery/beat/start.sh /start-celerybeat.sh
-RUN sed -i 's/\r//' /start-celerybeat.sh
-RUN chmod +x /start-celerybeat.sh
+COPY ./compose/local/django/bashrc /root/.bashrc
 
 WORKDIR /app
 
 ENV DJANGO_READ_DOT_ENV_FILE=True
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint"]

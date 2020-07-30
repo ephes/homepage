@@ -1,4 +1,4 @@
-FROM postgres:12.1
+FROM postgres:12.3
 
 COPY ./compose/production/postgres/backup.sh /usr/local/bin/backup
 RUN chmod +x /usr/local/bin/backup

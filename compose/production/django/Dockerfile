@@ -2,39 +2,42 @@ FROM python:3.8-buster
 
 ENV PYTHONUNBUFFERED 1
 
-# being able to use apt
-RUN apt update
-RUN apt -y upgrade
+RUN apt-get update \
+  && apt -y upgrade \
+  # postgres client psql for python manage.py dbshell
+  && apt-get install -y postgresql-client \
+  # gettexts for compilemessages + fluent comments
+  && apt-get install -y gettext \
+  # ffmpeg/ffprobe for audio length etc
+  && apt-get install -y ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
 
-# requirements for ffmpeg (need it to get thumbnails for videos)
-RUN apt -y install ffmpeg
+# Add django user
+RUN addgroup --system django \
+    && adduser --system --ingroup django django
 
-RUN groupadd -r django \
-    && useradd -r -g django django
+# Install Poetry
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python \
+    && mkdir -p /etc/bash_completion.d \
+    && /root/.poetry/bin/poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Requirements have to be pulled and installed here, otherwise caching won't work
-COPY ./requirements /requirements
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r /requirements/production.txt \
-    && rm -rf /requirements
+# Project Initialization
+COPY poetry.lock pyproject.toml /app/
+WORKDIR /app
+RUN /root/.poetry/bin/poetry config virtualenvs.create false \
+    && /root/.poetry/bin/poetry install --no-interaction --no-ansi --no-root --no-dev
 
-COPY ./compose/production/django/gunicorn.sh /gunicorn.sh
-RUN sed -i 's/\r//' /gunicorn.sh
-RUN chmod +x /gunicorn.sh
-RUN chown django /gunicorn.sh
+COPY ./compose/production/django/entrypoint /entrypoint
+RUN sed -i 's/\r//' /entrypoint
+RUN chmod +x /entrypoint
+RUN chown django /entrypoint
 
-COPY ./compose/production/django/entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r//' /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-RUN chown django /entrypoint.sh
+COPY ./compose/production/django/start /start
+RUN sed -i 's/\r//' /start
+RUN chmod +x /start
+RUN chown django /start
 
-COPY ./compose/production/django/celery/worker/start.sh /start-celeryworker.sh
-RUN sed -i 's/\r//' /start-celeryworker.sh
-RUN chmod +x /start-celeryworker.sh
-
-COPY ./compose/production/django/celery/beat/start.sh /start-celerybeat.sh
-RUN sed -i 's/\r//' /start-celerybeat.sh
-RUN chmod +x /start-celerybeat.sh
+COPY ./compose/production/django/bashrc /home/django/.bashrc
 
 COPY . /app
 
@@ -44,4 +47,4 @@ USER django
 
 WORKDIR /app
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint"]

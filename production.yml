@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 volumes:
   postgres_data: {}
@@ -10,11 +10,14 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
+    image: homepage_production_django
     depends_on:
       - postgres
       - redis
-    env_file: .env
-    command: /gunicorn.sh
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
+    command: /start
     ports:
       - "127.0.0.1:8080:5000"
 
@@ -22,10 +25,12 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
+    image: homepage_production_postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backup:/backups
-    env_file: .env
+    env_file:
+      - ./.envs/.production/.postgres
 
 #  caddy:
 #    build:
@@ -41,5 +46,5 @@ services:
 #      - "0.0.0.0:4444:443"
 
   redis:
-    image: redis:3.0
+    image: redis:3.2
 

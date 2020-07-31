@@ -31,7 +31,7 @@ sftp.get(remote_path, 'backups/{}'.format(file_name))
 # recreate local docker environment from production
 
 # restore backup dump to database
-docker_id_cmd = 'docker ps | grep postgres | cut -d " " -f 1'
+docker_id_cmd = 'docker ps | grep homepage_production_postgres | cut -d " " -f 1'
 postgres_id = (check_output(docker_id_cmd, shell=True)
                .decode('utf-8')
                .replace("\n", ""))

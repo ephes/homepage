@@ -27,6 +27,7 @@ WORKDIR /app
 RUN /root/.poetry/bin/poetry config virtualenvs.create false \
     && /root/.poetry/bin/poetry install --no-interaction --no-ansi --no-root --no-dev
 
+# django-imagekit workaround (exception on save)
 RUN python -m pip uninstall -y django-imagekit \
     && python -m pip install git+https://github.com/ephes/django-imagekit
 

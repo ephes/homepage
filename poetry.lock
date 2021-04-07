@@ -416,7 +416,7 @@ python-slugify = "^4.0.0"
 type = "git"
 url = "https://github.com/ephes/django-cast"
 reference = "master"
-resolved_reference = "7b0ebfdc04c684f686d342555e0b2e0ad6d65fec"
+resolved_reference = "b41fd94b6cbd6abfe20799825f9c48fecc641de9"
 
 [[package]]
 name = "django-ckeditor"
@@ -529,6 +529,24 @@ type = "git"
 url = "https://github.com/ephes/django-fluent-comments"
 reference = "master"
 resolved_reference = "109b9896cdc1c32b149a27e7ed254aef09c1b07e"
+
+[[package]]
+name = "django-imagekit"
+version = "4.0.2"
+description = "Automated image processing for Django models."
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.dependencies]
+django-appconf = ">=0.5"
+pilkit = ">=0.2.0"
+six = "*"
+
+[package.extras]
+async = ["django-celery (>=3.0)"]
+async_rq = ["django-rq (>=0.6.0)"]
 
 [package.source]
 type = "git"

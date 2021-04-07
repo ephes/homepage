@@ -538,6 +538,7 @@ description = "Automated image processing for Django models."
 category = "main"
 optional = false
 python-versions = "*"
+develop = false
 
 [package.dependencies]
 django-appconf = ">=0.5"
@@ -547,6 +548,12 @@ six = "*"
 [package.extras]
 async = ["django-celery (>=3.0)"]
 async_rq = ["django-rq (>=0.6.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/ephes/django-imagekit"
+reference = "master"
+resolved_reference = "097999f3cf2db7bccf3640273e2180f7de7a4111"
 
 [[package]]
 name = "django-indieweb"
@@ -1997,7 +2004,7 @@ notebook = ">=4.4.1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "8f4cb00306b1cc63d242b36ba3bcaa21c60362858b5f34c04afcf38f0e8858b4"
+content-hash = "f5b7b1529ec3f62736f036fcea26a76cc6e28f45e5a81d2297dc13c671513224"
 
 [metadata.files]
 alabaster = [
@@ -2278,10 +2285,7 @@ django-filter = [
     {file = "django_filter-2.4.0-py3-none-any.whl", hash = "sha256:e00d32cebdb3d54273c48f4f878f898dced8d5dfaad009438fe61ebdf535ace1"},
 ]
 django-fluent-comments = []
-django-imagekit = [
-    {file = "django-imagekit-4.0.2.tar.gz", hash = "sha256:6ec0afb77cdf52cd453c9fc2c10ef350d111edfd6ce53c5977aa8a0e22cee00c"},
-    {file = "django_imagekit-4.0.2-py2.py3-none-any.whl", hash = "sha256:304c3379f6a5cac387e47ace11195a603ad3cb01e3e951b45489824d25b00359"},
-]
+django-imagekit = []
 django-indieweb = [
     {file = "django-indieweb-0.0.5.tar.gz", hash = "sha256:38642f436fb481352d76b3cfed50fc12538cd4907945094e2f2a7aa80cc4d2b9"},
     {file = "django_indieweb-0.0.5-py2.py3-none-any.whl", hash = "sha256:6122f065f9cebc9b80c1eae39afd684be973a4c2cc9b71a4b01ed05f4b177c2f"},

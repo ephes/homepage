@@ -30,7 +30,7 @@ paramiko = "^2.7.1"
 python-dotenv = "^0.17"
 boto3 = "^1.14.21"
 raven = "^6.10.0"
-django-anymail = {extras = ["mailgun"], version = "^7.1.0"}
+django-anymail = {extras = ["mailgun"], version = "*"}
 whitenoise = "^5.1.0"
 cyberpandas = "^1.1.1"
 django-fluent-comments = {git = "https://github.com/ephes/django-fluent-comments"}
@@ -40,21 +40,21 @@ django-cast = {git = "https://github.com/ephes/django-cast"}
 django-indieweb = "^0.0.5"
 
 [tool.poetry.dev-dependencies]
-Werkzeug = "^0.16"
-pytest = "<5.4"
-pytest-sugar = "^0.9"
-factory-boy = "^2"
-flake8 = "^3"
-coverage = "^5"
+Werkzeug = "*"
+pytest = "*"
+pytest-sugar = "^*"
+factory-boy = "*"
+flake8 = "*"
+coverage = "*"
 ipdb = "^0.12"
-django-extensions = "^3"
-django-debug-toolbar = "^2.2"
-Sphinx = "^2"
+django-extensions = "*"
+django-debug-toolbar = "*"
+Sphinx = "*"
 jupyter = "^1"
 ipython = "^7"
-pytest-django = "^3"
-black = "19.10b0"
-sphinx_rtd_theme = "^0.4"
+pytest-django = "*"
+black = "*"
+sphinx_rtd_theme = "*"
 django-test-plus = "^1.4.0"
 
 [tool.poetry.scripts]

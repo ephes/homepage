@@ -323,3 +323,6 @@ CAST_COMMENTS_ENABLED = True
 
 # Default auto primary key field (Django 3.2)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Cast default api page size
+CAST_API_PAGE_SIZE=100

@@ -7,11 +7,15 @@ postgres_id = (check_output(docker_id_cmd, shell=True)
 print(postgres_id)
 
 backup_cmd = 'docker-compose -f production.yml run postgres backup | cut -d " " -f 5'
-backup_name = (check_output(backup_cmd, shell=True)
+backup_lines = (check_output(backup_cmd, shell=True)
                .decode('utf-8')
-               .replace("\n", ""))
-# there are weird escape sequences in backup_name
-backup_name = "".join([c for c in backup_name if c.isalnum() or c in set(['.', '_'])])
+               .split("\n"))
+backup_name = None
+for line in backup_lines:
+    if "backup" in line:
+        # there are weird escape sequences in backup_name
+        backup_name = "".join([c for c in line if c.isalnum() or c in set(['.', '_'])])
+assert backup_name is not None
 print(backup_name)
 
 copy_cmd = 'docker cp {}:/backups/{} backups'.format(

@@ -18,7 +18,7 @@ APPS_DIR = ROOT_DIR.path("homepage")
 env = environ.Env()
 
 # .env file, should load only in development environment
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
 
 if READ_DOT_ENV_FILE:
     # Operating System Environment variables have precedence over variables defined in the .env file,
@@ -288,7 +288,7 @@ AUTOSLUG_SLUGIFY_FUNCTION = "slugify.slugify"
 
 
 # Location of root django.contrib.admin URL, use {% url 'admin:index' %}
-ADMIN_URL = r"^admin/"
+ADMIN_URL = "admin/"
 
 # Your common stuff: Below this line define 3rd party library settings
 # ------------------------------------------------------------------------------

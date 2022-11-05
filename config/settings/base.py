@@ -59,6 +59,20 @@ THIRD_PARTY_APPS = [
     'filepond',  # uploading files via filepond
     'threadedcomments',
     'django_comments',
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail.core",
+    "wagtail_srcset",
+    "modelcluster",
+    "taggit",
 ]
 
 # Apps specific for this project go here.
@@ -81,6 +95,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
 ]
 
 # MIGRATIONS CONFIGURATION
@@ -307,3 +322,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Cast default api page size
 CAST_API_PAGE_SIZE=100
+
+# Wagtail settings
+
+WAGTAIL_SITE_NAME = "homepage"
+WAGTAILIMAGES_MAX_UPLOAD_SIZE = 30 * 1024 * 1024
+WAGTAILADMIN_BASE_URL = "cms/"

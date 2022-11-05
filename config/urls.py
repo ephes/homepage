@@ -7,6 +7,10 @@ from django.views.generic import TemplateView
 from django.views import defaults as default_views
 from django.http import HttpResponse
 
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.core import urls as wagtail_urls
+from wagtail.documents import urls as wagtaildocs_urls
+
 from rest_framework.documentation import include_docs_urls
 from rest_framework.authtoken import views as authtokenviews
 
@@ -24,9 +28,6 @@ urlpatterns = [
     url(r'^accounts/', include('allauth.urls')),
 
     # Your stuff: custom urls includes go here
-
-    # CKEditor upload
-    url(r'^ckeditor/', include('ckeditor_uploader.urls')),
 
     # Cast Blog
     url(r'^blogs/', include('cast.urls', namespace='cast')),
@@ -47,6 +48,11 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='My Blog API service')),
     # Uploads
     path("uploads/", include("filepond.urls", namespace="filepond")),
+
+    # Wagtail
+    path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+    path("", include(wagtail_urls)),  # default is wagtail
 
     # robots.txt
     url(r'^robots.txt',

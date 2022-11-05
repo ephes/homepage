@@ -49,8 +49,6 @@ THIRD_PARTY_APPS = [
     'allauth',  # registration
     'allauth.account',  # registration
     'allauth.socialaccount',  # registration
-    'ckeditor',  # editor
-    'ckeditor_uploader',  # file upload for ckeditor
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',  # filter posts
@@ -285,19 +283,6 @@ ADMIN_URL = r'^admin/'
 
 # Your common stuff: Below this line define 3rd party library settings
 # ------------------------------------------------------------------------------
-
-# CKEditor
-CKEDITOR_UPLOAD_PATH = 'uploads/ckeditor/'
-CKEDITOR_IMAGE_BACKEND = 'pillow'
-AWS_QUERYSTRING_AUTH = False
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-CKEDITOR_CONFIGS = {
-  'default': {
-    'removePlugins': 'stylesheetparser',
-    'allowedContent': True,
-    'enterMode': 2,
-  },
-}
 
 # REST
 REST_FRAMEWORK = {

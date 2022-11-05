@@ -316,3 +316,6 @@ backups/
 
 # PyCharm
 .idea
+
+# Databases
+databases

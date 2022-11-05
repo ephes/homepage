@@ -53,7 +53,6 @@ THIRD_PARTY_APPS = [
     'rest_framework.authtoken',
     'django_filters',  # filter posts
     'watson',  # fulltext search
-    'imagekit',
     'indieweb',  # indieauth etc
     'cast',  # blog/podcast package
     'fluent_comments',
@@ -297,9 +296,6 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
-
-# django imagekit
-IMAGEKIT_DEFAULT_CACHEFILE_STRATEGY='imagekit.cachefiles.strategies.Optimistic'
 
 # Comments
 COMMENTS_APP = 'fluent_comments'

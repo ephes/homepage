@@ -15,15 +15,15 @@
     <![endif]-->
 
     {% block css %}
-    <!-- Latest compiled and minified Bootstrap 4 Alpha 4 CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+      <!-- Latest compiled and minified Bootstrap 4 Alpha 4 CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
 
-    <!-- Your stuff: Third-party CSS libraries go here -->
-    <link href="{% static 'css/cast.css' %}" rel="stylesheet">
-    
-    <!-- This file stores project-specific CSS -->
-    <link href="{% static 'css/project.css' %}" rel="stylesheet">
-    
+      <!-- Your stuff: Third-party CSS libraries go here -->
+      <link href="{% static 'css/cast.css' %}" rel="stylesheet">
+
+      <!-- This file stores project-specific CSS -->
+      <link href="{% static 'css/project.css' %}" rel="stylesheet">
+
     {% endblock %}
 
   </head>
@@ -40,7 +40,8 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'cast:post_list' 'ephes_blog' %}">Jochens Blog</a>
+              Post List FIXME
+              {#                <a class="nav-link" href="{% url 'cast:post_list' 'ephes_blog' %}">Jochens Blog</a>#}
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'about' %}">About</a>
@@ -83,9 +84,9 @@
     <div class="container">
 
       {% if messages %}
-          {% for message in messages %}
-              <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
-          {% endfor %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+        {% endfor %}
       {% endif %}
 
       {% block content %}
@@ -107,12 +108,11 @@
       <!-- Your stuff: Third-party javascript libraries go here -->
 
       <!-- place project specific Javascript in this file -->
-      
+
       <script src="{% static 'js/project.js' %}"></script>
       {% block template_script %}{% endblock template_script %}
-      
+
 
     {% endblock javascript %}
   </body>
 </html>
- 

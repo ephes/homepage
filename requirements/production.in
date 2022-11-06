@@ -1,3 +1,4 @@
+argon2-cffi
 boto3
 cyberpandas
 django-anymail[mailgun]

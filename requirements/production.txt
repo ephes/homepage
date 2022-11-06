@@ -6,6 +6,10 @@
 #
 anyascii==0.3.1
     # via wagtail
+argon2-cffi==21.3.0
+    # via -r requirements/production.in
+argon2-cffi-bindings==21.2.0
+    # via argon2-cffi
 asgiref==3.5.2
     # via django
 beautifulsoup4==4.11.1
@@ -19,7 +23,9 @@ botocore==1.29.3
 certifi==2022.9.24
     # via requests
 cffi==1.15.1
-    # via cryptography
+    # via
+    #   argon2-cffi-bindings
+    #   cryptography
 charset-normalizer==2.1.1
     # via requests
 click==8.1.3

@@ -319,3 +319,6 @@ backups/
 
 # Databases
 databases
+
+# vault password
+.vault_password

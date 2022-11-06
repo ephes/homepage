@@ -12,6 +12,7 @@ matplotlib
 pandas
 psycopg2
 python-dotenv
+raven
 requests
 typer
 whitenoise

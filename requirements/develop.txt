@@ -449,6 +449,8 @@ qtconsole==5.4.0
     # via jupyter
 qtpy==2.2.1
     # via qtconsole
+raven==6.10.0
+    # via -r requirements/production.in
 requests==2.28.1
     # via
     #   -r requirements/production.in

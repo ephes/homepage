@@ -1,3 +1,4 @@
+boto3
 cyberpandas
 django-anymail[mailgun]
 django-extensions

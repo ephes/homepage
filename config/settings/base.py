@@ -320,3 +320,24 @@ CAST_API_PAGE_SIZE = 100
 WAGTAIL_SITE_NAME = "homepage"
 WAGTAILIMAGES_MAX_UPLOAD_SIZE = 30 * 1024 * 1024
 WAGTAILADMIN_BASE_URL = "cms/"
+
+# Jupyter
+PATH_TO_NOTEBOOK_DIR = "notebooks"
+try:
+    import jupyterlab  # noqa
+
+    notebook_default_url = "/lab"  # Using JupyterLab
+except ImportError:
+    notebook_default_url = "/tree"  # Using Jupyter
+
+NOTEBOOK_ARGUMENTS = [
+    "--ip",
+    "127.0.0.1",
+    "--port",
+    "8888",
+    "--notebook-dir",
+    PATH_TO_NOTEBOOK_DIR,
+    "--NotebookApp.default_url",
+    notebook_default_url,
+]
+IPYTHON_KERNEL_DISPLAY_NAME = "Django Kernel"

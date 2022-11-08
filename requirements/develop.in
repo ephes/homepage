@@ -4,7 +4,7 @@ factory-boy
 flake8
 django-debug-toolbar
 django-test-plus
-jupyter
+jupyterlab
 pytest
 pytest-sugar
 pytest-django

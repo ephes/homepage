@@ -5,6 +5,7 @@ flake8
 django-debug-toolbar
 django-test-plus
 jupyterlab
+nb_black
 pytest
 pytest-sugar
 pytest-django

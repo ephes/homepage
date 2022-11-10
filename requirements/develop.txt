@@ -31,7 +31,9 @@ attrs==22.1.0
     #   jsonschema
     #   pytest
 babel==2.11.0
-    # via sphinx
+    # via
+    #   jupyterlab-server
+    #   sphinx
 backcall==0.2.0
     # via ipython
 beautifulsoup4==4.11.1
@@ -39,12 +41,14 @@ beautifulsoup4==4.11.1
     #   nbconvert
     #   wagtail
 black==22.10.0
-    # via -r requirements/develop.in
+    # via
+    #   -r requirements/develop.in
+    #   nb-black
 bleach==5.0.1
     # via nbconvert
-boto3==1.26.3
+boto3==1.26.7
     # via -r requirements/production.in
-botocore==1.29.3
+botocore==1.29.7
     # via
     #   boto3
     #   s3transfer
@@ -180,7 +184,7 @@ executing==1.2.0
     # via stack-data
 factory-boy==3.2.1
     # via -r requirements/develop.in
-faker==15.2.0
+faker==15.3.1
     # via factory-boy
 fastjsonschema==2.16.2
     # via nbformat
@@ -202,26 +206,19 @@ imagesize==1.4.1
     # via sphinx
 iniconfig==1.1.1
     # via pytest
-ipykernel==6.17.0
+ipykernel==6.17.1
     # via
-    #   ipywidgets
-    #   jupyter
-    #   jupyter-console
     #   nbclassic
     #   notebook
-    #   qtconsole
 ipython==8.6.0
     # via
     #   ipykernel
-    #   ipywidgets
-    #   jupyter-console
+    #   jupyterlab
+    #   nb-black
 ipython-genutils==0.2.0
     # via
     #   nbclassic
     #   notebook
-    #   qtconsole
-ipywidgets==8.0.2
-    # via jupyter
 itypes==1.2.0
     # via coreapi
 jedi==0.18.1
@@ -230,6 +227,8 @@ jinja2==3.1.2
     # via
     #   coreschema
     #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
     #   nbclassic
     #   nbconvert
     #   notebook
@@ -238,38 +237,40 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+json5==0.9.10
+    # via jupyterlab-server
 jsonschema==4.17.0
-    # via nbformat
-jupyter==1.0.0
-    # via -r requirements/develop.in
-jupyter-client==7.4.4
+    # via
+    #   jupyterlab-server
+    #   nbformat
+jupyter-client==7.4.5
     # via
     #   ipykernel
-    #   jupyter-console
     #   jupyter-server
     #   nbclassic
     #   nbclient
     #   notebook
-    #   qtconsole
-jupyter-console==6.4.4
-    # via jupyter
-jupyter-core==4.11.2
+jupyter-core==5.0.0
     # via
     #   jupyter-client
     #   jupyter-server
+    #   jupyterlab
     #   nbclassic
     #   nbconvert
     #   nbformat
     #   notebook
-    #   qtconsole
-jupyter-server==1.21.0
+jupyter-server==1.23.1
     # via
+    #   jupyterlab
+    #   jupyterlab-server
     #   nbclassic
     #   notebook-shim
+jupyterlab==3.5.0
+    # via -r requirements/develop.in
 jupyterlab-pygments==0.2.2
     # via nbconvert
-jupyterlab-widgets==3.0.3
-    # via ipywidgets
+jupyterlab-server==2.16.2
+    # via jupyterlab
 kiwisolver==1.4.4
     # via matplotlib
 l18n==2021.3
@@ -292,13 +293,16 @@ mistune==2.0.4
     # via nbconvert
 mypy-extensions==0.4.3
     # via black
+nb-black==1.0.7
+    # via -r requirements/develop.in
 nbclassic==0.4.8
-    # via notebook
+    # via
+    #   jupyterlab
+    #   notebook
 nbclient==0.7.0
     # via nbconvert
-nbconvert==7.2.3
+nbconvert==7.2.4
     # via
-    #   jupyter
     #   jupyter-server
     #   nbclassic
     #   notebook
@@ -317,7 +321,7 @@ nest-asyncio==1.5.6
     #   nbclient
     #   notebook
 notebook==6.5.2
-    # via jupyter
+    # via jupyterlab
 notebook-shim==0.2.2
     # via nbclassic
 numpy==1.23.4
@@ -333,11 +337,12 @@ packaging==21.3
     # via
     #   ipykernel
     #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
     #   matplotlib
     #   nbconvert
     #   pytest
     #   pytest-sugar
-    #   qtpy
     #   sphinx
 pandas==1.5.1
     # via
@@ -357,8 +362,10 @@ pillow==9.3.0
     # via
     #   matplotlib
     #   wagtail
-platformdirs==2.5.2
-    # via black
+platformdirs==2.5.3
+    # via
+    #   black
+    #   jupyter-core
 plotly==5.11.0
     # via django-cast
 pluggy==1.0.0
@@ -369,10 +376,8 @@ prometheus-client==0.15.0
     #   nbclassic
     #   notebook
 prompt-toolkit==3.0.32
-    # via
-    #   ipython
-    #   jupyter-console
-psutil==5.9.3
+    # via ipython
+psutil==5.9.4
     # via ipykernel
 psycopg2==2.9.5
     # via -r requirements/production.in
@@ -391,9 +396,7 @@ pyflakes==2.5.0
 pygments==2.13.0
     # via
     #   ipython
-    #   jupyter-console
     #   nbconvert
-    #   qtconsole
     #   rich
     #   sphinx
 pyjwt[crypto]==2.6.0
@@ -445,11 +448,6 @@ pyzmq==24.0.1
     #   jupyter-server
     #   nbclassic
     #   notebook
-    #   qtconsole
-qtconsole==5.4.0
-    # via jupyter
-qtpy==2.2.1
-    # via qtconsole
 raven==6.10.0
     # via -r requirements/production.in
 requests==2.28.1
@@ -458,6 +456,7 @@ requests==2.28.1
     #   coreapi
     #   django-allauth
     #   django-anymail
+    #   jupyterlab-server
     #   python-akismet
     #   requests-oauthlib
     #   sphinx
@@ -526,11 +525,14 @@ text-unidecode==1.3
     # via python-slugify
 tinycss2==1.2.1
     # via nbconvert
+tomli==2.0.1
+    # via jupyterlab
 tornado==6.2
     # via
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
+    #   jupyterlab
     #   nbclassic
     #   notebook
     #   terminado
@@ -538,7 +540,6 @@ traitlets==5.5.0
     # via
     #   ipykernel
     #   ipython
-    #   ipywidgets
     #   jupyter-client
     #   jupyter-core
     #   jupyter-server
@@ -548,7 +549,6 @@ traitlets==5.5.0
     #   nbconvert
     #   nbformat
     #   notebook
-    #   qtconsole
 typer==0.7.0
     # via
     #   -r requirements/develop.in
@@ -576,8 +576,6 @@ websocket-client==1.4.2
     # via jupyter-server
 whitenoise==6.2.0
     # via -r requirements/production.in
-widgetsnbextension==4.0.3
-    # via ipywidgets
 willow==1.4.1
     # via wagtail
 

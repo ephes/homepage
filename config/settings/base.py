@@ -53,7 +53,6 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # shell_plus etc
     "watson",  # fulltext search
     "indieweb",  # indieauth etc
-    "cast",  # blog/podcast package
     "fluent_comments",
     "filepond",  # uploading files via filepond
     "threadedcomments",
@@ -72,6 +71,7 @@ THIRD_PARTY_APPS = [
     "wagtail_srcset",
     "modelcluster",
     "taggit",
+    "cast",  # blog/podcast package
 ]
 
 # Apps specific for this project go here.

@@ -130,6 +130,7 @@ MANAGERS = ADMINS
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
     "default": env.db("DATABASE_URL", default="postgres:///homepage"),
+    "legacy": env.db("LEGACY_DATABASE_URL", default="postgres:///homepage_legacy"),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
@@ -341,3 +342,6 @@ NOTEBOOK_ARGUMENTS = [
     notebook_default_url,
 ]
 IPYTHON_KERNEL_DISPLAY_NAME = "Django Kernel"
+
+# Disable wagtail post_delete_file_cleanup signal to avoid deleting files from S3
+DELETE_WAGTAIL_IMAGES = False

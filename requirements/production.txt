@@ -14,9 +14,9 @@ asgiref==3.5.2
     # via django
 beautifulsoup4==4.11.1
     # via wagtail
-boto3==1.26.7
+boto3==1.26.8
     # via -r requirements/production.in
-botocore==1.29.7
+botocore==1.29.8
     # via
     #   boto3
     #   s3transfer
@@ -247,7 +247,7 @@ urllib3==1.26.12
     # via
     #   botocore
     #   requests
-wagtail==4.1
+wagtail==4.1.1
     # via
     #   django-cast
     #   wagtail-srcset

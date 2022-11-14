@@ -12,10 +12,8 @@ from wagtail.core import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 urlpatterns = [
-    path("home/", TemplateView.as_view(template_name="pages/home.html"), name="home"),
-    path(
-        "about/", TemplateView.as_view(template_name="pages/about.html"), name="about"
-    ),
+    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
     path(
         "jochen/",
         TemplateView.as_view(template_name="pages/jochen.html"),
@@ -33,7 +31,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     # Cast Blog
-    path("blogs/", include("cast.urls", namespace="cast")),
+    # path("blogs/", include("cast.urls", namespace="cast")),
     # Threadedcomments
     re_path(r"^show/comments/", include("fluent_comments.urls")),
     # Fulltext Search
@@ -50,13 +48,11 @@ urlpatterns = [
     # Wagtail
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
-    path("", include(wagtail_urls)),  # default is wagtail
+    path("blogs/", include(wagtail_urls)),  # default is wagtail
     # robots.txt
     re_path(
         r"^robots.txt",
-        lambda x: HttpResponse(
-            "User-Agent: *\nDisallow: /*claas", content_type="text/plain"
-        ),
+        lambda x: HttpResponse("User-Agent: *\nDisallow: /*claas", content_type="text/plain"),
         name="robots_file",
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

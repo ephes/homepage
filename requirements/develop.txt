@@ -46,9 +46,9 @@ black==22.10.0
     #   nb-black
 bleach==5.0.1
     # via nbconvert
-boto3==1.26.10
+boto3==1.26.11
     # via -r requirements/production.in
-botocore==1.29.10
+botocore==1.29.11
     # via
     #   boto3
     #   s3transfer
@@ -243,7 +243,7 @@ jsonschema==4.17.0
     # via
     #   jupyterlab-server
     #   nbformat
-jupyter-client==7.4.6
+jupyter-client==7.4.7
     # via
     #   ipykernel
     #   jupyter-server

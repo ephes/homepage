@@ -85,6 +85,12 @@
         owner: "{{ username }}"
         mode: "0755"
 
+    - name: Create directory django cache
+      file:
+        path: "{{ django_cache_location }}"
+        state: directory
+        owner: "{{ username }}"
+
     - name: Run django migrations
       shell: "{{ python }} manage.py migrate"
       args:

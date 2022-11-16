@@ -206,6 +206,12 @@ DATABASES["default"] = env.db("DATABASE_URL")
 #    }
 # }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": env("DJANGO_CACHE_LOCATION"),
+    }
+}
 
 # Sentry Configuration
 SENTRY_DSN = env("DJANGO_SENTRY_DSN")

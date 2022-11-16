@@ -30,8 +30,6 @@ urlpatterns = [
     path("users/", include("homepage.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    # Cast Blog
-    # path("blogs/", include("cast.urls", namespace="cast")),
     # Threadedcomments
     re_path(r"^show/comments/", include("fluent_comments.urls")),
     # Fulltext Search
@@ -49,6 +47,8 @@ urlpatterns = [
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("blogs/", include(wagtail_urls)),  # default is wagtail
+    # Cast Blog
+    path("blogs/", include("cast.urls", namespace="cast")),
     # robots.txt
     re_path(
         r"^robots.txt",

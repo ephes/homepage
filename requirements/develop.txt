@@ -46,9 +46,9 @@ black==22.10.0
     #   nb-black
 bleach==5.0.1
     # via nbconvert
-boto3==1.26.8
+boto3==1.26.10
     # via -r requirements/production.in
-botocore==1.29.8
+botocore==1.29.10
     # via
     #   boto3
     #   s3transfer
@@ -141,7 +141,7 @@ django-fluent-comments==3.0
     # via django-cast
 django-indieweb==0.0.6
     # via -r requirements/production.in
-django-model-utils==4.2.0
+django-model-utils==4.3.1
     # via
     #   django-cast
     #   django-filepond
@@ -184,7 +184,7 @@ executing==1.2.0
     # via stack-data
 factory-boy==3.2.1
     # via -r requirements/develop.in
-faker==15.3.1
+faker==15.3.2
     # via factory-boy
 fastjsonschema==2.16.2
     # via nbformat
@@ -243,7 +243,7 @@ jsonschema==4.17.0
     # via
     #   jupyterlab-server
     #   nbformat
-jupyter-client==7.4.5
+jupyter-client==7.4.6
     # via
     #   ipykernel
     #   jupyter-server
@@ -259,7 +259,7 @@ jupyter-core==5.0.0
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-server==1.23.1
+jupyter-server==1.23.2
     # via
     #   jupyterlab
     #   jupyterlab-server
@@ -301,7 +301,7 @@ nbclassic==0.4.8
     #   notebook
 nbclient==0.7.0
     # via nbconvert
-nbconvert==7.2.4
+nbconvert==7.2.5
     # via
     #   jupyter-server
     #   nbclassic

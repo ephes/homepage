@@ -345,3 +345,6 @@ IPYTHON_KERNEL_DISPLAY_NAME = "Django Kernel"
 
 # Disable wagtail post_delete_file_cleanup signal to avoid deleting files from S3
 DELETE_WAGTAIL_IMAGES = False
+
+# wagtail_srcset settings
+WAGTAILIMAGES_JPEG_QUALITY = 60

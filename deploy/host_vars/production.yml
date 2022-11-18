@@ -1,0 +1,5 @@
+fqdn: "wersdoerfer.de"
+deploy_environment: "production"
+username: "{{ project_name }}_new"
+postgres_backup: "{{ home_path }}/site/backups/db.production.psql.gz"
+traefik_host_rule: "Host(`wersdoerfer.de`) || Host(`www.wersdoerfer.de`)"

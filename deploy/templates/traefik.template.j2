@@ -1,7 +1,7 @@
 http:
   routers:
     {{ fqdn }}-router:
-      rule: "Host(`{{ fqdn }}`)"
+      rule: "{{ traefik_host_rule }}"
 
       entryPoints:
         - web
@@ -11,13 +11,15 @@ http:
       service: {{ fqdn }}
 
     {{ fqdn }}-secure-router:
-      rule: "Host(`{{ fqdn }}`)"
+      rule: "{{ traefik_host_rule }}"
 
       entryPoints:
         - web-secure
       middlewares:
         - csrf
         - sslHeaders
+        - test-compress
+        - redirect-www
       service: {{ fqdn }}
       tls:
         certResolver: letsencrypt
@@ -35,6 +37,13 @@ http:
         customRequestHeaders:
           X-Forwarded-Proto: "https"
           X-Forwarded-Port: "443"
+    test-compress:
+      compress: {}
+    redirect-www:
+      redirectRegex:
+        regex: "^https?://www\\.(.+)"
+        replacement: "https://${1}"
+        permanent: false
 
   services:
     {{ fqdn }}:

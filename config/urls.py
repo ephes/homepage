@@ -37,7 +37,7 @@ urlpatterns = [
     # Indieweb
     re_path(r"^indieweb/", include("indieweb.urls")),
     # rest
-    re_path(r"^api/api-token-auth/", authtokenviews.obtain_auth_token),
+    path("api/api-token-auth/", authtokenviews.obtain_auth_token),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     re_path(r"^api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     re_path(r"^docs/", include_docs_urls(title="My Blog API service")),

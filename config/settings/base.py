@@ -321,6 +321,28 @@ WAGTAIL_SITE_NAME = "homepage"
 WAGTAILIMAGES_MAX_UPLOAD_SIZE = 30 * 1024 * 1024
 WAGTAILADMIN_BASE_URL = "cms/"
 
+WAGTAILADMIN_RICH_TEXT_EDITORS = {
+    "default": {
+        "WIDGET": "wagtail.admin.rich_text.DraftailRichTextArea",
+        "OPTIONS": {
+            "features": [
+                "bold",
+                "italic",
+                "h2",
+                "h3",
+                "h4",
+                "ol",
+                "ul",
+                "hr",
+                "blockquote",
+                "link",
+                "document-link",
+                "code",
+            ]
+        },
+    },
+}
+
 # Jupyter
 PATH_TO_NOTEBOOK_DIR = "notebooks"
 try:

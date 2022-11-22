@@ -49,6 +49,8 @@ urlpatterns = [
     path("blogs/", include(wagtail_urls)),  # default is wagtail
     # Cast Blog
     path("blogs/", include("cast.urls", namespace="cast")),
+    # Fediverse redirects etc.
+    path("", include("homepage.fedi.urls", namespace="fedi")),
     # robots.txt
     re_path(
         r"^robots.txt",

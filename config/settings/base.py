@@ -77,6 +77,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     # custom users app
     "homepage.users.apps.UsersConfig",
+    "homepage.fedi.apps.FediConfig",
     # Your stuff: custom apps go here
 ]
 

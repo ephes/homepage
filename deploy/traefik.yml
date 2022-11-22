@@ -1,4 +1,4 @@
-- hosts: production
+- hosts: all
   pre_tasks:
     - include_vars: secrets.yml
   roles:

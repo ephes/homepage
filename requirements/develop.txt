@@ -46,9 +46,9 @@ black==22.10.0
     #   nb-black
 bleach==5.0.1
     # via nbconvert
-boto3==1.26.11
+boto3==1.26.15
     # via -r requirements/production.in
-botocore==1.29.11
+botocore==1.29.15
     # via
     #   boto3
     #   s3transfer
@@ -150,13 +150,15 @@ django-modelcluster==6.0
     # via wagtail
 django-permissionedforms==0.1
     # via wagtail
+django-proxy==1.2.1
+    # via -r requirements/production.in
 django-storages==1.13.1
     # via -r requirements/production.in
 django-tag-parser==3.2
     # via
     #   django-cast
     #   django-fluent-comments
-django-taggit==3.0.0
+django-taggit==3.1.0
     # via wagtail
 django-test-plus==2.2.1
     # via -r requirements/develop.in
@@ -184,7 +186,7 @@ executing==1.2.0
     # via stack-data
 factory-boy==3.2.1
     # via -r requirements/develop.in
-faker==15.3.2
+faker==15.3.3
     # via factory-boy
 fastjsonschema==2.16.2
     # via nbformat
@@ -221,7 +223,7 @@ ipython-genutils==0.2.0
     #   notebook
 itypes==1.2.0
     # via coreapi
-jedi==0.18.1
+jedi==0.18.2
     # via ipython
 jinja2==3.1.2
     # via
@@ -259,7 +261,7 @@ jupyter-core==5.0.0
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-server==1.23.2
+jupyter-server==1.23.3
     # via
     #   jupyterlab
     #   jupyterlab-server
@@ -324,7 +326,7 @@ notebook==6.5.2
     # via jupyterlab
 notebook-shim==0.2.2
     # via nbclassic
-numpy==1.23.4
+numpy==1.23.5
     # via
     #   contourpy
     #   matplotlib
@@ -375,7 +377,7 @@ prometheus-client==0.15.0
     #   jupyter-server
     #   nbclassic
     #   notebook
-prompt-toolkit==3.0.32
+prompt-toolkit==3.0.33
     # via ipython
 psutil==5.9.4
     # via ipykernel
@@ -429,7 +431,7 @@ python-dateutil==2.8.2
     #   pandas
 python-dotenv==0.21.0
     # via -r requirements/production.in
-python-slugify==6.1.2
+python-slugify==7.0.0
     # via django-cast
 python3-openid==3.2.0
     # via django-allauth
@@ -456,6 +458,7 @@ requests==2.28.1
     #   coreapi
     #   django-allauth
     #   django-anymail
+    #   django-proxy
     #   jupyterlab-server
     #   python-akismet
     #   requests-oauthlib
@@ -514,7 +517,7 @@ telepath==0.3
     # via wagtail
 tenacity==8.1.0
     # via plotly
-termcolor==2.1.0
+termcolor==2.1.1
     # via pytest-sugar
 terminado==0.17.0
     # via
@@ -580,5 +583,5 @@ willow==1.4.1
     # via wagtail
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==65.5.1
+setuptools==65.6.0
     # via gunicorn

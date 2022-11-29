@@ -14,9 +14,9 @@ asgiref==3.5.2
     # via django
 beautifulsoup4==4.11.1
     # via wagtail
-boto3==1.26.15
+boto3==1.26.17
     # via -r requirements/production.in
-botocore==1.29.15
+botocore==1.29.17
     # via
     #   boto3
     #   s3transfer
@@ -36,7 +36,7 @@ coreapi==2.3.3
     # via django-cast
 coreschema==0.0.4
     # via coreapi
-cryptography==38.0.3
+cryptography==38.0.4
     # via pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
@@ -166,7 +166,7 @@ openpyxl==3.0.10
     # via wagtail
 packaging==21.3
     # via matplotlib
-pandas==1.5.1
+pandas==1.5.2
     # via
     #   -r requirements/production.in
     #   cyberpandas
@@ -246,7 +246,7 @@ typer==0.7.0
     # via -r requirements/production.in
 uritemplate==4.1.1
     # via coreapi
-urllib3==1.26.12
+urllib3==1.26.13
     # via
     #   botocore
     #   requests
@@ -264,5 +264,5 @@ willow==1.4.1
     # via wagtail
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==65.6.0
+setuptools==65.6.3
     # via gunicorn

@@ -46,9 +46,9 @@ black==22.10.0
     #   nb-black
 bleach==5.0.1
     # via nbconvert
-boto3==1.26.18
+boto3==1.26.19
     # via -r requirements/production.in
-botocore==1.29.18
+botocore==1.29.19
     # via
     #   boto3
     #   s3transfer
@@ -210,7 +210,7 @@ imagesize==1.4.1
     # via sphinx
 iniconfig==1.1.1
     # via pytest
-ipykernel==6.18.2
+ipykernel==6.18.3
     # via
     #   nbclassic
     #   notebook
@@ -243,7 +243,7 @@ jmespath==1.0.1
     #   botocore
 json5==0.9.10
     # via jupyterlab-server
-jsonschema==4.17.1
+jsonschema==4.17.3
     # via
     #   jupyterlab-server
     #   nbformat
@@ -304,7 +304,7 @@ nbclassic==0.4.8
     # via
     #   jupyterlab
     #   notebook
-nbclient==0.7.1
+nbclient==0.7.2
     # via nbconvert
 nbconvert==7.2.5
     # via

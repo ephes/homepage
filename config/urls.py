@@ -11,6 +11,11 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.core import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+
+def trigger_error(request):
+    _ = 1 / 0
+
+
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
@@ -57,6 +62,8 @@ urlpatterns = [
         lambda x: HttpResponse("User-Agent: *\nDisallow: /*claas", content_type="text/plain"),
         name="robots_file",
     ),
+    # sentry debug
+    path("sentry-debug/", trigger_error),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

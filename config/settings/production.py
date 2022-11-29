@@ -14,6 +14,9 @@ import logging
 import os
 from tempfile import SpooledTemporaryFile
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 from .base import *  # noqa
 
 # SECRET CONFIGURATION
@@ -215,7 +218,24 @@ CACHES = {
 
 # Sentry Configuration
 SENTRY_DSN = env("DJANGO_SENTRY_DSN")
-SENTRY_CLIENT = env("DJANGO_SENTRY_CLIENT", default="raven.contrib.django.raven_compat.DjangoClient")
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    integrations=[DjangoIntegration()],
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production,
+    traces_sample_rate=1.0,
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True,
+    # By default the SDK will try to use the SENTRY_RELEASE
+    # environment variable, or infer a git commit
+    # SHA as release, however you may want to set
+    # something more human-readable.
+    # release="myapp@1.0.0",
+)
+
+# Logging
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -282,10 +302,8 @@ LOGGING = {
     },
 }
 SENTRY_CELERY_LOGLEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
-RAVEN_CONFIG = {"CELERY_LOGLEVEL": env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO), "DSN": SENTRY_DSN}
 
 # Custom Admin URL, use {% url 'admin:index' %}
 ADMIN_URL = env("DJANGO_ADMIN_URL")
 
 # Your production stuff: Below this line define 3rd party library settings
-# ------------------------------------------------------------------------------

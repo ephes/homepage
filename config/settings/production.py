@@ -5,10 +5,6 @@ Production Configurations
 - Use Amazon's S3 for storing uploaded media
 - Use mailgun to send emails
 - Use Redis for cache
-
-- Use sentry for error logging
-
-
 """
 import logging
 import os
@@ -255,7 +251,6 @@ LOGGING = {
             "level": "ERROR",
             "handlers": [
                 "console",
-                "sentry",
             ],
             "propagate": False,
         },

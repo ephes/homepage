@@ -225,5 +225,24 @@ def production_db_to_local():
     subprocess.call(command, shell=True)
 
 
+def deploy(environment):
+    """
+    Use ansible-playbook to deploy the site to the staging server.
+    """
+    deploy_root = Path(__file__).parent / "deploy"
+    with working_directory(deploy_root):
+        subprocess.call(["ansible-playbook", "deploy.yml", "--limit", environment])
+
+
+@cli.command()
+def deploy_staging():
+    deploy("staging")
+
+
+@cli.command()
+def deploy_production():
+    deploy("production")
+
+
 if __name__ == "__main__":
     cli()

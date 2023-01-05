@@ -17,6 +17,7 @@ def update_via_pip_tools(upgrade: bool):
         base_command.append("--upgrade")
     base_command.extend(
         [
+            "--resolver=backtracking",
             "--allow-unsafe",
             # "--generate-hashes",  # FIXME does not work with repo urls (django-cast)
             "requirements/production.in",

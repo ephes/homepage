@@ -210,6 +210,20 @@ def production_db_to_local():
     Make sure only the database is running using:
       postgres -D databases/postgres
     """
+    import psutil
+
+    for proc in psutil.process_iter(["pid", "name", "username"]):
+        if "python" not in proc.info["name"]:
+            continue
+        try:
+            cmdline = " ".join(proc.cmdline())
+            if "honcho" in cmdline:
+                print("please stop honcho first and start a single postgres db with postgres -D databases/postgres")
+                sys.exit(1)
+        except psutil.AccessDenied:
+            # ignore processes that we cannot observe
+            pass
+
     deploy_root = Path(__file__).parent / "deploy"
     with working_directory(deploy_root):
         output = subprocess.check_output(
@@ -223,7 +237,9 @@ def production_db_to_local():
     subprocess.call(["createdb", db_name])
     subprocess.call(["createuser", db_name])
     command = f"gunzip -c {backup_path} | psql {db_name}"
+    print(command)
     subprocess.call(command, shell=True)
+    print(backup_path)
 
 
 def deploy(environment):

@@ -52,9 +52,9 @@ black==23.1.0
     #   nb-black
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.66
+boto3==1.26.69
     # via -r requirements/production.in
-botocore==1.29.66
+botocore==1.29.69
     # via
     #   boto3
     #   s3transfer
@@ -190,7 +190,7 @@ executing==1.2.0
     # via stack-data
 factory-boy==3.2.1
     # via -r requirements/develop.in
-faker==16.7.0
+faker==16.8.1
     # via factory-boy
 fastjsonschema==2.16.2
     # via nbformat
@@ -217,7 +217,7 @@ ipykernel==6.21.1
     # via
     #   nbclassic
     #   notebook
-ipython==8.9.0
+ipython==8.10.0
     # via
     #   ipykernel
     #   jupyterlab

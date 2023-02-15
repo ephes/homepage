@@ -14,9 +14,9 @@ asgiref==3.6.0
     # via django
 beautifulsoup4==4.11.2
     # via wagtail
-boto3==1.26.69
+boto3==1.26.72
     # via -r requirements/production.in
-botocore==1.29.69
+botocore==1.29.72
     # via
     #   boto3
     #   s3transfer
@@ -46,7 +46,7 @@ cycler==0.11.0
     # via matplotlib
 defusedxml==0.7.1
     # via python3-openid
-django==4.1.6
+django==4.1.7
     # via
     #   django-allauth
     #   django-anymail
@@ -151,7 +151,7 @@ markdown==3.4.1
     # via django-cast
 markupsafe==2.1.2
     # via jinja2
-matplotlib==3.6.3
+matplotlib==3.7.0
     # via -r requirements/production.in
 numpy==1.24.2
     # via
@@ -160,7 +160,7 @@ numpy==1.24.2
     #   pandas
 oauthlib==3.2.2
     # via requests-oauthlib
-openpyxl==3.1.0
+openpyxl==3.1.1
     # via wagtail
 packaging==23.0
     # via matplotlib
@@ -226,7 +226,7 @@ six==1.16.0
     #   html5lib
     #   l18n
     #   python-dateutil
-soupsieve==2.3.2.post1
+soupsieve==2.4
     # via beautifulsoup4
 sqlparse==0.4.3
     # via django
@@ -257,5 +257,5 @@ willow==1.4.1
     # via wagtail
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==67.2.0
+setuptools==67.3.2
     # via gunicorn

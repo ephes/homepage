@@ -370,3 +370,7 @@ DELETE_WAGTAIL_IMAGES = False
 
 # wagtail_srcset settings
 WAGTAILIMAGES_JPEG_QUALITY = 60
+
+# crispy forms
+CRISPY_TEMPLATE_PACK = "bootstrap4"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"

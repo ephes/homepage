@@ -31,22 +31,18 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     # Threadedcomments
-    re_path(r"^show/comments/", include("fluent_comments.urls")),
+    path("show/comments/", include("fluent_comments.urls")),
     # Fulltext Search
     path("search/", include("watson.urls", namespace="watson")),
     # Indieweb
-    re_path(r"^indieweb/", include("indieweb.urls")),
+    path("indieweb/", include("indieweb.urls")),
     # rest
     path("api/api-token-auth/", authtokenviews.obtain_auth_token),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
-    re_path(r"^api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     re_path(r"^docs/", include_docs_urls(title="My Blog API service")),
     # Uploads
     path("uploads/", include("filepond.urls", namespace="filepond")),
-    # Wagtail
-    path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
-    path("documents/", include(wagtaildocs_urls)),
-    path("blogs/", include(wagtail_urls)),  # default is wagtail
     # Cast Blog
     path("blogs/", include("cast.urls", namespace="cast")),
     # Fediverse redirects etc.
@@ -57,6 +53,10 @@ urlpatterns = [
         lambda x: HttpResponse("User-Agent: *\nDisallow: /*claas", content_type="text/plain"),
         name="robots_file",
     ),
+    # Wagtail
+    path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+    path("blogs/", include(wagtail_urls)),  # default is wagtail
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

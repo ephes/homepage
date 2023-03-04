@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.http import HttpResponse
 from django.urls import include, path, re_path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
@@ -47,12 +46,6 @@ urlpatterns = [
     path("blogs/", include("cast.urls", namespace="cast")),
     # Fediverse redirects etc.
     path("", include("homepage.fedi.urls", namespace="fedi")),
-    # robots.txt
-    re_path(
-        r"^robots.txt",
-        lambda x: HttpResponse("User-Agent: *\nDisallow: /*claas", content_type="text/plain"),
-        name="robots_file",
-    ),
     # Wagtail
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),

@@ -52,9 +52,9 @@ black==23.1.0
     #   nb-black
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.99
+boto3==1.26.100
     # via -r requirements/production.in
-botocore==1.29.99
+botocore==1.29.100
     # via
     #   boto3
     #   s3transfer

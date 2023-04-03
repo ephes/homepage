@@ -14,9 +14,9 @@ asgiref==3.6.0
     # via django
 beautifulsoup4==4.11.2
     # via wagtail
-boto3==1.26.104
+boto3==1.26.105
     # via -r requirements/production.in
-botocore==1.29.104
+botocore==1.29.105
     # via
     #   boto3
     #   s3transfer
@@ -172,7 +172,7 @@ openpyxl==3.1.2
     # via wagtail
 packaging==23.0
     # via matplotlib
-pandas==1.5.3
+pandas==2.0.0
     # via
     #   -r requirements/production.in
     #   cyberpandas
@@ -180,7 +180,7 @@ pillow==9.5.0
     # via
     #   matplotlib
     #   wagtail
-psycopg2==2.9.5
+psycopg2==2.9.6
     # via -r requirements/production.in
 pycparser==2.21
     # via cffi
@@ -244,6 +244,8 @@ text-unidecode==1.3
     # via python-slugify
 typer==0.7.0
     # via -r requirements/production.in
+tzdata==2023.3
+    # via pandas
 uritemplate==4.1.1
     # via coreapi
 urllib3==1.26.15
@@ -251,7 +253,7 @@ urllib3==1.26.15
     #   botocore
     #   requests
     #   sentry-sdk
-wagtail==4.2.1
+wagtail==4.2.2
     # via
     #   django-cast
     #   wagtail-srcset

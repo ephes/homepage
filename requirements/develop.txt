@@ -52,9 +52,9 @@ black==23.3.0
     #   nb-black
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.104
+boto3==1.26.105
     # via -r requirements/production.in
-botocore==1.29.104
+botocore==1.29.105
     # via
     #   boto3
     #   s3transfer
@@ -139,7 +139,7 @@ django-crispy-forms==2.0
     #   crispy-bootstrap4
     #   django-cast
     #   django-fluent-comments
-django-debug-toolbar==3.8.1
+django-debug-toolbar==4.0.0
     # via -r requirements/develop.in
 django-environ==0.10.0
     # via django-cast
@@ -337,9 +337,9 @@ nbclassic==0.5.4
     # via
     #   jupyterlab
     #   notebook
-nbclient==0.7.2
+nbclient==0.7.3
     # via nbconvert
-nbconvert==7.2.10
+nbconvert==7.3.0
     # via
     #   jupyter-server
     #   nbclassic
@@ -381,7 +381,7 @@ packaging==23.0
     #   pytest
     #   pytest-sugar
     #   sphinx
-pandas==1.5.3
+pandas==2.0.0
     # via
     #   -r requirements/production.in
     #   cyberpandas
@@ -414,7 +414,7 @@ prompt-toolkit==3.0.38
     # via ipython
 psutil==5.9.4
     # via ipykernel
-psycopg2==2.9.5
+psycopg2==2.9.6
     # via -r requirements/production.in
 ptyprocess==0.7.0
     # via
@@ -601,6 +601,8 @@ typer==0.7.0
     # via
     #   -r requirements/develop.in
     #   -r requirements/production.in
+tzdata==2023.3
+    # via pandas
 uri-template==1.2.0
     # via jsonschema
 uritemplate==4.1.1
@@ -610,7 +612,7 @@ urllib3==1.26.15
     #   botocore
     #   requests
     #   sentry-sdk
-wagtail==4.2.1
+wagtail==4.2.2
     # via
     #   django-cast
     #   wagtail-srcset

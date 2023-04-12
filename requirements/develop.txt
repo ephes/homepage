@@ -33,9 +33,7 @@ asgiref==3.6.0
 asttokens==2.2.1
     # via stack-data
 attrs==22.2.0
-    # via
-    #   jsonschema
-    #   pytest
+    # via jsonschema
 babel==2.12.1
     # via
     #   jupyterlab-server
@@ -52,9 +50,9 @@ black==23.3.0
     #   nb-black
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.109
+boto3==1.26.111
     # via -r requirements/production.in
-botocore==1.29.109
+botocore==1.29.111
     # via
     #   boto3
     #   s3transfer
@@ -291,11 +289,11 @@ jupyter-server==1.23.6
     #   jupyterlab-server
     #   nbclassic
     #   notebook-shim
-jupyter-server-fileid==0.8.0
+jupyter-server-fileid==0.9.0
     # via jupyter-server-ydoc
 jupyter-server-ydoc==0.8.0
     # via jupyterlab
-jupyter-ydoc==0.2.3
+jupyter-ydoc==0.2.4
     # via
     #   jupyter-server-ydoc
     #   jupyterlab
@@ -339,7 +337,7 @@ nbclassic==0.5.5
     #   notebook
 nbclient==0.7.3
     # via nbconvert
-nbconvert==7.3.0
+nbconvert==7.3.1
     # via
     #   jupyter-server
     #   nbclassic
@@ -428,7 +426,7 @@ pycparser==2.21
     # via cffi
 pyflakes==3.0.1
     # via flake8
-pygments==2.14.0
+pygments==2.15.0
     # via
     #   django-cast
     #   ipython
@@ -441,14 +439,14 @@ pyparsing==3.0.9
     # via matplotlib
 pyrsistent==0.19.3
     # via jsonschema
-pytest==7.2.2
+pytest==7.3.0
     # via
     #   -r requirements/develop.in
     #   pytest-django
     #   pytest-sugar
 pytest-django==4.5.2
     # via -r requirements/develop.in
-pytest-sugar==0.9.6
+pytest-sugar==0.9.7
     # via -r requirements/develop.in
 python-akismet==0.4.3
     # via

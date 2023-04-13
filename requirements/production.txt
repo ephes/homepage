@@ -14,9 +14,9 @@ asgiref==3.6.0
     # via django
 beautifulsoup4==4.11.2
     # via wagtail
-boto3==1.26.111
+boto3==1.26.112
     # via -r requirements/production.in
-botocore==1.29.111
+botocore==1.29.112
     # via
     #   boto3
     #   s3transfer
@@ -170,7 +170,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 openpyxl==3.1.2
     # via wagtail
-packaging==23.0
+packaging==23.1
     # via matplotlib
 pandas==2.0.0
     # via

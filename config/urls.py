@@ -31,8 +31,6 @@ urlpatterns = [
     # Your stuff: custom urls includes go here
     # Threadedcomments
     path("show/comments/", include("fluent_comments.urls")),
-    # Fulltext Search
-    path("search/", include("watson.urls", namespace="watson")),
     # Indieweb
     path("indieweb/", include("indieweb.urls")),
     # rest

@@ -302,13 +302,14 @@ pip-selfcheck.json
 
 
 
-
-homepage/media/
+# media files
+homepage/media
 
 # Added to maintain local compose files which are ignored by something above.
 # See issue https://github.com/pydanny/cookiecutter-django/issues/1321
 !/compose/local/
 
+# backups
 backups/
 
 # pytest

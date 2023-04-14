@@ -51,7 +51,6 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "django_filters",  # filter posts
     "django_extensions",  # shell_plus etc
-    "watson",  # fulltext search
     "indieweb",  # indieauth etc
     "fluent_comments",
     "filepond",  # uploading files via filepond

@@ -1,14 +1,20 @@
+from cast.views import defaults as default_views_cast
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
-from django.views import defaults as default_views
 from django.views.generic import TemplateView
 from rest_framework.authtoken import views as authtokenviews
 from rest_framework.documentation import include_docs_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.core import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
+
+handler404 = default_views_cast.page_not_found
+handler500 = default_views_cast.server_error
+handler400 = default_views_cast.bad_request
+handler403 = default_views_cast.permission_denied
+
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -56,20 +62,20 @@ if settings.DEBUG:
     urlpatterns += [
         path(
             "400/",
-            default_views.bad_request,
+            default_views_cast.bad_request,
             kwargs={"exception": Exception("Bad Request!")},
         ),
         path(
             "403/",
-            default_views.permission_denied,
+            default_views_cast.permission_denied,
             kwargs={"exception": Exception("Permission Denied")},
         ),
         path(
             "404/",
-            default_views.page_not_found,
+            default_views_cast.page_not_found,
             kwargs={"exception": Exception("Page not Found")},
         ),
-        path("500/", default_views.server_error),
+        path("500/", default_views_cast.server_error),
     ]
     if "debug_toolbar" in settings.INSTALLED_APPS:
         import debug_toolbar

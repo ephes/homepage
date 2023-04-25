@@ -6,8 +6,8 @@ from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 from rest_framework.authtoken import views as authtokenviews
 from rest_framework.documentation import include_docs_urls
+from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
-from wagtail.core import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 handler404 = default_views_cast.page_not_found

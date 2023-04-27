@@ -1,5 +1,6 @@
 argon2-cffi
 boto3
+git+https://github.com/ephes/cast-vue@main
 cyberpandas
 django-anymail[mailgun]
 django-extensions

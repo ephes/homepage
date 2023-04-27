@@ -281,3 +281,7 @@ SENTRY_CELERY_LOGLEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
 ADMIN_URL = env("DJANGO_ADMIN_URL")
 
 # Your production stuff: Below this line define 3rd party library settings
+
+# Vite
+DJANGO_VITE_DEV_MODE = False
+DJANGO_VITE_ASSETS_PATH = ROOT_DIR.path("staticfiles")

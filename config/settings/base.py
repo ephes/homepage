@@ -72,6 +72,8 @@ THIRD_PARTY_APPS = [
     "modelcluster",
     "taggit",
     "cast",  # blog/podcast package
+    "django_vite",  # cast_vue theme
+    "cast_vue.apps.CastVueConfig",  # cast_vue theme
 ]
 
 # Apps specific for this project go here.
@@ -208,6 +210,7 @@ STATIC_URL = "/static/"
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = [
     str(APPS_DIR.path("static")),
+    # "/Users/jochen/projects/cast-vue/cast_vue/static/dist",
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
@@ -380,3 +383,11 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 
 # view handling csrf failures
 CSRF_FAILURE_VIEW = "cast.views.defaults.csrf_failure"
+
+
+# Where ViteJS assets are built.
+DJANGO_VITE_ASSETS_PATH = APPS_DIR.path("static").path("dist")
+# DJANGO_VITE_ASSETS_PATH = "/Users/jochen/projects/cast-vue/cast_vue/static/dist"
+# DJANGO_VITE_MANIFEST_PATH = "/Users/jochen/projects/cast-vue/cast_vue/static/dist/manifest.json"
+# DJANGO_VITE_DEV_MODE = DEBUG
+# DJANGO_VITE_DEV_MODE = True

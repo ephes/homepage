@@ -133,7 +133,9 @@ django-threadedcomments==2.0
 django-treebeard==4.7
     # via wagtail
 django-vite==2.0.2
-    # via cast-vue
+    # via
+    #   -r requirements/production.in
+    #   cast-vue
 djangorestframework==3.14.0
     # via wagtail
 draftjs-exporter==2.1.7

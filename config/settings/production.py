@@ -285,4 +285,4 @@ ADMIN_URL = env("DJANGO_ADMIN_URL")
 # Vite
 DJANGO_VITE_DEV_MODE = False
 DJANGO_VITE_ASSETS_PATH = ROOT_DIR.path("staticfiles")
-DJANGO_VITE_MANIFEST_PATH = ROOT_DIR.path("staticfiles.json")
+DJANGO_VITE_MANIFEST_PATH = ROOT_DIR.path("staticfiles").path("staticfiles.json")

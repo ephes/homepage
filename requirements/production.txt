@@ -20,7 +20,7 @@ botocore==1.29.122
     # via
     #   boto3
     #   s3transfer
-cast-vue @ git+https://github.com/ephes/cast-vue@main
+cast-vue @ git+https://github.com/ephes/cast-vue
     # via -r requirements/production.in
 certifi==2022.12.7
     # via

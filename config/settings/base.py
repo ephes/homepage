@@ -210,7 +210,6 @@ STATIC_URL = "/static/"
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = [
     str(APPS_DIR.path("static")),
-    # "/Users/jochen/projects/cast-vue/cast_vue/static/dist",
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
@@ -390,4 +389,4 @@ DJANGO_VITE_ASSETS_PATH = APPS_DIR.path("static").path("dist")
 # DJANGO_VITE_ASSETS_PATH = "/Users/jochen/projects/cast-vue/cast_vue/static/dist"
 # DJANGO_VITE_MANIFEST_PATH = "/Users/jochen/projects/cast-vue/cast_vue/static/dist/manifest.json"
 # DJANGO_VITE_DEV_MODE = DEBUG
-# DJANGO_VITE_DEV_MODE = True
+DJANGO_VITE_DEV_MODE = True

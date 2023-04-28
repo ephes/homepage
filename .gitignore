@@ -323,3 +323,6 @@ databases
 
 # vault password
 .vault_password
+
+# vscode
+.vscode

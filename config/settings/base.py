@@ -43,7 +43,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",  # Form layouts
-    "crispy_bootstrap4",
+    "crispy_bootstrap5",
     "allauth",  # registration
     "allauth.account",  # registration
     "allauth.socialaccount",  # registration
@@ -71,6 +71,7 @@ THIRD_PARTY_APPS = [
     "wagtail_srcset",
     "modelcluster",
     "taggit",
+    "cast_bootstrap5.apps.CastBootstrap5Config",  # cast_bootstrap5 theme
     "cast",  # blog/podcast package
     "django_vite",  # cast_vue theme
     "cast_vue.apps.CastVueConfig",  # cast_vue theme
@@ -195,9 +196,6 @@ TEMPLATES = [
         },
     },
 ]
-
-# See: http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
-CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # STATIC FILE CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -377,8 +375,8 @@ DELETE_WAGTAIL_IMAGES = False
 WAGTAILIMAGES_JPEG_QUALITY = 60
 
 # crispy forms
-CRISPY_TEMPLATE_PACK = "bootstrap4"
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 # view handling csrf failures
 CSRF_FAILURE_VIEW = "cast.views.defaults.csrf_failure"

@@ -20,6 +20,8 @@ botocore==1.29.133
     # via
     #   boto3
     #   s3transfer
+cast-bootstrap5==0.0.1
+    # via -r requirements/production.in
 cast-vue @ git+https://github.com/ephes/cast-vue
     # via -r requirements/production.in
 certifi==2023.5.7
@@ -42,6 +44,8 @@ coreschema==0.0.4
     # via coreapi
 crispy-bootstrap4==2022.1
     # via django-cast
+crispy-bootstrap5==0.7
+    # via cast-bootstrap5
 cryptography==40.0.2
     # via pyjwt
 cyberpandas==1.1.1
@@ -55,6 +59,7 @@ defusedxml==0.7.1
 django==4.2.1
     # via
     #   crispy-bootstrap4
+    #   crispy-bootstrap5
     #   django-allauth
     #   django-anymail
     #   django-braces
@@ -84,6 +89,7 @@ django-braces==1.15.0
 django-cast @ git+https://github.com/ephes/django-cast@develop
     # via
     #   -r requirements/production.in
+    #   cast-bootstrap5
     #   cast-vue
 django-contrib-comments==2.2.0
     # via
@@ -93,6 +99,7 @@ django-contrib-comments==2.2.0
 django-crispy-forms==2.0
     # via
     #   crispy-bootstrap4
+    #   crispy-bootstrap5
     #   django-cast
     #   django-fluent-comments
 django-environ==0.10.0

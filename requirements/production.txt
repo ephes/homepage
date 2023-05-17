@@ -47,7 +47,9 @@ crispy-bootstrap4==2022.1
 crispy-bootstrap5==0.7
     # via cast-bootstrap5
 cryptography==40.0.2
-    # via pyjwt
+    # via
+    #   django-anymail
+    #   pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.11.0

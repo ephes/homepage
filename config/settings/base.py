@@ -73,8 +73,8 @@ THIRD_PARTY_APPS = [
     "taggit",
     "cast_bootstrap5.apps.CastBootstrap5Config",  # cast_bootstrap5 theme
     "cast",  # blog/podcast package
-    "django_vite",  # cast_vue theme
     "cast_vue.apps.CastVueConfig",  # cast_vue theme
+    "django_vite",  # cast_vue theme
 ]
 
 # Apps specific for this project go here.

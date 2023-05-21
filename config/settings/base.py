@@ -383,7 +383,7 @@ CSRF_FAILURE_VIEW = "cast.views.defaults.csrf_failure"
 
 
 # Where ViteJS assets are built.
-DJANGO_VITE_ASSETS_PATH = APPS_DIR.path("static").path("cast_vue")
+DJANGO_VITE_ASSETS_PATH = APPS_DIR.path("static").path("dist")
 # DJANGO_VITE_ASSETS_PATH = "/Users/jochen/projects/cast-vue/cast_vue/static/dist"
 # DJANGO_VITE_MANIFEST_PATH = "/Users/jochen/projects/cast-vue/cast_vue/static/dist/manifest.json"
 # DJANGO_VITE_DEV_MODE = DEBUG

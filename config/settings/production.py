@@ -284,5 +284,5 @@ ADMIN_URL = env("DJANGO_ADMIN_URL")
 
 # Vite
 DJANGO_VITE_DEV_MODE = False
-DJANGO_VITE_ASSETS_PATH = ROOT_DIR.path("staticfiles")
-DJANGO_VITE_MANIFEST_PATH = ROOT_DIR.path("staticfiles").path("cast_vue").path("manifest.json")
+DJANGO_VITE_ASSETS_PATH = ROOT_DIR.path("staticfiles").path("cast_vue")
+DJANGO_VITE_MANIFEST_PATH = DJANGO_VITE_ASSETS_PATH.path("manifest.json")

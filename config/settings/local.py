@@ -191,3 +191,7 @@ ALLOWED_HOSTS = env.list(
 # File Storage
 DEFAULT_FILE_STORAGE = "config.settings.local.CustomS3Boto3Storage"
 MEDIA_URL = "https://s3.amazonaws.com/%s/" % AWS_STORAGE_BUCKET_NAME
+
+# Django Vite
+DJANGO_VITE_ASSETS_PATH = "need to be set but doesn't matter"
+DJANGO_VITE_DEV_MODE = True

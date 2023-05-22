@@ -212,7 +212,7 @@ factory-boy==3.2.1
     # via -r requirements/develop.in
 faker==18.9.0
     # via factory-boy
-fastjsonschema==2.17.0
+fastjsonschema==2.17.1
     # via nbformat
 filetype==1.2.0
     # via willow

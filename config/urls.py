@@ -1,5 +1,4 @@
 from cast.views import defaults as default_views_cast
-from cast_vue import views as cast_vue_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -55,7 +54,6 @@ urlpatterns = [
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("blogs/", include(wagtail_urls)),  # default is wagtail
-    path("vue/", cast_vue_views.vue),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

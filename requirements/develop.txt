@@ -48,9 +48,9 @@ black==23.3.0
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.140
+boto3==1.26.141
     # via -r requirements/production.in
-botocore==1.29.140
+botocore==1.29.141
     # via
     #   boto3
     #   s3transfer
@@ -191,7 +191,7 @@ django-threadedcomments==2.0
     # via django-cast
 django-treebeard==4.7
     # via wagtail
-django-vite==2.0.2
+django-vite==2.1.0
     # via
     #   -r requirements/production.in
     #   cast-vue
@@ -620,7 +620,7 @@ typer==0.9.0
     # via
     #   -r requirements/develop.in
     #   -r requirements/production.in
-typing-extensions==4.6.1
+typing-extensions==4.6.2
     # via typer
 tzdata==2023.3
     # via pandas
@@ -634,7 +634,7 @@ urllib3==1.26.16
     #   django-anymail
     #   requests
     #   sentry-sdk
-wagtail==5.0
+wagtail==5.0.1
     # via
     #   django-cast
     #   wagtail-srcset

@@ -10,13 +10,13 @@ argon2-cffi==21.3.0
     # via -r requirements/production.in
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
-asgiref==3.7.1
+asgiref==3.7.2
     # via django
 beautifulsoup4==4.11.2
     # via wagtail
-boto3==1.26.141
+boto3==1.26.142
     # via -r requirements/production.in
-botocore==1.29.141
+botocore==1.29.142
     # via
     #   boto3
     #   s3transfer
@@ -190,7 +190,7 @@ openpyxl==3.1.2
     # via wagtail
 packaging==23.1
     # via matplotlib
-pandas==2.0.1
+pandas==2.0.2
     # via
     #   -r requirements/production.in
     #   cyberpandas

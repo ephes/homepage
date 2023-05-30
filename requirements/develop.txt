@@ -12,7 +12,7 @@ alabaster==0.7.13
     # via sphinx
 anyascii==0.3.2
     # via wagtail
-anyio==3.6.2
+anyio==3.7.0
     # via jupyter-server
 appnope==0.1.3
     # via
@@ -28,7 +28,7 @@ argon2-cffi-bindings==21.2.0
     # via argon2-cffi
 arrow==1.2.3
     # via isoduration
-asgiref==3.7.1
+asgiref==3.7.2
     # via django
 asttokens==2.2.1
     # via stack-data
@@ -48,9 +48,9 @@ black==23.3.0
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.141
+boto3==1.26.142
     # via -r requirements/production.in
-botocore==1.29.141
+botocore==1.29.142
     # via
     #   boto3
     #   s3transfer
@@ -80,7 +80,7 @@ coreapi==2.3.3
     # via django-cast
 coreschema==0.0.4
     # via coreapi
-coverage==7.2.6
+coverage==7.2.7
     # via -r requirements/develop.in
 crispy-bootstrap4==2022.1
     # via django-cast
@@ -397,7 +397,7 @@ packaging==23.1
     #   pytest
     #   pytest-sugar
     #   sphinx
-pandas==2.0.1
+pandas==2.0.2
     # via
     #   -r requirements/production.in
     #   cyberpandas
@@ -495,7 +495,7 @@ pytz==2023.3
     #   pandas
 pyyaml==6.0
     # via jupyter-events
-pyzmq==25.0.2
+pyzmq==25.1.0
     # via
     #   ipykernel
     #   jupyter-client

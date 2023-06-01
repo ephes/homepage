@@ -48,9 +48,9 @@ black==23.3.0
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.144
+boto3==1.26.145
     # via -r requirements/production.in
-botocore==1.29.144
+botocore==1.29.145
     # via
     #   boto3
     #   s3transfer
@@ -191,7 +191,7 @@ django-threadedcomments==2.0
     # via django-cast
 django-treebeard==4.7
     # via wagtail
-django-vite==2.1.0
+django-vite==2.1.1
     # via
     #   -r requirements/production.in
     #   cast-vue
@@ -210,7 +210,7 @@ executing==1.2.0
     # via stack-data
 factory-boy==3.2.1
     # via -r requirements/develop.in
-faker==18.9.0
+faker==18.10.0
     # via factory-boy
 fastjsonschema==2.17.1
     # via nbformat

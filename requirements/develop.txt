@@ -48,9 +48,9 @@ black==23.3.0
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.26.143
+boto3==1.26.144
     # via -r requirements/production.in
-botocore==1.29.143
+botocore==1.29.144
     # via
     #   boto3
     #   s3transfer
@@ -86,10 +86,8 @@ crispy-bootstrap4==2022.1
     # via django-cast
 crispy-bootstrap5==0.7
     # via cast-bootstrap5
-cryptography==41.0.0
-    # via
-    #   django-anymail
-    #   pyjwt
+cryptography==41.0.1
+    # via pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.11.0
@@ -362,7 +360,7 @@ nbconvert==7.4.0
     #   jupyter-server
     #   nbclassic
     #   notebook
-nbformat==5.8.0
+nbformat==5.9.0
     # via
     #   jupyter-server
     #   nbclassic
@@ -527,7 +525,7 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.3.5
+rich==13.4.1
     # via -r requirements/develop.in
 s3transfer==0.6.1
     # via boto3

@@ -12,7 +12,7 @@ alabaster==0.7.13
     # via sphinx
 anyascii==0.3.2
     # via wagtail
-anyio==3.7.0
+anyio==3.7.1
     # via jupyter-server
 appnope==0.1.3
     # via
@@ -33,7 +33,9 @@ asgiref==3.7.2
 asttokens==2.2.1
     # via stack-data
 attrs==23.1.0
-    # via jsonschema
+    # via
+    #   jsonschema
+    #   referencing
 babel==2.12.1
     # via
     #   jupyterlab-server
@@ -48,9 +50,9 @@ black==23.3.0
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.27.0
+boto3==1.28.1
     # via -r requirements/production.in
-botocore==1.30.0
+botocore==1.31.1
     # via
     #   boto3
     #   s3transfer
@@ -66,9 +68,9 @@ cffi==1.15.1
     # via
     #   argon2-cffi-bindings
     #   cryptography
-charset-normalizer==3.1.0
+charset-normalizer==3.2.0
     # via requests
-click==8.1.3
+click==8.1.4
     # via
     #   black
     #   typer
@@ -210,7 +212,7 @@ executing==1.2.0
     # via stack-data
 factory-boy==3.2.1
     # via -r requirements/develop.in
-faker==18.11.2
+faker==18.13.0
     # via factory-boy
 fastjsonschema==2.17.1
     # via nbformat
@@ -276,11 +278,13 @@ json5==0.9.14
     # via jupyterlab-server
 jsonpointer==2.4
     # via jsonschema
-jsonschema[format-nongpl]==4.17.3
+jsonschema[format-nongpl]==4.18.0
     # via
     #   jupyter-events
     #   jupyterlab-server
     #   nbformat
+jsonschema-specifications==2023.6.1
+    # via jsonschema
 jupyter-client==8.3.0
     # via
     #   ipykernel
@@ -335,7 +339,7 @@ markupsafe==2.1.3
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.7.1
+matplotlib==3.7.2
     # via -r requirements/production.in
 matplotlib-inline==0.1.6
     # via
@@ -415,7 +419,7 @@ pillow==9.5.0
     # via
     #   matplotlib
     #   wagtail
-platformdirs==3.8.0
+platformdirs==3.8.1
     # via
     #   black
     #   jupyter-core
@@ -453,10 +457,8 @@ pygments==2.15.1
     #   sphinx
 pyjwt[crypto]==2.7.0
     # via django-allauth
-pyparsing==3.1.0
+pyparsing==3.0.9
     # via matplotlib
-pyrsistent==0.19.3
-    # via jsonschema
 pytest==7.4.0
     # via
     #   -r requirements/develop.in
@@ -502,6 +504,10 @@ pyzmq==25.1.0
     #   jupyter-server
     #   nbclassic
     #   notebook
+referencing==0.29.1
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
 requests==2.31.0
     # via
     #   -r requirements/production.in
@@ -527,6 +533,10 @@ rfc3986-validator==0.1.1
     #   jupyter-events
 rich==13.4.2
     # via -r requirements/develop.in
+rpds-py==0.8.10
+    # via
+    #   jsonschema
+    #   referencing
 s3transfer==0.6.1
     # via boto3
 send2trash==1.8.2
@@ -534,7 +544,7 @@ send2trash==1.8.2
     #   jupyter-server
     #   nbclassic
     #   notebook
-sentry-sdk==1.27.0
+sentry-sdk==1.27.1
     # via -r requirements/production.in
 six==1.16.0
     # via
@@ -653,7 +663,7 @@ websocket-client==1.6.1
     # via jupyter-server
 whitenoise==6.5.0
     # via -r requirements/production.in
-willow==1.5
+willow==1.5.1
     # via wagtail
 y-py==0.5.9
     # via

@@ -14,9 +14,9 @@ asgiref==3.7.2
     # via django
 beautifulsoup4==4.11.2
     # via wagtail
-boto3==1.28.32
+boto3==1.28.33
     # via -r requirements/production.in
-botocore==1.31.32
+botocore==1.31.33
     # via
     #   boto3
     #   s3transfer
@@ -169,7 +169,7 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-kiwisolver==1.4.4
+kiwisolver==1.4.5
     # via matplotlib
 l18n==2021.3
     # via wagtail

@@ -20,7 +20,7 @@ botocore==1.31.40
     # via
     #   boto3
     #   s3transfer
-cast-bootstrap5==0.0.8
+cast-bootstrap5==0.0.9
     # via -r requirements/production.in
 cast-vue @ git+https://github.com/ephes/cast-vue
     # via -r requirements/production.in

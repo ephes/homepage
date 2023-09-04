@@ -56,7 +56,7 @@ defusedxml==0.7.1
     # via
     #   python3-openid
     #   willow
-django==4.2.4
+django==4.2.5
     # via
     #   crispy-bootstrap4
     #   crispy-bootstrap5

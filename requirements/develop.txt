@@ -30,7 +30,7 @@ arrow==1.2.3
     # via isoduration
 asgiref==3.7.2
     # via django
-asttokens==2.3.0
+asttokens==2.4.0
     # via stack-data
 attrs==23.1.0
     # via
@@ -56,7 +56,7 @@ botocore==1.31.40
     # via
     #   boto3
     #   s3transfer
-cast-bootstrap5==0.0.8
+cast-bootstrap5==0.0.9
     # via -r requirements/production.in
 cast-vue @ git+https://github.com/ephes/cast-vue
     # via -r requirements/production.in
@@ -103,7 +103,7 @@ defusedxml==0.7.1
     #   nbconvert
     #   python3-openid
     #   willow
-django==4.2.4
+django==4.2.5
     # via
     #   crispy-bootstrap4
     #   crispy-bootstrap5
@@ -243,7 +243,7 @@ imagesize==1.4.1
     # via sphinx
 iniconfig==2.0.0
     # via pytest
-ipykernel==6.25.1
+ipykernel==6.25.2
     # via
     #   jupyterlab
     #   nbclassic
@@ -541,7 +541,7 @@ rfc3986-validator==0.1.1
     #   jupyter-events
 rich==13.5.2
     # via -r requirements/develop.in
-rpds-py==0.10.0
+rpds-py==0.10.2
     # via
     #   jsonschema
     #   referencing

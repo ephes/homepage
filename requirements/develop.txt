@@ -50,9 +50,9 @@ black==23.7.0
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.28.40
+boto3==1.28.41
     # via -r requirements/production.in
-botocore==1.31.40
+botocore==1.31.41
     # via
     #   boto3
     #   s3transfer
@@ -179,7 +179,7 @@ django-permissionedforms==0.1
     # via wagtail
 django-proxy==1.2.2
     # via -r requirements/production.in
-django-storages==1.13.2
+django-storages==1.14
     # via -r requirements/production.in
 django-tag-parser==3.2
     # via
@@ -495,7 +495,7 @@ python-slugify==8.0.1
     # via django-cast
 python3-openid==3.2.0
     # via django-allauth
-pytz==2023.3
+pytz==2023.3.post1
     # via
     #   django-indieweb
     #   django-modelcluster

@@ -101,6 +101,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 # MIGRATIONS CONFIGURATION
@@ -329,6 +330,7 @@ control = "max-age=%d, s-maxage=%d, must-revalidate" % (AWS_EXPIRY, AWS_EXPIRY)
 AWS_HEADERS = {"Cache-Control": bytes(control, encoding="latin-1")}
 
 from storages.backends.s3boto3 import S3Boto3Storage
+
 
 class CustomS3Boto3Storage(S3Boto3Storage):
     """

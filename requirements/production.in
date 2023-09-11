@@ -12,6 +12,7 @@ django-storages
 git+https://github.com/ephes/django-cast@develop
 django-vite
 gunicorn
+httpx
 matplotlib
 pandas
 psycopg2

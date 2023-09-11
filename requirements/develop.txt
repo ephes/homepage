@@ -46,7 +46,7 @@ beautifulsoup4==4.11.2
     # via
     #   nbconvert
     #   wagtail
-black==23.9.0
+black==23.9.1
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
@@ -89,7 +89,9 @@ crispy-bootstrap4==2022.1
 crispy-bootstrap5==0.7
     # via cast-bootstrap5
 cryptography==41.0.3
-    # via pyjwt
+    # via
+    #   django-anymail
+    #   pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.11.0
@@ -672,7 +674,7 @@ webencodings==0.5.1
     #   bleach
     #   html5lib
     #   tinycss2
-websocket-client==1.6.2
+websocket-client==1.6.3
     # via jupyter-server
 whitenoise==6.5.0
     # via -r requirements/production.in

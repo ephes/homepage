@@ -52,9 +52,9 @@ black==23.9.1
     # via -r requirements/develop.in
 bleach==6.0.0
     # via nbconvert
-boto3==1.28.46
+boto3==1.28.47
     # via -r requirements/production.in
-botocore==1.31.46
+botocore==1.31.47
     # via
     #   boto3
     #   s3transfer
@@ -554,7 +554,7 @@ rfc3986-validator==0.1.1
     #   jupyter-events
 rich==13.5.2
     # via -r requirements/develop.in
-rpds-py==0.10.2
+rpds-py==0.10.3
     # via
     #   jsonschema
     #   referencing
@@ -565,7 +565,7 @@ send2trash==1.8.2
     #   jupyter-server
     #   nbclassic
     #   notebook
-sentry-sdk==1.30.0
+sentry-sdk==1.31.0
     # via -r requirements/production.in
 six==1.16.0
     # via
@@ -585,7 +585,7 @@ snowballstemmer==2.2.0
     # via sphinx
 soupsieve==2.5
     # via beautifulsoup4
-sphinx==7.2.5
+sphinx==7.2.6
     # via
     #   sphinx-rtd-theme
     #   sphinxcontrib-applehelp

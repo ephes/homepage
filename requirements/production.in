@@ -15,7 +15,7 @@ gunicorn
 httpx
 matplotlib
 pandas
-psycopg2
+psycopg[binary]
 python-dotenv
 sentry-sdk
 requests

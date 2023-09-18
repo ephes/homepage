@@ -93,7 +93,9 @@ crispy-bootstrap4==2022.1
 crispy-bootstrap5==0.7
     # via cast-bootstrap5
 cryptography==41.0.3
-    # via pyjwt
+    # via
+    #   django-anymail
+    #   pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.11.0
@@ -659,7 +661,7 @@ typer==0.9.0
     # via
     #   -r requirements/develop.in
     #   -r requirements/production.in
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   psycopg
     #   typer

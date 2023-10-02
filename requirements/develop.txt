@@ -28,7 +28,7 @@ argon2-cffi==23.1.0
     #   notebook
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
-arrow==1.2.3
+arrow==1.3.0
     # via isoduration
 asgiref==3.7.2
     # via django
@@ -72,7 +72,7 @@ cffi==1.16.0
     # via
     #   argon2-cffi-bindings
     #   cryptography
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via requests
 click==8.1.7
     # via
@@ -214,13 +214,13 @@ entrypoints==0.4
     # via jupyter-client
 et-xmlfile==1.1.0
     # via openpyxl
-executing==1.2.0
+executing==2.0.0
     # via stack-data
 factory-boy==3.3.0
     # via -r requirements/develop.in
 faker==19.6.2
     # via factory-boy
-fastjsonschema==2.18.0
+fastjsonschema==2.18.1
     # via nbformat
 filetype==1.2.0
     # via willow
@@ -230,7 +230,7 @@ flit==3.9.0
     # via -r requirements/develop.in
 flit-core==3.9.0
     # via flit
-fonttools==4.42.1
+fonttools==4.43.0
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
@@ -259,7 +259,7 @@ ipykernel==6.25.2
     #   jupyterlab
     #   nbclassic
     #   notebook
-ipython==8.16.0
+ipython==8.16.1
     # via
     #   ipykernel
     #   jupyterlab
@@ -362,7 +362,7 @@ mccabe==0.7.0
     # via flake8
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.0.1
+mistune==3.0.2
     # via nbconvert
 mypy-extensions==1.0.0
     # via black
@@ -403,7 +403,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 openpyxl==3.1.2
     # via wagtail
-packaging==23.1
+packaging==23.2
     # via
     #   black
     #   gunicorn
@@ -552,7 +552,7 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.5.3
+rich==13.6.0
     # via -r requirements/develop.in
 rpds-py==0.10.3
     # via
@@ -614,7 +614,7 @@ sqlparse==0.4.4
     # via
     #   django
     #   django-debug-toolbar
-stack-data==0.6.2
+stack-data==0.6.3
     # via ipython
 telepath==0.3.1
     # via wagtail
@@ -660,6 +660,8 @@ typer==0.9.0
     # via
     #   -r requirements/develop.in
     #   -r requirements/production.in
+types-python-dateutil==2.8.19.14
+    # via arrow
 typing-extensions==4.8.0
     # via
     #   psycopg
@@ -682,7 +684,7 @@ wagtail==5.1.2
     #   wagtail-srcset
 wagtail-srcset==0.3.0
     # via django-cast
-wcwidth==0.2.7
+wcwidth==0.2.8
     # via prompt-toolkit
 webcolors==1.13
     # via jsonschema

@@ -24,7 +24,7 @@ botocore==1.32.6
     # via
     #   boto3
     #   s3transfer
-cast-bootstrap5==0.0.16
+cast-bootstrap5==0.0.17
     # via -r requirements/production.in
 cast-vue @ git+https://github.com/ephes/cast-vue
     # via -r requirements/production.in
@@ -307,10 +307,6 @@ urllib3==2.0.7
     #   requests
     #   sentry-sdk
 wagtail==5.2.1
-    # via
-    #   django-cast
-    #   wagtail-srcset
-wagtail-srcset==0.3.0
     # via django-cast
 webencodings==0.5.1
     # via html5lib

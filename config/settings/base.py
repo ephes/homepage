@@ -69,7 +69,6 @@ THIRD_PARTY_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
-    "wagtail_srcset",
     "modelcluster",
     "taggit",
     "cast_bootstrap5.apps.CastBootstrap5Config",  # cast_bootstrap5 theme
@@ -444,7 +443,7 @@ IPYTHON_KERNEL_DISPLAY_NAME = "Django Kernel"
 # Disable wagtail post_delete_file_cleanup signal to avoid deleting files from S3
 DELETE_WAGTAIL_IMAGES = False
 
-# wagtail_srcset settings
+# image compression settings
 WAGTAILIMAGES_JPEG_QUALITY = 70
 WAGTAILIMAGES_AVIF_QUALITY = 60
 

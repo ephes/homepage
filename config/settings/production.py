@@ -212,7 +212,18 @@ ADMIN_URL = env("DJANGO_ADMIN_URL")
 # Your production stuff: Below this line define 3rd party library settings
 
 # Vite
-DJANGO_VITE_DEV_MODE = False
-DJANGO_VITE_STATIC_URL_PREFIX = "cast_vue/"
-DJANGO_VITE_ASSETS_PATH = ROOT_DIR.path("staticfiles").path("cast_vue")
-DJANGO_VITE_MANIFEST_PATH = DJANGO_VITE_ASSETS_PATH.path("manifest.json")
+DJANGO_VITE = {
+    "cast_vue": {
+        "dev_mode": False,
+        "static_url_prefix": "cast_vue/",
+        "manifest_path": ROOT_DIR.path("staticfiles").path("cast_vue").path("manifest.json"),
+    },
+    "cast-bootstrap5": {
+        "dev_mode": False,
+        "static_url_prefix": "cast_bootstrap5/",
+        "manifest_path": ROOT_DIR.path("staticfiles").path("cast_bootstrap5").path("manifest.json"),
+    },
+}
+# DJANGO_VITE_STATIC_URL_PREFIX = "cast_vue/"
+# DJANGO_VITE_ASSETS_PATH = ROOT_DIR.path("staticfiles").path("cast_vue")
+# DJANGO_VITE_MANIFEST_PATH = DJANGO_VITE_ASSETS_PATH.path("manifest.json")

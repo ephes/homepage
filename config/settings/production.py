@@ -216,7 +216,7 @@ DJANGO_VITE = {
     "cast_vue": {
         "dev_mode": False,
         "static_url_prefix": "cast_vue/",
-        "manifest_path": ROOT_DIR.path("staticfiles").path("cast_vue").path("manifest.json"),
+        "manifest_path": ROOT_DIR.path("staticfiles").path("cast_vue").path(".vite").path("manifest.json"),
     },
     "cast-bootstrap5": {
         "dev_mode": False,

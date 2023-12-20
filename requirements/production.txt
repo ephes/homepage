@@ -18,9 +18,9 @@ asgiref==3.7.2
     #   django-htmx
 beautifulsoup4==4.11.2
     # via wagtail
-boto3==1.34.3
+boto3==1.34.4
     # via -r requirements/production.in
-botocore==1.34.3
+botocore==1.34.4
     # via
     #   boto3
     #   s3transfer
@@ -151,6 +151,7 @@ django-vite==3.0.1
     # via
     #   -r requirements/production.in
     #   cast-vue
+    #   django-cast
 djangorestframework==3.14.0
     # via wagtail
 draftjs-exporter==2.1.7
@@ -222,9 +223,9 @@ pillow==10.1.0
     #   wagtail
 pillow-heif==0.14.0
     # via willow
-psycopg[binary]==3.1.15
+psycopg[binary]==3.1.16
     # via -r requirements/production.in
-psycopg-binary==3.1.15
+psycopg-binary==3.1.16
     # via psycopg
 pycparser==2.21
     # via cffi

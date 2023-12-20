@@ -226,6 +226,6 @@ DJANGO_VITE = {
     "cast": {
         "dev_mode": False,
         "static_url_prefix": "cast/js/vite/",
-        "manifest_path": ROOT_DIR.path("staticfiles").path("cast").path("js").path("vite").path("manifest.json"),
+        "manifest_path": ROOT_DIR.path("staticfiles").path("js").path("vite").path("manifest.json"),
     },
 }

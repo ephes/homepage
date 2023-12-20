@@ -132,4 +132,7 @@ DJANGO_VITE = {
     "cast-bootstrap5": {
         "dev_mode": True,
     },
+    "cast": {
+        "dev_mode": True,
+    },
 }

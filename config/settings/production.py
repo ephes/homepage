@@ -226,8 +226,8 @@ DJANGO_VITE = {
     },
     "cast-bootstrap5": {
         "dev_mode": False,
-        "static_url_prefix": "cast_bootstrap5/",
-        "manifest_path": ROOT_DIR.path("staticfiles").path("cast_bootstrap5").path("manifest.json"),
+        "static_url_prefix": "cast_bootstrap5/vite/",
+        "manifest_path": ROOT_DIR.path("staticfiles").path("cast_bootstrap5").path("vite").path("manifest.json"),
     },
     "cast": {
         "dev_mode": False,

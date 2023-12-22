@@ -33,7 +33,19 @@ EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.c
 
 # CACHING
 # ------------------------------------------------------------------------------
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": ""}}
+# CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": ""}}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+#         "LOCATION": "/var/tmp/django_cache",
+#         "TIMEOUT": 600,
+#         "OPTIONS": {"MAX_ENTRIES": 10000},
+#     }
+# }
+# CACHE_MIDDLEWARE_ALIAS = "default"
+# CACHE_MIDDLEWARE_SECONDS = 600
+# CACHE_MIDDLEWARE_KEY_PREFIX = "homepage"
+
 
 # django-debug-toolbar
 # ------------------------------------------------------------------------------

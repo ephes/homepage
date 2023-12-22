@@ -131,11 +131,13 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
         "LOCATION": env("DJANGO_CACHE_LOCATION"),
+        "TIMEOUT": 600,
+        "OPTIONS": {"MAX_ENTRIES": 10000},
     }
 }
-# CACHE_MIDDLEWARE_ALIAS = "default"
-# CACHE_MIDDLEWARE_SECONDS = 600
-# CACHE_MIDDLEWARE_KEY_PREFIX = "homepage"
+CACHE_MIDDLEWARE_ALIAS = "default"
+CACHE_MIDDLEWARE_SECONDS = 600
+CACHE_MIDDLEWARE_KEY_PREFIX = "homepage"
 
 # Sentry Configuration
 SENTRY_DSN = env("DJANGO_SENTRY_DSN")

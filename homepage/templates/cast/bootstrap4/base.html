@@ -3,15 +3,6 @@
 
 {%block title %}{{ page.title }}{% endblock title %}
 
-{% block css %}
-  {{ block.super }}
-  <link href="{% static 'css/project.css' %}" rel="stylesheet">
-{% endblock css %}
-
-{% block headerscript %}
-  <script defer data-domain="wersdoerfer.de" src="https://plausible.io/js/script.js"></script>
-{% endblock headerscript %}
-
 {% block bodystart %}
   <a href="https://fedi.wersdoerfer.de/@jochen" rel="me"></a>
 {% endblock bodystart %}
@@ -76,3 +67,7 @@
     </nav>
   </div>
 {% endblock navigation%}
+
+{% block javascript %}
+  <script defer data-domain="wersdoerfer.de" src="https://plausible.io/js/script.js"></script>
+{% endblock javascript %}

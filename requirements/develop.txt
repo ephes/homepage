@@ -91,7 +91,9 @@ crispy-bootstrap4==2023.1
 crispy-bootstrap5==2023.10
     # via cast-bootstrap5
 cryptography==41.0.7
-    # via pyjwt
+    # via
+    #   django-anymail
+    #   pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.12.1
@@ -390,7 +392,7 @@ notebook==6.5.4
     # via jupyterlab
 notebook-shim==0.2.3
     # via nbclassic
-numpy==1.26.2
+numpy==1.26.3
     # via
     #   contourpy
     #   matplotlib

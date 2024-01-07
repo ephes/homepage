@@ -50,9 +50,9 @@ black==23.12.1
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.34.13
+boto3==1.34.14
     # via -r requirements/production.in
-botocore==1.34.13
+botocore==1.34.14
     # via
     #   boto3
     #   s3transfer
@@ -130,7 +130,7 @@ django==5.0.1
     #   django-vite
     #   djangorestframework
     #   wagtail
-django-allauth==0.59.0
+django-allauth==0.60.0
     # via django-cast
 django-anymail[mailgun]==10.2
     # via -r requirements/production.in
@@ -521,7 +521,7 @@ pyzmq==25.1.2
     #   jupyter-server
     #   nbclassic
     #   notebook
-referencing==0.32.0
+referencing==0.32.1
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -658,7 +658,7 @@ typer==0.9.0
     # via
     #   -r requirements/develop.in
     #   -r requirements/production.in
-types-python-dateutil==2.8.19.14
+types-python-dateutil==2.8.19.20240106
     # via arrow
 typing-extensions==4.9.0
     # via
@@ -678,7 +678,7 @@ urllib3==2.0.7
     #   sentry-sdk
 wagtail==5.2.2
     # via django-cast
-wcwidth==0.2.12
+wcwidth==0.2.13
     # via prompt-toolkit
 webcolors==1.13
     # via jsonschema

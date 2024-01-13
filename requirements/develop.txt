@@ -8,7 +8,7 @@ aiofiles==22.1.0
     # via ypy-websocket
 aiosqlite==0.19.0
     # via ypy-websocket
-alabaster==0.7.13
+alabaster==0.7.15
     # via sphinx
 anyascii==0.3.2
     # via wagtail
@@ -91,7 +91,9 @@ crispy-bootstrap4==2023.1
 crispy-bootstrap5==2023.10
     # via cast-bootstrap5
 cryptography==41.0.7
-    # via pyjwt
+    # via
+    #   django-anymail
+    #   pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.12.1
@@ -256,7 +258,7 @@ ipykernel==6.28.0
     #   jupyterlab
     #   nbclassic
     #   notebook
-ipython==8.19.0
+ipython==8.20.0
     # via
     #   ipykernel
     #   jupyterlab
@@ -302,7 +304,7 @@ jupyter-client==8.6.0
     #   nbclassic
     #   nbclient
     #   notebook
-jupyter-core==5.7.0
+jupyter-core==5.7.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -446,9 +448,9 @@ prompt-toolkit==3.0.43
     # via ipython
 psutil==5.9.7
     # via ipykernel
-psycopg[binary]==3.1.16
+psycopg[binary]==3.1.17
     # via -r requirements/production.in
-psycopg-binary==3.1.16
+psycopg-binary==3.1.17
     # via psycopg
 ptyprocess==0.7.0
     # via

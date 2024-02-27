@@ -1,0 +1,6 @@
+<h3><a href="{{ work.company.url }}">{{ work.company.name }}</a></h3>
+{% for badge in work.badges %}
+  <p>{{ badge }}</p>
+{% endfor %}
+<span>{{ work.start }} - {{ work.end }}</span>
+<p>{{ work.description }}</p>

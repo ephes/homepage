@@ -16,7 +16,7 @@ asgiref==3.7.2
     # via
     #   django
     #   django-htmx
-beautifulsoup4==4.12.3
+beautifulsoup4==4.11.2
     # via wagtail
 boto3==1.34.59
     # via -r requirements/production.in
@@ -85,7 +85,6 @@ django==5.0.3
     #   django-treebeard
     #   django-vite
     #   djangorestframework
-    #   laces
     #   wagtail
 django-allauth==0.61.1
     # via django-cast
@@ -142,7 +141,7 @@ django-tag-parser==3.2
     # via
     #   django-cast
     #   django-fluent-comments
-django-taggit==5.0.1
+django-taggit==4.0.0
     # via wagtail
 django-threadedcomments==2.0
     # via django-cast
@@ -155,7 +154,7 @@ django-vite==3.0.3
     #   django-cast
 djangorestframework==3.14.0
     # via wagtail
-draftjs-exporter==5.0.0
+draftjs-exporter==2.1.7
     # via wagtail
 et-xmlfile==1.1.0
     # via openpyxl
@@ -190,8 +189,6 @@ kiwisolver==1.4.5
     # via matplotlib
 l18n==2021.3
     # via wagtail
-laces==0.1.1
-    # via wagtail
 markdown==3.5.2
     # via django-cast
 markdown-it-py==3.0.0
@@ -211,7 +208,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 openpyxl==3.1.2
     # via wagtail
-packaging==23.2
+packaging==24.0
     # via
     #   gunicorn
     #   matplotlib
@@ -316,13 +313,13 @@ urllib3==2.0.7
     #   django-anymail
     #   requests
     #   sentry-sdk
-wagtail==6.0.1
+wagtail==5.2.3
     # via django-cast
 webencodings==0.5.1
     # via html5lib
 whitenoise==6.6.0
     # via -r requirements/production.in
-willow[heif]==1.8.0
+willow[heif]==1.6.3
     # via
     #   wagtail
     #   willow

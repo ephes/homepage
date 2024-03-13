@@ -42,7 +42,7 @@ babel==2.14.0
     # via
     #   jupyterlab-server
     #   sphinx
-beautifulsoup4==4.11.2
+beautifulsoup4==4.12.3
     # via
     #   nbconvert
     #   wagtail
@@ -50,9 +50,9 @@ black==24.2.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.34.61
+boto3==1.34.62
     # via -r requirements/production.in
-botocore==1.34.61
+botocore==1.34.62
     # via
     #   boto3
     #   s3transfer
@@ -129,6 +129,7 @@ django==5.0.3
     #   django-treebeard
     #   django-vite
     #   djangorestframework
+    #   laces
     #   wagtail
 django-allauth==0.61.1
     # via django-cast
@@ -187,7 +188,7 @@ django-tag-parser==3.2
     # via
     #   django-cast
     #   django-fluent-comments
-django-taggit==4.0.0
+django-taggit==5.0.1
     # via wagtail
 django-test-plus==2.2.3
     # via -r requirements/develop.in
@@ -207,7 +208,7 @@ docutils==0.20.1
     #   flit
     #   sphinx
     #   sphinx-rtd-theme
-draftjs-exporter==2.1.7
+draftjs-exporter==5.0.0
     # via wagtail
 et-xmlfile==1.1.0
     # via openpyxl
@@ -215,7 +216,7 @@ executing==2.0.1
     # via stack-data
 factory-boy==3.3.0
     # via -r requirements/develop.in
-faker==24.1.0
+faker==24.2.0
     # via factory-boy
 fastjsonschema==2.19.1
     # via nbformat
@@ -340,6 +341,8 @@ jupyterlab-server==2.25.4
 kiwisolver==1.4.5
     # via matplotlib
 l18n==2021.3
+    # via wagtail
+laces==0.1.1
     # via wagtail
 markdown==3.5.2
     # via django-cast
@@ -562,7 +565,7 @@ send2trash==1.8.2
     #   jupyter-server
     #   nbclassic
     #   notebook
-sentry-sdk==1.41.0
+sentry-sdk==1.42.0
     # via -r requirements/production.in
 six==1.16.0
     # via
@@ -670,7 +673,7 @@ urllib3==2.0.7
     #   django-anymail
     #   requests
     #   sentry-sdk
-wagtail==5.2.3
+wagtail==6.0.1
     # via django-cast
 wcwidth==0.2.13
     # via prompt-toolkit
@@ -685,7 +688,7 @@ websocket-client==1.7.0
     # via jupyter-server
 whitenoise==6.6.0
     # via -r requirements/production.in
-willow[heif]==1.6.3
+willow[heif]==1.8.0
     # via
     #   wagtail
     #   willow
@@ -697,5 +700,5 @@ ypy-websocket==0.8.4
     # via jupyter-server-ydoc
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==69.1.1
+setuptools==69.2.0
     # via django-cast

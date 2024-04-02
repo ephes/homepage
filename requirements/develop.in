@@ -13,4 +13,4 @@ pytest-django
 rich
 sphinx_rtd_theme
 traitlets < 5.10.0
-typer < 0.12
+typer < 0.11.1

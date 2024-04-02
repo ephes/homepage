@@ -649,7 +649,7 @@ traitlets==5.9.0
     #   nbconvert
     #   nbformat
     #   notebook
-typer==0.11.1
+typer==0.11.0
     # via
     #   -r requirements/develop.in
     #   -r requirements/production.in

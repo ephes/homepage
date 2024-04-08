@@ -148,7 +148,7 @@ django-threadedcomments==2.0
     # via django-cast
 django-treebeard==4.7.1
     # via wagtail
-django-vite==3.0.3
+django-vite==3.0.4
     # via
     #   -r requirements/production.in
     #   cast-vue

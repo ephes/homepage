@@ -10,7 +10,9 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 
 import environ
 
-ROOT_DIR = environ.Path(__file__) - 3  # (homepage/config/settings/base.py - 3 = homepage/)
+ROOT_DIR = (
+    environ.Path(__file__) - 3
+)  # (homepage/config/settings/base.py - 3 = homepage/)
 APPS_DIR = ROOT_DIR.path("homepage")
 
 # Load operating system environment variables and then prepare to use them
@@ -123,7 +125,9 @@ FIXTURE_DIRS = (str(APPS_DIR.path("fixtures")),)
 
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
-EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_BACKEND = env(
+    "DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
+)
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -463,5 +467,5 @@ CAST_CUSTOM_THEMES = [
     ("bootstrap5", "Bootstrap 5"),
 ]
 
-# post data
-CAST_USE_POST_DATA = False
+# post repository for blog index page
+CAST_BLOG_INDEX_REPOSITORY = "raw"

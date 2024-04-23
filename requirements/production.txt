@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.34.88
+boto3==1.34.89
     # via -r requirements/production.in
-botocore==1.34.88
+botocore==1.34.89
     # via
     #   boto3
     #   s3transfer
@@ -35,9 +35,7 @@ certifi==2024.2.2
     #   requests
     #   sentry-sdk
 cffi==1.16.0
-    # via
-    #   argon2-cffi-bindings
-    #   cryptography
+    # via argon2-cffi-bindings
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
@@ -52,16 +50,12 @@ crispy-bootstrap4==2024.1
     # via django-cast
 crispy-bootstrap5==2024.2
     # via cast-bootstrap5
-cryptography==42.0.5
-    # via pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.12.1
     # via matplotlib
 defusedxml==0.7.1
-    # via
-    #   python3-openid
-    #   willow
+    # via willow
 django==5.0.4
     # via
     #   crispy-bootstrap4
@@ -87,7 +81,7 @@ django==5.0.4
     #   djangorestframework
     #   laces
     #   wagtail
-django-allauth==0.61.1
+django-allauth==0.62.0
     # via django-cast
 django-anymail[mailgun]==10.3
     # via -r requirements/production.in
@@ -207,8 +201,6 @@ numpy==1.26.4
     #   contourpy
     #   matplotlib
     #   pandas
-oauthlib==3.2.2
-    # via requests-oauthlib
 openpyxl==3.1.2
     # via wagtail
 packaging==24.0
@@ -236,8 +228,6 @@ pygments==2.17.2
     # via
     #   django-cast
     #   rich
-pyjwt[crypto]==2.8.0
-    # via django-allauth
 pyparsing==3.1.2
     # via matplotlib
 python-akismet==0.4.3
@@ -253,8 +243,6 @@ python-dotenv==1.0.1
     # via -r requirements/production.in
 python-slugify==8.0.4
     # via django-cast
-python3-openid==3.2.0
-    # via django-allauth
 pytz==2024.1
     # via
     #   django-indieweb
@@ -267,14 +255,10 @@ requests==2.31.0
     # via
     #   -r requirements/production.in
     #   coreapi
-    #   django-allauth
     #   django-anymail
     #   django-proxy
     #   python-akismet
-    #   requests-oauthlib
     #   wagtail
-requests-oauthlib==2.0.0
-    # via django-allauth
 rich==13.7.1
     # via
     #   django-cast

@@ -50,9 +50,9 @@ black==24.4.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.34.88
+boto3==1.34.89
     # via -r requirements/production.in
-botocore==1.34.88
+botocore==1.34.89
     # via
     #   boto3
     #   s3transfer
@@ -67,9 +67,7 @@ certifi==2024.2.2
     #   requests
     #   sentry-sdk
 cffi==1.16.0
-    # via
-    #   argon2-cffi-bindings
-    #   cryptography
+    # via argon2-cffi-bindings
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
@@ -90,8 +88,6 @@ crispy-bootstrap4==2024.1
     # via django-cast
 crispy-bootstrap5==2024.2
     # via cast-bootstrap5
-cryptography==42.0.5
-    # via pyjwt
 cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.12.1
@@ -103,7 +99,6 @@ decorator==5.1.1
 defusedxml==0.7.1
     # via
     #   nbconvert
-    #   python3-openid
     #   willow
 django==5.0.4
     # via
@@ -131,7 +126,7 @@ django==5.0.4
     #   djangorestframework
     #   laces
     #   wagtail
-django-allauth==0.61.1
+django-allauth==0.62.0
     # via django-cast
 django-anymail[mailgun]==10.3
     # via -r requirements/production.in
@@ -336,7 +331,7 @@ jupyterlab==3.6.7
     # via -r requirements/develop.in
 jupyterlab-pygments==0.3.0
     # via nbconvert
-jupyterlab-server==2.27.0
+jupyterlab-server==2.27.1
     # via jupyterlab
 kiwisolver==1.4.5
     # via matplotlib
@@ -398,8 +393,6 @@ numpy==1.26.4
     #   contourpy
     #   matplotlib
     #   pandas
-oauthlib==3.2.2
-    # via requests-oauthlib
 openpyxl==3.1.2
     # via wagtail
 packaging==24.0
@@ -472,8 +465,6 @@ pygments==2.17.2
     #   nbconvert
     #   rich
     #   sphinx
-pyjwt[crypto]==2.8.0
-    # via django-allauth
 pyparsing==3.1.2
     # via matplotlib
 pytest==8.1.1
@@ -503,8 +494,6 @@ python-json-logger==2.0.7
     # via jupyter-events
 python-slugify==8.0.4
     # via django-cast
-python3-openid==3.2.0
-    # via django-allauth
 pytz==2024.1
     # via
     #   django-indieweb
@@ -530,17 +519,13 @@ requests==2.31.0
     # via
     #   -r requirements/production.in
     #   coreapi
-    #   django-allauth
     #   django-anymail
     #   django-proxy
     #   flit
     #   jupyterlab-server
     #   python-akismet
-    #   requests-oauthlib
     #   sphinx
     #   wagtail
-requests-oauthlib==2.0.0
-    # via django-allauth
 rfc3339-validator==0.1.4
     # via
     #   jsonschema

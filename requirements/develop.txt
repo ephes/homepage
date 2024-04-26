@@ -549,7 +549,7 @@ send2trash==1.8.3
     #   jupyter-server
     #   nbclassic
     #   notebook
-sentry-sdk==2.0.0
+sentry-sdk==2.0.1
     # via -r requirements/production.in
 six==1.16.0
     # via

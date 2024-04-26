@@ -265,7 +265,7 @@ rich==13.7.1
     #   typer
 s3transfer==0.10.1
     # via boto3
-sentry-sdk==2.0.0
+sentry-sdk==2.0.1
     # via -r requirements/production.in
 shellingham==1.5.4
     # via typer

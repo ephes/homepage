@@ -264,7 +264,7 @@ ipykernel==6.29.4
     #   jupyter-console
     #   jupyterlab
     #   qtconsole
-ipython==8.21.0
+ipython==8.24.0
     # via
     #   dj-notebook
     #   ipykernel
@@ -632,9 +632,8 @@ tornado==6.4
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.9.0
+traitlets==5.14.3
     # via
-    #   -r requirements/develop.in
     #   comm
     #   ipykernel
     #   ipython

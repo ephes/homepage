@@ -10,9 +10,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 
 import environ
 
-ROOT_DIR = (
-    environ.Path(__file__) - 3
-)  # (homepage/config/settings/base.py - 3 = homepage/)
+ROOT_DIR = environ.Path(__file__) - 3  # (homepage/config/settings/base.py - 3 = homepage/)
 APPS_DIR = ROOT_DIR.path("homepage")
 
 # Load operating system environment variables and then prepare to use them
@@ -125,9 +123,7 @@ FIXTURE_DIRS = (str(APPS_DIR.path("fixtures")),)
 
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
-EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
-)
+EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -425,27 +421,6 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
         },
     },
 }
-
-# Jupyter
-PATH_TO_NOTEBOOK_DIR = "notebooks"
-try:
-    import jupyterlab  # noqa
-
-    notebook_default_url = "/lab"  # Using JupyterLab
-except ImportError:
-    notebook_default_url = "/tree"  # Using Jupyter
-
-NOTEBOOK_ARGUMENTS = [
-    "--ip",
-    "127.0.0.1",
-    "--port",
-    "8888",
-    "--notebook-dir",
-    PATH_TO_NOTEBOOK_DIR,
-    "--NotebookApp.default_url",
-    notebook_default_url,
-]
-IPYTHON_KERNEL_DISPLAY_NAME = "Django Kernel"
 
 # Disable wagtail post_delete_file_cleanup signal to avoid deleting files from S3
 DELETE_WAGTAIL_IMAGES = False

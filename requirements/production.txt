@@ -56,7 +56,7 @@ cycler==0.12.1
     # via matplotlib
 defusedxml==0.7.1
     # via willow
-django==5.0.5
+django==5.0.4
     # via
     #   crispy-bootstrap4
     #   crispy-bootstrap5

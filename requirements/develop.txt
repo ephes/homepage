@@ -48,9 +48,9 @@ black==24.4.2
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.34.109
+boto3==1.34.110
     # via -r requirements/production.in
-botocore==1.34.109
+botocore==1.34.110
     # via
     #   boto3
     #   s3transfer
@@ -533,7 +533,7 @@ referencing==0.35.1
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
-requests==2.32.1
+requests==2.32.2
     # via
     #   -r requirements/production.in
     #   coreapi

@@ -131,7 +131,7 @@ django==5.0.6
     #   djangorestframework
     #   laces
     #   wagtail
-django-allauth==0.63.1
+django-allauth==0.63.2
     # via django-cast
 django-anymail[mailgun]==10.3
     # via -r requirements/production.in

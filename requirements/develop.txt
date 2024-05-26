@@ -48,9 +48,9 @@ black==24.4.2
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.34.112
+boto3==1.34.113
     # via -r requirements/production.in
-botocore==1.34.112
+botocore==1.34.113
     # via
     #   boto3
     #   s3transfer
@@ -163,7 +163,7 @@ django-extensions==3.2.3
     #   dj-notebook
 django-filepond==0.1.4
     # via -r requirements/production.in
-django-filter==24.2
+django-filter==23.5
     # via
     #   django-cast
     #   wagtail
@@ -234,7 +234,7 @@ flit==3.9.0
     # via -r requirements/develop.in
 flit-core==3.9.0
     # via flit
-fonttools==4.51.0
+fonttools==4.52.1
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
@@ -242,6 +242,8 @@ gunicorn==22.0.0
     # via -r requirements/production.in
 h11==0.14.0
     # via httpcore
+html5lib==1.1
+    # via wagtail
 httpcore==1.0.5
     # via httpx
 httpx==0.27.0
@@ -576,6 +578,7 @@ six==1.16.0
     #   bleach
     #   cyberpandas
     #   django-pandas
+    #   html5lib
     #   l18n
     #   python-dateutil
     #   rfc3339-validator
@@ -672,7 +675,7 @@ urllib3==2.2.1
     #   django-anymail
     #   requests
     #   sentry-sdk
-wagtail==6.1.1
+wagtail==6.0.4
     # via django-cast
 wcwidth==0.2.13
     # via prompt-toolkit
@@ -681,6 +684,7 @@ webcolors==1.13
 webencodings==0.5.1
     # via
     #   bleach
+    #   html5lib
     #   tinycss2
 websocket-client==1.8.0
     # via jupyter-server

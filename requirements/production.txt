@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.34.133
+boto3==1.34.132
     # via -r requirements/production.in
-botocore==1.34.133
+botocore==1.34.132
     # via
     #   boto3
     #   s3transfer
@@ -133,7 +133,9 @@ django-proxy==1.3.0
 django-storages==1.14.3
     # via -r requirements/production.in
 django-tag-parser==3.2
-    # via django-fluent-comments
+    # via
+    #   django-cast
+    #   django-fluent-comments
 django-taggit==5.0.1
     # via wagtail
 django-threadedcomments==2.0
@@ -259,7 +261,7 @@ rich==13.7.1
     #   typer
 s3transfer==0.10.2
     # via boto3
-sentry-sdk==2.7.0
+sentry-sdk==2.6.0
     # via -r requirements/production.in
 shellingham==1.5.4
     # via typer

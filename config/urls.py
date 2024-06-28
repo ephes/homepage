@@ -44,8 +44,6 @@ urlpatterns = [
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     re_path(r"^docs/", include_docs_urls(title="My Blog API service")),
-    # Uploads
-    path("uploads/", include("filepond.urls", namespace="filepond")),
     # Cast Blog
     path("blogs/", include("cast.urls", namespace="cast")),
     # Fediverse redirects etc.

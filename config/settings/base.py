@@ -54,7 +54,6 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # shell_plus etc
     "indieweb",  # indieauth etc
     "fluent_comments",
-    "filepond",  # uploading files via filepond
     "threadedcomments",
     "django_comments",
     "storages",  # store media on s3

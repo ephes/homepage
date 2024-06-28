@@ -117,7 +117,6 @@ django==5.0.6
     #   django-crispy-forms
     #   django-debug-toolbar
     #   django-extensions
-    #   django-filepond
     #   django-filter
     #   django-htmx
     #   django-indieweb
@@ -161,8 +160,6 @@ django-extensions==3.2.3
     # via
     #   -r requirements/production.in
     #   dj-notebook
-django-filepond==0.1.4
-    # via -r requirements/production.in
 django-filter==24.2
     # via
     #   django-cast
@@ -176,7 +173,6 @@ django-indieweb==0.0.7
 django-model-utils==4.5.1
     # via
     #   django-cast
-    #   django-filepond
     #   django-indieweb
 django-modelcluster==6.3
     # via wagtail
@@ -262,7 +258,7 @@ ipykernel==6.29.4
     #   jupyter-console
     #   jupyterlab
     #   qtconsole
-ipython==8.25.0
+ipython==8.26.0
     # via
     #   dj-notebook
     #   ipykernel

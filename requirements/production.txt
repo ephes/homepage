@@ -67,7 +67,6 @@ django==5.0.6
     #   django-contrib-comments
     #   django-crispy-forms
     #   django-extensions
-    #   django-filepond
     #   django-filter
     #   django-htmx
     #   django-indieweb
@@ -107,8 +106,6 @@ django-environ==0.11.2
     # via django-cast
 django-extensions==3.2.3
     # via -r requirements/production.in
-django-filepond==0.1.4
-    # via -r requirements/production.in
 django-filter==24.2
     # via
     #   django-cast
@@ -122,7 +119,6 @@ django-indieweb==0.0.7
 django-model-utils==4.5.1
     # via
     #   django-cast
-    #   django-filepond
     #   django-indieweb
 django-modelcluster==6.3
     # via wagtail

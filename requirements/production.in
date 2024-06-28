@@ -6,7 +6,6 @@ cyberpandas
 django-allauth
 django-anymail[mailgun]
 django-extensions
-django-filepond
 django-indieweb
 django-proxy
 django-storages

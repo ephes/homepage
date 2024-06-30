@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.34.135
+boto3==1.34.136
     # via -r requirements/production.in
-botocore==1.34.135
+botocore==1.34.136
     # via
     #   boto3
     #   s3transfer
@@ -191,7 +191,7 @@ numpy==2.0.0
     #   contourpy
     #   matplotlib
     #   pandas
-openpyxl==3.1.4
+openpyxl==3.1.5
     # via wagtail
 packaging==24.1
     # via

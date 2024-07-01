@@ -201,16 +201,16 @@ pandas==2.2.2
     # via
     #   -r requirements/production.in
     #   cyberpandas
-pillow==10.3.0
+pillow==10.4.0
     # via
     #   matplotlib
     #   pillow-heif
     #   wagtail
 pillow-heif==0.16.0
     # via willow
-psycopg[binary]==3.1.19
+psycopg[binary]==3.2.1
     # via -r requirements/production.in
-psycopg-binary==3.1.19
+psycopg-binary==3.2.1
     # via psycopg
 pycparser==2.22
     # via cffi

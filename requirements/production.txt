@@ -182,7 +182,7 @@ markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
     # via jinja2
-matplotlib==3.9.1
+matplotlib==3.9.0
     # via -r requirements/production.in
 mdurl==0.1.2
     # via markdown-it-py
@@ -239,7 +239,7 @@ pytz==2024.1
     #   django-modelcluster
     #   l18n
     #   pandas
-pyzmq==26.0.3
+pyzmq==26.1.0
     # via -r requirements/production.in
 requests==2.32.3
     # via

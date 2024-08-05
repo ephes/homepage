@@ -84,7 +84,7 @@ coreapi==2.3.3
     # via django-cast
 coreschema==0.0.4
     # via coreapi
-coverage==7.6.0
+coverage==7.6.1
     # via -r requirements/develop.in
 crispy-bootstrap4==2024.1
     # via django-cast
@@ -222,7 +222,7 @@ fastjsonschema==2.20.0
     # via nbformat
 filetype==1.2.0
     # via willow
-flake8==7.1.0
+flake8==7.1.1
     # via -r requirements/develop.in
 flit==3.9.0
     # via -r requirements/develop.in
@@ -352,7 +352,7 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.9.1
+matplotlib==3.9.0
     # via -r requirements/production.in
 matplotlib-inline==0.1.7
     # via
@@ -454,7 +454,7 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.3
     # via stack-data
-pycodestyle==2.12.0
+pycodestyle==2.12.1
     # via flake8
 pycparser==2.22
     # via cffi
@@ -508,7 +508,7 @@ pytz==2024.1
     #   pandas
 pyyaml==6.0.1
     # via jupyter-events
-pyzmq==26.0.3
+pyzmq==26.1.0
     # via
     #   -r requirements/production.in
     #   ipykernel

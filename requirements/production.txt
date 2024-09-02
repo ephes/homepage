@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.35.8
+boto3==1.35.10
     # via -r requirements/production.in
-botocore==1.35.8
+botocore==1.35.10
     # via
     #   boto3
     #   s3transfer
@@ -28,7 +28,7 @@ cast-bootstrap5 @ git+https://github.com/ephes/cast-bootstrap5
     # via -r requirements/production.in
 cast-vue @ git+https://github.com/ephes/cast-vue
     # via -r requirements/production.in
-certifi==2024.7.4
+certifi==2024.8.30
     # via
     #   httpcore
     #   httpx
@@ -80,7 +80,7 @@ django==5.1
     #   djangorestframework
     #   laces
     #   wagtail
-django-allauth==64.1.0
+django-allauth==64.2.0
     # via -r requirements/production.in
 django-anymail[mailgun]==11.1
     # via -r requirements/production.in

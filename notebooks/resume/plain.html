@@ -8,12 +8,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <style>
       :root {
-        font-family: "Inter", monospace;
-        font-optical-sizing: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        color: #666666;
         font-weight: 300;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: "Inter", monospace;
+        font-weight: 600;
         font-style: normal;
         font-variation-settings:
         "slnt" 0;
+        font-optical-sizing: auto;
+        color: black;
       }
 
       .center {
@@ -72,11 +79,15 @@
           display: inline-block;
           margin-right: 10px; /* Optional: Adds space between items */
       }
+
+      .socialLink {
+          color: black;
+      }
     </style>
   </head>
   <body class="center">
     <header>
-      <h1>{{ person.name }}</h1>
+      <h1 class="headline">{{ person.name }}</h1>
       <div class="with-sidebar">
         <div>
           <p>{{ person.tagline }}</p>
@@ -86,7 +97,7 @@
           <a href="{{ location.url }}">{{ location.name }}</a>
           <ul class="without-bullets">
             {% for social_link in contact.social_links %}
-              <li><a href="{{ social_link.url }}">{{ social_link.svg_icon | safe }}</a></li>
+              <li><a class="socialLink" href="{{ social_link.url }}">{{ social_link.svg_icon | safe }}</a></li>
             {% endfor %}
           </ul>
         </div>

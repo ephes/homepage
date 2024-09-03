@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>{{ resume.person.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        color: #666666;
+        font-weight: 300;
+        --ratio: 1.5;
+        --s-5: calc(var(--s-4) / var(--ratio));
+        --s-4: calc(var(--s-3) / var(--ratio));
+        --s-3: calc(var(--s-2) / var(--ratio));
+        --s-2: calc(var(--s-1) / var(--ratio));
+        --s-1: calc(var(--s0) / var(--ratio));
+        --s0: 1rem;
+        --s1: calc(var(--s0) * var(--ratio));
+        --s2: calc(var(--s1) * var(--ratio));
+        --s3: calc(var(--s2) * var(--ratio));
+        --s4: calc(var(--s3) * var(--ratio));
+        --s5: calc(var(--s4) * var(--ratio));
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: "Inter", monospace;
+        font-weight: 600;
+        font-style: normal;
+        font-variation-settings:
+        "slnt" 0;
+        font-optical-sizing: auto;
+        color: black;
+      }
+
+      .center {
+        box-sizing: content-box;
+        max-inline-size: 90ch;
+        margin-inline: auto;
+        padding-inline-start: 1rem;
+        padding-inline-end: 1rem;
+      }
+
+      .with-sidebar > :last-child {
+        flex-basis: 15rem;
+        flex-grow: 1;
+      }
+
+      .with-sidebar > :first-child {
+        flex-basis: 0;
+        flex-grow: 999;
+        min-inline-size: 50%;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      .stack > * + * {
+        margin-block-start: var(--s1);
+      }
+
+      .stack-wide > * + * {
+        margin-block-start: 3.5rem;
+      }
+
+      .stack-recursive * + * {
+        margin-block-start: 1.5rem;
+      }
+
+      li {
+        display: inline-block;
+        margin-right: 10px; /* Optional: Adds space between items */
+      }
+    </style>
+  </head>
+  <body class="center">
+    <header>
+      <p>Header</p>
+    </header>
+    <main>
+      <div class="stack">
+        <h2>Some Heading for Plain stack-l</h2>
+        <p>Some text</p>
+        <p>More text</p>
+      </div>
+      <div class="stack-wide">
+        <h2>Heading for space=3rem</h2>
+        <div class="stack">
+          <p>p in nested stack with space=1.5rem</p>
+          <p>second p in nested stack</p>
+          <p>third p in nested stack</p>
+        </div>
+        <h2>Second Heading</h2>
+        <div class="stack">
+          <p>first p in second nested stack</p>
+          <p>second p in second nested stack</p>
+          <p>third p in second nested stack</p>
+        </div>
+      </div>
+      <h2>Recursive</h2>
+      <div class="stack-recursive">
+        <div>first level child in recursive stack</div>
+        <div>first level sibling</div>
+        <div>
+          <div>second level child in recursive stack</div>
+          <div>second level sibling</div>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <p>Footer</p>
+    </footer>
+  </body>
+</html>

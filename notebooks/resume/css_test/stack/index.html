@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>{{ resume.person.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        color: #666666;
+        font-weight: 300;
+        --ratio: 1.5;
+        --s-5: calc(var(--s-4) / var(--ratio));
+        --s-4: calc(var(--s-3) / var(--ratio));
+        --s-3: calc(var(--s-2) / var(--ratio));
+        --s-2: calc(var(--s-1) / var(--ratio));
+        --s-1: calc(var(--s0) / var(--ratio));
+        --s0: 1rem;
+        --s1: calc(var(--s0) * var(--ratio));
+        --s2: calc(var(--s1) * var(--ratio));
+        --s3: calc(var(--s2) * var(--ratio));
+        --s4: calc(var(--s3) * var(--ratio));
+        --s5: calc(var(--s4) * var(--ratio));
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: "Inter", monospace;
+        font-weight: 600;
+        font-style: normal;
+        font-variation-settings:
+        "slnt" 0;
+        font-optical-sizing: auto;
+        color: black;
+      }
+
+      .center {
+        box-sizing: content-box;
+        max-inline-size: 90ch;
+        margin-inline: auto;
+        padding-inline-start: 1rem;
+        padding-inline-end: 1rem;
+      }
+
+      .with-sidebar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4rem;
+      }
+
+      .with-sidebar > :last-child {
+        flex-basis: 15rem;
+        flex-grow: 1;
+      }
+
+      .with-sidebar > :first-child {
+        flex-basis: 0;
+        flex-grow: 999;
+        min-inline-size: 50%;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      .stack > * {
+        margin-block: 0;
+      }
+
+      .stack > * + * {
+        margin-block-start: 1.5rem;
+      }
+
+      stack-l {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      stack-l > * + * {
+        margin-block-start: var(--s1);
+      }
+
+      li {
+        display: inline-block;
+        margin-right: 10px; /* Optional: Adds space between items */
+      }
+    </style>
+  </head>
+  <body class="center">
+    <header>
+      <p>Header</p>
+    </header>
+    <main>
+      <stack-l>
+        <h2>Some Heading for Plain stack-l</h2>
+        <p>Some text</p>
+        <p>More text</p>
+      </stack-l>
+      <stack-l space="3rem">
+        <h2>Heading for space=3rem</h2>
+        <stack-l space="1.5rem">
+          <p>p in nested stack with space=1.5rem</p>
+          <p>second p in nested stack</p>
+          <p>third p in nested stack</p>
+        </stack-l>
+        <h2>Second Heading</h2>
+        <stack-l space="1.5rem">
+          <p>first p in second nested stack</p>
+          <p>second p in second nested stack</p>
+          <p>third p in second nested stack</p>
+        </stack-l>
+      </stack-l>
+      <h2>Recursive</h2>
+      <stack-l recursive>
+        <div>first level child in recursive stack</div>
+        <div>first level sibling</div>
+        <div>
+          <div>second level child in recursive stack</div>
+          <div>second level sibling</div>
+        </div>
+      </stack-l>
+    </main>
+    <footer>
+      <p>Footer</p>
+    </footer>
+    <script>
+/**
+ * @module stack-l
+ * @description
+ * A custom element for injecting white space (margin) between flow
+ * (block) elements along a vertical axis.
+ * @property {string} space=var(--s1) A CSS `margin` value
+ * @property {boolean} recursive=false Whether the spaces apply recursively (i.e. regardless of nesting level)
+ * @property {number} splitAfter=null The element after which to _split_ the stack with an auto margin
+ */
+      export default class Stack extends HTMLElement {
+        constructor() {
+          super();
+          this.render = () => {
+            this.i = `Stack-${[this.space, this.recursive, this.splitAfter].join('')}`;
+            this.dataset.i = this.i;
+            if (!document.getElementById(this.i)) {
+              let styleEl = document.createElement('style');
+              styleEl.id = this.i;
+              styleEl.innerHTML = `
+          [data-i="${this.i}"]${this.recursive ? '' : ' >'} * + * {
+            margin-block-start: ${this.space};
+          }
+
+          ${this.splitAfter ? `
+              [data-i="${this.i}"]:only-child {
+                block-size: 100%;
+              }
+
+              [data-i="${this.i}"] > :nth-child(${this.splitAfter}) {
+                margin-block-end: auto;
+              }`
+          : ''}
+        `.replace(/\s\s+/g, ' ').trim();
+              document.head.appendChild(styleEl);
+            }
+          }
+        }
+
+        get space() {
+          return this.getAttribute('space') || 'var(--s1)';
+        }
+
+        set space(val) {
+          return this.setAttribute('space', val);
+        }
+
+        get recursive() {
+          return this.hasAttribute('recursive');
+        }
+
+        set recursive(val) {
+          return this.setAttribute(val ? 'recursive' : '');
+        }
+
+        get splitAfter() {
+          return this.getAttribute('splitAfter') || null;
+        }
+
+        set splitAfter(val) {
+          return this.setAttribute('splitAfter', val);
+        }
+
+        static get observedAttributes() {
+          return ['space', 'recursive', 'splitAfter'];
+        }
+
+        connectedCallback() {
+          this.render();
+        }
+
+        attributeChangedCallback() {
+          this.render();
+        }
+      }
+
+      if ('customElements' in window) {
+        customElements.define('stack-l', Stack);
+      }
+    </script>
+  </body>
+</html>

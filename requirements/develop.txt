@@ -48,9 +48,9 @@ black==24.8.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.35.10
+boto3==1.35.11
     # via -r requirements/production.in
-botocore==1.35.10
+botocore==1.35.11
     # via
     #   boto3
     #   s3transfer
@@ -104,7 +104,7 @@ defusedxml==0.7.1
     #   willow
 dj-notebook==0.7.0
     # via -r requirements/develop.in
-django==5.1
+django==5.1.1
     # via
     #   crispy-bootstrap4
     #   crispy-bootstrap5
@@ -339,7 +339,7 @@ jupyterlab-server==2.27.3
     #   notebook
 jupyterlab-widgets==3.0.13
     # via ipywidgets
-kiwisolver==1.4.5
+kiwisolver==1.4.6
     # via matplotlib
 l18n==2021.3
     # via wagtail
@@ -384,7 +384,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==2.1.0
+numpy==2.1.1
     # via
     #   contourpy
     #   matplotlib
@@ -676,7 +676,7 @@ willow[heif]==1.8.0
     #   willow
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==74.1.0
+setuptools==74.1.1
     # via
     #   django-cast
     #   jupyterlab

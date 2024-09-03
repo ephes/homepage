@@ -13,7 +13,7 @@
         font-weight: 300;
         --measure: 75ch;
         --ratio: 1.5;
-        --border-thin: var(--s-4) solid;
+        --border-thin: var(--s-6);
         --s-6: calc(var(--s-5) / var(--ratio));
         --s-5: calc(var(--s-4) / var(--ratio));
         --s-4: calc(var(--s-3) / var(--ratio));
@@ -130,42 +130,59 @@
       }
 
       .timeline-item {
-          position: relative;
+        position: relative;
       }
 
       .year-span {
-          position: absolute;
-          top: var(--s1);
-          right: 0;
-          font-size: calc(0.9 * var(--s0));
-          font-weight: lighter;
+        position: absolute;
+        top: var(--s1);
+        right: 0;
+        font-size: calc(0.9 * var(--s0));
+        font-weight: lighter;
       }
 
       svg {
-          vertical-align: middle; /* Adjusts the vertical alignment */
+        vertical-align: middle; /* Adjusts the vertical alignment */
       }
 
       .skills-list {
-          list-style-type: none; /* Removes default bullets */
-          padding: 0; /* Removes default padding */
-          display: flex;
-          flex-wrap: wrap; /* Allows the badges to wrap to the next line */
-          gap: 2px; /* Adds space between badges */
+        list-style-type: none; /* Removes default bullets */
+        padding: 0; /* Removes default padding */
+        display: flex;
+        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
+        gap: 2px; /* Adds space between badges */
       }
 
       .skills-list li {
-          background-color: #333333; /* Dark grey background */
-          color: #ffffff; /* White text color */
-          padding: 0.5ch 1ch; /* Adds space inside the badge */
-          margin-right: 0.5ch; /* Adds space between badges */
-          border-radius: 1ch; /* Rounds the corners */
-          font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
-          display: inline-block; /* Ensures badges are inline */
+        background-color: #333333; /* Dark grey background */
+        color: #ffffff; /* White text color */
+        padding: 0.5ch 1ch; /* Adds space inside the badge */
+        margin-right: 0.5ch; /* Adds space between badges */
+        border-radius: 1ch; /* Rounds the corners */
+        font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
+        display: inline-block; /* Ensures badges are inline */
+      }
+
+      .badges-list {
+        list-style-type: none; /* Removes default bullets */
+        padding: 0; /* Removes default padding */
+        display: flex;
+        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
+        gap: 2px; /* Adds space between badges */
+      }
+
+      .badges-list li {
+        background-color: rgb(243, 244, 246); /* Light grey background */
+        padding: 0.5ch 1ch; /* Adds space inside the badge */
+        margin-right: 0.5ch; /* Adds space between badges */
+        border-radius: 1ch; /* Rounds the corners */
+        font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
+        display: inline-block; /* Ensures badges are inline */
       }
 
       a {
-          color: black; /* Changes the link color to black */
-          text-decoration: none; /* Removes the underline */
+        color: black; /* Changes the link color to black */
+        text-decoration: none; /* Removes the underline */
       }
 
       a:hover {
@@ -173,8 +190,9 @@
       }
 
       .box {
-        padding: var(--s1);
-        border: var(--border-thin) solid;
+        padding: var(--s-1);
+        border: #d3d3d3 var(--border-thin) solid;
+        border-radius: 0.5ch;
         --color-light: #fff;
         --color-dark: #000;
         color: var(--color-dark);
@@ -236,7 +254,7 @@
               <h3><a href="{{ entry.company.url }}">{{ entry.company.name }}</a></h3>
               <strong>{{ entry.title }}</strong>
               <span class="year-span">{{ entry.start }} - {{ entry.end }}</span>
-              <p>{{ entry.description }}</p>
+              <p>{{ entry.description|safe }}</p>
             </div>
           {% endfor %}
         </section>
@@ -261,7 +279,7 @@
             <div class="box stack">
               <h3><a href="{{ project.url }}">{{ project.title }}</a></h3>
               <p>{{ project.description }}</p>
-              <ul class="skills-list">
+              <ul class="badges-list">
                 {% for badge in project.badges %}
                   <li>{{ badge }}</li>
                 {% endfor %}

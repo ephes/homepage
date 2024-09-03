@@ -11,6 +11,18 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         color: #666666;
         font-weight: 300;
+        --ratio: 1.5;
+        --s-5: calc(var(--s-4) / var(--ratio));
+        --s-4: calc(var(--s-3) / var(--ratio));
+        --s-3: calc(var(--s-2) / var(--ratio));
+        --s-2: calc(var(--s-1) / var(--ratio));
+        --s-1: calc(var(--s0) / var(--ratio));
+        --s0: 1rem;
+        --s1: calc(var(--s0) * var(--ratio));
+        --s2: calc(var(--s1) * var(--ratio));
+        --s3: calc(var(--s2) * var(--ratio));
+        --s4: calc(var(--s3) * var(--ratio));
+        --s5: calc(var(--s4) * var(--ratio));
       }
 
       h1, h2, h3, h4, h5, h6 {
@@ -58,12 +70,17 @@
         justify-content: flex-start;
       }
 
-      .stack > * {
+      [class^='stack'] > * {
+        /* top and bottom margins in horizontal-tb writing mode */
         margin-block: 0;
       }
 
       .stack > * + * {
-        margin-block-start: 1.5rem;
+        margin-block-start: var(--s1);
+      }
+
+      .stack-large > * + * {
+        margin-block-start: var(--s2);
       }
 
       .without-bullets {
@@ -72,12 +89,12 @@
       }
 
       li {
-          display: inline-block;
-          margin-right: 10px; /* Optional: Adds space between items */
+        display: inline-block;
+        margin-right: 10px; /* Optional: Adds space between items */
       }
 
       .socialLink {
-          color: black;
+        color: black;
       }
     </style>
   </head>
@@ -92,17 +109,17 @@
           </svg>
           <a href="https://www.google.com/maps/place/D%C3%BCsseldorf/">Düsseldorf, Germany, CET</a>
           <ul class="without-bullets">
-            
-              <li><a class="socialLink" href="mailto:jochen-cv@wersdoerfer.de"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail size-4"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></a></li>
-            
-              <li><a class="socialLink" href="tel:+4917623530319"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone size-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a></li>
-            
-              <li><a class="socialLink" href="https://github.com/ephes/"><svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z" fill="#24292f"/></svg></a></li>
-            
-              <li><a class="socialLink" href="https://www.linkedin.com/in/jochen-wersdoerfer/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.72 3.99997H5.37C5.19793 3.99191 5.02595 4.01786 4.86392 4.07635C4.70189 4.13484 4.55299 4.22471 4.42573 4.34081C4.29848 4.45692 4.19537 4.59699 4.12232 4.75299C4.04927 4.909 4.0077 5.07788 4 5.24997V18.63C4.01008 18.9901 4.15766 19.3328 4.41243 19.5875C4.6672 19.8423 5.00984 19.9899 5.37 20H18.72C19.0701 19.9844 19.4002 19.8322 19.6395 19.5761C19.8788 19.32 20.0082 18.9804 20 18.63V5.24997C20.0029 5.08247 19.9715 4.91616 19.9078 4.76122C19.8441 4.60629 19.7494 4.466 19.6295 4.34895C19.5097 4.23191 19.3672 4.14059 19.2108 4.08058C19.0544 4.02057 18.8874 3.99314 18.72 3.99997ZM9 17.34H6.67V10.21H9V17.34ZM7.89 9.12997C7.72741 9.13564 7.5654 9.10762 7.41416 9.04768C7.26291 8.98774 7.12569 8.89717 7.01113 8.78166C6.89656 8.66615 6.80711 8.5282 6.74841 8.37647C6.6897 8.22474 6.66301 8.06251 6.67 7.89997C6.66281 7.73567 6.69004 7.57169 6.74995 7.41854C6.80986 7.26538 6.90112 7.12644 7.01787 7.01063C7.13463 6.89481 7.2743 6.80468 7.42793 6.74602C7.58157 6.68735 7.74577 6.66145 7.91 6.66997C8.07259 6.66431 8.2346 6.69232 8.38584 6.75226C8.53709 6.8122 8.67431 6.90277 8.78887 7.01828C8.90344 7.13379 8.99289 7.27174 9.05159 7.42347C9.1103 7.5752 9.13699 7.73743 9.13 7.89997C9.13719 8.06427 9.10996 8.22825 9.05005 8.3814C8.99014 8.53456 8.89888 8.6735 8.78213 8.78931C8.66537 8.90513 8.5257 8.99526 8.37207 9.05392C8.21843 9.11259 8.05423 9.13849 7.89 9.12997ZM17.34 17.34H15V13.44C15 12.51 14.67 11.87 13.84 11.87C13.5822 11.8722 13.3313 11.9541 13.1219 12.1045C12.9124 12.2549 12.7546 12.4664 12.67 12.71C12.605 12.8926 12.5778 13.0865 12.59 13.28V17.34H10.29V10.21H12.59V11.21C12.7945 10.8343 13.0988 10.5225 13.4694 10.3089C13.84 10.0954 14.2624 9.98848 14.69 9.99997C16.2 9.99997 17.34 11 17.34 13.13V17.34Z" fill="#000000"/></svg></a></li>
-            
-              <li><a class="socialLink" href="https://wersdoerfer.de/@jochen"><svg width="24" height="24" viewBox="0 0 61 65" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.7539 14.3904C59.8143 7.40642 53.7273 1.90257 46.5117 0.836066C45.2943 0.655854 40.6819 0 29.9973 0H29.9175C19.2299 0 16.937 0.655854 15.7196 0.836066C8.70488 1.87302 2.29885 6.81852 0.744617 13.8852C-0.00294988 17.3654 -0.0827298 21.2237 0.0561464 24.7629C0.254119 29.8384 0.292531 34.905 0.753482 39.9598C1.07215 43.3175 1.62806 46.6484 2.41704 49.9276C3.89445 55.9839 9.87499 61.0239 15.7344 63.0801C22.0077 65.2244 28.7542 65.5804 35.2184 64.1082C35.9295 63.9428 36.6318 63.7508 37.3252 63.5321C38.8971 63.0329 40.738 62.4745 42.0913 61.4937C42.1099 61.4799 42.1251 61.4621 42.1358 61.4417C42.1466 61.4212 42.1526 61.3986 42.1534 61.3755V56.4773C42.153 56.4557 42.1479 56.4345 42.1383 56.4151C42.1287 56.3958 42.1149 56.3788 42.0979 56.3655C42.0809 56.3522 42.0611 56.3429 42.04 56.3382C42.019 56.3335 41.9971 56.3336 41.9761 56.3384C37.8345 57.3276 33.5905 57.8234 29.3324 57.8156C22.0045 57.8156 20.0336 54.3384 19.4693 52.8908C19.0156 51.6397 18.7275 50.3346 18.6124 49.0088C18.6112 48.9866 18.6153 48.9643 18.6243 48.9439C18.6333 48.9236 18.647 48.9056 18.6643 48.8915C18.6816 48.8774 18.7019 48.8675 18.7237 48.8628C18.7455 48.858 18.7681 48.8585 18.7897 48.8641C22.8622 49.8465 27.037 50.3423 31.2265 50.3412C32.234 50.3412 33.2387 50.3412 34.2463 50.3146C38.4598 50.1964 42.9009 49.9808 47.0465 49.1713C47.1499 49.1506 47.2534 49.1329 47.342 49.1063C53.881 47.8507 60.1038 43.9097 60.7362 33.9301C60.7598 33.5372 60.8189 29.8148 60.8189 29.4071C60.8218 28.0215 61.2651 19.5781 60.7539 14.3904Z" fill="url(#paint0_linear_89_8)"/><path d="M50.3943 22.237V39.5876H43.5185V22.7481C43.5185 19.2029 42.0411 17.3949 39.036 17.3949C35.7325 17.3949 34.0778 19.5338 34.0778 23.7585V32.9759H27.2434V23.7585C27.2434 19.5338 25.5857 17.3949 22.2822 17.3949C19.2949 17.3949 17.8027 19.2029 17.8027 22.7481V39.5876H10.9298V22.237C10.9298 18.6918 11.835 15.8754 13.6453 13.7877C15.5128 11.7049 17.9623 10.6355 21.0028 10.6355C24.522 10.6355 27.1813 11.9885 28.9542 14.6917L30.665 17.5633L32.3788 14.6917C34.1517 11.9885 36.811 10.6355 40.3243 10.6355C43.3619 10.6355 45.8114 11.7049 47.6847 13.7877C49.4931 15.8734 50.3963 18.6899 50.3943 22.237Z" fill="white"/><defs><linearGradient id="paint0_linear_89_8" x1="30.5" y1="0" x2="30.5" y2="65" gradientUnits="userSpaceOnUse"><stop stop-color="#6364FF"/><stop offset="1" stop-color="#563ACC"/></linearGradient></defs></svg></a></li>
-            
+
+            <li><a class="socialLink" href="mailto:jochen-cv@wersdoerfer.de"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail size-4"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></a></li>
+
+            <li><a class="socialLink" href="tel:+4917623530319"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone size-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a></li>
+
+            <li><a class="socialLink" href="https://github.com/ephes/"><svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z" fill="#24292f"/></svg></a></li>
+
+            <li><a class="socialLink" href="https://www.linkedin.com/in/jochen-wersdoerfer/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.72 3.99997H5.37C5.19793 3.99191 5.02595 4.01786 4.86392 4.07635C4.70189 4.13484 4.55299 4.22471 4.42573 4.34081C4.29848 4.45692 4.19537 4.59699 4.12232 4.75299C4.04927 4.909 4.0077 5.07788 4 5.24997V18.63C4.01008 18.9901 4.15766 19.3328 4.41243 19.5875C4.6672 19.8423 5.00984 19.9899 5.37 20H18.72C19.0701 19.9844 19.4002 19.8322 19.6395 19.5761C19.8788 19.32 20.0082 18.9804 20 18.63V5.24997C20.0029 5.08247 19.9715 4.91616 19.9078 4.76122C19.8441 4.60629 19.7494 4.466 19.6295 4.34895C19.5097 4.23191 19.3672 4.14059 19.2108 4.08058C19.0544 4.02057 18.8874 3.99314 18.72 3.99997ZM9 17.34H6.67V10.21H9V17.34ZM7.89 9.12997C7.72741 9.13564 7.5654 9.10762 7.41416 9.04768C7.26291 8.98774 7.12569 8.89717 7.01113 8.78166C6.89656 8.66615 6.80711 8.5282 6.74841 8.37647C6.6897 8.22474 6.66301 8.06251 6.67 7.89997C6.66281 7.73567 6.69004 7.57169 6.74995 7.41854C6.80986 7.26538 6.90112 7.12644 7.01787 7.01063C7.13463 6.89481 7.2743 6.80468 7.42793 6.74602C7.58157 6.68735 7.74577 6.66145 7.91 6.66997C8.07259 6.66431 8.2346 6.69232 8.38584 6.75226C8.53709 6.8122 8.67431 6.90277 8.78887 7.01828C8.90344 7.13379 8.99289 7.27174 9.05159 7.42347C9.1103 7.5752 9.13699 7.73743 9.13 7.89997C9.13719 8.06427 9.10996 8.22825 9.05005 8.3814C8.99014 8.53456 8.89888 8.6735 8.78213 8.78931C8.66537 8.90513 8.5257 8.99526 8.37207 9.05392C8.21843 9.11259 8.05423 9.13849 7.89 9.12997ZM17.34 17.34H15V13.44C15 12.51 14.67 11.87 13.84 11.87C13.5822 11.8722 13.3313 11.9541 13.1219 12.1045C12.9124 12.2549 12.7546 12.4664 12.67 12.71C12.605 12.8926 12.5778 13.0865 12.59 13.28V17.34H10.29V10.21H12.59V11.21C12.7945 10.8343 13.0988 10.5225 13.4694 10.3089C13.84 10.0954 14.2624 9.98848 14.69 9.99997C16.2 9.99997 17.34 11 17.34 13.13V17.34Z" fill="#000000"/></svg></a></li>
+
+            <li><a class="socialLink" href="https://wersdoerfer.de/@jochen"><svg width="24" height="24" viewBox="0 0 61 65" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.7539 14.3904C59.8143 7.40642 53.7273 1.90257 46.5117 0.836066C45.2943 0.655854 40.6819 0 29.9973 0H29.9175C19.2299 0 16.937 0.655854 15.7196 0.836066C8.70488 1.87302 2.29885 6.81852 0.744617 13.8852C-0.00294988 17.3654 -0.0827298 21.2237 0.0561464 24.7629C0.254119 29.8384 0.292531 34.905 0.753482 39.9598C1.07215 43.3175 1.62806 46.6484 2.41704 49.9276C3.89445 55.9839 9.87499 61.0239 15.7344 63.0801C22.0077 65.2244 28.7542 65.5804 35.2184 64.1082C35.9295 63.9428 36.6318 63.7508 37.3252 63.5321C38.8971 63.0329 40.738 62.4745 42.0913 61.4937C42.1099 61.4799 42.1251 61.4621 42.1358 61.4417C42.1466 61.4212 42.1526 61.3986 42.1534 61.3755V56.4773C42.153 56.4557 42.1479 56.4345 42.1383 56.4151C42.1287 56.3958 42.1149 56.3788 42.0979 56.3655C42.0809 56.3522 42.0611 56.3429 42.04 56.3382C42.019 56.3335 41.9971 56.3336 41.9761 56.3384C37.8345 57.3276 33.5905 57.8234 29.3324 57.8156C22.0045 57.8156 20.0336 54.3384 19.4693 52.8908C19.0156 51.6397 18.7275 50.3346 18.6124 49.0088C18.6112 48.9866 18.6153 48.9643 18.6243 48.9439C18.6333 48.9236 18.647 48.9056 18.6643 48.8915C18.6816 48.8774 18.7019 48.8675 18.7237 48.8628C18.7455 48.858 18.7681 48.8585 18.7897 48.8641C22.8622 49.8465 27.037 50.3423 31.2265 50.3412C32.234 50.3412 33.2387 50.3412 34.2463 50.3146C38.4598 50.1964 42.9009 49.9808 47.0465 49.1713C47.1499 49.1506 47.2534 49.1329 47.342 49.1063C53.881 47.8507 60.1038 43.9097 60.7362 33.9301C60.7598 33.5372 60.8189 29.8148 60.8189 29.4071C60.8218 28.0215 61.2651 19.5781 60.7539 14.3904Z" fill="url(#paint0_linear_89_8)"/><path d="M50.3943 22.237V39.5876H43.5185V22.7481C43.5185 19.2029 42.0411 17.3949 39.036 17.3949C35.7325 17.3949 34.0778 19.5338 34.0778 23.7585V32.9759H27.2434V23.7585C27.2434 19.5338 25.5857 17.3949 22.2822 17.3949C19.2949 17.3949 17.8027 19.2029 17.8027 22.7481V39.5876H10.9298V22.237C10.9298 18.6918 11.835 15.8754 13.6453 13.7877C15.5128 11.7049 17.9623 10.6355 21.0028 10.6355C24.522 10.6355 27.1813 11.9885 28.9542 14.6917L30.665 17.5633L32.3788 14.6917C34.1517 11.9885 36.811 10.6355 40.3243 10.6355C43.3619 10.6355 45.8114 11.7049 47.6847 13.7877C49.4931 15.8734 50.3963 18.6899 50.3943 22.237Z" fill="white"/><defs><linearGradient id="paint0_linear_89_8" x1="30.5" y1="0" x2="30.5" y2="65" gradientUnits="userSpaceOnUse"><stop stop-color="#6364FF"/><stop offset="1" stop-color="#563ACC"/></linearGradient></defs></svg></a></li>
+
           </ul>
         </div>
         <div>
@@ -110,118 +127,134 @@
         </div>
       </div>
     </header>
-    <main class="stack stack-l">
+    <main class="stack-large">
       <section>
         <h2>About</h2>
         <p>As a long term Python developer I&#x27;ve seen a lot of different projects over the years. And I always had a lot of fun building stuff, never thinking of my work just as a job. Nowadays I mostly work with Python, but don&#x27;t mind using other languages and tools to build complete products.</p>
       </section>
-      
-        <section class="stack">
-          <h2>Freelance Experience</h2>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2024 - 2024</span>
-              <p>Single Sign On Integration.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Architect</h3>
-              <span>2022 - 2024</span>
-              <p>Software architecture for advanced economic models.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2023 - 2023</span>
-              <p>Building a system to collect hazards.</p>
-            </div>
-          
-            <div>
-              <h3>Trainer</h3>
-              <span>2022 - 2022</span>
-              <p>Workshop on how to use PyTest.</p>
-            </div>
-          
-            <div>
-              <h3>Trainer</h3>
-              <span>2021 - 2022</span>
-              <p>Introduction to the Python Programming Language.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2022 - 2022</span>
-              <p>Working on a new system to improve contact tracing for public health offices using Django and HTMX to be able to handle complex forms.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2020 - 2021</span>
-              <p>Building a system for context aware advertisement.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2018 - 2019</span>
-              <p>Automatic receipt handling.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Data Scientist / Product Owner</h3>
-              <span>2016 - 2017</span>
-              <p>(&#x27;Machine learning models for automatic bidding for clicks on hotel rooms.&#x27;, &#x27;A system for setting hotel room prices automatically based on forecasting.&#x27;)</p>
-            </div>
-          
-            <div>
-              <h3>Senior Data Scientist</h3>
-              <span>2015 - 2016</span>
-              <p>Machine learning models for extracting structured data from product detail pages.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Data Scientist</h3>
-              <span>2015 - 2015</span>
-              <p>Machine learning models for prediction of user attributes.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2014 - 2015</span>
-              <p>Django restframework based API for mobile clients.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2014 - 2014</span>
-              <p>Django restframework based API for mobile clients.</p>
-            </div>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2013 - 2013</span>
-              <p>Django backend for events website.</p>
-            </div>
-          
-        </section>
-      
-        <section class="stack">
-          <h2>Work Experience</h2>
-          
-            <div>
-              <h3>Senior Software Developer</h3>
-              <span>2005 - 2011</span>
-              <p>Backend development and machine learning.</p>
-            </div>
-          
-            <div>
-              <h3>System Administrator / Systems Programmer</h3>
-              <span>2001 - 2004</span>
-              <p>Lifecycle management, monitoring and deployment.</p>
-            </div>
-          
-        </section>
-      
+
+      <section class="stack">
+        <h2>Freelance Experience</h2>
+
+        <div>
+          <h3>Pixolus</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2024 - 2024</span>
+          <p>Single Sign On Integration.</p>
+        </div>
+
+        <div>
+          <h3>Systemiq</h3>
+          <strong>Senior Software Architect</strong>
+          <span>2022 - 2024</span>
+          <p>Software architecture for advanced economic models.</p>
+        </div>
+
+        <div>
+          <h3>Exkulpa</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2023 - 2023</span>
+          <p>Building a system to collect hazards.</p>
+        </div>
+
+        <div>
+          <h3>Heinrich Heine Universität Düsseldorf</h3>
+          <strong>Trainer</strong>
+          <span>2022 - 2022</span>
+          <p>Workshop on how to use PyTest.</p>
+        </div>
+
+        <div>
+          <h3>Linuxhotel</h3>
+          <strong>Trainer</strong>
+          <span>2021 - 2022</span>
+          <p>Introduction to the Python Programming Language.</p>
+        </div>
+
+        <div>
+          <h3>Covid IT Solutions GmbH</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2022 - 2022</span>
+          <p>Working on a new system to improve contact tracing for public health offices using Django and HTMX to be able to handle complex forms.</p>
+        </div>
+
+        <div>
+          <h3>RTL</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2020 - 2021</span>
+          <p>Building a system for context aware advertisement.</p>
+        </div>
+
+        <div>
+          <h3>Dirk Brennemann</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2018 - 2019</span>
+          <p>Automatic receipt handling.</p>
+        </div>
+
+        <div>
+          <h3>Trivago</h3>
+          <strong>Senior Data Scientist / Product Owner</strong>
+          <span>2016 - 2017</span>
+          <p>(&#x27;Machine learning models for automatic bidding for clicks on hotel rooms.&#x27;, &#x27;A system for setting hotel room prices automatically based on forecasting.&#x27;)</p>
+        </div>
+
+        <div>
+          <h3>Shop.co</h3>
+          <strong>Senior Data Scientist</strong>
+          <span>2015 - 2016</span>
+          <p>Machine learning models for extracting structured data from product detail pages.</p>
+        </div>
+
+        <div>
+          <h3>Otto Group</h3>
+          <strong>Senior Data Scientist</strong>
+          <span>2015 - 2015</span>
+          <p>Machine learning models for prediction of user attributes.</p>
+        </div>
+
+        <div>
+          <h3>Pixolus</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2014 - 2015</span>
+          <p>Django restframework based API for mobile clients.</p>
+        </div>
+
+        <div>
+          <h3>Institut für Nachrichtentechnik RWTH Aachen</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2014 - 2014</span>
+          <p>Django restframework based API for mobile clients.</p>
+        </div>
+
+        <div>
+          <h3>Intosite (prinz.de)</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2013 - 2013</span>
+          <p>Django backend for events website.</p>
+        </div>
+
+      </section>
+
+      <section class="stack">
+        <h2>Work Experience</h2>
+
+        <div>
+          <h3>solute GmbH / billiger.de</h3>
+          <strong>Senior Software Developer</strong>
+          <span>2005 - 2011</span>
+          <p>Backend development and machine learning.</p>
+        </div>
+
+        <div>
+          <h3>web.de</h3>
+          <strong>System Administrator / Systems Programmer</strong>
+          <span>2001 - 2004</span>
+          <p>Lifecycle management, monitoring and deployment.</p>
+        </div>
+
+      </section>
+
       <section>
         <h2>Education</h2>
         <h3>Universität Karlsruhe (TH)</h3>
@@ -230,74 +263,74 @@
       <section>
         <h2>Skills</h2>
         <ul>
-          
-            <li>Python</li>
-          
-            <li>Django</li>
-          
-            <li>scikit-learn</li>
-          
-            <li>Pandas</li>
-          
-            <li>NumPy</li>
-          
-            <li>keras</li>
-          
-            <li>PyTorch</li>
-          
-            <li>Vue.js</li>
-          
-            <li>SQL</li>
-          
+
+          <li>Python</li>
+
+          <li>Django</li>
+
+          <li>scikit-learn</li>
+
+          <li>Pandas</li>
+
+          <li>NumPy</li>
+
+          <li>keras</li>
+
+          <li>PyTorch</li>
+
+          <li>Vue.js</li>
+
+          <li>SQL</li>
+
         </ul>
       </section>
       <section>
         <h2>Projects</h2>
-        
-          <h3><a href="https://python-podcast.de/show"></a></h3>
-          <p>A popular german speaking podcast about Python</p>
-          
-            <span>Side Project</span>
-          
-            <span>Python</span>
-          
-        
-          <h3><a href="https://github.com/ephes/django-cast"></a></h3>
-          <p>A podcast hosting platform built with Django and Wagtail</p>
-          
-            <span>Side Project</span>
-          
-            <span>Python</span>
-          
-            <span>Django</span>
-          
-            <span>Wagtail</span>
-          
-        
-          <h3><a href="https://plasticiq.global/"></a></h3>
-          <p>Plastic IQ is a data-driven digital platform to help companies end plastic waste.</p>
-          
-            <span>Systemiq</span>
-          
-            <span>Python</span>
-          
-            <span>Django</span>
-          
-            <span>htmx</span>
-          
-        
-          <h3><a href="https://plastinvest.global/"></a></h3>
-          <p>(&#x27;PlastInvest is a tool for governments, providing quantitative and qualitative insights into the investments needed to deliver national action plans for reducing plastic waste and pollution.&#x27;,)</p>
-          
-            <span>Systemiq</span>
-          
-            <span>Python</span>
-          
-            <span>Django</span>
-          
-            <span>htmx</span>
-          
-        
+
+        <h3><a href="https://python-podcast.de/show"></a></h3>
+        <p>A popular german speaking podcast about Python</p>
+
+        <span>Side Project</span>
+
+        <span>Python</span>
+
+
+        <h3><a href="https://github.com/ephes/django-cast"></a></h3>
+        <p>A podcast hosting platform built with Django and Wagtail</p>
+
+        <span>Side Project</span>
+
+        <span>Python</span>
+
+        <span>Django</span>
+
+        <span>Wagtail</span>
+
+
+        <h3><a href="https://plasticiq.global/"></a></h3>
+        <p>Plastic IQ is a data-driven digital platform to help companies end plastic waste.</p>
+
+        <span>Systemiq</span>
+
+        <span>Python</span>
+
+        <span>Django</span>
+
+        <span>htmx</span>
+
+
+        <h3><a href="https://plastinvest.global/"></a></h3>
+        <p>(&#x27;PlastInvest is a tool for governments, providing quantitative and qualitative insights into the investments needed to deliver national action plans for reducing plastic waste and pollution.&#x27;,)</p>
+
+        <span>Systemiq</span>
+
+        <span>Python</span>
+
+        <span>Django</span>
+
+        <span>htmx</span>
+
+
       </section>
     </main>
     <footer>

@@ -11,6 +11,18 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         color: #666666;
         font-weight: 300;
+        --ratio: 1.5;
+        --s-5: calc(var(--s-4) / var(--ratio));
+        --s-4: calc(var(--s-3) / var(--ratio));
+        --s-3: calc(var(--s-2) / var(--ratio));
+        --s-2: calc(var(--s-1) / var(--ratio));
+        --s-1: calc(var(--s0) / var(--ratio));
+        --s0: 1rem;
+        --s1: calc(var(--s0) * var(--ratio));
+        --s2: calc(var(--s1) * var(--ratio));
+        --s3: calc(var(--s2) * var(--ratio));
+        --s4: calc(var(--s3) * var(--ratio));
+        --s5: calc(var(--s4) * var(--ratio));
       }
 
       h1, h2, h3, h4, h5, h6 {
@@ -58,16 +70,17 @@
         justify-content: flex-start;
       }
 
-      .stack > * {
+      [class^='stack'] > * {
+        /* top and bottom margins in horizontal-tb writing mode */
         margin-block: 0;
       }
 
       .stack > * + * {
-        margin-block-start: 1.5rem;
+        margin-block-start: var(--s1);
       }
 
-      .stack-l {
-        margin-block-start: 3rem;
+      .stack-large > * + * {
+        margin-block-start: var(--s2);
       }
 
       .without-bullets {
@@ -76,12 +89,12 @@
       }
 
       li {
-          display: inline-block;
-          margin-right: 10px; /* Optional: Adds space between items */
+        display: inline-block;
+        margin-right: 10px; /* Optional: Adds space between items */
       }
 
       .socialLink {
-          color: black;
+        color: black;
       }
     </style>
   </head>
@@ -106,7 +119,7 @@
         </div>
       </div>
     </header>
-    <main class="stack stack-l">
+    <main class="stack-large">
       <section>
         <h2>About</h2>
         <p>{{ person.about }}</p>
@@ -116,7 +129,8 @@
           <h2>{{ timeline.title }}</h2>
           {% for entry in timeline.entries %}
             <div>
-              <h3>{{ entry.title }}</h3>
+              <h3>{{ entry.company.name }}</h3>
+              <strong>{{ entry.title }}</strong>
               <span>{{ entry.start }} - {{ entry.end }}</span>
               <p>{{ entry.description }}</p>
             </div>

@@ -116,7 +116,7 @@ django-htmx==1.19.0
     # via django-cast
 django-indieweb==0.0.7
     # via -r requirements/production.in
-django-model-utils==4.5.1
+django-model-utils==5.0.0
     # via
     #   django-cast
     #   django-indieweb
@@ -172,7 +172,7 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-kiwisolver==1.4.6
+kiwisolver==1.4.7
     # via matplotlib
 l18n==2021.3
     # via wagtail

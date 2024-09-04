@@ -124,6 +124,9 @@
       }
 
       .box {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
         padding: var(--s-1);
         border: #e3e3e3 var(--border-thin) solid;
         border-radius: 0.5ch;
@@ -219,6 +222,7 @@
         display: flex;
         flex-wrap: wrap; /* Allows the badges to wrap to the next line */
         gap: 2px; /* Adds space between badges */
+        margin-top: auto; /* This pushes the badges to the bottom */
       }
 
       .badges-list li {

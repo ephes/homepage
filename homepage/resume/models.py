@@ -396,22 +396,42 @@ employed = Timeline(
 projects = [
     Project(
         title="Python Podcast",
-        url="https://python-podcast.de/show",
-        description="A popular german speaking podcast about Python",
+        url="https://python-podcast.de/show/",
+        description=(
+            "A popular german speaking podcast about the Python Programming Language. "
+            "I'm the host and producer of the show together with Dominik Geldmacher."
+        ),
         badges=[
             "Side Project",
             "Python",
+            "Podcast",
         ],
     ),
     Project(
         title="django-cast",
         url="https://github.com/ephes/django-cast",
-        description="A podcast hosting platform built with Django and Wagtail",
+        description=(
+            "A podcast hosting platform built with Django and Wagtail. "
+            "It's used to host the Python Podcast. I'm also proud of it's "
+            "responsive image capabilities."
+        ),
         badges=[
             "Side Project",
             "Python",
             "Django",
             "Wagtail",
+        ],
+    ),
+    Project(
+        title="Weeknotes",
+        url="https://wersdoerfer.de/weeknotes/",
+        description=(
+            "Since 2021 I write weeknotes to document my work and life. It's a great way to "
+            "reflect on what I've done and to keep track of my progress."
+        ),
+        badges=[
+            "Side Project",
+            "Blog",
         ],
     ),
     Project(
@@ -481,6 +501,21 @@ projects = [
         ],
     ),
     Project(
+        title="Serving Files with Django",
+        url="https://wersdoerfer.de/blogs/ephes_blog/djangocon-2021/",
+        description=(
+            "Exploring different ways to serve files with Django. "
+            "Wrote a benchmarking tool to compare different methods and held "
+            "a talk at DjangoCon Europe 2021 about the results."
+        ),
+        badges=[
+            "Side Project",
+            "Python",
+            "Django",
+            "async",
+        ],
+    ),
+    Project(
         title="cast-vue",
         url="https://github.com/ephes/cast-vue",
         description="A Vue.js frontend for django-cast",
@@ -488,6 +523,21 @@ projects = [
             "Side Project",
             "Vue.js",
             "TypeScript",
+        ],
+    ),
+    Project(
+        title="Django Async",
+        url="https://wersdoerfer.de/blogs/ephes_blog/django-31-async/",
+        description=(
+            "Wrote a longish blog post about the new async capabilities in Django 3.1. "
+            "A paper version of this article was also published in the german entwickler.de magazine."
+        ),
+        badges=[
+            "Side Project",
+            "Python",
+            "Django",
+            "Article",
+            "async",
         ],
     ),
     Project(
@@ -507,7 +557,7 @@ resume = Resume(
     contact=contact,
     education=Education(school="Universität Karlsruhe (TH)", start=Year(1997), end=Year(2001)),
     timelines=[freelance, employed],
-    skills=["Python", "Django", "scikit-learn", "Pandas", "NumPy", "keras", "PyTorch", "Vue.js", "SQL"],
+    skills=["Python", "Django", "Wagtail", "scikit-learn", "Pandas", "NumPy", "keras", "PyTorch", "Vue.js", "SQL"],
     projects=projects,
 )
 

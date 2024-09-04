@@ -123,7 +123,7 @@
         margin-block-start: var(--s1);
       }
 
-      .box {
+      .project-box {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -136,11 +136,11 @@
         background-color: var(--color-light);
       }
 
-      .box * {
+      .project-box * {
         color: inherit;
       }
 
-      .box.invert {
+      .project-box.invert {
         color: var(--color-light);
         background-color: var(--color-dark);
       }
@@ -188,14 +188,21 @@
 
       .timeline-item {
         position: relative;
+        padding-right: 0;
+      }
+
+      .timeline-item-header {
+        display: flex;
+        align-items: center; /* Aligns the items vertically */
+        gap: calc(0.5 * var(--s0)); /* Adds space between h3 in item-header an badges */
       }
 
       .year-span {
-        position: absolute;
         top: var(--s1);
         right: 0;
         font-size: calc(0.9 * var(--s0));
         font-weight: lighter;
+        margin-left: auto;
       }
 
       .skills-list {
@@ -275,9 +282,18 @@
           <h2>{{ timeline.title }}</h2>
           {% for entry in timeline.entries %}
             <div class="timeline-item">
-              <h3><a href="{{ entry.company.url }}">{{ entry.company.name }}</a></h3>
+              <div class="timeline-item-header">
+                <h3><a href="{{ entry.company.url }}">{{ entry.company.name }}</a></h3>
+                {% if entry.badges %}
+                  <ul class="badges-list">
+                    {% for badge in entry.badges %}
+                      <li>{{ badge }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                <span class="year-span">{{ entry.start }} - {{ entry.end }}</span>
+              </div>
               <div class="sub-line">{{ entry.title }}</div>
-              <span class="year-span">{{ entry.start }} - {{ entry.end }}</span>
               <p>{{ entry.description|safe }}</p>
             </div>
           {% endfor %}
@@ -300,7 +316,7 @@
         <h2>Projects</h2>
         <div class="grid">
           {% for project in projects %}
-            <a href="{{ project.url }}" aria-label="{{ project.title }}" class="box stack">
+            <a href="{{ project.url }}" aria-label="{{ project.title }}" class="project-box stack">
               <h3>{{ project.title }}</h3>
               <p>{{ project.description }}</p>
               <ul class="badges-list">

@@ -278,7 +278,7 @@ freelance = Timeline(
             start=Year(2022),
             end=Year(2022),
             description="Workshop on how to use PyTest.",
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(name="Linuxhotel", url="https://www.linuxhotel.de/"),
@@ -286,7 +286,7 @@ freelance = Timeline(
             start=Year(2021),
             end=Year(2022),
             description=("Introduction to the Python Programming Language."),
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(name="Covid IT Solutions GmbH", url="https://cov-it.de/"),
@@ -306,7 +306,7 @@ freelance = Timeline(
             start=Year(2020),
             end=Year(2021),
             description=("Building a system for context aware advertisement."),
-            badges=["In Person", "Remote"],
+            badges=["Remote"],
         ),
         Work(
             company=Company(name="Dirk Brennemann", url=None),
@@ -325,7 +325,7 @@ freelance = Timeline(
                 "Machine learning models for automatic bidding for clicks on hotel rooms."
                 "A system for setting hotel room prices automatically based on forecasting."
             ),
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(name="Shop.co", url=None),
@@ -333,7 +333,7 @@ freelance = Timeline(
             start=Year(2015),
             end=Year(2016),
             description=("Machine learning models for extracting structured data from product detail pages."),
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(name="Otto Group", url="https://www.ottogroup.com/"),
@@ -341,7 +341,7 @@ freelance = Timeline(
             start=Year(2015),
             end=Year(2015),
             description=("Machine learning models for prediction of user attributes."),
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(name="Pixolus", url="https://pixolus.de/"),
@@ -349,7 +349,7 @@ freelance = Timeline(
             start=Year(2014),
             end=Year(2015),
             description=("Django restframework based API for mobile clients."),
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(
@@ -359,7 +359,7 @@ freelance = Timeline(
             start=Year(2014),
             end=Year(2014),
             description=("Django restframework based API for mobile clients."),
-            badges=["In Person"],
+            badges=[],
         ),
         Work(
             company=Company(name="prinz.de", url="https://prinz.de/"),
@@ -424,7 +424,7 @@ projects = [
     ),
     Project(
         title="Weeknotes",
-        url="https://wersdoerfer.de/weeknotes/",
+        url="https://wersdoerfer.de/blogs/ephes_blog/?tag_facets=weeknotes",
         description=(
             "Since 2021 I write weeknotes to document my work and life. It's a great way to "
             "reflect on what I've done and to keep track of my progress."

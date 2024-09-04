@@ -19,6 +19,7 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         color: #666666;
         font-weight: 300;
+        font-size: 15px;
         --measure: 75ch;
         --ratio: 1.5;
         --border-thin: var(--s-6);
@@ -228,6 +229,11 @@
         font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
         display: inline-block; /* Ensures badges are inline */
       }
+
+      .sub-line {
+        font-size: calc(1.1 * var(--s0));
+        color: black;
+      }
     </style>
   </head>
   <body class="center">
@@ -266,7 +272,7 @@
           {% for entry in timeline.entries %}
             <div class="timeline-item">
               <h3><a href="{{ entry.company.url }}">{{ entry.company.name }}</a></h3>
-              <strong>{{ entry.title }}</strong>
+              <div class="sub-line">{{ entry.title }}</div>
               <span class="year-span">{{ entry.start }} - {{ entry.end }}</span>
               <p>{{ entry.description|safe }}</p>
             </div>

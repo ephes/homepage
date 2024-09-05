@@ -224,7 +224,7 @@ jochen = Person(
     ),
     avatar_url=("https://d2b7dn9rofvhjd.cloudfront.net/images" "/Jochen_Profil_Dunkel_Quadratisch.original.jpg"),
     personal_website_url="https://wersdoerfer.de",
-    pronouns="he/him",
+    pronouns="he | him",
 )
 duesseldorf = Location(
     name="Düsseldorf, Germany, CET",

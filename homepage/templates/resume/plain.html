@@ -224,6 +224,26 @@
         display: inline-block; /* Ensures badges are inline */
       }
 
+      .pronoun-badges-list {
+        /* badged that are displayed in the timeline */
+        list-style-type: none; /* Removes default bullets */
+        padding: 0; /* Removes default padding */
+        display: flex;
+        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
+        gap: 2px; /* Adds space between badges */
+        margin-top: auto; /* This pushes the badges to the bottom */
+      }
+
+      .pronoun-badges-list li {
+        background-color: rgb(243, 244, 246); /* Light grey background */
+        line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
+        padding: 0.5ch 1ch; /* Adds space inside the badge */
+        margin-right: 0.5ch; /* Adds space between badges */
+        border-radius: 1ch; /* Rounds the corners */
+        font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
+        display: inline-block; /* Ensures badges are inline */
+      }
+
       .job-badges-list {
         /* badged that are displayed in the timeline */
         list-style-type: none; /* Removes default bullets */
@@ -267,11 +287,22 @@
         font-size: calc(1.1 * var(--s0));
         color: black;
       }
+
+      .flex-horizontal {
+        display: flex;
+        flex-direction: row;
+        gap: var(--s1);
+      }
     </style>
   </head>
   <body class="center">
     <header>
-      <h1>{{ person.name }} ({{ person.pronouns }})</h1>
+      <div class="flex-horizontal">
+        <h1>{{ person.name }}</h1>
+        <ul class="project-badges-list">
+          <li>{{ person.pronouns }}</li>
+        </ul>
+      </div>
       <div class="with-sidebar">
         <div>
           <p>{{ person.tagline }}</p>

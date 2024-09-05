@@ -497,6 +497,7 @@ projects = [
             "Python",
             "fastapi",
             "sqlalchemy",
+            "websocket",
             "Vue.js",
         ],
     ),

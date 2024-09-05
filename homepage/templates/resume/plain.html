@@ -218,7 +218,8 @@
         display: inline-block; /* Ensures badges are inline */
       }
 
-      .badges-list {
+      .job-badges-list {
+        /* badged that are displayed in the timeline */
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
         display: flex;
@@ -227,7 +228,27 @@
         margin-top: auto; /* This pushes the badges to the bottom */
       }
 
-      .badges-list li {
+      .job-badges-list li {
+        background-color: rgb(243, 244, 246); /* Light grey background */
+        line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
+        padding: 0.5ch 1ch; /* Adds space inside the badge */
+        margin-right: 0.5ch; /* Adds space between badges */
+        border-radius: 1ch; /* Rounds the corners */
+        font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
+        display: inline-block; /* Ensures badges are inline */
+      }
+
+      .project-badges-list {
+        /* badges that are displayed in the project boxes */
+        list-style-type: none; /* Removes default bullets */
+        padding: 0; /* Removes default padding */
+        display: flex;
+        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
+        gap: 2px; /* Adds space between badges */
+        margin-top: auto; /* This pushes the badges to the bottom */
+      }
+
+      .project-badges-list li {
         background-color: rgb(243, 244, 246); /* Light grey background */
         padding: 0.5ch 1ch; /* Adds space inside the badge */
         margin-right: 0.5ch; /* Adds space between badges */
@@ -280,7 +301,7 @@
               <div class="timeline-item-header">
                 <h3><a href="{{ entry.company.url }}">{{ entry.company.name }}</a></h3>
                 {% if entry.badges %}
-                  <ul class="badges-list">
+                  <ul class="job-badges-list">
                     {% for badge in entry.badges %}
                       <li>{{ badge }}</li>
                     {% endfor %}
@@ -314,7 +335,7 @@
             <a href="{{ project.url }}" aria-label="{{ project.title }}" class="project-box stack">
               <h3>{{ project.title }}</h3>
               <p>{{ project.description }}</p>
-              <ul class="badges-list">
+              <ul class="project-badges-list">
                 {% for badge in project.badges %}
                   <li>{{ badge }}</li>
                 {% endfor %}

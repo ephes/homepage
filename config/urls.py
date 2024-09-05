@@ -49,7 +49,7 @@ urlpatterns = [
     # Fediverse redirects etc.
     path("", include("homepage.fedi.urls", namespace="fedi")),
     # Resume
-    path("", include("homepage.resume.urls", namespace="resume")),
+    path("resume/", include("homepage.resume.urls", namespace="resume")),
     # Wagtail
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),

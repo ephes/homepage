@@ -1,19 +1,19 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from .models import get_resume
+from .cv import get_cv
 
 
-def show_resume(request: HttpRequest) -> HttpResponse:
-    resume = get_resume()
+def show_cv(request: HttpRequest) -> HttpResponse:
+    cv = get_cv()
     context = {
-        "resume": resume,
-        "person": resume.person,
-        "location": resume.location,
-        "contact": resume.contact,
-        "timelines": resume.timelines,
-        "skills": resume.skills,
-        "education": resume.education,
-        "projects": resume.projects,
+        "resume": cv,
+        "person": cv.person,
+        "location": cv.location,
+        "contact": cv.contact,
+        "timelines": cv.timelines,
+        "skills": cv.skills,
+        "education": cv.education,
+        "projects": cv.projects,
     }
     return render(request, "resume/plain.html", context=context)

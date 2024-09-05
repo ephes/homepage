@@ -552,7 +552,7 @@ projects = [
         ],
     ),
 ]
-resume = Resume(
+cv = Resume(
     person=jochen,
     location=duesseldorf,
     contact=contact,
@@ -563,5 +563,5 @@ resume = Resume(
 )
 
 
-def get_resume():
-    return resume
+def get_cv():
+    return cv

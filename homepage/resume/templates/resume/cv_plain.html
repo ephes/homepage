@@ -70,12 +70,24 @@
       }
 
       a {
-        color: black; /* Changes the link color to black */
+        position: relative;
+        color: #3488da; /* Changes the link color */
         text-decoration: none; /* Removes the underline */
       }
 
-      a:hover {
-        text-decoration: underline; /* Adds the underline back on hover */
+      a::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(52, 136, 218, 0.4);
+      }
+
+      a:hover::after {
+        width: 100%; /* Expand underline */
+        transition: width 0.3s ease; /* Only apply transition on hover */
       }
 
       svg {

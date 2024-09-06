@@ -4,16 +4,20 @@ from django.shortcuts import render
 from .cv import get_cv
 
 
-def show_cv(request: HttpRequest) -> HttpResponse:
-    cv = get_cv()
+def cv(request: HttpRequest) -> HttpResponse:
+    cv_data = get_cv()
     context = {
-        "resume": cv,
-        "person": cv.person,
-        "location": cv.location,
-        "contact": cv.contact,
-        "timelines": cv.timelines,
-        "skills": cv.skills,
-        "education": cv.education,
-        "projects": cv.projects,
+        "resume": cv_data,
+        "person": cv_data.person,
+        "location": cv_data.location,
+        "contact": cv_data.contact,
+        "timelines": cv_data.timelines,
+        "skills": cv_data.skills,
+        "education": cv_data.education,
+        "projects": cv_data.projects,
     }
-    return render(request, "resume/plain.html", context=context)
+    return render(request, "resume/cv_plain.html", context=context)
+
+
+def index(request: HttpRequest) -> HttpResponse:
+    return render(request, "resume/index.html")

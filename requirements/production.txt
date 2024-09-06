@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.35.11
+boto3==1.35.13
     # via -r requirements/production.in
-botocore==1.35.11
+botocore==1.35.13
     # via
     #   boto3
     #   s3transfer
@@ -34,7 +34,7 @@ certifi==2024.8.30
     #   httpx
     #   requests
     #   sentry-sdk
-cffi==1.17.0
+cffi==1.17.1
     # via argon2-cffi-bindings
 charset-normalizer==3.3.2
     # via requests
@@ -80,7 +80,7 @@ django==5.1.1
     #   djangorestframework
     #   laces
     #   wagtail
-django-allauth==64.2.0
+django-allauth==64.2.1
     # via -r requirements/production.in
 django-anymail[mailgun]==11.1
     # via -r requirements/production.in
@@ -302,5 +302,5 @@ willow[heif]==1.8.0
     #   willow
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==74.1.1
+setuptools==74.1.2
     # via django-cast

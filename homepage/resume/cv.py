@@ -251,8 +251,8 @@ freelance = Timeline(
             end=Year(2024),
             description=(
                 "Single Sign On Integration using "
-                '<a href="https://github.com/grafana/django-saml2-auth">django-saml2-auth</a> '
-                'and <a href="https://github.com/IdentityPython/pysaml2">PySAML2</a>.'
+                '<a class="underlined" href="https://github.com/grafana/django-saml2-auth">django-saml2-auth</a> '
+                'and <a class="underlined" href="https://github.com/IdentityPython/pysaml2">PySAML2</a>.'
             ),
             badges=["Remote"],
         ),

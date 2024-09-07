@@ -276,5 +276,16 @@ def switch_to_dev_environment():
             subprocess.call(flit_install_dev)
 
 
+@cli.command()
+def recreate_resume_tables():
+    """
+    Drop and recreate the tables of the resume app.
+    """
+    subprocess.call(["python", "manage.py", "migrate", "resume", "zero"])
+    subprocess.call(["rm", "-r", "homepage/resume/migrations/"])
+    subprocess.call(["python", "manage.py", "makemigrations", "resume"])
+    subprocess.call(["python", "manage.py", "migrate", "resume"])
+
+
 if __name__ == "__main__":
     cli()

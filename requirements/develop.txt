@@ -48,9 +48,9 @@ black==24.8.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.35.13
+boto3==1.35.14
     # via -r requirements/production.in
-botocore==1.35.13
+botocore==1.35.14
     # via
     #   boto3
     #   s3transfer
@@ -427,7 +427,7 @@ pillow==10.4.0
     #   wagtail
 pillow-heif==0.18.0
     # via willow
-platformdirs==4.2.2
+platformdirs==4.3.1
     # via
     #   black
     #   jupyter-core

@@ -7,13 +7,13 @@ from .models import CVToken, Person, Project, Timeline, TimelineEntry
 
 @admin.register(CVToken)
 class CVTokenAdmin(admin.ModelAdmin):
-    fields = ("receiver",)
-    list_display = ("token", "created", "receiver", "token_link")
+    fields = ("person", "receiver")
+    list_display = ("person", "token", "created", "receiver", "token_link")
     search_fields = ("receiver",)
 
     @admin.display(description="Token Link")
     def token_link(self, obj):
-        cv_url = reverse("resume:cv")
+        cv_url = reverse("resume:cv", kwargs={"slug": obj.person.slug})
         cv_url_with_token = f"{cv_url}?token={obj.token}"
         return format_html('<a href="{}" target="_blank">{}</a>', cv_url_with_token, cv_url_with_token)
 

@@ -215,6 +215,14 @@
         color: black;
       }
 
+      .cluster {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s-2);
+        justify-content: flex-start;
+        align-items: center;
+      }
+
       .timeline-item {
         position: relative;
         padding-right: 0;
@@ -349,7 +357,7 @@
             </svg>
             <a class="underlined" href="{{ person.location_url }}">{{ person.location_name }}</a>
           </span>
-          <ul class="without-bullets">
+          <ul class="cluster without-bullets">
             {% for social_link in person.social_links %}
               <li>
                 <a class="social-link" href="{{ social_link.url }}"  aria-label="{{ social_link.name }}">

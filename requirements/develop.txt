@@ -427,7 +427,7 @@ pillow==10.4.0
     #   wagtail
 pillow-heif==0.18.0
     # via willow
-platformdirs==4.3.1
+platformdirs==4.3.2
     # via
     #   black
     #   jupyter-core
@@ -549,7 +549,7 @@ s3transfer==0.10.2
     # via boto3
 send2trash==1.8.3
     # via jupyter-server
-sentry-sdk==2.13.0
+sentry-sdk==2.14.0
     # via -r requirements/production.in
 shellingham==1.5.4
     # via typer

@@ -16,7 +16,6 @@
     </noscript>
     <style>
       /* universal styles, configuration etc. */
-
       :root {
         font-family: "Martian Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-optical-sizing: auto;
@@ -322,7 +321,7 @@
     </header>
     <main class="stack-large">
       <section class="with-sidebar">
-        <div>
+        <div><!-- The person's name, pronouns, tagline, location, and social links - not sidebar -->
           <div class="flex-horizontal">
             <h2>{{ person.name }}</h2>
             <ul class="pronoun-badges-list">
@@ -344,7 +343,7 @@
             {% endfor %}
           </ul>
         </div>
-        <div class="avatar-container">
+        <div class="avatar-container"><!-- Right side - the sidebar -->
           <img class="avatar" src="{{ person.avatar_url }}" alt="{{ person.avatar_alt }}" width="110" height="110">
         </div>
       </section>

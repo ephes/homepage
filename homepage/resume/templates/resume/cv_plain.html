@@ -223,9 +223,14 @@
         align-items: center;
       }
 
-      .timeline-item {
-        position: relative;
-        padding-right: 0;
+      .timeline-header-cluster {
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .timeline-header-title {
+        display: flex;
+        gap: var(--s-2);
       }
 
       .timeline-item-header {
@@ -361,21 +366,27 @@
         <section class="stack">
           <h2>{{ timeline.title }}</h2>
           {% for entry in timeline.ordered_entries %}
-            <div class="timeline-item">
-              <div class="timeline-item-header">
-                {% if entry.company_url %}
-                  <h3><a class="underlined" href="{{ entry.company_url }}">{{ entry.company_name }}</a></h3>
-                {% else %}
-                  <h3>{{ entry.company_name }}</h3>
-                {% endif %}
-                {% if entry.badges %}
-                  <ul class="cluster job-badges-list">
-                    {% for badge in entry.badges_list %}
-                      <li>{{ badge }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-                <span class="year-span">{{ entry.start }} - {{ entry.end }}</span>
+            <div class="stack">
+              <div class="cluster timeline-header-cluster">
+                <div class="timeline-header-title">
+                  {% if entry.company_url %}
+                    <h3><a class="underlined" href="{{ entry.company_url }}">{{ entry.company_name }}</a></h3>
+                  {% else %}
+                    <h3>{{ entry.company_name }}</h3>
+                  {% endif %}
+                  {% if entry.badges %}
+                    <ul class="cluster job-badges-list">
+                      {% for badge in entry.badges_list %}
+                        <li>{{ badge }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+                <ul class="cluster without-bullets year-span">
+                  <li>{{ entry.start }}</li>
+                  <li>-</li>
+                  <li>{{ entry.end }}</li>
+                </ul>
               </div>
               <div class="sub-line">{{ entry.role }}</div>
               <p>{{ entry.description|safe }}</p>
@@ -385,10 +396,17 @@
       {% endfor %}
       <section class="timeline-item">
         <h2>Education</h2>
-        <div class="timeline-item">
-          <div class="timeline-item-header">
-            <h3><a class="underlined" href="{{ person.education_school_url }}">{{ person.education_school_name }}</a></h3>
-            <span class="year-span">{{ person.education_start }} - {{ person.education_end }}</span>
+
+        <div class="stack">
+          <div class="cluster timeline-header-cluster">
+            <div class="timeline-header-title">
+              <h3><a class="underlined" href="{{ person.education_school_url }}">{{ person.education_school_name }}</a></h3>
+            </div>
+            <ul class="cluster without-bullets year-span">
+              <li>{{ person.education_start }}</li>
+              <li>-</li>
+              <li>{{ person.education_end }}</li>
+            </ul>
           </div>
         </div>
       </section>

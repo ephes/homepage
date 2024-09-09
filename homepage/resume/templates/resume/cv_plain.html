@@ -245,9 +245,6 @@
       .skills-list {
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
-        display: flex;
-        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
-        gap: 2px; /* Adds space between badges */
       }
 
       .skills-list li {
@@ -264,10 +261,6 @@
         /* badged that are displayed in the timeline */
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
-        display: flex;
-        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
-        gap: 2px; /* Adds space between badges */
-        margin-top: auto; /* This pushes the badges to the bottom */
       }
 
       .pronoun-badges-list li {
@@ -284,10 +277,6 @@
         /* badged that are displayed in the timeline */
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
-        display: flex;
-        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
-        gap: 2px; /* Adds space between badges */
-        margin-top: auto; /* This pushes the badges to the bottom */
       }
 
       .job-badges-list li {
@@ -304,9 +293,6 @@
         /* badges that are displayed in the project boxes */
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
-        display: flex;
-        flex-wrap: wrap; /* Allows the badges to wrap to the next line */
-        gap: 2px; /* Adds space between badges */
         margin-top: auto; /* This pushes the badges to the bottom */
       }
 
@@ -346,7 +332,7 @@
         <div><!-- The person's name, pronouns, tagline, location, and social links - not sidebar -->
           <div class="flex-horizontal">
             <h2>{{ person.name }}</h2>
-            <ul class="pronoun-badges-list">
+            <ul class="cluster pronoun-badges-list">
               <li>{{ person.pronouns }}</li>
             </ul>
           </div>
@@ -387,7 +373,7 @@
                   <h3>{{ entry.company_name }}</h3>
                 {% endif %}
                 {% if entry.badges %}
-                  <ul class="job-badges-list">
+                  <ul class="cluster job-badges-list">
                     {% for badge in entry.badges_list %}
                       <li>{{ badge }}</li>
                     {% endfor %}
@@ -412,7 +398,7 @@
       </section>
       <section>
         <h2>Skills</h2>
-        <ul class="skills-list">
+        <ul class="cluster skills-list">
           {% for skill in person.skills_list %}
             <li>{{ skill }}</li>
           {% endfor %}
@@ -425,7 +411,7 @@
             <a href="{{ project.url }}" aria-label="{{ project.title }}" class="project-box stack">
               <h3>{{ project.title }}</h3>
               <p>{{ project.description }}</p>
-              <ul class="project-badges-list">
+              <ul class="cluster project-badges-list">
                 {% for badge in project.badges_list %}
                   <li>{{ badge }}</li>
                 {% endfor %}

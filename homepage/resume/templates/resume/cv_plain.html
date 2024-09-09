@@ -373,8 +373,12 @@
       {% endfor %}
       <section class="timeline-item">
         <h2>Education</h2>
-        <h3><a class="underlined" href="{{ person.education_school_url }}">{{ person.education_school_name }}</a></h3>
-        <span class="year-span">{{ person.education_start }} - {{ person.education_end }}</span>
+        <div class="timeline-item">
+          <div class="timeline-item-header">
+            <h3><a class="underlined" href="{{ person.education_school_url }}">{{ person.education_school_name }}</a></h3>
+            <span class="year-span">{{ person.education_start }} - {{ person.education_end }}</span>
+          </div>
+        </div>
       </section>
       <section>
         <h2>Skills</h2>

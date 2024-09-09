@@ -139,6 +139,11 @@
         margin-block-start: var(--s0);
       }
 
+      .stack-card > :nth-child(2) {
+        /* push second child to the bottom */
+        margin-block-end: auto;
+      }
+
       .stack-large > * + * {
         margin-block-start: var(--s1);
       }
@@ -295,7 +300,7 @@
         /* badges that are displayed in the project boxes */
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
-        margin-top: auto; /* This pushes the badges to the bottom */
+        {#margin-top: auto; /* This pushes the badges to the bottom */#}
       }
 
       .project-badges-list li {
@@ -422,7 +427,7 @@
         <h2>Projects</h2>
         <div class="grid">
           {% for project in projects %}
-            <a href="{{ project.url }}" aria-label="{{ project.title }}" class="project-box stack">
+            <a href="{{ project.url }}" aria-label="{{ project.title }}" class="project-box stack stack-card">
               <h3>{{ project.title }}</h3>
               <p>{{ project.description }}</p>
               <ul class="cluster project-badges-list">

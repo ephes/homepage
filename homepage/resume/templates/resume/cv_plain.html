@@ -47,8 +47,7 @@
         font-family: "Inter", monospace;
         font-weight: 600;
         font-style: normal;
-        font-variation-settings:
-        "slnt" 0;
+        font-variation-settings: "slnt" 0;
         font-optical-sizing: auto;
         color: black;
       }
@@ -199,15 +198,6 @@
         border-radius: 10%;
       }
 
-      .without-bullets {
-        list-style-type: none;
-        padding-inline-start: 0;
-      }
-
-      .without-bullets li {
-        display: inline-block;
-      }
-
       .social-link {
         color: #333333;
         border: var(--border-thin) solid var(--border-color);
@@ -246,7 +236,7 @@
         margin-left: auto;
       }
 
-      .skills-list {
+      .cluster-list {
         list-style-type: none; /* Removes default bullets */
         padding: 0; /* Removes default padding */
       }
@@ -260,12 +250,6 @@
         display: inline-block; /* Ensures badges are inline */
       }
 
-      .pronoun-badges-list {
-        /* badged that are displayed in the timeline */
-        list-style-type: none; /* Removes default bullets */
-        padding: 0; /* Removes default padding */
-      }
-
       .pronoun-badges-list li {
         background-color: rgb(243, 244, 246); /* Light grey background */
         line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
@@ -275,12 +259,6 @@
         display: inline-block; /* Ensures badges are inline */
       }
 
-      .job-badges-list {
-        /* badged that are displayed in the timeline */
-        list-style-type: none; /* Removes default bullets */
-        padding: 0; /* Removes default padding */
-      }
-
       .job-badges-list li {
         background-color: rgb(243, 244, 246); /* Light grey background */
         line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
@@ -288,13 +266,6 @@
         border-radius: 1ch; /* Rounds the corners */
         font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
         display: inline-block; /* Ensures badges are inline */
-      }
-
-      .project-badges-list {
-        /* badges that are displayed in the project boxes */
-        list-style-type: none; /* Removes default bullets */
-        padding: 0; /* Removes default padding */
-        {#margin-top: auto; /* This pushes the badges to the bottom */#}
       }
 
       .project-badges-list li {
@@ -308,12 +279,6 @@
       .sub-line {
         font-size: calc(1.1 * var(--s0));
         color: black;
-      }
-
-      .flex-horizontal {
-        display: flex;
-        flex-direction: row;
-        gap: var(--s1);
       }
 
       header {
@@ -330,9 +295,9 @@
     <main class="stack-large">
       <section class="with-sidebar">
         <div><!-- The person's name, pronouns, tagline, location, and social links - not sidebar -->
-          <div class="flex-horizontal">
+          <div class="cluster">
             <h2>{{ person.name }}</h2>
-            <ul class="cluster pronoun-badges-list">
+            <ul class="cluster cluster-list pronoun-badges-list">
               <li>{{ person.pronouns }}</li>
             </ul>
           </div>
@@ -343,7 +308,7 @@
             </svg>
             <a class="underlined" href="{{ person.location_url }}">{{ person.location_name }}</a>
           </span>
-          <ul class="cluster without-bullets">
+          <ul class="cluster cluster-list">
             {% for social_link in person.social_links %}
               <li>
                 <a class="social-link" href="{{ social_link.url }}"  aria-label="{{ social_link.name }}">
@@ -374,14 +339,14 @@
                     <h3>{{ entry.company_name }}</h3>
                   {% endif %}
                   {% if entry.badges %}
-                    <ul class="cluster job-badges-list">
+                    <ul class="cluster cluster-list job-badges-list">
                       {% for badge in entry.badges_list %}
                         <li>{{ badge }}</li>
                       {% endfor %}
                     </ul>
                   {% endif %}
                 </div>
-                <ul class="cluster without-bullets year-span">
+                <ul class="cluster cluster-list year-span">
                   <li>{{ entry.start }}</li>
                   <li>-</li>
                   <li>{{ entry.end }}</li>
@@ -395,13 +360,12 @@
       {% endfor %}
       <section>
         <h2>Education</h2>
-
         <div class="stack">
           <div class="cluster timeline-header-cluster">
             <div class="timeline-header-title">
               <h3><a class="underlined" href="{{ person.education_school_url }}">{{ person.education_school_name }}</a></h3>
             </div>
-            <ul class="cluster without-bullets year-span">
+            <ul class="cluster cluster-list year-span">
               <li>{{ person.education_start }}</li>
               <li>-</li>
               <li>{{ person.education_end }}</li>
@@ -411,7 +375,7 @@
       </section>
       <section>
         <h2>Skills</h2>
-        <ul class="cluster skills-list">
+        <ul class="cluster cluster-list skills-list">
           {% for skill in person.skills_list %}
             <li>{{ skill }}</li>
           {% endfor %}
@@ -424,7 +388,7 @@
             <a href="{{ project.url }}" aria-label="{{ project.title }}" class="project-box stack stack-card">
               <h3>{{ project.title }}</h3>
               <p>{{ project.description }}</p>
-              <ul class="cluster project-badges-list">
+              <ul class="cluster cluster-list project-badges-list">
                 {% for badge in project.badges_list %}
                   <li>{{ badge }}</li>
                 {% endfor %}

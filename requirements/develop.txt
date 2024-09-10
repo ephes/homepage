@@ -48,9 +48,9 @@ black==24.8.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.35.14
+boto3==1.35.15
     # via -r requirements/production.in
-botocore==1.35.14
+botocore==1.35.15
     # via
     #   boto3
     #   s3transfer
@@ -132,7 +132,7 @@ django==5.1.1
     #   wagtail
 django-allauth==64.2.1
     # via -r requirements/production.in
-django-anymail[mailgun]==11.1
+django-anymail[mailgun]==12.0
     # via -r requirements/production.in
 django-braces==1.15.0
     # via django-indieweb

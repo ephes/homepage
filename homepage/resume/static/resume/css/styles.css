@@ -33,6 +33,11 @@ h1, h2, h3, h4, h5, h6 {
   font-variation-settings: "slnt" 0;
   font-optical-sizing: auto;
   color: black;
+  margin: 0; /* Removes default margin to remove gaps between sections */
+}
+
+p, ul {
+  margin: 0;  /* Removes default margin to remove gaps between sections */
 }
 
 * {
@@ -56,7 +61,7 @@ a {
 
 a.underlined {
   position: relative;
-  color: #3488da; /* Changes the link color */
+  color: #1b83ea; /* Changes the link color */
 }
 
 a.underlined::after {
@@ -122,11 +127,23 @@ svg {
 }
 
 .stack-card > :nth-child(2) {
-  /* push second child to the bottom */
-  margin-block-end: auto;
+  margin-block-end: auto; /* push second child to the bottom */
 }
 
+.stack-card > :last-child {
+  margin-block-start: var(--s1);  /* min space between card text and badges */
+}
+
+.stack-small > * + * {
+  margin-block-start: var(--s-1);
+}
+
+
 .stack-large > * + * {
+  margin-block-start: var(--s2);
+}
+
+.stack-large > :first-child {
   margin-block-start: var(--s1);
 }
 
@@ -225,6 +242,10 @@ svg {
   padding: 0; /* Removes default padding */
 }
 
+.icons-list {
+    margin-block-end: var(--s-3);  /* Remove ul default margin for social link icons */
+}
+
 .skills-list li {
   background-color: #333333; /* Dark grey background */
   color: #ffffff; /* White text color */
@@ -268,5 +289,21 @@ svg {
 header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--s1);
+  padding-block-end: var(--s1);
+  padding-block-start: var(--s1);
+}
+
+h1 {
+  font-size: calc(2.5 * var(--s0));
+  font-weight: 600;
+}
+
+h3 {
+  color: hsl(207, 6%, 30%);
+}
+
+section {
+  /*background-color: red;*/
+  padding-block-start: var(--s1);
+  padding-block-end: var(--s1);
 }

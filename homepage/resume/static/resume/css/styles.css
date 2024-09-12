@@ -61,7 +61,7 @@ a {
 
 a.underlined {
   position: relative;
-  color: #1b83ea; /* Changes the link color */
+  color: rgb(27, 131, 234); /* Changes the link color */
 }
 
 a.underlined::after {
@@ -71,7 +71,7 @@ a.underlined::after {
   height: 2px;
   bottom: 0;
   left: 0;
-  background-color: rgba(52, 136, 218, 0.4);
+  background-color: rgba(27, 131, 234, 0.7);
 }
 
 a.underlined:hover::after {

@@ -69,7 +69,7 @@ a {
 
 a.underlined {
   position: relative;
-  color: rgb(27, 131, 234); /* Changes the link color */
+  color: #0071c7; /* Changes the link color */
 }
 
 a.underlined::after {
@@ -79,7 +79,7 @@ a.underlined::after {
   height: 2px;
   bottom: 0;
   left: 0;
-  background-color: rgba(27, 131, 234, 0.7);
+  background-color: rgba(0, 113, 199, 0.7);
 }
 
 a.underlined:hover::after {
@@ -263,30 +263,27 @@ svg {
 }
 
 .pronoun-badges-list li {
-  background-color: rgba(243, 244, 246, 0.6); /* Light grey background */
+  background-color: rgb(235, 236, 241); /* Light grey background */
   line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
   padding: 0.5ch 1ch; /* Adds space inside the badge */
   border-radius: 1ch; /* Rounds the corners */
-  border: rgba(157, 158, 179, 0.56) var(--border-thin) solid;
   font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
   display: inline-block; /* Ensures badges are inline */
 }
 
 .job-badges-list li {
-  background-color: rgba(243, 244, 246, 0.6); /* Light grey background */
+  background-color: rgb(235, 236, 241); /* Light grey background */
   line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
   padding: 0.5ch 1ch; /* Adds space inside the badge */
   border-radius: 1ch; /* Rounds the corners */
-  border: rgba(157, 158, 179, 0.56) var(--border-thin) solid;
   font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
   display: inline-block; /* Ensures badges are inline */
 }
 
 .project-badges-list li {
-  background-color: rgba(243, 244, 246, 0.6); /* Light grey background */
+  background-color: rgb(235, 236, 241); /* Light grey background */
   padding: 0.5ch 1ch; /* Adds space inside the badge */
   border-radius: 1ch; /* Rounds the corners */
-  border: rgba(157, 158, 179, 0.56) var(--border-thin) solid;
   font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
   display: inline-block; /* Ensures badges are inline */
 }

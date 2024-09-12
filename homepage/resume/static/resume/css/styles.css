@@ -5,7 +5,8 @@
   font-weight: 100;
   font-style: normal;
   font-variation-settings: "wdth" 87.5;
-  color: hsl(207, 6%, 30%);
+  --font-color: hsl(207, 6%, 30%);
+  color: var(--font-color);
   font-size: 15px;
   line-height: 1.3rem;
   --measure: 75ch;
@@ -24,6 +25,13 @@
   --s3: calc(var(--s2) * var(--ratio));
   --s4: calc(var(--s3) * var(--ratio));
   --s5: calc(var(--s4) * var(--ratio));
+}
+
+body {
+  background-image: url('/static/resume/img/white-linen.png');
+  background-repeat: repeat;
+  background-size: 40%;
+  background-position: top left;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -166,12 +174,11 @@ svg {
   flex-direction: column;
   justify-content: space-between;
   padding: var(--s-1);
-  border: #e3e3e3 var(--border-thin) solid;
+  border: rgb(180, 185, 198) var(--border-thin) solid;
   border-radius: 0.5ch;
   --color-light: #fff;
   --color-dark: #000;
   color: var(--color-dark);
-  background-color: var(--color-light);
 }
 
 .project-box * {
@@ -256,27 +263,30 @@ svg {
 }
 
 .pronoun-badges-list li {
-  background-color: rgb(243, 244, 246); /* Light grey background */
+  background-color: rgba(243, 244, 246, 0.6); /* Light grey background */
   line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
   padding: 0.5ch 1ch; /* Adds space inside the badge */
   border-radius: 1ch; /* Rounds the corners */
+  border: rgba(157, 158, 179, 0.56) var(--border-thin) solid;
   font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
   display: inline-block; /* Ensures badges are inline */
 }
 
 .job-badges-list li {
-  background-color: rgb(243, 244, 246); /* Light grey background */
+  background-color: rgba(243, 244, 246, 0.6); /* Light grey background */
   line-height: 1.5; /* normalize the line height so that the badges are centered vertically */
   padding: 0.5ch 1ch; /* Adds space inside the badge */
   border-radius: 1ch; /* Rounds the corners */
+  border: rgba(157, 158, 179, 0.56) var(--border-thin) solid;
   font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
   display: inline-block; /* Ensures badges are inline */
 }
 
 .project-badges-list li {
-  background-color: rgb(243, 244, 246); /* Light grey background */
+  background-color: rgba(243, 244, 246, 0.6); /* Light grey background */
   padding: 0.5ch 1ch; /* Adds space inside the badge */
   border-radius: 1ch; /* Rounds the corners */
+  border: rgba(157, 158, 179, 0.56) var(--border-thin) solid;
   font-size: calc(0.8 * var(--s0)); /* Adjusts the font size */
   display: inline-block; /* Ensures badges are inline */
 }

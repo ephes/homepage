@@ -173,7 +173,7 @@ svg {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: var(--s-1);
+  padding: var(--s0);
   border: rgb(180, 185, 198) var(--border-thin) solid;
   border-radius: 0.5ch;
   --color-light: #fff;
@@ -183,6 +183,10 @@ svg {
 
 .project-box > h3 {
   color: black;
+}
+
+.project-box > p {
+  font-size: calc(0.9 * var(--s0));
 }
 
 .project-box * {

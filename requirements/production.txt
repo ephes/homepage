@@ -6,7 +6,7 @@
 #
 anyascii==0.3.2
     # via wagtail
-anyio==4.4.0
+anyio==4.5.0
     # via httpx
 argon2-cffi==23.1.0
     # via -r requirements/production.in
@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.35.15
+boto3==1.35.23
     # via -r requirements/production.in
-botocore==1.35.15
+botocore==1.35.23
     # via
     #   boto3
     #   s3transfer
@@ -136,7 +136,7 @@ django-threadedcomments==2.0
     # via django-cast
 django-treebeard==4.7.1
     # via wagtail
-django-vite==3.0.4
+django-vite==3.0.5
     # via
     #   -r requirements/production.in
     #   cast-vue
@@ -159,7 +159,7 @@ httpcore==1.0.5
     # via httpx
 httpx==0.27.2
     # via -r requirements/production.in
-idna==3.8
+idna==3.10
     # via
     #   anyio
     #   httpx
@@ -208,9 +208,9 @@ pillow==10.4.0
     #   wagtail
 pillow-heif==0.18.0
     # via willow
-psycopg[binary]==3.2.1
+psycopg[binary]==3.2.2
     # via -r requirements/production.in
-psycopg-binary==3.2.1
+psycopg-binary==3.2.2
     # via psycopg
 pycparser==2.22
     # via cffi
@@ -233,7 +233,7 @@ python-dotenv==1.0.1
     # via -r requirements/production.in
 python-slugify==8.0.4
     # via django-cast
-pytz==2024.1
+pytz==2024.2
     # via
     #   django-indieweb
     #   django-modelcluster
@@ -249,7 +249,7 @@ requests==2.32.3
     #   django-proxy
     #   python-akismet
     #   wagtail
-rich==13.8.0
+rich==13.8.1
     # via
     #   django-cast
     #   typer
@@ -286,7 +286,7 @@ tzdata==2024.1
     # via pandas
 uritemplate==4.1.1
     # via coreapi
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   botocore
     #   django-anymail
@@ -302,5 +302,5 @@ willow[heif]==1.8.0
     #   willow
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==74.1.2
+setuptools==75.1.0
     # via django-cast

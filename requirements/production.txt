@@ -18,9 +18,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.35.29
+boto3==1.35.36
     # via -r requirements/production.in
-botocore==1.35.29
+botocore==1.35.36
     # via
     #   boto3
     #   s3transfer
@@ -36,7 +36,7 @@ certifi==2024.8.30
     #   sentry-sdk
 cffi==1.17.1
     # via argon2-cffi-bindings
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via typer
@@ -46,9 +46,9 @@ coreapi==2.3.3
     # via django-cast
 coreschema==0.0.4
     # via coreapi
-crispy-bootstrap4==2024.1
+crispy-bootstrap4==2024.10
     # via django-cast
-crispy-bootstrap5==2024.2
+crispy-bootstrap5==2024.10
     # via cast-bootstrap5
 cyberpandas==1.1.1
     # via -r requirements/production.in
@@ -56,7 +56,7 @@ cycler==0.12.1
     # via matplotlib
 defusedxml==0.7.1
     # via willow
-django==5.1.1
+django==5.1.2
     # via
     #   crispy-bootstrap4
     #   crispy-bootstrap5
@@ -155,7 +155,7 @@ gunicorn==23.0.0
     # via -r requirements/production.in
 h11==0.14.0
     # via httpcore
-httpcore==1.0.5
+httpcore==1.0.6
     # via httpx
 httpx==0.27.2
     # via -r requirements/production.in
@@ -180,13 +180,13 @@ laces==0.1.1
     # via wagtail
 markdown-it-py==3.0.0
     # via rich
-markupsafe==2.1.5
+markupsafe==3.0.1
     # via jinja2
 matplotlib==3.9.2
     # via -r requirements/production.in
 mdurl==0.1.2
     # via markdown-it-py
-numpy==2.1.1
+numpy==2.1.2
     # via
     #   contourpy
     #   matplotlib
@@ -249,13 +249,13 @@ requests==2.32.3
     #   django-proxy
     #   python-akismet
     #   wagtail
-rich==13.8.1
+rich==13.9.2
     # via
     #   django-cast
     #   typer
-s3transfer==0.10.2
+s3transfer==0.10.3
     # via boto3
-sentry-sdk==2.14.0
+sentry-sdk==2.16.0
     # via -r requirements/production.in
 shellingham==1.5.4
     # via typer

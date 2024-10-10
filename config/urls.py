@@ -2,10 +2,9 @@ from cast.views import defaults as default_views_cast
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.generic import TemplateView
 from rest_framework.authtoken import views as authtokenviews
-from rest_framework.documentation import include_docs_urls
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
@@ -43,13 +42,13 @@ urlpatterns = [
     path("api/api-token-auth/", authtokenviews.obtain_auth_token),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
-    re_path(r"^docs/", include_docs_urls(title="My Blog API service")),
+    # re_path(r"^docs/", include_docs_urls(title="My Blog API service")),
     # Cast Blog
     path("blogs/", include("cast.urls", namespace="cast")),
     # Fediverse redirects etc.
     path("", include("homepage.fedi.urls", namespace="fedi")),
     # Resume
-    path("resume/", include("homepage.resume.urls", namespace="resume")),
+    path("resume/", include("django_resume.urls", namespace="resume")),
     # Wagtail
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),

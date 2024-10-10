@@ -2,6 +2,7 @@ argon2-cffi
 boto3
 git+https://github.com/ephes/cast-vue
 git+https://github.com/ephes/cast-bootstrap5
+django-resume
 cyberpandas
 django-allauth
 django-anymail[mailgun]

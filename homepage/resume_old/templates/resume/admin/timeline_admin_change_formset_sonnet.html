@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="{% static 'admin/js/jquery.init.js' %}"></script>
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/forms.css" %}">{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; {% if has_view_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; {% if add %}{% blocktranslate with name=opts.verbose_name %}Add {{ name }}{% endblocktranslate %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}
+  <div id="content-main">
+    {% block object-tools %}
+    {% if change and not is_popup %}
+      <ul class="object-tools">
+        {% block object-tools-items %}
+          {% change_form_object_tools %}
+        {% endblock %}
+      </ul>
+    {% endif %}
+    {% endblock %}
+    <h2>Edit {{ plugin.verbose_name }}</h2>
+    <form method="post" id="timeline-form">
+      {% csrf_token %}
+      {{ formset.management_form }}
+      <div id="timeline-entries">
+        {% for form in formset %}
+          <div class="timeline-entry">
+            {{ form.as_p }}
+            <button type="button" class="remove-entry">Remove</button>
+          </div>
+        {% endfor %}
+      </div>
+      <button type="button" id="add-entry">Add Entry</button>
+      {% if errors %}
+          <p class="errornote">
+          {% blocktranslate count counter=errors|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+          </p>
+          {{ form.non_field_errors }}
+      {% endif %}
+
+      {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+    </form>
+  </div>
+
+  <script>
+    (function($) {
+      $(document).ready(function() {
+        var formCount = parseInt($('#id_form-TOTAL_FORMS').val());
+        var maxForms = parseInt($('#id_form-MAX_NUM_FORMS').val());
+
+        function updateFormIndex(elem, index) {
+          var idRegex = new RegExp('(form-\\d+)');
+          var replacement = 'form-' + index;
+          elem.find(':input,label,div').each(function() {
+            if ($(this).attr("for")) $(this).attr("for", $(this).attr("for").replace(idRegex, replacement));
+            if (this.id) this.id = this.id.replace(idRegex, replacement);
+            if (this.name) this.name = this.name.replace(idRegex, replacement);
+          });
+        }
+
+        function cloneForm() {
+          if (formCount < maxForms) {
+            var row = $('.timeline-entry:first').clone(true);
+            row.find(':input').each(function() {
+              var elem = $(this);
+              elem.val('').removeAttr('checked');
+            });
+            row.find('span.helptext').remove();  // Remove any help text
+            updateFormIndex(row, formCount);
+            $('#timeline-entries').append(row);
+            formCount++;
+            $('#id_form-TOTAL_FORMS').val(formCount);
+          } else {
+            alert('You have reached the maximum number of entries allowed.');
+          }
+        }
+
+        function deleteForm(btn) {
+          var parent = $(btn).parent('.timeline-entry');
+          parent.hide();
+          var deletedInput = parent.find('input[name$="-DELETE"]');
+          if (deletedInput.length) {
+            deletedInput.val('on');
+          } else {
+            parent.append('<input type="hidden" name="form-' + (formCount - 1) + '-DELETE" value="on">');
+          }
+        }
+
+        $('#add-entry').click(cloneForm);
+
+        $('.remove-entry').click(function() {
+          deleteForm(this);
+        });
+
+        $('#timeline-form').submit(function() {
+          $('.timeline-entry').each(function(index) {
+            updateFormIndex($(this), index);
+          });
+        });
+      });
+    })(django.jQuery);
+  </script>
+{% endblock %}

@@ -134,6 +134,7 @@ class Person(models.Model):
 
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True)
+    data = models.JSONField(default=dict)
     pronouns = models.CharField(max_length=20)
     tagline = models.CharField(max_length=512)
     about = models.TextField()
@@ -179,6 +180,20 @@ class Person(models.Model):
             MastodonLink(url=self.mastodon),
         ]
         return links
+
+    def get_plugin_data(self, plugin_name):
+        from .plugins import plugin_registry
+        plugin = plugin_registry.get_plugin(plugin_name)
+        if plugin:
+            return plugin.get_data(self)
+        return None
+
+    def set_plugin_data(self, plugin_name, data):
+        from .plugins import plugin_registry
+        plugin = plugin_registry.get_plugin(plugin_name)
+        if plugin:
+            plugin.set_data(self, data)
+
 
 
 def generate_random_string(length=20):

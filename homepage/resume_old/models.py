@@ -183,6 +183,7 @@ class Person(models.Model):
 
     def get_plugin_data(self, plugin_name):
         from .plugins import plugin_registry
+
         plugin = plugin_registry.get_plugin(plugin_name)
         if plugin:
             return plugin.get_data(self)
@@ -190,10 +191,10 @@ class Person(models.Model):
 
     def set_plugin_data(self, plugin_name, data):
         from .plugins import plugin_registry
+
         plugin = plugin_registry.get_plugin(plugin_name)
         if plugin:
             plugin.set_data(self, data)
-
 
 
 def generate_random_string(length=20):

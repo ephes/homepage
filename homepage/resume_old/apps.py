@@ -5,14 +5,15 @@ class ResumeConfig(AppConfig):
     name = "homepage.resume"
     verbose_name = "Resume stuff"
 
-
     def register_admin_for_plugins(self):
         from .admin import register_person_admin_after_plugins_are_registered
+
         register_person_admin_after_plugins_are_registered()
 
     def register_plugins(self):
         from .plugins import plugin_registry
-        from .timelines import FreelanceTimelinePlugin, EmployedTimelinePlugin
+        from .timelines import EmployedTimelinePlugin, FreelanceTimelinePlugin
+
         plugin_registry.register(FreelanceTimelinePlugin)
         plugin_registry.register(EmployedTimelinePlugin)
         print("Registering plugins")

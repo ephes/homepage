@@ -53,17 +53,16 @@ class CVTokenAdmin(admin.ModelAdmin):
 #         return inline_instances
 
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
 
 from .plugins import plugin_registry
 
 
 class PersonAdmin(admin.ModelAdmin):
     def __init__(self, model, admin_site):
-        self.list_display = ['name']
+        self.list_display = ["name"]
         print("get all plugins: ", plugin_registry.get_all_plugins())
         self.readonly_fields = []
         for plugin in plugin_registry.get_all_plugins():
@@ -75,8 +74,10 @@ class PersonAdmin(admin.ModelAdmin):
         Add a method to the admin class that will return a link to the plugin admin view.
         This is used to have the plugins show up as readonly fields in the person change view.
         """
+
         def plugin_method(_self, obj):
             return plugin.get_admin_link(obj.id)
+
         plugin_method.__name__ = plugin.name
         setattr(self.__class__, plugin.name, plugin_method)
 
@@ -94,12 +95,16 @@ class PersonAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('<int:person_id>/plugin/<str:plugin_name>/',
-                 self.admin_site.admin_view(self.plugin_view),
-                 name='person-plugin'),
-            path('<int:person_id>/plugin/<str:plugin_name>/post/',
-                 self.admin_site.admin_view(self.plugin_view_post),
-                 name='person-plugin-post'),
+            path(
+                "<int:person_id>/plugin/<str:plugin_name>/",
+                self.admin_site.admin_view(self.plugin_view),
+                name="person-plugin",
+            ),
+            path(
+                "<int:person_id>/plugin/<str:plugin_name>/post/",
+                self.admin_site.admin_view(self.plugin_view_post),
+                name="person-plugin-post",
+            ),
         ]
         return custom_urls + urls
 
@@ -108,40 +113,37 @@ class PersonAdmin(admin.ModelAdmin):
         plugin = plugin_registry.get_plugin(plugin_name)
 
         form_class = plugin.get_admin_form()
-        if request.method == 'POST':
+        if request.method == "POST":
             form = form_class(request.POST)
             if form.is_valid():
                 existing_data = plugin.get_data(person)
                 existing_data.append(form.cleaned_data)
                 plugin.set_data(person, existing_data)
                 messages.success(request, f"{plugin.verbose_name} data updated successfully.")
-                return redirect('admin:resume_person_change', person_id)
-        return redirect('admin:resume_person_change', person_id)
+                return redirect("admin:resume_person_change", person_id)
+        return redirect("admin:resume_person_change", person_id)
 
     def plugin_view(self, request, person_id, plugin_name):
         person = get_object_or_404(Person, id=person_id)
         plugin = plugin_registry.get_plugin(plugin_name)
 
         if not plugin:
-            return redirect('admin:resume_person_change', person_id)
+            return redirect("admin:resume_person_change", person_id)
 
         form_class = plugin.get_admin_form()
         forms = []
-        if request.method == 'POST':
+        if request.method == "POST":
             form = form_class(request.POST)
             if form.is_valid():
                 plugin.set_data(person, form.cleaned_data)
                 messages.success(request, f"{plugin.verbose_name} data updated successfully.")
-                return redirect('admin:resume_person_change', person_id)
+                return redirect("admin:resume_person_change", person_id)
         else:
             # initial_data = {'timeline_items': plugin.get_data(person)}
             initial_data = plugin.get_data(person)
             print("initial_data: ", initial_data)
             print("form_class: ", form_class)
-            post_url = reverse(
-                "admin:person-plugin-post",
-                kwargs={"person_id": person_id, "plugin_name": plugin_name}
-            )
+            post_url = reverse("admin:person-plugin-post", kwargs={"person_id": person_id, "plugin_name": plugin_name})
             for form_data in initial_data:
                 form = form_class(initial=form_data)
                 form.post_url = post_url
@@ -154,13 +156,13 @@ class PersonAdmin(admin.ModelAdmin):
 
         print("post url: ", forms[0].post_url)
         context = {
-            'title': f"{plugin.verbose_name} for {person.name}",
-            'form': form,
-            'forms': forms,
+            "title": f"{plugin.verbose_name} for {person.name}",
+            "form": form,
+            "forms": forms,
             "formset": form,
-            'person': person,
-            'plugin': plugin,
-            'opts': self.model._meta,
+            "person": person,
+            "plugin": plugin,
+            "opts": self.model._meta,
             # context for admin/change_form.html template
             "add": False,
             "change": True,

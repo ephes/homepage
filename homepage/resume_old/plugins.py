@@ -24,7 +24,7 @@ class BasePlugin:
         return None
 
     def get_admin_url(self, person_id):
-        return reverse('admin:person-plugin', args=[person_id, self.name])
+        return reverse("admin:person-plugin", args=[person_id, self.name])
 
     def get_admin_link(self, person_id):
         url = self.get_admin_url(person_id)
@@ -33,9 +33,9 @@ class BasePlugin:
     def get_list_display_field(self):
         def admin_link(obj):
             return self.get_admin_link(obj.id)
+
         admin_link.short_description = self.verbose_name
         return admin_link
-
 
 
 class PluginRegistry:
@@ -51,7 +51,6 @@ class PluginRegistry:
 
     def get_all_plugins(self):
         return self.plugins.values()
-
 
 
 plugin_registry = PluginRegistry()

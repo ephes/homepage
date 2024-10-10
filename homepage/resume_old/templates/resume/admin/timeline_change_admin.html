@@ -2,68 +2,68 @@
 {% load i18n admin_urls static admin_modify %}
 
 {% block extrahead %}
-{{ block.super }}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<style>
-  .timeline-item {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 10px;
-  }
-  .delete-timeline-item {
-    color: red;
-    cursor: pointer;
-  }
-</style>
+  {{ block.super }}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .timeline-item {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .delete-timeline-item {
+      color: red;
+      cursor: pointer;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-<div id="content-main">
-  <form method="post" id="{{ opts.model_name }}_form" novalidate>
-    {% csrf_token %}
-    <div>
-      {% if form.errors %}
+  <div id="content-main">
+    <form method="post" id="{{ opts.model_name }}_form" novalidate>
+      {% csrf_token %}
+      <div>
+        {% if form.errors %}
           <p class="errornote">
-          {% if form.errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+            {% if form.errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
           </p>
           {{ form.non_field_errors }}
-      {% endif %}
+        {% endif %}
 
-      <fieldset class="module aligned">
-        {% for field in form.visible_fields %}
-          <div class="form-row">
-            {{ field.errors }}
-            {{ field.label_tag }}
+        <fieldset class="module aligned">
+          {% for field in form.visible_fields %}
+            <div class="form-row">
+              {{ field.errors }}
+              {{ field.label_tag }}
+              {{ field }}
+              {% if field.field.help_text %}
+                <p class="help">{{ field.field.help_text|safe }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+          {% for field in form.hidden_fields %}
             {{ field }}
-            {% if field.field.help_text %}
-            <p class="help">{{ field.field.help_text|safe }}</p>
-            {% endif %}
-          </div>
-        {% endfor %}
-        {% for field in form.hidden_fields %}
-          {{ field }}
-        {% endfor %}
-      </fieldset>
+          {% endfor %}
+        </fieldset>
 
-      <div id="timeline-items-container"></div>
-      <button type="button" id="add-timeline-item">Add Timeline Item</button>
+        <div id="timeline-items-container"></div>
+        <button type="button" id="add-timeline-item">Add Timeline Item</button>
 
-      <div class="submit-row">
-        <input type="submit" value="{% trans 'Save' %}" class="default" name="_save">
+        <div class="submit-row">
+          <input type="submit" value="{% trans 'Save' %}" class="default" name="_save">
+        </div>
       </div>
-    </div>
-  </form>
-</div>
+    </form>
+  </div>
 
-<script>
-$(document).ready(function() {
-  var timelineItems = JSON.parse($('#id_timeline_items').val() || '[]');
+  <script>
+    $(document).ready(function() {
+      var timelineItems = JSON.parse($('#id_timeline_items').val() || '[]');
 
-  function renderTimelineItems() {
-    var container = $('#timeline-items-container');
-    container.empty();
-    timelineItems.forEach(function(item, index) {
-      container.append(`
+      function renderTimelineItems() {
+        var container = $('#timeline-items-container');
+        container.empty();
+        timelineItems.forEach(function(item, index) {
+          container.append(`
         <div class="timeline-item">
           <input type="text" name="title" value="${item.title}" placeholder="Title">
           <textarea name="description" placeholder="Description">${item.description}</textarea>
@@ -72,39 +72,39 @@ $(document).ready(function() {
           <span class="delete-timeline-item" data-index="${index}">Delete</span>
         </div>
       `);
+        });
+      }
+
+      function updateHiddenInput() {
+        $('#id_timeline_items').val(JSON.stringify(timelineItems));
+      }
+
+      $('#add-timeline-item').click(function() {
+        timelineItems.push({title: '', description: '', start_date: '', end_date: ''});
+        renderTimelineItems();
+        updateHiddenInput();
+      });
+
+      $(document).on('click', '.delete-timeline-item', function() {
+        var index = $(this).data('index');
+        timelineItems.splice(index, 1);
+        renderTimelineItems();
+        updateHiddenInput();
+      });
+
+      $(document).on('change', '.timeline-item input, .timeline-item textarea', function() {
+        var item = $(this).closest('.timeline-item');
+        var index = item.index();
+        timelineItems[index] = {
+          title: item.find('input[name="title"]').val(),
+          description: item.find('textarea[name="description"]').val(),
+          start_date: item.find('input[name="start_date"]').val(),
+          end_date: item.find('input[name="end_date"]').val()
+        };
+        updateHiddenInput();
+      });
+
+      renderTimelineItems();
     });
-  }
-
-  function updateHiddenInput() {
-    $('#id_timeline_items').val(JSON.stringify(timelineItems));
-  }
-
-  $('#add-timeline-item').click(function() {
-    timelineItems.push({title: '', description: '', start_date: '', end_date: ''});
-    renderTimelineItems();
-    updateHiddenInput();
-  });
-
-  $(document).on('click', '.delete-timeline-item', function() {
-    var index = $(this).data('index');
-    timelineItems.splice(index, 1);
-    renderTimelineItems();
-    updateHiddenInput();
-  });
-
-  $(document).on('change', '.timeline-item input, .timeline-item textarea', function() {
-    var item = $(this).closest('.timeline-item');
-    var index = item.index();
-    timelineItems[index] = {
-      title: item.find('input[name="title"]').val(),
-      description: item.find('textarea[name="description"]').val(),
-      start_date: item.find('input[name="start_date"]').val(),
-      end_date: item.find('input[name="end_date"]').val()
-    };
-    updateHiddenInput();
-  });
-
-  renderTimelineItems();
-});
-</script>
+  </script>
 {% endblock %}

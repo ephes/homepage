@@ -15,13 +15,13 @@ class FreelanceTimelinePlugin(BasePlugin):
             timeline_items = forms.CharField(widget=forms.HiddenInput(), required=False)
 
             def __init__(self, *args, **kwargs):
-                initial = kwargs.get('initial', {})
-                if 'timeline_items' in initial and isinstance(initial['timeline_items'], list):
-                    initial['timeline_items'] = json.dumps(initial['timeline_items'])
+                initial = kwargs.get("initial", {})
+                if "timeline_items" in initial and isinstance(initial["timeline_items"], list):
+                    initial["timeline_items"] = json.dumps(initial["timeline_items"])
                 super().__init__(*args, **kwargs)
 
             def clean_timeline_items(self):
-                items = self.cleaned_data.get('timeline_items')
+                items = self.cleaned_data.get("timeline_items")
                 if not items:
                     return []
                 try:
@@ -37,7 +37,7 @@ class FreelanceTimelinePlugin(BasePlugin):
     def set_data(self, person, data):
         if not person.data:
             person.data = {}
-        person.data[self.name] = data.get('timeline_items', [])
+        person.data[self.name] = data.get("timeline_items", [])
         person.save()
 
 
@@ -48,13 +48,13 @@ class EmployedTimelineForm(forms.Form):
     end = forms.CharField(widget=forms.TextInput(), required=False)
 
     def __init__(self, *args, **kwargs):
-        initial = kwargs.get('initial', {})
-        if 'timeline_items' in initial and isinstance(initial['timeline_items'], list):
-            initial['timeline_items'] = json.dumps(initial['timeline_items'])
+        initial = kwargs.get("initial", {})
+        if "timeline_items" in initial and isinstance(initial["timeline_items"], list):
+            initial["timeline_items"] = json.dumps(initial["timeline_items"])
         super().__init__(*args, **kwargs)
 
     def clean_timeline_items(self):
-        items = self.cleaned_data.get('timeline_items')
+        items = self.cleaned_data.get("timeline_items")
         if not items:
             return []
         try:

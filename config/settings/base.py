@@ -75,6 +75,7 @@ THIRD_PARTY_APPS = [
     "cast",  # blog/podcast package
     "cast_vue.apps.CastVueConfig",  # cast_vue theme
     "django_vite",  # cast_vue theme
+    "django_resume.apps.ResumeConfig",  # django-resume
 ]
 
 # Apps specific for this project go here.
@@ -83,7 +84,6 @@ LOCAL_APPS = [
     "homepage.users.apps.UsersConfig",
     "homepage.fedi.apps.FediConfig",
     "homepage.core.apps.CoreConfig",
-    "homepage.resume.apps.ResumeConfig",
     # Your stuff: custom apps go here
 ]
 
@@ -307,7 +307,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
-    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    # "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
 }
 
 # STORAGE CONFIGURATION

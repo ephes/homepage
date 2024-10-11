@@ -48,9 +48,9 @@ black==24.10.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.35.37
+boto3==1.35.38
     # via -r requirements/production.in
-botocore==1.35.37
+botocore==1.35.38
     # via
     #   boto3
     #   s3transfer
@@ -90,7 +90,7 @@ cyberpandas==1.1.1
     # via -r requirements/production.in
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.6
+debugpy==1.8.7
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -565,7 +565,7 @@ snowballstemmer==2.2.0
     # via sphinx
 soupsieve==2.6
     # via beautifulsoup4
-sphinx==8.0.2
+sphinx==8.1.0
     # via
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery

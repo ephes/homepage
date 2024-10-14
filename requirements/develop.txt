@@ -8,7 +8,7 @@ alabaster==1.0.0
     # via sphinx
 anyascii==0.3.2
     # via wagtail
-anyio==4.6.0
+anyio==4.6.2.post1
     # via
     #   httpx
     #   jupyter-server
@@ -48,9 +48,9 @@ black==24.10.0
     # via -r requirements/develop.in
 bleach==6.1.0
     # via nbconvert
-boto3==1.35.38
+boto3==1.35.39
     # via -r requirements/production.in
-botocore==1.35.38
+botocore==1.35.39
     # via
     #   boto3
     #   s3transfer
@@ -80,7 +80,7 @@ comm==0.2.2
     #   ipywidgets
 contourpy==1.3.0
     # via matplotlib
-coverage==7.6.2
+coverage==7.6.3
     # via -r requirements/develop.in
 crispy-bootstrap4==2024.10
     # via django-cast
@@ -179,7 +179,7 @@ django-permissionedforms==0.1
     # via wagtail
 django-proxy==1.3.0
     # via -r requirements/production.in
-django-resume==0.1.1
+django-resume==0.1.3
     # via -r requirements/production.in
 django-schema-graph==3.1.0
     # via dj-notebook
@@ -461,7 +461,7 @@ pygments==2.18.0
     #   nbconvert
     #   rich
     #   sphinx
-pyparsing==3.1.4
+pyparsing==3.2.0
     # via matplotlib
 pytest==8.3.3
     # via
@@ -565,7 +565,7 @@ snowballstemmer==2.2.0
     # via sphinx
 soupsieve==2.6
     # via beautifulsoup4
-sphinx==8.1.0
+sphinx==8.1.3
     # via
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery

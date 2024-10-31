@@ -47,11 +47,11 @@ beautifulsoup4==4.12.3
     #   wagtail
 black==24.10.0
     # via -r requirements/develop.in
-bleach==6.1.0
+bleach==6.2.0
     # via nbconvert
-boto3==1.35.48
+boto3==1.35.52
     # via -r requirements/production.in
-botocore==1.35.48
+botocore==1.35.52
     # via
     #   boto3
     #   s3transfer
@@ -164,7 +164,7 @@ django-filter==24.3
     #   wagtail
 django-fluent-comments==3.0
     # via django-cast
-django-htmx==1.19.0
+django-htmx==1.21.0
     # via django-cast
 django-indieweb==0.0.7
     # via -r requirements/production.in
@@ -210,7 +210,7 @@ docutils==0.21.2
     #   sphinx-rtd-theme
 draftjs-exporter==5.0.0
     # via wagtail
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 executing==2.1.0
     # via stack-data
@@ -257,7 +257,7 @@ ipykernel==6.29.5
     #   jupyter
     #   jupyter-console
     #   jupyterlab
-ipython==8.28.0
+ipython==8.29.0
     # via
     #   dj-notebook
     #   ipykernel
@@ -552,7 +552,6 @@ shellingham==1.5.4
 six==1.16.0
     # via
     #   asttokens
-    #   bleach
     #   cyberpandas
     #   django-pandas
     #   l18n
@@ -660,17 +659,17 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.8.0
     # via jupyter-server
-whitenoise==6.7.0
+whitenoise==6.8.2
     # via -r requirements/production.in
 widgetsnbextension==4.0.13
     # via ipywidgets
-willow[heif]==1.8.0
+willow[heif]==1.9.0
     # via
     #   wagtail
     #   willow
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.2.0
+setuptools==75.3.0
     # via
     #   django-cast
     #   jupyterlab

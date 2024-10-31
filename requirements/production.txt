@@ -19,9 +19,9 @@ asgiref==3.8.1
     #   django-htmx
 beautifulsoup4==4.12.3
     # via wagtail
-boto3==1.35.48
+boto3==1.35.52
     # via -r requirements/production.in
-botocore==1.35.48
+botocore==1.35.52
     # via
     #   boto3
     #   s3transfer
@@ -110,7 +110,7 @@ django-filter==24.3
     #   wagtail
 django-fluent-comments==3.0
     # via django-cast
-django-htmx==1.19.0
+django-htmx==1.21.0
     # via django-cast
 django-indieweb==0.0.7
     # via -r requirements/production.in
@@ -145,7 +145,7 @@ djangorestframework==3.15.2
     # via wagtail
 draftjs-exporter==5.0.0
     # via wagtail
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 filetype==1.2.0
     # via willow
@@ -283,13 +283,13 @@ urllib3==2.2.3
     #   sentry-sdk
 wagtail==6.2.2
     # via django-cast
-whitenoise==6.7.0
+whitenoise==6.8.2
     # via -r requirements/production.in
-willow[heif]==1.8.0
+willow[heif]==1.9.0
     # via
     #   wagtail
     #   willow
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.2.0
+setuptools==75.3.0
     # via django-cast

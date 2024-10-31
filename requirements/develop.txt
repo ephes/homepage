@@ -537,7 +537,7 @@ rich==13.9.3
     #   dj-notebook
     #   django-cast
     #   typer
-rpds-py==0.20.0
+rpds-py==0.20.1
     # via
     #   jsonschema
     #   referencing

@@ -9,6 +9,8 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from homepage.core import views as core_views
+
 handler404 = default_views_cast.page_not_found
 handler500 = default_views_cast.server_error
 handler400 = default_views_cast.bad_request
@@ -17,6 +19,7 @@ handler403 = default_views_cast.permission_denied
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("favicon.ico", core_views.favicon),
     path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
     path(
         "jochen/",

@@ -716,14 +716,14 @@ wheels = [
 
 [[package]]
 name = "django-resume"
-version = "0.1.7"
+version = "0.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/68/82/e62b4580807466ea50c09984fcb403d99ccec7bdfbb2a4fe638387523985/django_resume-0.1.7.tar.gz", hash = "sha256:9c3977c9ca1552b5fa3f609e5d8190153c6c71e4c2fac1fe561a12494205ab8f", size = 10034101 }
+sdist = { url = "https://files.pythonhosted.org/packages/99/de/5214e25b83740db9cf17f0c34a67cb6c53ba3d0e66dcb64515d219f6169b/django_resume-0.1.8.tar.gz", hash = "sha256:1e7aac57f5062ed38e6a1cee70ea3d0f6ee28977d180c1f5aabeddc05ccdb562", size = 10190621 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/88/bac8957bf41c4c2137cc6ac8bb005f6a4ec186e9ea6735341ae9f63a7302/django_resume-0.1.7-py3-none-any.whl", hash = "sha256:f8a8bc5e0d46cefd0dafafa31a42fd55960f535b4b019429439849557561bd15", size = 1237637 },
+    { url = "https://files.pythonhosted.org/packages/da/93/d43f14646bfb3f91fabe5ad17b84d231ce3aab49b8254cc5a78bb607bb86/django_resume-0.1.8-py3-none-any.whl", hash = "sha256:b7f679fbbbd7145155cca716fdbb39b1ac9cc843dcd599f13d06a771acead2dd", size = 1238725 },
 ]
 
 [[package]]

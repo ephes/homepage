@@ -42,6 +42,7 @@ dev-dependencies = [
     "pytest-django",
     "rich",
     "typer",
+    "django-removals",
 ]
 
 [tool.uv.sources]

@@ -1,0 +1,27 @@
+[global]
+  checkNewVersion = true
+  sendAnonymousUsage = true
+
+[providers.file]
+  directory = "/etc/traefik/dynamic"
+
+[api]
+  dashboard = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+
+  [entryPoints.web-secure]
+    address = ":443"
+    [entryPoints.web-secure.transport]
+      [entryPoints.web-secure.transport.respondingTimeouts]
+        readTimeout = 600
+
+[certificatesResolvers]
+  [letsencrypt]
+    [acme]
+      email = "jochen-traefik@wersdoerfer.de"
+      storage = "/etc/traefik/acme/acme.json"
+      [certificatesResolvers.letsencrypt.acme.httpChallenge]
+        entryPoint = "web"

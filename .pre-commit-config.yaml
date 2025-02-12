@@ -13,20 +13,20 @@ repos:
       - id: pyupgrade
         args: [--py312-plus]
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.22.2
+    rev: 1.23.1
     hooks:
       - id: django-upgrade
         args: [--target-version, "5.0"]
   - repo: https://github.com/psf/black
     # black config is in pyproject.toml
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black
         language_version: python3.11
         exclude: ^docs
   - repo: https://github.com/timothycrosley/isort
     # isort config in pyproject.toml does not work FIXME
-    rev: 5.13.2
+    rev: 6.0.0
     hooks:
       - id: isort
         language_version: python3

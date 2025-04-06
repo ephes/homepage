@@ -6,7 +6,7 @@
       tags: traefik
       vars:
         traefik_update: yes
-        traefik_binary_url: https://github.com/traefik/traefik/releases/download/v3.2.3/traefik_v3.2.3_linux_amd64.tar.gz
+        traefik_binary_url: https://github.com/traefik/traefik/releases/download/v3.3.5/traefik_v3.3.5_linux_amd64.tar.gz
         dashboard_hostname: traefik.wersdoerfer.de
 
   tasks:

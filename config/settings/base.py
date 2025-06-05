@@ -322,6 +322,12 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_FILE_OVERWRITE = True
 AWS_S3_CUSTOM_DOMAIN = env("CLOUDFRONT_DOMAIN")
 
+from botocore.config import Config as BotocoreConfig
+
+AWS_S3_CLIENT_PARAMS = {
+    "config": BotocoreConfig(connect_timeout=60, read_timeout=300),
+}
+
 # AWS cache settings, don't change unless you know what you're doing:
 AWS_EXPIRY = 60 * 60 * 24 * 7
 

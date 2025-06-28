@@ -1,0 +1,245 @@
+{% extends "cast/bootstrap5/base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Create Post - Micropub{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-primary text-white">
+            <h2 class="card-title mb-0 h4">
+              <i class="bi bi-pencil-square me-2"></i>Micropub Post Creator
+            </h2>
+          </div>
+          <div class="card-body p-4">
+            <p class="text-muted mb-4">
+              <i class="bi bi-info-circle me-1"></i>
+              Create posts using the local micropub interface.
+              This uses the same backend as external micropub clients.
+            </p>
+
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  {{ message|safe }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            {% crispy form %}
+          </div>
+        </div>
+
+        <div class="card mt-4 shadow-sm border-0">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-lightbulb me-2"></i>Formatting Tips
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-primary mb-2">HTML Tags</h6>
+                <ul class="small list-unstyled">
+                  <li><i class="bi bi-check2 text-success me-1"></i><code>&lt;p&gt;</code> - Paragraphs</li>
+                  <li><i class="bi bi-check2 text-success me-1"></i><code>&lt;strong&gt;</code> - Bold text</li>
+                  <li><i class="bi bi-check2 text-success me-1"></i><code>&lt;em&gt;</code> - Italic text</li>
+                  <li><i class="bi bi-check2 text-success me-1"></i><code>&lt;br&gt;</code> - Line breaks</li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-primary mb-2">Markdown Features</h6>
+                <ul class="small list-unstyled">
+                  <li><i class="bi bi-check2 text-success me-1"></i><code>#</code> - Headings</li>
+                  <li><i class="bi bi-check2 text-success me-1"></i><code>```python</code> - Code blocks</li>
+                  <li><i class="bi bi-check2 text-success me-1"></i>Double line breaks - New paragraphs</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-header bg-info bg-opacity-10">
+                <h5 class="card-title mb-0">
+                  <i class="bi bi-journal-text me-2"></i>Blog Information
+                </h5>
+              </div>
+              <div class="card-body">
+                {% if blog_count == 0 %}
+                  <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>No blogs found!</strong>
+                    <p class="mb-0 mt-2">Please create a blog in the <a href="/cms/" class="alert-link">Wagtail admin</a> first.</p>
+                  </div>
+                {% else %}
+                  <p class="small text-muted mb-3">Posts will be created in:</p>
+                  <div class="list-group list-group-flush">
+                    {% for blog in blogs %}
+                      <div class="list-group-item px-0 border-0">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                          <h6 class="mb-0">{{ blog.title }}</h6>
+                          <span class="badge bg-primary rounded-pill">Active</span>
+                        </div>
+                        <small class="text-muted">{{ blog.get_url }}</small>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-header bg-success bg-opacity-10">
+                <h5 class="card-title mb-0">
+                  <i class="bi bi-globe me-2"></i>API Information
+                </h5>
+              </div>
+              <div class="card-body">
+                <dl class="row mb-0">
+                  <dt class="col-12 text-muted small mb-1">Micropub Endpoint</dt>
+                  <dd class="col-12 mb-3">
+                    <code class="text-dark bg-light p-2 rounded d-block">{{ micropub_endpoint }}</code>
+                  </dd>
+
+                  <dt class="col-12 text-muted small mb-1">Your Site URL</dt>
+                  <dd class="col-12 mb-0">
+                    <code class="text-dark bg-light p-2 rounded d-block">{{ site_url }}</code>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .micropub-form textarea {
+      font-family: 'SF Mono', Monaco, 'Inconsolata', 'Fira Code', monospace;
+      font-size: 14px;
+      background-color: #f8f9fa;
+      border: 2px solid #e9ecef;
+      transition: all 0.2s ease;
+    }
+
+    .micropub-form textarea:focus {
+      background-color: #fff;
+      border-color: #86b7fe;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+
+    #div_id_post_type .form-check {
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 1rem;
+      background-color: #f8f9fa;
+      border-radius: 0.375rem;
+      transition: all 0.2s ease;
+    }
+
+    #div_id_post_type .form-check:hover {
+      background-color: #e9ecef;
+    }
+
+    #div_id_post_type .form-check input:checked + label {
+      font-weight: 600;
+      color: #0d6efd;
+    }
+
+    #title-field {
+      transition: all 0.3s ease;
+    }
+
+    #title-field.d-none {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      margin-bottom: 0 !important;
+    }
+
+    .card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+    }
+
+    .list-group-item {
+      transition: background-color 0.2s ease;
+    }
+
+    .list-group-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    code {
+      padding: 0.2rem 0.4rem;
+      font-size: 85%;
+      background-color: rgba(110, 118, 129, 0.1);
+      border-radius: 0.25rem;
+    }
+
+    .form-floating > label {
+      font-weight: 500;
+      color: #6c757d;
+    }
+
+    .btn-primary {
+      font-weight: 600;
+      padding: 0.5rem 2rem;
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide title field based on post type
+      const postTypeRadios = document.querySelectorAll('input[name="post_type"]');
+      const titleField = document.getElementById('title-field');
+      const nameInput = document.getElementById('id_name');
+
+      function toggleTitleField() {
+        const selectedType = document.querySelector('input[name="post_type"]:checked').value;
+        if (selectedType === 'article') {
+          titleField.classList.remove('d-none');
+          nameInput.removeAttribute('disabled');
+        } else {
+          titleField.classList.add('d-none');
+          nameInput.setAttribute('disabled', 'disabled');
+          nameInput.value = '';
+        }
+      }
+
+      postTypeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleTitleField);
+      });
+
+    // Initial state
+      toggleTitleField();
+
+    // Auto-resize textarea
+      const textarea = document.getElementById('id_content');
+      function autoResize() {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+
+      textarea.addEventListener('input', autoResize);
+      autoResize();
+    });
+  </script>
+{% endblock %}

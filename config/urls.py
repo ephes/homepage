@@ -41,6 +41,8 @@ urlpatterns = [
     path("show/comments/", include("fluent_comments.urls")),
     # Indieweb
     path("indieweb/", include("indieweb.urls")),
+    # Micropub local interface (form for creating posts)
+    path("indieweb/micropub-form/", include("homepage.micropub.urls")),
     # rest
     path("api/api-token-auth/", authtokenviews.obtain_auth_token),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),

@@ -84,6 +84,7 @@ LOCAL_APPS = [
     "homepage.users.apps.UsersConfig",
     "homepage.fedi.apps.FediConfig",
     "homepage.core.apps.CoreConfig",
+    "homepage.micropub",
     # Your stuff: custom apps go here
 ]
 
@@ -268,6 +269,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
+    # "indieweb.auth.backends.IndieAuthBackend",  # TODO: Enable when available in django-indieweb
 ]
 
 # Some really nice defaults
@@ -449,3 +451,8 @@ CAST_CUSTOM_THEMES = [
 
 # post repository for blog index page
 CAST_BLOG_INDEX_REPOSITORY = "raw"
+
+# IndieAuth and Micropub Configuration
+# ------------------------------------------------------------------------------
+INDIEWEB_ME_URL = env("INDIEWEB_ME_URL", default="http://localhost:8000")  # Your domain
+INDIEWEB_MICROPUB_HANDLER = "homepage.micropub.handler.CastPostMicropubHandler"

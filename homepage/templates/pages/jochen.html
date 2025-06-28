@@ -3,8 +3,13 @@
 
 {% block title %}Jochen{% endblock %}
 
-{% block content %}
+{% block extra_head %}
   <link rel="authorization_endpoint" href="https://wersdoerfer.de/indieweb/auth/">
+  <link rel="token_endpoint" href="https://wersdoerfer.de/indieweb/token/">
+  <link rel="micropub" href="https://wersdoerfer.de/indieweb/micropub/">
+{% endblock %}
+
+{% block content %}
   <div class="container">
     <ul>
       <li><a href="https://twitter.com/ephes" rel="me">@ephes on Twitter</a></li>

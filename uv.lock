@@ -510,18 +510,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-braces"
-version = "1.17.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/c0/eb3e27e817eb4ba39d9c66fbd53139cb4db7073f5e6e71c28ce4d8b706da/django_braces-1.17.0.tar.gz", hash = "sha256:3a6fe630d3d91fef0711bfe1088d14af00c245559f79f6298040ed2b2f757337", size = 54227, upload-time = "2025-03-18T02:03:02.354Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/34/966fd4a68cbe7a80e29868bcb9d43e6ba5d562120e272e27e61ab795eea9/django_braces-1.17.0-py3-none-any.whl", hash = "sha256:18c9fe889bc673bddee6110f23a8c57fefe99663c8c683a7c2ac4f8f8743674d", size = 15330, upload-time = "2025-03-18T02:03:01.217Z" },
-]
-
-[[package]]
 name = "django-cast"
 version = "0.2.45"
 source = { git = "https://github.com/ephes/django-cast?branch=develop#131f70fe2d2f1a3b7df89ee18387a91a819079a2" }
@@ -645,18 +633,15 @@ wheels = [
 
 [[package]]
 name = "django-indieweb"
-version = "0.2.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
-    { name = "django-braces" },
     { name = "django-model-utils" },
-    { name = "pytz" },
-    { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/61/63/78d8674e59e5756a0fada5dfebb01fe9ff95fe4fcf0bec1361d23793456e/django_indieweb-0.2.0.tar.gz", hash = "sha256:491f2aec3f119861995cfb4fbbab8b3844da61664fe41aa3527dd3bbc19f8619", size = 6616, upload-time = "2025-06-16T20:28:56.369Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/e8/d545953af78e18da2cf11982a02b0588fe20d02f22020f69f68e91cf9852/django_indieweb-0.3.0.tar.gz", hash = "sha256:ddbe0a304377571ba82be8407c4cb00f433e4030d38310e7e712db8b35ba834a", size = 12723, upload-time = "2025-06-28T18:21:44.925Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/4c/65ee01cbdae5d5eae135d7808505a976ce55c297699f4c41260b8ce14f70/django_indieweb-0.2.0-py3-none-any.whl", hash = "sha256:c6ae980feecee8ed3fcbd7c685f8a7f38940838089322c1f8ece56ad2ad9103c", size = 10094, upload-time = "2025-06-16T20:28:55.555Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/2b/27d172bc007aa25972794b230216fb32e546ac2e5d4ba4f6c72ededf6edd/django_indieweb-0.3.0-py3-none-any.whl", hash = "sha256:bfdcb6fad22e0475b95bb8ae5402fbec0dca917d4f9d7dc95cfafff319e34024", size = 18300, upload-time = "2025-06-28T18:21:43.719Z" },
 ]
 
 [[package]]
@@ -1471,7 +1456,7 @@ wheels = [
 
 [[package]]
 name = "jupyterlab"
-version = "4.4.3"
+version = "4.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "async-lru" },
@@ -1488,9 +1473,9 @@ dependencies = [
     { name = "tornado" },
     { name = "traitlets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/2d/d1678dcf2db66cb4a38a80d9e5fcf48c349f3ac12f2d38882993353ae768/jupyterlab-4.4.3.tar.gz", hash = "sha256:a94c32fd7f8b93e82a49dc70a6ec45a5c18281ca2a7228d12765e4e210e5bca2", size = 23032376, upload-time = "2025-05-26T11:18:00.996Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/4d/7ca5b46ea56742880d71a768a9e6fb8f8482228427eb89492d55c5d0bb7d/jupyterlab-4.4.4.tar.gz", hash = "sha256:163fee1ef702e0a057f75d2eed3ed1da8a986d59eb002cbeb6f0c2779e6cd153", size = 23044296, upload-time = "2025-06-28T13:07:20.708Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/4d/7dd5c2ffbb960930452a031dc8410746183c924580f2ab4e68ceb5b3043f/jupyterlab-4.4.3-py3-none-any.whl", hash = "sha256:164302f6d4b6c44773dfc38d585665a4db401a16e5296c37df5cba63904fbdea", size = 12295480, upload-time = "2025-05-26T11:17:56.607Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/82/66910ce0995dbfdb33609f41c99fe32ce483b9624a3e7d672af14ff63b9f/jupyterlab-4.4.4-py3-none-any.whl", hash = "sha256:711611e4f59851152eb93316c3547c3ec6291f16bb455f1f4fa380d25637e0dd", size = 12296310, upload-time = "2025-06-28T13:07:15.676Z" },
 ]
 
 [[package]]

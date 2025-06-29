@@ -54,6 +54,10 @@ class CastPostMicropubHandler(MicropubContentHandler):
         published = self._get_published_date(properties)
         categories = properties.get("category", [])
 
+        # Debug logging for properties
+        logger.info(f"Received properties: {properties}")
+        logger.info(f"Categories/tags: {categories}")
+
         # Get the first blog as parent (you might want to make this configurable)
         blog = self._get_default_blog()
         if not blog:
@@ -116,12 +120,22 @@ class CastPostMicropubHandler(MicropubContentHandler):
 
         # Handle tags/categories after publishing
         if categories:
-            post.tags.add(*categories)
-            # Create another revision to track the tag addition
-            new_revision = post.save_revision(user=user)
-            post.latest_revision = new_revision
-            post.latest_revision_created_at = new_revision.created_at
-            post.save()
+            logger.info(f"Adding tags to post {post.id}: {categories}")
+            try:
+                post.tags.add(*categories)
+                logger.info(
+                    "Tags added successfully. Post now has tags: "
+                    f"{list(post.tags.all().values_list('name', flat=True))}"
+                )
+                # Create another revision to track the tag addition
+                new_revision = post.save_revision(user=user)
+                post.latest_revision = new_revision
+                post.latest_revision_created_at = new_revision.created_at
+                post.save()
+            except Exception as e:
+                logger.error(f"Error adding tags: {e}")
+        else:
+            logger.info("No categories/tags to add")
 
         # Handle photos if present
         photo_urls = properties.get("photo", [])

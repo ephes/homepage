@@ -4,11 +4,11 @@ requires-python = ">=3.12"
 
 [[package]]
 name = "anyascii"
-version = "0.3.2"
+version = "0.3.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9f/52/93b9ea99063f7cf37fb67f5e3f49480686cbe7f228c48b9d713326223b6e/anyascii-0.3.2.tar.gz", hash = "sha256:9d5d32ef844fe225b8bc7cba7f950534fae4da27a9bf3a6bea2cb0ea46ce4730", size = 214052, upload-time = "2023-03-16T00:24:42.431Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/ba/edebda727008390936da4a9bf677c19cd63b32d51e864656d2cbd1028e25/anyascii-0.3.3.tar.gz", hash = "sha256:c94e9dd9d47b3d9494eca305fef9447d00b4bf1a32aff85aa746fa3ec7fb95c3", size = 264680, upload-time = "2025-06-29T03:33:30.427Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/7b/a9a747e0632271d855da379532b05a62c58e979813814a57fa3b3afeb3a4/anyascii-0.3.2-py3-none-any.whl", hash = "sha256:3b3beef6fc43d9036d3b0529050b0c48bfad8bc960e9e562d7223cfb94fe45d4", size = 289923, upload-time = "2023-03-16T00:24:39.649Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/76/783b75a21ce3563b8709050de030ae253853b147bd52e141edc1025aa268/anyascii-0.3.3-py3-none-any.whl", hash = "sha256:f5ab5e53c8781a36b5a40e1296a0eeda2f48c649ef10c3921c1381b1d00dee7a", size = 345090, upload-time = "2025-06-29T03:33:28.356Z" },
 ]
 
 [[package]]
@@ -633,15 +633,15 @@ wheels = [
 
 [[package]]
 name = "django-indieweb"
-version = "0.3.1"
+version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-model-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/b8/385bf78a4910758dcadaf9f4c83a8b470f4c724580adcfab9e9e9d0047aa/django_indieweb-0.3.1.tar.gz", hash = "sha256:1c3e046952abc679298838efa75d10240a8a331ac574f76bd84db19a2cb44859", size = 12817, upload-time = "2025-06-28T20:17:38.624Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/cb/773786bad43c159b875012839c1cf75b1388a875b4780a6a8bdfe01ccc83/django_indieweb-0.3.2.tar.gz", hash = "sha256:ed9893de72cb9f02d5500a7e339a5fbcd7c5d2f780f0ccb696fed0053b20b6be", size = 13070, upload-time = "2025-06-29T11:09:15.652Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/40/f00727097b0d4f2b960016e467353c35c5bb48d19696051de6e36a93a744/django_indieweb-0.3.1-py3-none-any.whl", hash = "sha256:efb9ecc69b1f88cdeda664c9d645614bbd98635fe083f98205ee4b36d15ec89b", size = 18708, upload-time = "2025-06-28T20:17:37.39Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/40/dc2c122ee813d9cb0308e07353ffdafed332c7ca63451fb2bb8139ed3b98/django_indieweb-0.3.2-py3-none-any.whl", hash = "sha256:fcf1d9c1fc3d97d097e2fdbae99c37f197a8b7469ec1ad8632eac59b4f08996d", size = 18973, upload-time = "2025-06-29T11:09:14.451Z" },
 ]
 
 [[package]]

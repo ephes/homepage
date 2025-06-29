@@ -6,6 +6,7 @@ Production Configurations
 - Use mailgun to send emails
 - Use Redis for cache
 """
+
 import logging
 import os
 from tempfile import SpooledTemporaryFile
@@ -202,6 +203,13 @@ LOGGING = {
             "level": "DEBUG",
         },
         "indieweb": {
+            "handlers": [
+                "console",
+            ],
+            "propagate": True,
+            "level": "DEBUG",
+        },
+        "homepage.micropub": {
             "handlers": [
                 "console",
             ],

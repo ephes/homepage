@@ -142,6 +142,7 @@ DJANGO_VITE = {
     },
     "cast-bootstrap5": {
         "dev_mode": True,
+        "dev_server_port": 5174,
     },
     "cast": {
         "dev_mode": True,

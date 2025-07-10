@@ -1,0 +1,34 @@
+{% extends "cast/bootstrap4/post.html" %}
+{% load i18n %}
+{% load static %}
+{% load wagtailcore_tags %}
+{% load wagtailimages_tags %}
+{% load webmention_tags %}
+{% load comments %}
+
+{% block meta %}
+  {{ block.super }}
+  {# Add webmention endpoint discovery #}
+  {% webmention_endpoint_link %}
+{% endblock %}
+
+{% block content %}
+  {% include "./post_body.html" with render_detail=True %}
+
+  {# Webmentions section - only show if there are webmentions #}
+  {% webmention_count request.build_absolute_uri as wm_count %}
+  {% if wm_count > 0 %}
+    <section class="webmentions mt-5">
+      <h3>Webmentions</h3>
+      {% show_webmentions request.build_absolute_uri %}
+    </section>
+  {% endif %}
+
+  {% if comments_are_enabled %}
+    {% render_comment_list for page %}
+    {% render_comment_form for page %}
+  {% endif %}
+
+  <p><a href="{{ blog_url }}">Return to blog</a></p>
+
+{% endblock %}

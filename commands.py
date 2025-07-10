@@ -229,7 +229,7 @@ def switch_to_dev_environment():
     projects_dir = get_project_root().parent
 
     uv_install_dev = ["uv", "pip", "install", "-e"]
-    for project in ["django-cast"]:
+    for project in ["django-cast", "django-indieweb"]:
         uv_args = uv_install_dev.copy()
         uv_args.append(projects_dir / project)
         subprocess.call(uv_args)

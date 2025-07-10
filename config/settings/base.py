@@ -456,3 +456,10 @@ CAST_BLOG_INDEX_REPOSITORY = "raw"
 # ------------------------------------------------------------------------------
 INDIEWEB_ME_URL = env("INDIEWEB_ME_URL", default="http://localhost:8000")  # Your domain
 INDIEWEB_MICROPUB_HANDLER = "homepage.micropub.handler.CastPostMicropubHandler"
+
+# Webmention Configuration
+# ------------------------------------------------------------------------------
+INDIEWEB_URL_RESOLVER = "homepage.webmention_config.CastURLResolver"
+INDIEWEB_SPAM_CHECKER = "indieweb.interfaces.NoOpSpamChecker"  # Or implement your own spam checker
+# Optional: Comment adapter to convert webmentions to comments
+# INDIEWEB_COMMENT_ADAPTER = "homepage.webmention_config.WebmentionToCommentAdapter"

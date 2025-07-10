@@ -1,7 +1,12 @@
 {% extends "cast/bootstrap5/base.html" %}
 {% load i18n static wagtailcore_tags %}
+{% load webmention_tags %}
 
 {%block title %}{{ page.title }}{% endblock title %}
+
+{% block meta %}
+  {{ block.super }}
+{% endblock %}
 
 {% block bodystart %}
   <a href="https://fedi.wersdoerfer.de/@jochen" rel="me"></a>

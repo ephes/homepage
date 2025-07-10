@@ -1,0 +1,45 @@
+{% load i18n %}
+
+<div class="list-group-item">
+  <div class="d-flex w-100 justify-content-between">
+    <div class="d-flex align-items-start">
+      {% if webmention.author_photo %}
+        <img src="{{ webmention.author_photo }}"
+             alt="{{ webmention.author_name|default:'User avatar' }}"
+             class="rounded-circle me-3"
+             width="48"
+             height="48">
+      {% else %}
+        <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-3"
+             style="width: 48px; height: 48px; background-color: #e9ecef;">
+          <i class="bi bi-person-fill"></i>
+        </div>
+      {% endif %}
+      <div>
+        <h5 class="mb-1">
+          {% if webmention.author_url %}
+            <a href="{{ webmention.author_url }}" rel="nofollow">{{ webmention.author_name|default:"Anonymous" }}</a>
+          {% else %}
+            {{ webmention.author_name|default:"Anonymous" }}
+          {% endif %}
+        </h5>
+        <div class="webmention-content">
+          {% if webmention.content_html %}
+            {{ webmention.content_html|safe|truncatewords_html:50 }}
+          {% else %}
+            {{ webmention.content|truncatewords:50 }}
+          {% endif %}
+        </div>
+        <small class="text-muted">
+          <a href="{{ webmention.source_url }}" rel="nofollow">
+            {% if webmention.published %}
+              {{ webmention.published|date:"F j, Y g:i A" }}
+            {% else %}
+              {% trans "View reply" %}
+            {% endif %}
+          </a>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

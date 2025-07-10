@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<div class="list-group-item">
+  <div class="d-flex align-items-center">
+    {% if webmention.author_photo %}
+      <img src="{{ webmention.author_photo }}"
+           alt="{{ webmention.author_name|default:'User avatar' }}"
+           class="rounded-circle me-3"
+           width="32"
+           height="32">
+    {% else %}
+      <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-3"
+           style="width: 32px; height: 32px; background-color: #e9ecef;">
+        <i class="bi bi-person-fill"></i>
+      </div>
+    {% endif %}
+    <div>
+      <i class="bi bi-arrow-repeat me-1"></i>
+      {% if webmention.author_url %}
+        <a href="{{ webmention.author_url }}" rel="nofollow">{{ webmention.author_name|default:"Someone" }}</a>
+      {% else %}
+        {{ webmention.author_name|default:"Someone" }}
+      {% endif %}
+      {% trans "reposted this" %}
+      <small class="text-muted ms-2">
+        <a href="{{ webmention.source_url }}" rel="nofollow">
+          {% if webmention.published %}
+            {{ webmention.published|date:"F j, Y" }}
+          {% endif %}
+        </a>
+      </small>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+{% load i18n %}
+
+<div class="webmentions-container">
+  {% if webmentions %}
+    {% regroup webmentions by mention_type as webmention_groups %}
+
+    {% for group in webmention_groups %}
+      {% if group.grouper == "like" %}
+        <div class="webmention-likes mb-3">
+          <h4>{% trans "Likes" %} ({{ group.list|length }})</h4>
+          <div class="d-flex flex-wrap gap-2">
+            {% for webmention in group.list %}
+              {% include "indieweb/webmention_types/like.html" %}
+            {% endfor %}
+          </div>
+        </div>
+      {% elif group.grouper == "repost" %}
+        <div class="webmention-reposts mb-3">
+          <h4>{% trans "Reposts" %} ({{ group.list|length }})</h4>
+          <div class="list-group">
+            {% for webmention in group.list %}
+              {% include "indieweb/webmention_types/repost.html" %}
+            {% endfor %}
+          </div>
+        </div>
+      {% elif group.grouper == "reply" %}
+        <div class="webmention-replies mb-3">
+          <h4>{% trans "Replies" %} ({{ group.list|length }})</h4>
+          <div class="list-group">
+            {% for webmention in group.list %}
+              {% include "indieweb/webmention_types/reply.html" %}
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="webmention-mentions mb-3">
+          <h4>{% trans "Mentions" %} ({{ group.list|length }})</h4>
+          <div class="list-group">
+            {% for webmention in group.list %}
+              {% include "indieweb/webmention_types/mention.html" %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">{% trans "No webmentions yet." %}</p>
+  {% endif %}
+</div>

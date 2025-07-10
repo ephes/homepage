@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<a href="{{ webmention.author_url|default:webmention.source_url }}"
+   class="webmention-like"
+   title="{{ webmention.author_name|default:'Someone' }} liked this"
+   rel="nofollow">
+  {% if webmention.author_photo %}
+    <img src="{{ webmention.author_photo }}"
+         alt="{{ webmention.author_name|default:'User avatar' }}"
+         class="rounded-circle"
+         width="48"
+         height="48">
+  {% else %}
+    <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center"
+         style="width: 48px; height: 48px; background-color: #e9ecef;">
+      <i class="bi bi-person-fill"></i>
+    </div>
+  {% endif %}
+</a>

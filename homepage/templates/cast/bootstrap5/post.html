@@ -18,7 +18,7 @@
   {# Webmentions section - only show if there are webmentions #}
   {% with page.full_url as page_url %}
     {% webmention_count page_url as wm_count %}
-    {% if wm_count %}
+    {% if wm_count > 0 %}
       <section class="webmentions mt-5">
         <h3>Webmentions</h3>
         {% show_webmentions page_url %}

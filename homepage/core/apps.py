@@ -10,4 +10,5 @@ class CoreConfig(AppConfig):
         Users system checks
         Users signal registration
         """
-        pass
+        # Import webmention integration to register signal handlers
+        from . import webmention_integration  # noqa: F401

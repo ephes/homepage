@@ -45,8 +45,9 @@ def send_webmentions_on_publish(sender, **kwargs):
     # Get the full URL of the post
     full_url = post.get_full_url()
 
-    # Get the rendered HTML content
-    html_content = post.get_description()
+    # Get the rendered HTML content from the body StreamField
+    # Using __html__() method which doesn't require a request object
+    html_content = post.body.__html__()
 
     # Send webmentions
     sender = WebmentionSender()

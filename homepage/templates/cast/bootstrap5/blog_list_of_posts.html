@@ -1,0 +1,7 @@
+{% extends "cast/bootstrap5/blog_list_of_posts.html" %}
+{% load indieweb %}
+
+{% block meta %}
+  {{ block.super }}
+  {% webmention_endpoint_link %}
+{% endblock %}

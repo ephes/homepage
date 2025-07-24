@@ -81,6 +81,43 @@ class WebmentionURLResolverTest(TestCase):
                 result = self.resolver.resolve(url)
                 self.assertIsNone(result)
 
+    @patch("django.contrib.sites.models.Site.objects.get_current")
+    @patch("cast.models.Blog.objects.filter")
+    def test_resolve_blog_overview_url(self, mock_blog_filter, mock_get_current):
+        """Test resolving a blog overview URL"""
+        # Mock the current site
+        mock_site = Mock()
+        mock_site.domain = "localhost"
+        mock_get_current.return_value = mock_site
+
+        # Mock a blog
+        mock_blog = Mock()
+        mock_blog.slug = "ephes-blog"
+        mock_blog_filter.return_value.first.return_value = mock_blog
+
+        # Test URL resolution for blog overview
+        result = self.resolver.resolve("http://localhost:8000/blogs/ephes-blog/")
+
+        self.assertEqual(result, mock_blog)
+        mock_blog_filter.assert_called_once_with(slug="ephes-blog")
+
+    @patch("django.contrib.sites.models.Site.objects.get_current")
+    def test_resolve_personal_page_url(self, mock_get_current):
+        """Test resolving the personal page URL"""
+        # Mock the current site
+        mock_site = Mock()
+        mock_site.domain = "wersdoerfer.de"
+        mock_get_current.return_value = mock_site
+
+        # Test URL resolution for personal page
+        result = self.resolver.resolve("https://wersdoerfer.de/jochen/")
+
+        # Should return a dictionary representing the personal page
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["type"], "personal_page")
+        self.assertEqual(result["url"], "https://wersdoerfer.de/jochen/")
+
     def test_get_absolute_url_with_full_url_method(self):
         """Test getting absolute URL when object has get_full_url method"""
         mock_object = Mock()

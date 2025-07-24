@@ -9,12 +9,12 @@ from indieweb.interfaces import URLResolver
 
 
 class CastURLResolver(URLResolver):
-    """Resolve URLs to django-cast blog posts"""
+    """Resolve URLs to django-cast blog posts, blog overview pages, and personal pages"""
 
     def resolve(self, target_url: str) -> Any | None:
-        """Resolve a URL to a content object (Post or Episode)."""
+        """Resolve a URL to a content object (Post, Blog, or Page)."""
         try:
-            from cast.models import Post
+            from cast.models import Blog, Post
             from django.contrib.sites.models import Site
 
             parsed = urlparse(target_url)
@@ -33,17 +33,30 @@ class CastURLResolver(URLResolver):
                 logger.debug(f"Domain mismatch: {parsed.netloc} != {expected_domain}")
                 return None
 
-            # Extract blog and post slug from URL
-            # Expected format: /blogs/{blog_slug}/{post_slug}/
+            # Extract parts from URL
             path_parts = [p for p in path.strip("/").split("/") if p]
 
-            if len(path_parts) >= 3 and path_parts[0] == "blogs":
-                post_slug = path_parts[2]
+            # Handle personal page (/jochen/)
+            if len(path_parts) == 1 and path_parts[0] == "jochen":
+                # Return a simple dictionary to represent the personal page
+                return {"type": "personal_page", "url": target_url}
 
-                # Try to find the post by slug
-                post = Post.objects.filter(slug=post_slug).first()
-                if post:
-                    return post
+            # Handle blog URLs
+            if len(path_parts) >= 2 and path_parts[0] == "blogs":
+                blog_slug = path_parts[1]
+
+                # Handle blog overview page (/blogs/{blog_slug}/)
+                if len(path_parts) == 2:
+                    blog = Blog.objects.filter(slug=blog_slug).first()
+                    if blog:
+                        return blog
+
+                # Handle individual blog post (/blogs/{blog_slug}/{post_slug}/)
+                elif len(path_parts) >= 3:
+                    post_slug = path_parts[2]
+                    post = Post.objects.filter(slug=post_slug).first()
+                    if post:
+                        return post
 
         except Exception as e:
             import logging

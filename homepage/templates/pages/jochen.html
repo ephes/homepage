@@ -1,5 +1,6 @@
 {% extends cast_base_template %}
 {% load static %}
+{% load indieweb %}
 
 {% block title %}Jochen{% endblock %}
 
@@ -7,6 +8,7 @@
   <link rel="authorization_endpoint" href="{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'indieweb:auth' %}">
   <link rel="token_endpoint" href="{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'indieweb:token' %}">
   <link rel="micropub" href="{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'indieweb:micropub' %}">
+  {% webmention_endpoint_link %}
 {% endblock %}
 
 {% block content %}

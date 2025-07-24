@@ -174,8 +174,8 @@ class WebmentionIntegrationTest(TestCase):
         # Test that we can count webmentions
         from indieweb.templatetags.webmention_tags import webmention_count
 
-        count = webmention_count(self.post_full_url)
-        self.assertEqual(count, "2")
+        count = webmention_count({}, self.post_full_url)
+        self.assertEqual(count, 2)
 
         # Test that we can get webmentions data
         from indieweb.templatetags.webmention_tags import show_webmentions

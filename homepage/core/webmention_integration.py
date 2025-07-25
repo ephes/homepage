@@ -8,6 +8,11 @@ through Wagtail's publishing workflow.
 from django.dispatch import receiver
 from wagtail.signals import page_published
 
+# These will be imported inside the function to avoid circular imports
+Post = None
+Episode = None
+WebmentionSender = None
+
 
 @receiver(page_published)
 def send_webmentions_on_publish(sender, **kwargs):
@@ -20,14 +25,21 @@ def send_webmentions_on_publish(sender, **kwargs):
     3. Extracts URLs from the post content
     4. Sends webmentions to all external URLs that support them
     """
+    global Post, Episode, WebmentionSender
+
     page = kwargs["instance"]
 
     # Import here to avoid circular imports
-    try:
-        from cast.models import Episode, Post
-    except ImportError:
-        # django-cast not installed
-        return
+    if Post is None or Episode is None:
+        try:
+            from cast.models import Episode as _Episode
+            from cast.models import Post as _Post
+
+            Post = _Post
+            Episode = _Episode
+        except ImportError:
+            # django-cast not installed
+            return
 
     # Only process Post and Episode pages
     if not isinstance(page.specific, (Post, Episode)):
@@ -36,11 +48,14 @@ def send_webmentions_on_publish(sender, **kwargs):
     post = page.specific
 
     # Import webmention sender
-    try:
-        from indieweb.senders import WebmentionSender
-    except ImportError:
-        # django-indieweb not installed
-        return
+    if WebmentionSender is None:
+        try:
+            from indieweb.senders import WebmentionSender as _WebmentionSender
+
+            WebmentionSender = _WebmentionSender
+        except ImportError:
+            # django-indieweb not installed
+            return
 
     # Get the full URL of the post
     full_url = post.get_full_url()

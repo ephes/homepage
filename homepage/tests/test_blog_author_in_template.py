@@ -29,14 +29,16 @@ class BlogAuthorTemplateTest(TestCase):
         # Render the template
         html = render_to_string("cast/bootstrap5/post_body.html", context)
 
-        # Check that the author is rendered
+        # Check that the author is in the hidden h-card
         self.assertIn("Jochen Wersdörfer", html)
         self.assertIn('class="h-entry"', html)
-        self.assertIn('class="author p-author h-card"', html)
-        self.assertIn('<a class="p-name u-url" href="/jochen/">Jochen Wersdörfer</a>', html)
+        self.assertIn('class="author p-author h-card" style="display: none;"', html)
+        self.assertIn('<span class="p-name">Jochen Wersdörfer</span>', html)
+        self.assertIn('class="u-photo"', html)
+        self.assertIn('<a class="u-url" href="/jochen/"></a>', html)
 
     def test_template_with_none_author_shows_none(self):
-        """Test that None author is visible (should fail if template is correct)"""
+        """Test that None author is included in the hidden h-card"""
         # Create mock objects with None author
         mock_blog = Mock()
         mock_blog.author = None
@@ -54,9 +56,9 @@ class BlogAuthorTemplateTest(TestCase):
         # Render the template
         html = render_to_string("cast/bootstrap5/post_body.html", context)
 
-        # This should show "None" which is the bug we're catching
-        self.assertIn(">None<", html)
-        self.assertIn('<a class="p-name u-url" href="/jochen/">None</a>', html)
+        # This should show "None" in the hidden h-card
+        self.assertIn('<span class="p-name">None</span>', html)
+        self.assertIn('alt="None"', html)  # Check avatar alt text
 
     def test_template_with_none_page_renders_nothing(self):
         """Test that template handles None page gracefully"""

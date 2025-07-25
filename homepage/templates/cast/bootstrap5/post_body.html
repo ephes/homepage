@@ -12,11 +12,7 @@
     <!-- link is on one line to avoid underlined whitespace -->
     <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time>,</a>
     <span class="author p-author h-card">
-      {% if blog and blog.author %}
-        <a class="p-name u-url" href="/{{ owner_username|default:'jochen' }}/">{{ blog.author }}</a>
-      {% else %}
-        <a class="p-name u-url" href="/{{ owner_username|default:'jochen' }}/">{{ owner_username|default:"jochen"|title }}</a>
-      {% endif %}
+      <a class="p-name u-url" href="/jochen/">{{ page.blog.author }}</a>
     </span>
   </header>
   <div class="e-content">

@@ -13,8 +13,9 @@
     <!-- link is on one line to avoid underlined whitespace -->
       <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time>,</a>
       <span class="author p-author h-card">
-        <img class="u-photo" src="https://d2b7dn9rofvhjd.cloudfront.net/uploads/jochen-cover-profile_8SKdFNe.webp" alt="{{ blog.author }}" width="48" height="48" style="border-radius: 50%; margin-right: 0.5rem;">
-        <a class="p-name u-url" href="/jochen/">{{ blog.author }}</a>
+        <img class="u-photo" src="https://d2b7dn9rofvhjd.cloudfront.net/uploads/jochen-cover-profile_8SKdFNe.webp" alt="{{ blog.author }}" width="48" height="48" style="display: none;">
+        <span class="p-name">{{ blog.author }}</span>
+        <a class="u-url" href="/jochen/" style="display: none;"></a>
       </span>
     </header>
     <div class="e-content">

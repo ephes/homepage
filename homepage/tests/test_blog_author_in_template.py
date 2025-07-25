@@ -11,7 +11,7 @@ from django.test import TestCase
 
 class BlogAuthorTemplateTest(TestCase):
     def test_template_renders_blog_author(self):
-        """Test that page.blog.author is rendered correctly in the template"""
+        """Test that blog.author is rendered correctly in the template"""
         # Create mock objects
         mock_blog = Mock()
         mock_blog.author = "Jochen Wersdörfer"
@@ -23,8 +23,8 @@ class BlogAuthorTemplateTest(TestCase):
         mock_page.visible_date = datetime(2025, 7, 25, 10, 0, 0)
         mock_page.body = []
 
-        # Create context
-        context = {"page": mock_page, "render_detail": True, "comments_are_enabled": False}
+        # Create context - now blog is passed directly in context
+        context = {"page": mock_page, "blog": mock_blog, "render_detail": True, "comments_are_enabled": False}
 
         # Render the template
         html = render_to_string("cast/bootstrap5/post_body.html", context)
@@ -48,8 +48,8 @@ class BlogAuthorTemplateTest(TestCase):
         mock_page.visible_date = datetime(2025, 7, 25, 10, 0, 0)
         mock_page.body = []
 
-        # Create context
-        context = {"page": mock_page, "render_detail": True, "comments_are_enabled": False}
+        # Create context - now blog is passed directly in context
+        context = {"page": mock_page, "blog": mock_blog, "render_detail": True, "comments_are_enabled": False}
 
         # Render the template
         html = render_to_string("cast/bootstrap5/post_body.html", context)
@@ -57,3 +57,14 @@ class BlogAuthorTemplateTest(TestCase):
         # This should show "None" which is the bug we're catching
         self.assertIn(">None<", html)
         self.assertIn('<a class="p-name u-url" href="/jochen/">None</a>', html)
+
+    def test_template_with_none_page_renders_nothing(self):
+        """Test that template handles None page gracefully"""
+        # Create context with None page
+        context = {"page": None, "render_detail": False, "comments_are_enabled": False}
+
+        # Render the template
+        html = render_to_string("cast/bootstrap5/post_body.html", context)
+
+        # Should render nothing or empty
+        self.assertEqual(html.strip(), "")

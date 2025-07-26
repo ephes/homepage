@@ -14,7 +14,7 @@
     <!-- link is on one line to avoid underlined whitespace -->
       <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time></a>
       {% if page.owner %}
-        <span style="display: none;">{% h_card page.owner %}</span>
+        <span class="p-author" style="display: none;">{% h_card page.owner %}</span>
       {% else %}
         {# Fallback for pages without owner #}
         <span class="p-author h-card" style="display: none;">

@@ -12,8 +12,9 @@ Contents:
    :maxdepth: 2
 
    install
+   development
    backup_restore
-   media_utils   
+   media_utils
    deploy
    docker_ec2
    tests

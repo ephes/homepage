@@ -1,5 +1,19 @@
 ## Development Tips
 - Use uv run instead of manually activating the virtualenv
+- Use `just dev` to start PostgreSQL and Django (most common workflow)
+- Use `just dev-all` to start all services including JupyterLab and Vite
+- Logs are written to `logs/dev.log` for debugging
+
+## Accessing Development Logs
+When you need to debug issues or see what's happening:
+- Read the log file directly: `cat logs/dev.log` or `tail -n 100 logs/dev.log`
+- Use the provided commands:
+  - `just logs` - View last 50 lines
+  - `just logs -n 100` - View last 100 lines
+  - `just logs-follow` - Watch logs in real-time
+  - `just logs-grep ERROR` - Filter for specific patterns
+- The log file contains output from all services with ANSI colors stripped
+- Browser console messages can be accessed via Playwright MCP's `browser_console_messages()` function
 
 ## Project Overview
 This is a Django-based personal website/blog implementing IndieWeb standards with Wagtail CMS integration.
@@ -11,12 +25,14 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 - Use `uv run` prefix for all Python commands
 
 ## Key Commands
-- `uv run python manage.py runserver` - Start development server
-- `uv run python commands.py test` - Run test suite
-- `uv run python commands.py coverage` - Run tests with coverage report
-- `uv run python manage.py makemigrations` - Create database migrations
-- `uv run python manage.py migrate` - Apply database migrations
-- `uv run python manage.py shell_plus` - Enhanced Django shell
+- `just dev` - Start PostgreSQL and Django development server
+- `just dev-all` - Start all services (includes JupyterLab and Vite)
+- `just test` - Run test suite
+- `just coverage` - Run tests with coverage report
+- `just db-migrate` - Create and apply database migrations
+- `just shell` - Enhanced Django shell
+- `just logs-follow` - Watch development logs in real-time
+- `just cleanup` - Kill any leftover development processes
 
 ## Code Style
 - Black formatter with 119 character line length

@@ -10,14 +10,17 @@
   <link rel="token_endpoint" href="{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'indieweb:token' %}">
   <link rel="micropub" href="{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'indieweb:micropub' %}">
   {% webmention_endpoint_link %}
+  <link rel="stylesheet" href="{% static 'css/h-card.css' %}">
 {% endblock %}
 
 {% block content %}
   <div class="container">
     {% h_card user %}
 
+    <h1 class="profile-name">Jochen Wersdörfer</h1>
+
     {# Additional links not in h-card #}
-    <ul style="margin-top: 2rem;">
+    <ul>
       <li><a href="https://twitter.com/ephes" rel="me">@ephes on Twitter</a></li>
       <li><a href="https://github.com/ephes" rel="me">Github</a></li>
       <li><a href="mailto:jochen-www@wersdoerfer.de" rel="me">jochen-www@wersdoerfer.de</a></li>

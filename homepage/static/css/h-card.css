@@ -1,0 +1,140 @@
+/* h-card styles for profile page */
+
+/* Center the profile section */
+.container {
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+/* Style h-card for profile page */
+.h-card {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.h-card .u-photo {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.h-card .u-photo:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Hide microformat data but keep it in DOM for parsers */
+.h-card .p-name,
+.h-card .u-url,
+.h-card .u-email,
+.h-card .p-tel,
+.h-card .p-note,
+.h-card .p-adr,
+.h-card .p-org {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Style the profile name */
+.profile-name {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Style the additional links section */
+.container > ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0;
+}
+
+.container > ul li {
+  background: #f8f9fa;
+  border-radius: 2rem;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.container > ul li:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.container > ul li a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  color: #495057;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.container > ul li a:hover {
+  color: #212529;
+}
+
+/* Add icon styles for different link types */
+.container > ul li a[href^="mailto:"]:before {
+  content: "✉️ ";
+  margin-right: 0.25rem;
+}
+
+.container > ul li a[href^="sms:"]:before {
+  content: "📱 ";
+  margin-right: 0.25rem;
+}
+
+.container > ul li a[href*="github"]:before {
+  content: "🐙 ";
+  margin-right: 0.25rem;
+}
+
+.container > ul li a[href*="twitter"]:before {
+  content: "🐦 ";
+  margin-right: 0.25rem;
+}
+
+.container > ul li a[href*="mastodon"]:before,
+.container > ul li a[rel="me"][href*="@"]:before {
+  content: "🐘 ";
+  margin-right: 0.25rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    margin: 2rem auto;
+  }
+
+  .h-card .u-photo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .container > ul {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .container > ul li {
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+  }
+}

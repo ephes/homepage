@@ -11,6 +11,7 @@
   <link rel="micropub" href="{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'indieweb:micropub' %}">
   {% webmention_endpoint_link %}
   <link rel="stylesheet" href="{% static 'css/h-card.css' %}">
+  <link rel="stylesheet" href="{% static 'css/now-section.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -27,5 +28,40 @@
       <li><a href="sms:+4917623530319" rel="me">(+49) 0176 23530319</a></li>
       <li><a rel="me" href="https://wersdoerfer.de/@jochen">Mastodon</a></li>
     </ul>
+
+    {# Now Section #}
+    <section class="now-section">
+      <h2>Now</h2>
+      <p class="now-updated">Last updated: {% now "F j, Y" %}</p>
+
+      <div class="now-content">
+        <div class="now-category">
+          <h3><span class="category-icon">🎯</span>Current Focus</h3>
+          <ul class="now-list">
+            <li>Currently obsessed with building things using Claude Code - it's become my favorite development tool</li>
+            <li>Building IndieWeb support for Django through <a href="https://github.com/ephes/django-indieweb" class="project-highlight">django-indieweb</a></li>
+            <li>Always interested in connecting with folks who work at the intersection of frontend and backend</li>
+            <li>I host the <a href="https://python-podcast.de/show/" class="project-highlight">Python Podcast</a> (in German) - if you have an interesting Python story to share, I'd love to hear from you!</li>
+          </ul>
+        </div>
+
+        <div class="now-category">
+          <h3><span class="category-icon">📚</span>What I'm Learning</h3>
+          <ul class="now-list">
+            <li>Diving deep into frontend development and finally learning CSS the right way</li>
+            <li>Exploring best practices for AI-assisted development workflows</li>
+          </ul>
+        </div>
+
+        <div class="now-category">
+          <h3><span class="category-icon">🎧</span>Interests & Hobbies</h3>
+          <ul class="now-list">
+            <li>Long-time podcast enthusiast (10+ years and counting)</li>
+            <li>Photography is another creative outlet I enjoy</li>
+            <li>Learning to play guitar and ukulele when time permits</li>
+          </ul>
+        </div>
+      </div>
+    </section>
   </div>
 {% endblock content %}

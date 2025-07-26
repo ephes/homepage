@@ -1,0 +1,232 @@
+/* Homepage navigation hub styles */
+
+.homepage-hero {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 4rem 0 3rem;
+  margin-bottom: 4rem;
+}
+
+.homepage-hero h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 1rem;
+}
+
+.homepage-hero .tagline {
+  font-size: 1.25rem;
+  color: #6c757d;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* People sections */
+.people-section {
+  padding: 3rem 0;
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 3rem;
+  margin-top: 3rem;
+}
+
+/* Person card styles */
+.person-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e9ecef;
+  will-change: transform;
+}
+
+.person-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.person-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.person-photo,
+.person-header .h-card .u-photo {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Override h-card styles for homepage */
+.person-header .h-card {
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.person-header .h-card .p-name,
+.person-header .h-card .u-url,
+.person-header .h-card .u-email,
+.person-header .h-card .p-tel,
+.person-header .h-card .p-note,
+.person-header .h-card .p-adr,
+.person-header .h-card .p-org {
+  display: none;
+}
+
+.person-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.person-tagline {
+  font-size: 1rem;
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+/* Quick links section */
+.quick-links {
+  margin-top: 2rem;
+}
+
+.quick-links h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.quick-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quick-links-list li {
+  margin-bottom: 0.75rem;
+}
+
+.quick-links-list a {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: #495057;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  font-weight: 500;
+}
+
+.quick-links-list a:hover {
+  background: #e9ecef;
+  color: #212529;
+  transform: translateX(4px);
+}
+
+.quick-links-list .link-icon {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
+}
+
+/* Social links */
+.social-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border: 2px solid #e9ecef;
+  border-radius: 2rem;
+  text-decoration: none;
+  color: #495057;
+  font-weight: 500;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.social-link:hover {
+  border-color: #6c757d;
+  color: #212529;
+  transform: translateY(-2px);
+}
+
+/* Projects section within cards */
+.projects-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.projects-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.projects-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.project-item {
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+}
+
+.project-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.project-link:hover {
+  text-decoration: underline;
+}
+
+.project-desc {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .homepage-hero h1 {
+    font-size: 2rem;
+  }
+
+  .homepage-hero .tagline {
+    font-size: 1.1rem;
+  }
+
+  .people-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .person-card {
+    padding: 2rem;
+  }
+
+  .person-photo,
+  .person-header .h-card .u-photo {
+    width: 120px;
+    height: 120px;
+  }
+}

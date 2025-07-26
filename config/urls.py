@@ -18,7 +18,7 @@ handler403 = default_views_cast.permission_denied
 
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("", core_views.home, name="home"),
     path("favicon.ico", core_views.favicon),
     path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
     path(

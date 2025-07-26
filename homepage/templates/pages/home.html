@@ -1,1 +1,129 @@
 {% extends cast_base_template %}
+{% load static %}
+{% load indieweb_tags %}
+
+{% block title %}Welcome - Wersdörfer Family{% endblock %}
+
+{% block additionalheaders %}
+  <link rel="stylesheet" href="{% static 'css/homepage.css' %}">
+{% endblock %}
+
+{% block content %}
+  <!-- Hero Section -->
+  <section class="homepage-hero text-center">
+    <div class="container">
+      <h1>Welcome to Wersdörfer.de</h1>
+      <p class="tagline">The digital home of Jochen and Katharina</p>
+    </div>
+  </section>
+
+  <!-- People Section -->
+  <section class="people-section">
+    <div class="container">
+      <div class="people-grid">
+
+        <!-- Jochen's Card -->
+        <div class="person-card">
+          <div class="person-header">
+            {% if jochen %}
+              {% h_card jochen %}
+            {% else %}
+              <img src="https://via.placeholder.com/150" alt="Jochen Wersdörfer" class="person-photo">
+            {% endif %}
+            <h2 class="person-name">Jochen Wersdörfer</h2>
+            <p class="person-tagline">Software Developer · Python Podcaster</p>
+          </div>
+
+          <div class="quick-links">
+            <h3>Quick Links</h3>
+            <ul class="quick-links-list">
+              <li>
+                <a href="/jochen/">
+                  <span class="link-icon">👤</span>
+                  Profile & Now Page
+                </a>
+              </li>
+              <li>
+                <a href="/blogs/ephes_blog/">
+                  <span class="link-icon">✍️</span>
+                  Blog
+                </a>
+              </li>
+              <li>
+                <a href="/resume/jochen/">
+                  <span class="link-icon">📄</span>
+                  Professional Resume
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="projects-section">
+            <h4>Featured Projects</h4>
+            <div class="projects-grid">
+              <div class="project-item">
+                <a href="https://github.com/ephes/django-cast" class="project-link">django-cast</a>
+                <span class="project-desc">- Podcast & blog platform built on Wagtail</span>
+              </div>
+              <div class="project-item">
+                <a href="https://github.com/ephes/homepage" class="project-link">homepage</a>
+                <span class="project-desc">- Source code for this website</span>
+              </div>
+              <div class="project-item">
+                <a href="https://github.com/ephes/django-indieweb" class="project-link">django-indieweb</a>
+                <span class="project-desc">- IndieWeb protocols for Django apps</span>
+              </div>
+              <div class="project-item">
+                <a href="https://python-podcast.de/show/" class="project-link">Python Podcast</a>
+                <span class="project-desc">- German-language podcast about Python</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="social-links">
+            <a href="https://github.com/ephes" class="social-link" rel="me">
+              GitHub
+            </a>
+            <a href="https://wersdoerfer.de/@jochen" class="social-link" rel="me">
+              Mastodon
+            </a>
+            <a href="mailto:jochen-www@wersdoerfer.de" class="social-link" rel="me">
+              Email
+            </a>
+          </div>
+        </div>
+
+        <!-- Katharina's Card -->
+        <div class="person-card">
+          <div class="person-header">
+            <img src="https://via.placeholder.com/150" alt="Katharina Wersdörfer" class="person-photo">
+            <h2 class="person-name">Katharina Wersdörfer</h2>
+            <p class="person-tagline">Digital Creative</p>
+          </div>
+
+          <div class="quick-links">
+            <h3>Quick Links</h3>
+            <ul class="quick-links-list">
+              <li>
+                <a href="/katharina/">
+                  <span class="link-icon">👤</span>
+                  Profile Page
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="social-links">
+            <a href="https://twitter.com/KathaKlex" class="social-link" rel="me">
+              Twitter
+            </a>
+            <a href="mailto:katharina-www@wersdoerfer.de" class="social-link" rel="me">
+              Email
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+{% endblock content %}

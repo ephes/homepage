@@ -17,6 +17,26 @@ def favicon(request: HttpRequest) -> HttpResponse:
     return FileResponse(file)
 
 
+def home(request: HttpRequest) -> HttpResponse:
+    """View for the homepage with user profiles."""
+    try:
+        jochen = User.objects.get(username="jochen")
+    except User.DoesNotExist:
+        jochen = None
+
+    try:
+        katharina = User.objects.get(username="katharina")
+    except User.DoesNotExist:
+        katharina = None
+
+    context = {
+        "jochen": jochen,
+        "katharina": katharina,
+        "cast_base_template": "cast/bootstrap5/base.html",
+    }
+    return render(request, "pages/home.html", context)
+
+
 def jochen_profile(request: HttpRequest) -> HttpResponse:
     """View for Jochen's profile page with h-card."""
     user = User.objects.get(username="jochen")

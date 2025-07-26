@@ -1,0 +1,109 @@
+/* Now section styles */
+.now-section {
+  margin-top: 4rem;
+  padding: 3rem 0;
+  border-top: 2px solid #e9ecef;
+}
+
+.now-section h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.now-section .now-updated {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 3rem;
+}
+
+.now-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.now-category {
+  margin-bottom: 2.5rem;
+  background: #f8f9fa;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.now-category:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.now-category h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.now-category h3 .category-icon {
+  margin-right: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.now-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.now-list li {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  position: relative;
+  line-height: 1.6;
+  color: #495057;
+}
+
+.now-list li:before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.now-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Special styling for project highlights */
+.project-highlight {
+  font-weight: 500;
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.project-highlight:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .now-section {
+    margin-top: 3rem;
+    padding: 2rem 0;
+  }
+
+  .now-section h2 {
+    font-size: 1.75rem;
+  }
+
+  .now-category {
+    padding: 1.5rem;
+  }
+
+  .now-category h3 {
+    font-size: 1.25rem;
+  }
+}

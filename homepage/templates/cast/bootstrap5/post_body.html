@@ -14,7 +14,12 @@
     <!-- link is on one line to avoid underlined whitespace -->
       <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time></a>
       {% if page.owner %}
-        <span class="p-author" style="display: none;">{% h_card page.owner %}</span>
+        <div class="p-author h-card" style="display: none;">
+          <img class="u-photo" src="https://wersdoerfer.de/media/images/jochen.jpg" alt="Jochen Wersdörfer">
+          <a class="u-url" href="https://wersdoerfer.de/jochen/">
+            <span class="p-name">Jochen Wersdörfer</span>
+          </a>
+        </div>
       {% else %}
         {# Fallback for pages without owner #}
         <span class="p-author h-card" style="display: none;">

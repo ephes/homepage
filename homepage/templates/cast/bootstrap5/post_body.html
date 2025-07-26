@@ -13,11 +13,11 @@
       </h2>
     <!-- link is on one line to avoid underlined whitespace -->
       <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time></a>
-      {% if page.owner %}
+      {% if page.owner and page.owner.profile %}
         <div class="p-author h-card" style="display: none;">
-          <img class="u-photo" src="https://wersdoerfer.de/media/images/jochen.jpg" alt="Jochen Wersdörfer">
-          <a class="u-url" href="https://wersdoerfer.de/jochen/">
-            <span class="p-name">Jochen Wersdörfer</span>
+          <img class="u-photo" src="{{ page.owner.profile.photo_url }}" alt="{{ page.owner.profile.name|default:page.owner.get_full_name|default:page.owner.username }}">
+          <a class="u-url" href="{{ page.owner.profile.url }}">
+            <span class="p-name">{{ page.owner.profile.name|default:page.owner.get_full_name|default:page.owner.username }}</span>
           </a>
         </div>
       {% else %}

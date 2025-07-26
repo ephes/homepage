@@ -1,6 +1,7 @@
 {% extends cast_base_template %}
 {% load static %}
 {% load webmention_tags %}
+{% load indieweb_tags %}
 
 {% block title %}Jochen{% endblock %}
 
@@ -12,16 +13,15 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container h-card">
-    <img class="u-photo" src="https://d2b7dn9rofvhjd.cloudfront.net/uploads/jochen-cover-profile_8SKdFNe.webp" alt="Jochen Wersdörfer" style="max-width: 200px; height: auto; border-radius: 8px; margin-bottom: 1rem;">
-    <h1 class="p-name">Jochen Wersdörfer</h1>
-    <a class="u-url" href="/jochen/" style="display: none;"></a>
+  <div class="container">
+    {% h_card user %}
 
-    <ul>
+    {# Additional links not in h-card #}
+    <ul style="margin-top: 2rem;">
       <li><a href="https://twitter.com/ephes" rel="me">@ephes on Twitter</a></li>
       <li><a href="https://github.com/ephes" rel="me">Github</a></li>
-      <li><a href="mailto:jochen-www@wersdoerfer.de" rel="me" class="u-email">jochen-www@wersdoerfer.de</a></li>
-      <li><a href="sms:+4917623530319" rel="me" class="p-tel">(+49) 0176 23530319</a></li>
+      <li><a href="mailto:jochen-www@wersdoerfer.de" rel="me">jochen-www@wersdoerfer.de</a></li>
+      <li><a href="sms:+4917623530319" rel="me">(+49) 0176 23530319</a></li>
       <li><a rel="me" href="https://wersdoerfer.de/@jochen">Mastodon</a></li>
     </ul>
   </div>

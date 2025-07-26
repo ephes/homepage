@@ -23,7 +23,7 @@ urlpatterns = [
     path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
     path(
         "jochen/",
-        TemplateView.as_view(template_name="pages/jochen.html"),
+        core_views.jochen_profile,
         name="jochen",
     ),
     path(

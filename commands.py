@@ -221,23 +221,48 @@ def deploy_production():
 @cli.command()
 def switch_to_dev_environment():
     """
-    Switch to the development environment installing a list of
-    packages in development mode using flit.
+    Switch to development mode using local editable packages.
+
+    Uses uv pip install with overrides to install local packages as editable.
     """
-    from contextlib import chdir
+    project_root = get_project_root()
+    projects_dir = project_root.parent
 
-    projects_dir = get_project_root().parent
+    # Install local packages as editable
+    print("Installing local packages in editable mode...")
 
-    uv_install_dev = ["uv", "pip", "install", "-e"]
-    for project in ["django-cast", "django-indieweb"]:
-        uv_args = uv_install_dev.copy()
-        uv_args.append(projects_dir / project)
-        subprocess.call(uv_args)
+    packages = [
+        ("cast-vue", projects_dir / "cast-vue"),
+        ("cast-bootstrap5", projects_dir / "cast-bootstrap5"),
+        ("django-cast", projects_dir / "django-cast"),
+        ("django-indieweb", projects_dir / "django-indieweb"),
+    ]
 
-    flit_install_dev = [sys.executable, "-m", "flit", "install", "-s"]
-    for project in ["cast-vue", "cast-bootstrap5"]:
-        with chdir(projects_dir / project):
-            subprocess.call(flit_install_dev)
+    for package_name, package_path in packages:
+        if package_path.exists():
+            print(f"Installing {package_name} from {package_path}")
+            subprocess.call(["uv", "pip", "install", "-e", str(package_path)])
+        else:
+            print(f"Warning: {package_path} does not exist, skipping")
+
+    print("\nDevelopment environment activated!")
+    print("Local packages are now installed in editable mode.")
+    print("Changes to the source code will be reflected immediately.")
+    print("\nTo switch back to git sources, run: uv run commands.py switch-to-git-sources")
+
+
+@cli.command()
+def switch_to_git_sources():
+    """
+    Switch back to git sources from local development mode.
+
+    Re-syncs from pyproject.toml to restore git sources.
+    """
+    print("Re-syncing from pyproject.toml to restore git sources...")
+    subprocess.call(["uv", "sync", "--reinstall"])
+
+    print("\nSwitched back to git sources!")
+    print("All packages are now installed from their git repositories.")
 
 
 @cli.command()

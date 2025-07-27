@@ -8,7 +8,7 @@ Prerequisites
 
 * Python 3.12+
 * uv (Python package manager)
-* PostgreSQL (or Docker for running PostgreSQL)
+* PostgreSQL
 * just (command runner) - Install with ``brew install just`` on macOS
 
 Quick Start

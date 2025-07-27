@@ -16,7 +16,6 @@ Contents:
    backup_restore
    media_utils
    deploy
-   docker_ec2
    tests
 
 

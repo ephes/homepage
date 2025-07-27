@@ -20,7 +20,7 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 
 ## Development Environment
 - Python 3.12+ with uv for dependency management
-- PostgreSQL database (use local Docker container for development)
+- PostgreSQL database (local installation required for development)
 - Redis for background tasks (production only)
 - Use `uv run` prefix for all Python commands
 

@@ -42,7 +42,17 @@
             {% endfor %}
           </section>
           {% if not render_detail %}
-            {% block detail_link %}{% endblock %}
+            {% block detail_link %}
+              {% for block in page.body %}
+                {% if block.block_type == "detail" and block.value %}
+                  <p class="mt-3">
+                    <a href="{{ page.page_url }}" class="text-muted">
+                      {% trans "Continue reading" %} →
+                    </a>
+                  </p>
+                {% endif %}
+              {% endfor %}
+            {% endblock %}
           {% endif %}
         {% endif %}
       {% endfor %}

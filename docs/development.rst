@@ -71,6 +71,11 @@ Testing
 * ``just test`` - Run test suite
 * ``just coverage`` - Run tests with coverage report
 
+Code Quality
+~~~~~~~~~~~~
+
+* ``uv run python commands.py mypy`` - Run type checking with mypy
+
 Deployment
 ~~~~~~~~~~
 
@@ -142,6 +147,48 @@ You can also run services individually if needed::
 
     # Just JupyterLab
     uv run python commands.py jupyterlab
+
+Code Style and Linting
+----------------------
+
+The project uses several tools to maintain code quality and consistency:
+
+Code Formatters
+~~~~~~~~~~~~~~~
+
+* **Black**: Automatic code formatting with 119 character line length
+* **isort**: Import sorting with Black-compatible profile
+
+Both are configured in ``pyproject.toml``::
+
+    [tool.black]
+    line-length = 119
+
+    [tool.isort]
+    profile = "black"
+
+To format code manually::
+
+    uv run black .
+    uv run isort .
+
+Linting Tools
+~~~~~~~~~~~~~
+
+* **flake8**: Style guide enforcement (included in dev dependencies)
+* **mypy**: Static type checking
+
+Run type checking::
+
+    uv run python commands.py mypy
+
+Best Practices
+~~~~~~~~~~~~~~
+
+1. Run formatters before committing code
+2. Use type hints where appropriate, especially for function signatures
+3. Follow existing code patterns and conventions
+4. Keep line length under 119 characters (enforced by Black)
 
 
 Add Dependencies to be Editable by Claude

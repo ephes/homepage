@@ -210,65 +210,20 @@ wheels = [
 [[package]]
 name = "cast-bootstrap5"
 version = "0.0.59"
-source = { editable = "../cast-bootstrap5" }
+source = { git = "https://github.com/ephes/cast-bootstrap5#6d063bc63ad1ea846b2a9e4f10340dfc86cb3998" }
 dependencies = [
     { name = "crispy-bootstrap5" },
     { name = "django-cast" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "crispy-bootstrap5" },
-    { name = "django-cast" },
-    { name = "django-environ", marker = "extra == 'dev'" },
-    { name = "django-extensions", marker = "extra == 'dev'" },
-    { name = "django-stubs", extras = ["compatible-mypy"], marker = "extra == 'dev'" },
-    { name = "flake8", marker = "extra == 'dev'" },
-    { name = "furo", marker = "extra == 'doc'" },
-    { name = "isort", marker = "extra == 'dev'" },
-    { name = "jupyter", marker = "extra == 'dev'" },
-    { name = "mypy", marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=6" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=3" },
-    { name = "pytest-django", marker = "extra == 'test'" },
-    { name = "pytest-mock", marker = "extra == 'test'" },
-    { name = "rich", marker = "extra == 'dev'" },
-    { name = "tox", marker = "extra == 'dev'" },
-    { name = "typer", marker = "extra == 'dev'" },
-]
-provides-extras = ["test", "doc", "dev"]
 
 [[package]]
 name = "cast-vue"
-source = { editable = "../cast-vue" }
+version = "0.0.25"
+source = { git = "https://github.com/ephes/cast-vue#025a9c3391b1b256b716f8463924f8c1215d9e51" }
 dependencies = [
     { name = "django-cast" },
     { name = "django-vite" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "django-cast" },
-    { name = "django-environ", marker = "extra == 'dev'" },
-    { name = "django-extensions", marker = "extra == 'dev'" },
-    { name = "django-stubs", extras = ["compatible-mypy"], marker = "extra == 'dev'" },
-    { name = "django-vite" },
-    { name = "flake8", marker = "extra == 'dev'" },
-    { name = "furo", marker = "extra == 'doc'" },
-    { name = "isort", marker = "extra == 'dev'" },
-    { name = "jupyter", marker = "extra == 'dev'" },
-    { name = "mypy", marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=6" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=3" },
-    { name = "pytest-django", marker = "extra == 'test'" },
-    { name = "pytest-mock", marker = "extra == 'test'" },
-    { name = "rich", marker = "extra == 'dev'" },
-    { name = "tox", marker = "extra == 'dev'" },
-    { name = "typer", marker = "extra == 'dev'" },
-]
-provides-extras = ["dev", "doc", "test"]
 
 [[package]]
 name = "cattrs"
@@ -576,7 +531,7 @@ wheels = [
 [[package]]
 name = "django-cast"
 version = "0.2.48"
-source = { editable = "../django-cast" }
+source = { git = "https://github.com/ephes/django-cast?branch=develop#4c43252880efb06f473efc9460234a68a4b4a256" }
 dependencies = [
     { name = "crispy-bootstrap4" },
     { name = "django" },
@@ -595,53 +550,6 @@ dependencies = [
     { name = "rich" },
     { name = "setuptools" },
     { name = "wagtail" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "crispy-bootstrap4" },
-    { name = "django" },
-    { name = "django-contrib-comments" },
-    { name = "django-crispy-forms" },
-    { name = "django-environ" },
-    { name = "django-filter" },
-    { name = "django-fluent-comments" },
-    { name = "django-htmx" },
-    { name = "django-model-utils" },
-    { name = "django-threadedcomments" },
-    { name = "django-vite" },
-    { name = "pygments" },
-    { name = "python-akismet" },
-    { name = "python-slugify" },
-    { name = "rich" },
-    { name = "setuptools" },
-    { name = "wagtail" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "django-allauth" },
-    { name = "django-environ" },
-    { name = "django-extensions" },
-    { name = "django-stubs", extras = ["compatible-mypy"] },
-    { name = "factory-boy" },
-    { name = "feedparser" },
-    { name = "furo" },
-    { name = "jupyter" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pytest", specifier = ">=6" },
-    { name = "pytest-cov", specifier = ">=3" },
-    { name = "pytest-django" },
-    { name = "pytest-mock" },
-    { name = "pytest-randomly" },
-    { name = "pytz" },
-    { name = "ruff" },
-    { name = "tox" },
-    { name = "tox-uv" },
-    { name = "typer" },
-    { name = "types-python-slugify" },
-    { name = "types-requests" },
 ]
 
 [[package]]
@@ -745,37 +653,12 @@ wheels = [
 [[package]]
 name = "django-indieweb"
 version = "0.5.2"
-source = { editable = "../django-indieweb" }
+source = { git = "https://github.com/ephes/django-indieweb?branch=develop#87674b3a348d40e39a56033c6b7b44b27e3b5cda" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "django" },
     { name = "httpx" },
     { name = "mf2py" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "beautifulsoup4" },
-    { name = "django" },
-    { name = "httpx" },
-    { name = "mf2py" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "django-environ" },
-    { name = "django-stubs", extras = ["compatible-mypy"] },
-    { name = "furo" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pytest", specifier = ">=6" },
-    { name = "pytest-cov", specifier = ">=3" },
-    { name = "pytest-django" },
-    { name = "requests" },
-    { name = "ruff" },
-    { name = "sphinxcontrib-mermaid", specifier = ">=1.0.0" },
-    { name = "tox" },
-    { name = "types-requests" },
 ]
 
 [[package]]
@@ -1179,7 +1062,6 @@ dev = [
     { name = "pytest-django" },
     { name = "pytest-sugar" },
     { name = "rich" },
-    { name = "toml" },
     { name = "typer" },
 ]
 
@@ -1187,13 +1069,13 @@ dev = [
 requires-dist = [
     { name = "argon2-cffi" },
     { name = "boto3" },
-    { name = "cast-bootstrap5", editable = "../cast-bootstrap5" },
-    { name = "cast-vue", editable = "../cast-vue" },
+    { name = "cast-bootstrap5", git = "https://github.com/ephes/cast-bootstrap5" },
+    { name = "cast-vue", git = "https://github.com/ephes/cast-vue" },
     { name = "django-allauth" },
     { name = "django-anymail", extras = ["mailgun"] },
-    { name = "django-cast", editable = "../django-cast" },
+    { name = "django-cast", git = "https://github.com/ephes/django-cast?branch=develop" },
     { name = "django-extensions" },
-    { name = "django-indieweb", editable = "../django-indieweb" },
+    { name = "django-indieweb", git = "https://github.com/ephes/django-indieweb?branch=develop" },
     { name = "django-proxy" },
     { name = "django-resume" },
     { name = "django-storages" },
@@ -1222,7 +1104,6 @@ dev = [
     { name = "pytest-django" },
     { name = "pytest-sugar" },
     { name = "rich" },
-    { name = "toml", specifier = ">=0.10.2" },
     { name = "typer" },
 ]
 
@@ -2799,15 +2680,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7a/fd/7a5ee21fd08ff70d3d33a5781c255cbe779659bd03278feb98b19ee550f4/tinycss2-1.4.0.tar.gz", hash = "sha256:10c0972f6fc0fbee87c3edb76549357415e94548c1ae10ebccdea16fb404a9b7", size = 87085, upload-time = "2024-10-24T14:58:29.895Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/34/ebdc18bae6aa14fbee1a08b63c015c72b64868ff7dae68808ab500c492e2/tinycss2-1.4.0-py3-none-any.whl", hash = "sha256:3a49cf47b7675da0b15d0c6e1df8df4ebd96e9394bb905a5775adb0d884c5289", size = 26610, upload-time = "2024-10-24T14:58:28.029Z" },
-]
-
-[[package]]
-name = "toml"
-version = "0.10.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
 ]
 
 [[package]]

@@ -43,3 +43,12 @@ repos:
     hooks:
       - id: djhtml
         args: [-t, "2"]
+  - repo: local
+    hooks:
+      - id: check-uv-sources
+        name: Check tool.uv.sources for local paths
+        entry: .pre-commit-scripts/check-uv-sources.py
+        language: python
+        additional_dependencies: [toml]
+        pass_filenames: false
+        always_run: true

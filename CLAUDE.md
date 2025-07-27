@@ -86,3 +86,24 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 - Write clear, descriptive commit messages
 - Test thoroughly before pushing
 - Use conventional commits format when appropriate
+
+## Local Development with Editable Dependencies
+When working on dependencies like django-cast or cast-vue:
+
+1. **Switch to local editable mode:**
+   ```bash
+   uv run commands.py switch-to-dev-environment
+   ```
+   This modifies `pyproject.toml` to use local paths in `[tool.uv.sources]`
+
+2. **Switch back to git sources:**
+   ```bash
+   uv run commands.py switch-to-git-sources
+   ```
+
+3. **Pre-commit hook:** A pre-commit hook automatically prevents committing local paths. If you try to commit while in dev mode, it will:
+   - Detect local paths in `tool.uv.sources`
+   - Automatically switch back to git sources
+   - Require you to stage the corrected `pyproject.toml`
+
+**Note:** The pre-commit hook ensures you never accidentally commit local development paths.

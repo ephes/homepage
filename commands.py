@@ -223,14 +223,27 @@ def switch_to_dev_environment():
     """
     Switch to development mode using local editable packages.
 
-    Uses uv pip install with overrides to install local packages as editable.
+    Modifies pyproject.toml to use local paths in tool.uv.sources.
     """
+    import toml
+
     project_root = get_project_root()
     projects_dir = project_root.parent
+    pyproject_path = project_root / "pyproject.toml"
 
-    # Install local packages as editable
-    print("Installing local packages in editable mode...")
+    # Read current pyproject.toml
+    with open(pyproject_path) as f:
+        pyproject = toml.load(f)
 
+    # Ensure tool.uv.sources exists
+    if "tool" not in pyproject:
+        pyproject["tool"] = {}
+    if "uv" not in pyproject["tool"]:
+        pyproject["tool"]["uv"] = {}
+    if "sources" not in pyproject["tool"]["uv"]:
+        pyproject["tool"]["uv"]["sources"] = {}
+
+    # Define local package mappings
     packages = [
         ("cast-vue", projects_dir / "cast-vue"),
         ("cast-bootstrap5", projects_dir / "cast-bootstrap5"),
@@ -238,17 +251,31 @@ def switch_to_dev_environment():
         ("django-indieweb", projects_dir / "django-indieweb"),
     ]
 
+    print("Switching to local development sources in pyproject.toml...")
+
+    sources_modified = False
     for package_name, package_path in packages:
         if package_path.exists():
-            print(f"Installing {package_name} from {package_path}")
-            subprocess.call(["uv", "pip", "install", "-e", str(package_path)])
+            # Update to local editable source
+            pyproject["tool"]["uv"]["sources"][package_name] = {"path": f"../{package_path.name}", "editable": True}
+            print(f"✓ {package_name} -> {package_path}")
+            sources_modified = True
         else:
             print(f"Warning: {package_path} does not exist, skipping")
 
-    print("\nDevelopment environment activated!")
-    print("Local packages are now installed in editable mode.")
-    print("Changes to the source code will be reflected immediately.")
-    print("\nTo switch back to git sources, run: uv run commands.py switch-to-git-sources")
+    if sources_modified:
+        # Write updated pyproject.toml
+        with open(pyproject_path, "w") as f:
+            toml.dump(pyproject, f)
+
+        print("\nRunning uv sync to apply changes...")
+        subprocess.call(["uv", "sync"])
+
+        print("\nDevelopment environment activated!")
+        print("Local packages are now installed in editable mode.")
+        print("Changes to the source code will be reflected immediately.")
+        print("\nIMPORTANT: Remember to run pre-commit hooks before committing!")
+        print("To switch back to git sources, run: uv run commands.py switch-to-git-sources")
 
 
 @cli.command()
@@ -256,13 +283,44 @@ def switch_to_git_sources():
     """
     Switch back to git sources from local development mode.
 
-    Re-syncs from pyproject.toml to restore git sources.
+    Restores original git sources in pyproject.toml.
     """
-    print("Re-syncing from pyproject.toml to restore git sources...")
-    subprocess.call(["uv", "sync", "--reinstall"])
+    import toml
 
-    print("\nSwitched back to git sources!")
-    print("All packages are now installed from their git repositories.")
+    project_root = get_project_root()
+    pyproject_path = project_root / "pyproject.toml"
+
+    # Read current pyproject.toml
+    with open(pyproject_path) as f:
+        pyproject = toml.load(f)
+
+    # Define default git sources
+    default_sources = {
+        "cast-vue": {"git": "https://github.com/ephes/cast-vue"},
+        "cast-bootstrap5": {"git": "https://github.com/ephes/cast-bootstrap5"},
+        "django-cast": {"git": "https://github.com/ephes/django-cast", "branch": "develop"},
+        "django-indieweb": {"git": "https://github.com/ephes/django-indieweb", "branch": "develop"},
+    }
+
+    print("Restoring git sources in pyproject.toml...")
+
+    if "tool" in pyproject and "uv" in pyproject["tool"] and "sources" in pyproject["tool"]["uv"]:
+        for package_name, git_source in default_sources.items():
+            if package_name in pyproject["tool"]["uv"]["sources"]:
+                pyproject["tool"]["uv"]["sources"][package_name] = git_source
+                print(f"✓ {package_name} -> {git_source}")
+
+        # Write updated pyproject.toml
+        with open(pyproject_path, "w") as f:
+            toml.dump(pyproject, f)
+
+        print("\nRunning uv sync to apply changes...")
+        subprocess.call(["uv", "sync", "--reinstall"])
+
+        print("\nSwitched back to git sources!")
+        print("All packages are now installed from their git repositories.")
+    else:
+        print("No tool.uv.sources found in pyproject.toml, nothing to restore.")
 
 
 @cli.command()

@@ -1,0 +1,14 @@
+# Development dependencies - editable installs
+# These packages should be installed in editable mode during development
+
+# Install with: uv pip install -r requirements-dev.txt
+# Check if packages are editable: uv pip list --format=json | jq '.[] | select(.name | test("cast-|django-cast|django-indieweb")) | {name: .name, editable_project_location: .editable_project_location}'
+
+# Note: uv run --with-requirements doesn't install packages as editable,
+# so you need to install them manually first with: uv pip install -r requirements-dev.txt
+# The 'just dev' command preserves editable installs (doesn't run uv sync)
+
+-e ../cast-vue
+-e ../cast-bootstrap5
+-e ../django-cast
+-e ../django-indieweb

@@ -149,7 +149,7 @@ Add Dependencies to be Editable by Claude
 
 All dev dependencies::
 
-    /add-dir ../django-dast
+    /add-dir ../django-cast
     /add-dir ../cast-bootstrap5
     /add-dir ../django-indieweb
     /add-dir ../cast-vue

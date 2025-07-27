@@ -142,3 +142,14 @@ You can also run services individually if needed::
 
     # Just JupyterLab
     uv run python commands.py jupyterlab
+
+
+Add Dependencies to be Editable by Claude
+-----------------------------------------
+
+All dev dependencies::
+
+    /add-dir ../django-dast
+    /add-dir ../cast-bootstrap5
+    /add-dir ../django-indieweb
+    /add-dir ../cast-vue

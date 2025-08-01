@@ -119,10 +119,10 @@ install:
 
 # Production deployment
 deploy-staging:
-    uv run python commands.py deploy_staging
+    uv run python commands.py deploy-staging
 
 deploy-production:
-    uv run python commands.py deploy_production
+    uv run python commands.py deploy-production
 
 # Help for common issues
 troubleshoot:

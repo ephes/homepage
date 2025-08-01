@@ -60,9 +60,19 @@ def send_webmentions_on_publish(sender, **kwargs):
     # Get the full URL of the post
     full_url = post.get_full_url()
 
-    # Get the rendered HTML content from the body StreamField
-    # Using __html__() method which doesn't require a request object
-    html_content = post.body.__html__()
+    # Create a minimal request object for rendering
+    from django.test import RequestFactory
+    
+    request_factory = RequestFactory()
+    request = request_factory.get(full_url)
+    
+    # Use get_description with render_detail=True to get the full content
+    html_content = post.get_description(
+        request=request,
+        render_detail=True,
+        escape_html=False,
+        remove_newlines=False
+    )
 
     # Send webmentions
     sender = WebmentionSender()
@@ -80,4 +90,5 @@ def send_webmentions_on_publish(sender, **kwargs):
             if result["success"]:
                 print(f"  ✓ Sent webmention to {result['target']}")
             else:
-                print(f"  ✗ Failed to send to {result['target']}: {result['error']}")
+                error_msg = result.get('error', result.get('response', 'Unknown error'))
+                print(f"  ✗ Failed to send to {result['target']}: {error_msg}")

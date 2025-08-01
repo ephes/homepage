@@ -11,7 +11,7 @@ from homepage.core import webmention_integration
 
 class TestWebmentionIntegration(TestCase):
     def test_webmention_sending_uses_body_html_method(self):
-        """Test that webmention sending uses body.__html__() instead of get_description()."""
+        """Test that webmention sending uses get_description with render_detail=True."""
 
         # Create a mock Post class
         class MockPostClass(type):
@@ -21,11 +21,9 @@ class TestWebmentionIntegration(TestCase):
         mock_post = Mock()
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
-
-        # Mock the body field with __html__ method
-        mock_body = MagicMock()
-        mock_body.__html__ = Mock(return_value='<p>Test content with <a href="https://external.com">link</a></p>')
-        mock_post.body = mock_body
+        
+        # Mock the get_description method
+        mock_post.get_description = Mock(return_value='<p>Test content with <a href="https://external.com">link</a></p>')
 
         # Create mock page with specific attribute returning our mock post
         mock_page = Mock()
@@ -43,8 +41,12 @@ class TestWebmentionIntegration(TestCase):
                     # Call the handler directly
                     webmention_integration.send_webmentions_on_publish(None, instance=mock_page)
 
-                    # Verify that body.__html__() was called
-                    mock_body.__html__.assert_called_once()
+                    # Verify that get_description was called with correct parameters
+                    mock_post.get_description.assert_called_once()
+                    call_kwargs = mock_post.get_description.call_args.kwargs
+                    assert call_kwargs['render_detail'] is True
+                    assert call_kwargs['escape_html'] is False
+                    assert call_kwargs['remove_newlines'] is False
 
                     # Verify webmentions were sent with correct parameters
                     mock_sender.send_webmentions.assert_called_once_with(
@@ -63,13 +65,11 @@ class TestWebmentionIntegration(TestCase):
         mock_post = Mock()
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
-
-        # Mock the body field
-        mock_body = MagicMock()
-        mock_body.__html__ = Mock(
+        
+        # Mock the get_description method
+        mock_post.get_description = Mock(
             return_value='<p>Links: <a href="https://success.com">1</a> <a href="https://fail.com">2</a></p>'
         )
-        mock_post.body = mock_body
 
         # Create mock page
         mock_page = Mock()

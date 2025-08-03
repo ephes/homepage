@@ -117,6 +117,10 @@ shell:
 install:
     uv sync
 
+# Build documentation
+docs:
+    uv run python commands.py docs
+
 # Production deployment
 deploy-staging:
     uv run python commands.py deploy-staging

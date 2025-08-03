@@ -43,6 +43,8 @@ dev-dependencies = [
     "rich",
     "typer",
     "django-removals",
+    "sphinx",
+    "furo",
 ]
 
 [tool.uv.sources]

@@ -2,10 +2,14 @@
 Unit tests for webmentions functionality
 """
 
+from datetime import timedelta
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.utils import timezone
 
+from homepage.core.templatetags import webmention_filters
 from homepage.webmention_config import CastURLResolver
 
 
@@ -163,3 +167,62 @@ class WebmentionSettingsTest(TestCase):
 
         self.assertTrue(hasattr(settings, "INDIEWEB_SPAM_CHECKER"))
         self.assertEqual(settings.INDIEWEB_SPAM_CHECKER, "indieweb.interfaces.NoOpSpamChecker")
+
+
+class WebmentionTemplateFilterTests(SimpleTestCase):
+    """Tests for the template filter that sorts webmentions before regrouping."""
+
+    def test_sort_webmentions_for_grouping_orders_types_and_dates(self):
+        """Likes/reposts appear first, preserving newest-first order per type."""
+        now = timezone.now()
+        earlier = now - timedelta(days=1)
+        much_earlier = now - timedelta(days=2)
+
+        webmentions = [
+            SimpleNamespace(mention_type="reply", published=earlier, created=earlier),
+            SimpleNamespace(mention_type="like", published=much_earlier, created=much_earlier),
+            SimpleNamespace(mention_type="repost", published=now, created=now),
+            SimpleNamespace(mention_type="like", published=now, created=now),
+            SimpleNamespace(mention_type="mention", published=earlier, created=earlier),
+        ]
+
+        sorted_mentions = webmention_filters.sort_webmentions_for_grouping(webmentions)
+
+        self.assertEqual(
+            [wm.mention_type for wm in sorted_mentions],
+            ["like", "like", "repost", "reply", "mention"],
+        )
+        # Likes should remain newest-first within their group
+        like_dates = [wm.published for wm in sorted_mentions if wm.mention_type == "like"]
+        self.assertGreaterEqual(like_dates[0], like_dates[1])
+
+    def test_sort_webmentions_handles_missing_published(self):
+        """Filter falls back to created timestamps when published is missing."""
+        now = timezone.now()
+        later = now + timedelta(hours=1)
+
+        webmentions = [
+            SimpleNamespace(mention_type="repost", published=None, created=now),
+            SimpleNamespace(mention_type="repost", published=None, created=later),
+        ]
+
+        sorted_mentions = webmention_filters.sort_webmentions_for_grouping(webmentions)
+
+        self.assertEqual([wm.created for wm in sorted_mentions], [later, now])
+
+    def test_sort_webmentions_empty_list(self):
+        """Empty input returns empty output."""
+        self.assertEqual(webmention_filters.sort_webmentions_for_grouping([]), [])
+
+    def test_sort_webmentions_unknown_type(self):
+        """Unknown mention types are pushed to the end."""
+        now = timezone.now()
+        webmentions = [
+            SimpleNamespace(mention_type="unknown", published=now, created=now),
+            SimpleNamespace(mention_type="like", published=now, created=now),
+        ]
+
+        sorted_mentions = webmention_filters.sort_webmentions_for_grouping(webmentions)
+
+        self.assertEqual(sorted_mentions[0].mention_type, "like")
+        self.assertEqual(sorted_mentions[1].mention_type, "unknown")

@@ -1,8 +1,9 @@
-{% load i18n %}
+{% load i18n webmention_filters %}
 
 <div class="webmentions-container">
   {% if webmentions %}
-    {% regroup webmentions by mention_type as webmention_groups %}
+    {# Sort by mention_type before regrouping - regroup requires pre-sorted data #}
+    {% regroup webmentions|sort_webmentions_for_grouping by mention_type as webmention_groups %}
 
     {% for group in webmention_groups %}
       {% if group.grouper == "like" %}

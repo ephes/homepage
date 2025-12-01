@@ -109,6 +109,9 @@ db-migrate:
 db-shell:
     @just manage dbshell
 
+production-db-to-local:
+    uv run python commands.py production-db-to-local
+
 # Shell access
 shell:
     @just manage shell_plus

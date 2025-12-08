@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "argon2-cffi",
+    "django>=5.2,<6.0",  # pin until django-cast deps support Django 6
     "boto3",
     "cast-vue",
     "cast-bootstrap5",

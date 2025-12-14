@@ -33,6 +33,7 @@ DJANGO_APPS = [
     # Default Django apps:
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.postgres",
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
@@ -53,7 +54,7 @@ THIRD_PARTY_APPS = [
     "django_filters",  # filter posts
     "django_extensions",  # shell_plus etc
     "indieweb",  # indieauth etc
-    "fluent_comments",
+    "cast.comments.apps.CastCommentsConfig",  # must be before django_comments
     "threadedcomments",
     "django_comments",
     "storages",  # store media on s3
@@ -392,7 +393,7 @@ STORAGES = {
 MEDIA_URL = "https://s3.amazonaws.com/%s/" % AWS_STORAGE_BUCKET_NAME
 
 # Comments
-COMMENTS_APP = "fluent_comments"
+COMMENTS_APP = "cast.comments"
 FLUENT_COMMENTS_EXCLUDE_FIELDS = ("email", "url", "title")
 CAST_COMMENTS_ENABLED = True
 

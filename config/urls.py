@@ -37,7 +37,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     # Threadedcomments
-    path("show/comments/", include("fluent_comments.urls")),
+    path("show/comments/", include("cast.comments.urls")),
     # Indieweb
     path("indieweb/", include("indieweb.urls")),
     # Micropub local interface (form for creating posts)

@@ -10,6 +10,75 @@ def get_project_root():
     return Path(__file__).parent.resolve()
 
 
+def _toml_inline_table(value: dict) -> str:
+    parts: list[str] = []
+    for key, item in value.items():
+        if isinstance(item, bool):
+            rendered = "true" if item else "false"
+        else:
+            raw = str(item)
+            escaped = raw.replace("\\", "\\\\").replace('"', '\\"')
+            rendered = f'"{escaped}"'
+        parts.append(f"{key} = {rendered}")
+    return "{ " + ", ".join(parts) + " }"
+
+
+def _replace_uv_sources(pyproject_path: Path, updates: dict[str, dict]) -> None:
+    """
+    Update (or create) entries in the [tool.uv.sources] section without needing external TOML libraries.
+
+    This is intentionally minimal: it preserves the rest of the file as-is and only rewrites/creates the
+    [tool.uv.sources] section and the keys we manage.
+    """
+    text = pyproject_path.read_text(encoding="utf-8")
+    lines = text.splitlines(keepends=True)
+
+    section_header = "[tool.uv.sources]"
+    header_index = next((i for i, line in enumerate(lines) if line.strip() == section_header), None)
+
+    # If the section doesn't exist, append it at the end.
+    if header_index is None:
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] += "\n"
+        if lines and lines[-1].strip():
+            lines.append("\n")
+        lines.append(section_header + "\n")
+        header_index = len(lines) - 1
+        section_end = len(lines)
+    else:
+        # Find the end of the section (next TOML section header or EOF).
+        section_end = next(
+            (
+                i
+                for i in range(header_index + 1, len(lines))
+                if lines[i].startswith("[") and lines[i].rstrip().endswith("]")
+            ),
+            len(lines),
+        )
+
+    # Parse existing entries (simple `name = { ... }` lines).
+    existing: dict[str, int] = {}
+    for i in range(header_index + 1, section_end):
+        stripped = lines[i].strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        name, _rest = stripped.split("=", 1)
+        existing[name.strip()] = i
+
+    # Apply updates: replace existing lines or insert new ones before section end.
+    insertion_point = section_end
+    for name, mapping in updates.items():
+        new_line = f"{name} = {_toml_inline_table(mapping)}\n"
+        if name in existing:
+            lines[existing[name]] = new_line
+        else:
+            lines.insert(insertion_point, new_line)
+            insertion_point += 1
+            section_end += 1
+
+    pyproject_path.write_text("".join(lines), encoding="utf-8")
+
+
 def bootstrap():
     """
     Called when first non-standard lib import fails.
@@ -202,23 +271,9 @@ def switch_to_dev_environment():
 
     Modifies pyproject.toml to use local paths in tool.uv.sources.
     """
-    import toml
-
     project_root = get_project_root()
     projects_dir = project_root.parent
     pyproject_path = project_root / "pyproject.toml"
-
-    # Read current pyproject.toml
-    with open(pyproject_path) as f:
-        pyproject = toml.load(f)
-
-    # Ensure tool.uv.sources exists
-    if "tool" not in pyproject:
-        pyproject["tool"] = {}
-    if "uv" not in pyproject["tool"]:
-        pyproject["tool"]["uv"] = {}
-    if "sources" not in pyproject["tool"]["uv"]:
-        pyproject["tool"]["uv"]["sources"] = {}
 
     # Define local package mappings
     packages = [
@@ -230,20 +285,16 @@ def switch_to_dev_environment():
 
     print("Switching to local development sources in pyproject.toml...")
 
-    sources_modified = False
+    updates: dict[str, dict] = {}
     for package_name, package_path in packages:
         if package_path.exists():
-            # Update to local editable source
-            pyproject["tool"]["uv"]["sources"][package_name] = {"path": f"../{package_path.name}", "editable": True}
             print(f"✓ {package_name} -> {package_path}")
-            sources_modified = True
+            updates[package_name] = {"path": f"../{package_path.name}", "editable": True}
         else:
             print(f"Warning: {package_path} does not exist, skipping")
 
-    if sources_modified:
-        # Write updated pyproject.toml
-        with open(pyproject_path, "w") as f:
-            toml.dump(pyproject, f)
+    if updates:
+        _replace_uv_sources(pyproject_path, updates)
 
         print("\nRunning uv sync to apply changes...")
         subprocess.call(["uv", "sync"])
@@ -262,14 +313,8 @@ def switch_to_git_sources():
 
     Restores original git sources in pyproject.toml.
     """
-    import toml
-
     project_root = get_project_root()
     pyproject_path = project_root / "pyproject.toml"
-
-    # Read current pyproject.toml
-    with open(pyproject_path) as f:
-        pyproject = toml.load(f)
 
     # Define default git sources
     default_sources = {
@@ -280,24 +325,15 @@ def switch_to_git_sources():
     }
 
     print("Restoring git sources in pyproject.toml...")
+    _replace_uv_sources(pyproject_path, default_sources)
+    for package_name, git_source in default_sources.items():
+        print(f"✓ {package_name} -> {git_source}")
 
-    if "tool" in pyproject and "uv" in pyproject["tool"] and "sources" in pyproject["tool"]["uv"]:
-        for package_name, git_source in default_sources.items():
-            if package_name in pyproject["tool"]["uv"]["sources"]:
-                pyproject["tool"]["uv"]["sources"][package_name] = git_source
-                print(f"✓ {package_name} -> {git_source}")
+    print("\nRunning uv sync to apply changes...")
+    subprocess.call(["uv", "sync", "--reinstall"])
 
-        # Write updated pyproject.toml
-        with open(pyproject_path, "w") as f:
-            toml.dump(pyproject, f)
-
-        print("\nRunning uv sync to apply changes...")
-        subprocess.call(["uv", "sync", "--reinstall"])
-
-        print("\nSwitched back to git sources!")
-        print("All packages are now installed from their git repositories.")
-    else:
-        print("No tool.uv.sources found in pyproject.toml, nothing to restore.")
+    print("\nSwitched back to git sources!")
+    print("All packages are now installed from their git repositories.")
 
 
 @cli.command()

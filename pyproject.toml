@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "argon2-cffi",
-    "django>=5.2,<6.0",  # pin until django-cast deps support Django 6
+    "django>=6.0,<7.0",
     "boto3",
     "cast-vue",
     "cast-bootstrap5",
@@ -51,8 +51,8 @@ dev-dependencies = [
 [tool.uv.sources]
 cast-vue = { git = "https://github.com/ephes/cast-vue" }
 cast-bootstrap5 = { git = "https://github.com/ephes/cast-bootstrap5" }
-django-cast = { git = "https://github.com/ephes/django-cast", branch="develop" }
-django-indieweb = { git = "https://github.com/ephes/django-indieweb", branch="develop" }
+django-cast = { git = "https://github.com/ephes/django-cast", branch = "develop" }
+django-indieweb = { git = "https://github.com/ephes/django-indieweb", branch = "develop" }
 
 [tool.black]
 line-length = 119

@@ -29,11 +29,6 @@
         </span>
       {% endif %}
     </header>
-    {% if cover_image_url and not render_for_feed %}
-      <figure class="cast-cover-image">
-        <img class="img-fluid" src="{{ cover_image_url }}" alt="{{ cover_alt_text }}" loading="lazy">
-      </figure>
-    {% endif %}
     <div class="e-content">
       {% for block in page.body %}
       {# this is either an overview or detail block #}

@@ -79,8 +79,8 @@ Code Quality
 Deployment
 ~~~~~~~~~~
 
-* ``just deploy-staging`` - Deploy to staging environment
-* ``just deploy-production`` - Deploy to production environment
+* ``just deploy-staging`` - Deploy to staging via ops-control (SOPS)
+* ``just deploy-production`` - Deploy to production via ops-control (SOPS)
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

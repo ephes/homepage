@@ -1,7 +1,15 @@
 Deploy
 ========
 
-The project uses Ansible for automated deployment to staging and production environments.
+Staging and production deployments run through ops-control (SOPS-backed). The local ``deploy/``
+directory is kept as a legacy reference.
+
+Ops-control Prerequisites
+-------------------------
+
+* An ops-control clone (set ``OPS_CONTROL`` if not located at ``../ops-control``)
+* SOPS age key configured (``SOPS_AGE_KEY_FILE`` defaults to ``~/.config/sops/age/keys.txt``)
+* ``PROJECTS_ROOT`` pointing at the parent directory that contains this repo
 
 Deployment Commands
 -------------------
@@ -9,12 +17,14 @@ Deployment Commands
 From Commands.py
 ~~~~~~~~~~~~~~~~
 
-Deploy to staging::
+Deploy to staging (ops-control)::
 
     uv run python commands.py deploy_staging
 
-Deploy to production::
+Deploy to production (ops-control)::
 
+    OPS_CONTROL=/path/to/ops-control \
+    SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
     uv run python commands.py deploy_production
 
 From Justfile
@@ -36,10 +46,10 @@ To backup the production database and restore it locally::
 
     postgres -D databases/postgres
 
-Deployment Process
-------------------
+Legacy Deployment Process (Reference Only)
+------------------------------------------
 
-The deployment uses Ansible and performs the following steps:
+The legacy deployment uses Ansible and performs the following steps:
 
 1. **Configuration Loading**
 
@@ -76,8 +86,8 @@ The deployment uses Ansible and performs the following steps:
    * Sets up Traefik reverse proxy
    * Restarts the service
 
-Deployment Directory Structure
-------------------------------
+Legacy Deployment Directory Structure
+-------------------------------------
 
 The ``deploy/`` directory contains::
 
@@ -120,8 +130,8 @@ Static Files
 
 Static files are served using WhiteNoise in production, eliminating the need for a separate web server for static content.
 
-Prerequisites
--------------
+Legacy Prerequisites
+--------------------
 
 * Ansible installed locally
 * SSH access to the deployment servers

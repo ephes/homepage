@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_control
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 
 User = get_user_model()
 
@@ -17,7 +17,7 @@ def favicon(request: HttpRequest) -> HttpResponse:
     return FileResponse(file)
 
 
-@require_GET
+@require_http_methods(["GET", "HEAD"])
 @cache_control(max_age=60 * 60 * 24, public=True)  # one day
 def robots_txt(request: HttpRequest) -> HttpResponse:
     content = "\n".join(

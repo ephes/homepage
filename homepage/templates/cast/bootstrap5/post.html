@@ -13,24 +13,25 @@
 {% endblock %}
 
 {% block content %}
-  {% include "./post_body.html" with render_detail=True %}
+  <main>
+    {% include "./post_body.html" with render_detail=True %}
 
-  {# Webmentions section - only show if there are webmentions #}
-  {% with page.full_url as page_url %}
-    {% webmention_count page_url as wm_count %}
-    {% if wm_count > 0 %}
-      <section class="webmentions mt-5">
-        <h3>Webmentions</h3>
-        {% show_webmentions page_url %}
-      </section>
+    {# Webmentions section - only show if there are webmentions #}
+    {% with page.full_url as page_url %}
+      {% webmention_count page_url as wm_count %}
+      {% if wm_count > 0 %}
+        <section class="webmentions mt-5">
+          <h3>Webmentions</h3>
+          {% show_webmentions page_url %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    {% if comments_are_enabled %}
+      {% render_comment_list for page %}
+      {% render_comment_form for page %}
     {% endif %}
-  {% endwith %}
 
-  {% if comments_are_enabled %}
-    {% render_comment_list for page %}
-    {% render_comment_form for page %}
-  {% endif %}
-
-  <p><a href="{{ blog_url }}">Return to blog</a></p>
-
+    <p><a href="{{ blog_url }}">Return to blog</a></p>
+  </main>
 {% endblock %}

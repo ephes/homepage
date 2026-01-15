@@ -19,6 +19,7 @@ handler403 = default_views_cast.permission_denied
 
 urlpatterns = [
     path("", core_views.home, name="home"),
+    path("robots.txt", core_views.robots_txt, name="robots_txt"),
     path("favicon.ico", core_views.favicon),
     path(
         "jochen/",

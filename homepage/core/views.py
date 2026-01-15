@@ -17,6 +17,19 @@ def favicon(request: HttpRequest) -> HttpResponse:
     return FileResponse(file)
 
 
+@require_GET
+@cache_control(max_age=60 * 60 * 24, public=True)  # one day
+def robots_txt(request: HttpRequest) -> HttpResponse:
+    content = "\n".join(
+        [
+            "User-agent: *",
+            "Disallow: /admin/",
+            "Disallow: /cms/",
+        ]
+    )
+    return HttpResponse(f"{content}\n", content_type="text/plain; charset=utf-8")
+
+
 def home(request: HttpRequest) -> HttpResponse:
     """View for the homepage with user profiles."""
     try:

@@ -5,8 +5,8 @@
 {% if page %}
   <article class="h-entry">
     <header>
-      <h2 class="p-name">
-        <a class="text-dark text-decoration-none u-url" href="{{ page.page_url }}">{{ page.title }}</a>
+      <h2 class="p-name {% if render_detail %}post-title{% else %}post-card-title{% endif %}">
+        <a class="u-url" href="{{ page.page_url }}">{{ page.title }}</a>
         {% if render_for_feed and comments_are_enabled %}
           {% translate "(click here to comment)" %}
         {% endif %}

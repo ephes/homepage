@@ -144,29 +144,17 @@
           return;
         }
 
-        function ensureParagraphs(bq) {
-          var nodes = Array.prototype.slice.call(bq.childNodes);
-          var hasElement = nodes.some(function (node) {
-            return node.nodeType === Node.ELEMENT_NODE;
-          });
-          if (!hasElement) {
-            var text = bq.textContent.trim();
-            bq.textContent = '';
-            if (text) {
-              var p = document.createElement('p');
-              p.textContent = text;
-              bq.appendChild(p);
-            }
+        function ensureLineWrapper(bq) {
+          if (bq.firstElementChild && bq.firstElementChild.classList.contains('cast-blockquote-line')) {
             return;
           }
-
-          nodes.forEach(function (node) {
-            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-              var p = document.createElement('p');
-              p.textContent = node.textContent.trim();
-              bq.replaceChild(p, node);
-            }
-          });
+          var line = document.createElement('div');
+          line.className = 'cast-blockquote-line';
+          line.style.whiteSpace = 'pre-line';
+          while (bq.firstChild) {
+            line.appendChild(bq.firstChild);
+          }
+          bq.appendChild(line);
         }
 
         blockquotes.forEach(function (bq) {
@@ -178,12 +166,15 @@
             return;
           }
 
-          ensureParagraphs(bq);
+          ensureLineWrapper(bq);
           while (next && next.tagName.toLowerCase() === 'blockquote') {
-            ensureParagraphs(next);
-            while (next.firstChild) {
-              bq.appendChild(next.firstChild);
-            }
+            ensureLineWrapper(next);
+            var lines = Array.prototype.slice.call(next.children).filter(function (child) {
+              return child.classList.contains('cast-blockquote-line');
+            });
+            lines.forEach(function (line) {
+              bq.appendChild(line);
+            });
             var toRemove = next;
             next = next.nextElementSibling;
             toRemove.remove();

@@ -157,6 +157,17 @@
           bq.appendChild(line);
         }
 
+        function applyLineSpacing(bq) {
+          var lines = Array.prototype.slice.call(bq.children).filter(function (child) {
+            return child.classList.contains('cast-blockquote-line');
+          });
+          lines.forEach(function (line, index) {
+            line.style.display = 'block';
+            line.style.marginTop = index === 0 ? '0' : '0.35rem';
+            line.style.marginBottom = '0';
+          });
+        }
+
         blockquotes.forEach(function (bq) {
           if (bq.dataset.castBlockquoteMerged === 'true') {
             return;
@@ -179,6 +190,7 @@
             next = next.nextElementSibling;
             toRemove.remove();
           }
+          applyLineSpacing(bq);
           bq.dataset.castBlockquoteMerged = 'true';
         });
       }

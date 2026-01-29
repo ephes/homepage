@@ -8,6 +8,11 @@
   {{ block.super }}
 {% endblock %}
 
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/site-overrides.css' %}">
+{% endblock css %}
+
 {% block bodystart %}
   <a
     href="https://fedi.wersdoerfer.de/@jochen"

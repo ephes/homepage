@@ -2,20 +2,20 @@
 .now-section {
   margin-top: 4rem;
   padding: 3rem 0;
-  border-top: 2px solid #e9ecef;
+  border-top: 2px solid var(--cast-border);
 }
 
 .now-section h2 {
   font-size: 2rem;
   font-weight: 700;
-  color: #212529;
+  color: var(--cast-text);
   margin-bottom: 0.5rem;
   text-align: center;
 }
 
 .now-section .now-updated {
   text-align: center;
-  color: #6c757d;
+  color: var(--cast-text-muted);
   font-size: 0.9rem;
   margin-bottom: 3rem;
 }
@@ -27,7 +27,7 @@
 
 .now-category {
   margin-bottom: 2.5rem;
-  background: #f8f9fa;
+  background: var(--cast-bg-alt);
   border-radius: 0.75rem;
   padding: 2rem;
   transition: all 0.3s ease;
@@ -40,7 +40,7 @@
 .now-category h3 {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--cast-text);
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -62,14 +62,14 @@
   padding-left: 1.5rem;
   position: relative;
   line-height: 1.6;
-  color: #495057;
+  color: var(--cast-text);
 }
 
 .now-list li:before {
   content: "→";
   position: absolute;
   left: 0;
-  color: #6c757d;
+  color: var(--cast-text-muted);
   font-weight: 600;
 }
 
@@ -80,7 +80,7 @@
 /* Special styling for project highlights */
 .project-highlight {
   font-weight: 500;
-  color: #0066cc;
+  color: var(--cast-accent);
   text-decoration: none;
 }
 

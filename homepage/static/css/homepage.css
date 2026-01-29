@@ -1,7 +1,7 @@
 /* Homepage navigation hub styles */
 
 .homepage-hero {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, var(--cast-bg) 0%, var(--cast-bg-alt) 100%);
   padding: 4rem 0 3rem;
   margin-bottom: 4rem;
 }
@@ -9,13 +9,13 @@
 .homepage-hero h1 {
   font-size: 3rem;
   font-weight: 700;
-  color: #212529;
+  color: var(--cast-text);
   margin-bottom: 1rem;
 }
 
 .homepage-hero .tagline {
   font-size: 1.25rem;
-  color: #6c757d;
+  color: var(--cast-text-muted);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -34,12 +34,12 @@
 
 /* Person card styles */
 .person-card {
-  background: #fff;
+  background: var(--cast-surface);
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   padding: 2.5rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--cast-border);
   will-change: transform;
 }
 
@@ -82,13 +82,13 @@
 .person-name {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #212529;
+  color: var(--cast-text);
   margin-bottom: 0.5rem;
 }
 
 .person-tagline {
   font-size: 1rem;
-  color: #6c757d;
+  color: var(--cast-text-muted);
   margin-bottom: 0;
 }
 
@@ -100,7 +100,7 @@
 .quick-links h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--cast-text);
   margin-bottom: 1rem;
 }
 
@@ -118,17 +118,17 @@
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
-  background: #f8f9fa;
+  background: var(--cast-bg-alt);
   border-radius: 0.5rem;
   text-decoration: none;
-  color: #495057;
+  color: var(--cast-text);
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
   font-weight: 500;
 }
 
 .quick-links-list a:hover {
-  background: #e9ecef;
-  color: #212529;
+  background: var(--cast-surface);
+  color: var(--cast-accent);
   transform: translateX(4px);
 }
 
@@ -150,18 +150,18 @@
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: #fff;
-  border: 2px solid #e9ecef;
+  background: var(--cast-surface);
+  border: 2px solid var(--cast-border);
   border-radius: 2rem;
   text-decoration: none;
-  color: #495057;
+  color: var(--cast-text);
   font-weight: 500;
   transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .social-link:hover {
-  border-color: #6c757d;
-  color: #212529;
+  border-color: var(--cast-accent);
+  color: var(--cast-accent);
   transform: translateY(-2px);
 }
 
@@ -169,13 +169,13 @@
 .projects-section {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--cast-border);
 }
 
 .projects-section h4 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--cast-text);
   margin-bottom: 1rem;
 }
 
@@ -190,7 +190,7 @@
 }
 
 .project-link {
-  color: #0066cc;
+  color: var(--cast-accent);
   text-decoration: none;
   font-weight: 500;
 }
@@ -200,7 +200,7 @@
 }
 
 .project-desc {
-  color: #6c757d;
+  color: var(--cast-text-muted);
   font-size: 0.85rem;
   margin-left: 0.5rem;
 }

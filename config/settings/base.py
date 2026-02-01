@@ -451,6 +451,35 @@ CAST_CUSTOM_THEMES = [
     ("bootstrap5", "Bootstrap 5"),
 ]
 
+CAST_PODLOVE_PLAYER_THEMES = {
+    "bootstrap5": {
+        "light": {
+            "tokens": {
+                "brand": "#0066cc",
+                "brandDark": "#004c99",
+                "brandDarkest": "#212529",
+                "brandLightest": "#e6f0ff",
+                "shadeDark": "#6c757d",
+                "shadeBase": "#6c757d",
+                "contrast": "#212529",
+                "alt": "#ffffff",
+            }
+        },
+        "dark": {
+            "tokens": {
+                "brand": "#38bdf8",
+                "brandDark": "#0ea5e9",
+                "brandDarkest": "#0b1f34",
+                "brandLightest": "#0b1f34",
+                "shadeDark": "#94a3b8",
+                "shadeBase": "#94a3b8",
+                "contrast": "#f8fafc",
+                "alt": "#1e293b",
+            }
+        },
+    }
+}
+
 # post repository for blog index page
 CAST_BLOG_INDEX_REPOSITORY = "raw"
 

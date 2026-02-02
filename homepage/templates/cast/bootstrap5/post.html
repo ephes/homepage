@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-  <main>
+  <article class="post-content cast-reading">
     {% include "./post_body.html" with render_detail=True %}
 
     {# Webmentions section - only show if there are webmentions #}
@@ -32,6 +32,6 @@
       {% render_comment_form for page %}
     {% endif %}
 
-    <p><a href="{{ blog_url }}">Return to blog</a></p>
-  </main>
+    <p><a class="return-to-blog" href="{{ blog_url }}">Return to blog</a></p>
+  </article>
 {% endblock %}

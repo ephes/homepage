@@ -199,6 +199,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 # Your stuff: custom template context processors go here
                 "cast.context_processors.site_template_base_dir",
+                "homepage.core.context_processors.default_follow_links",
             ],
         },
     },
@@ -402,6 +403,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Cast default api page size
 CAST_API_PAGE_SIZE = 100
+
+CAST_FOLLOW_LINKS = {
+    "rss": "/blogs/ephes_blog/feed/rss.xml",
+    "mastodon": "https://wersdoerfer.de/@jochen",
+    "github": "https://github.com/ephes",
+    "email": "mailto:jochen-www@wersdoerfer.de",
+}
 
 # Wagtail settings
 

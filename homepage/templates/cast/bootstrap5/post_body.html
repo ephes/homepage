@@ -3,7 +3,7 @@
 {% load indieweb_tags %}
 
 {% if page %}
-  <article class="h-entry">
+  <article class="{% if render_detail %}post-detail{% else %}post-card{% endif %} h-entry">
     <header>
       <h2 class="p-name {% if render_detail %}post-title{% else %}post-card-title{% endif %}">
         <a class="u-url" href="{{ page.page_url }}">{{ page.title }}</a>
@@ -12,7 +12,9 @@
         {% endif %}
       </h2>
     <!-- link is on one line to avoid underlined whitespace -->
-      <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time></a>
+      <div class="post-card-meta">
+        <a href="{{ page.page_url }}"><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time></a>
+      </div>
       {% if page.owner and page.owner.profile %}
         <div class="p-author h-card" style="display: none;">
           <img
@@ -41,7 +43,7 @@
         </span>
       {% endif %}
     </header>
-    <div class="e-content">
+    <div class="{% if render_detail %}post-body{% else %}post-card-excerpt{% endif %} e-content">
       {% for block in page.body %}
       {# this is either an overview or detail block #}
         {% if block.block_type != "detail" or render_detail %}

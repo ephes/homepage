@@ -35,11 +35,17 @@
       <div class="cast-post-footer">
         <nav class="cast-share-links" aria-label="{% trans "Share this post" %}">
           <span class="cast-share-label">{% trans "Share" %}</span>
-          <a class="cast-share-link" href="https://twitter.com/intent/tweet?url={{ share_url }}&text={{ share_title }}" target="_blank" rel="noopener noreferrer" aria-label="{% trans "Share on Twitter" %}">
+          <a class="cast-share-link" href="#" data-cast-share="fediverse" data-share-url="{{ share_url }}" data-share-title="{{ share_title }}" aria-label="{% trans "Share on Fediverse" %}">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.684 6.684 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793 3.286 3.286 0 0 0-5.595 2.994A9.325 9.325 0 0 1 1.114 2.1a3.286 3.286 0 0 0 1.018 4.381A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.615-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"></path>
+              <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765 2.79.765.502 1.783.502 5.253c-.007.823-.01 1.797.01 2.823.06 3.456.447 6.862 2.702 7.707a11.5 11.5 0 0 0 3.264.764c.55.028.92-.138.92-.138l-.02-.44s-.422.133-.895.117C5.56 16.05 4.553 15.83 4.4 14.5c-.014-.121-.02-.25-.02-.384a22 22 0 0 0 2.79.558c.746.064 1.505.024 2.268-.045l.003-.002c1.013-.115 1.898-.506 2.01-.933l.46-1.498zm1.617-2.46V5.553c0-.82-.208-1.47-.623-1.95-.43-.48-.993-.726-1.692-.726-.808 0-1.42.31-1.83.93l-.394.66-.395-.66c-.41-.62-1.022-.93-1.83-.93-.7 0-1.263.247-1.693.727-.415.48-.623 1.13-.623 1.95v4.18h1.656V5.684c0-.82.345-1.235 1.036-1.235.763 0 1.146.493 1.146 1.468v2.22h1.645v-2.22c0-.975.383-1.468 1.146-1.468.69 0 1.036.416 1.036 1.236v4.05h1.415z"></path>
             </svg>
-            <span>{% trans "Twitter" %}</span>
+            <span>{% trans "Fediverse" %}</span>
+          </a>
+          <a class="cast-share-link" href="https://bsky.app/intent/compose?text={{ share_url }}" target="_blank" rel="noopener noreferrer" aria-label="{% trans "Share on Bluesky" %}">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d="M3.468 1.948C5.303 3.325 7.276 6.118 8 7.616c.724-1.498 2.697-4.29 4.532-5.668C13.855.955 16 .186 16 2.632c0 .489-.28 4.105-.444 4.692-.572 2.04-2.653 2.561-4.504 2.246 3.236.551 4.06 2.375 2.281 4.2-3.376 3.464-4.852-.87-5.23-1.98-.07-.204-.102-.3-.103-.218-.001-.082-.033.014-.103.219-.378 1.11-1.854 5.443-5.23 1.98-1.778-1.825-.955-3.649 2.282-4.2-1.851.315-3.932-.205-4.505-2.246C.28 6.737 0 3.12 0 2.632 0 .186 2.145.955 3.468 1.948"></path>
+            </svg>
+            <span>{% trans "Bluesky" %}</span>
           </a>
           <a class="cast-share-link" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url }}" target="_blank" rel="noopener noreferrer" aria-label="{% trans "Share on LinkedIn" %}">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -53,9 +59,73 @@
             </svg>
             <span>{% trans "Email" %}</span>
           </a>
+          <button class="cast-share-link" data-cast-share="copy" data-share-url="{{ share_url }}" aria-label="{% trans "Copy link" %}" type="button" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"></path>
+              <path d="M11.285 9.458l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 5.671A3 3 0 0 0 7.414 10.5l.586-.586a1 1 0 0 0 .154-.199 2 2 0 0 1-.861-3.337L9.12 4.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287z"></path>
+            </svg>
+            <span>{% trans "Copy Link" %}</span>
+          </button>
+          <button class="cast-share-link" data-cast-share="native" data-share-url="{{ share_url }}" data-share-title="{{ share_title }}" aria-label="{% trans "Share" %}" type="button" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5m-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3"></path>
+            </svg>
+            <span>{% trans "Share..." %}</span>
+          </button>
         </nav>
         <a class="return-to-blog" href="{{ blog_url }}">{% trans "Return to blog" %}</a>
       </div>
+      <script>
+        (function() {
+          // Fediverse share via Mastodon instance prompt with localStorage
+          var fediverseLink = document.querySelector('[data-cast-share="fediverse"]');
+          if (fediverseLink) {
+            fediverseLink.addEventListener('click', function(e) {
+              e.preventDefault();
+              var instance = localStorage.getItem('mastodon_instance');
+              if (!instance) {
+                instance = window.prompt('Enter your Mastodon instance (e.g. mastodon.social)');
+                if (!instance) return;
+              }
+              // Normalize: strip https://, @, trailing /
+              instance = instance.replace(/^https?:\/\//, '').replace(/^@/, '').replace(/\/+$/, '');
+              localStorage.setItem('mastodon_instance', instance);
+              var title = decodeURIComponent(this.dataset.shareTitle);
+              var url = decodeURIComponent(this.dataset.shareUrl);
+              window.open('https://' + instance + '/share?text=' + encodeURIComponent(title + '\n' + url), '_blank', 'noopener,noreferrer');
+            });
+          }
+
+          // Copy Link — show button only if clipboard API is available
+          var copyBtn = document.querySelector('[data-cast-share="copy"]');
+          if (copyBtn && navigator.clipboard) {
+            copyBtn.hidden = false;
+            copyBtn.addEventListener('click', function() {
+              var url = decodeURIComponent(this.dataset.shareUrl);
+              var label = this.querySelector('span');
+              navigator.clipboard.writeText(url).then(function() {
+                if (label) {
+                  var original = label.textContent;
+                  label.textContent = 'Copied!';
+                  setTimeout(function() { label.textContent = original; }, 2000);
+                }
+              });
+            });
+          }
+
+          // Web Share API — show button only if available
+          var shareBtn = document.querySelector('[data-cast-share="native"]');
+          if (shareBtn && navigator.share) {
+            shareBtn.hidden = false;
+            shareBtn.addEventListener('click', function() {
+              navigator.share({
+                title: decodeURIComponent(this.dataset.shareTitle),
+                url: decodeURIComponent(this.dataset.shareUrl)
+              });
+            });
+          }
+        })();
+      </script>
     {% endwith %}
   </article>
 {% endblock %}

@@ -31,42 +31,38 @@
       {% render_comment_list for page %}
       {% render_comment_form for page %}
     {% endif %}
+
     {% with share_url=absolute_page_url|urlencode share_title=page.seo_title|default:page.title|urlencode %}
       <div class="cast-post-footer">
         <nav class="cast-share-links" aria-label="{% trans "Share this post" %}">
-          <span class="cast-share-label">{% trans "Share" %}</span>
           <a class="cast-share-link" href="#" data-cast-share-fediverse data-share-url="{{ absolute_page_url }}" data-share-title="{{ page.seo_title|default:page.title }}" aria-label="{% trans "Share on Fediverse" %}">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.348-4.326.348-4.326 0-3.256-2.128-4.21-2.128-4.21C12.324.486 10.394.017 8.366 0h-.05C6.29.017 4.36.486 3.286 1.056c0 0-2.128.954-2.128 4.21 0 .377-.007.828.002 1.305.03 1.61.044 3.194.398 4.342.587 1.91 4.417 3.533 7.958 3.096.22-.027.428-.068.626-.12l-.006-.155a4.76 4.76 0 0 1-.052-.744l-.012-.074-.055-.018a8.88 8.88 0 0 1-1.235-.475l-.067-.034-.018-.07a.355.355 0 0 1 .12-.346l.065-.04.074.015c.485.102.979.17 1.504.17 3.832 0 4.86-2.414 4.86-4.26v-.125c0-.166.058-.327.162-.455l.03-.037V5.17a3.37 3.37 0 0 1-.07.69l-.024.088-.068.057c-.622.52-1.352.88-2.156 1.05l-.057.012v-1.84c0-1.02-.378-1.827-1.248-1.827-.92 0-1.377.728-1.377 1.45v2.696H8.12V5.195C8.12 4.175 7.743 3.449 6.822 3.449c-.87 0-1.248.808-1.248 1.827v1.84l-.057-.012a4.92 4.92 0 0 1-2.156-1.05l-.068-.056-.024-.089A3.37 3.37 0 0 1 3.2 5.17v2.288l.03.037c.104.128.162.29.162.455v.126c0 1.845 1.028 4.26 4.86 4.26.525 0 1.02-.069 1.504-.17l.074-.016.065.04a.355.355 0 0 1 .12.347l-.018.07-.067.034c-.398.194-.81.35-1.235.474l-.055.018-.012.075a4.76 4.76 0 0 1-.052.744l-.006.155c.198.052.406.093.626.12z" fill="currentColor"></path>
+              <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a4 4 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522q0-1.288.66-2.046c.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764q.662.757.661 2.046z" fill="currentColor"></path>
             </svg>
-            <span>{% trans "Fediverse" %}</span>
           </a>
           <a class="cast-share-link" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url }}" target="_blank" rel="noopener noreferrer" aria-label="{% trans "Share on LinkedIn" %}">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
               <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.247-1.342-1.247-.822 0-1.359.538-1.359 1.247 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"></path>
             </svg>
-            <span>{% trans "LinkedIn" %}</span>
           </a>
           <a class="cast-share-link" href="mailto:?subject={{ share_title }}&body={{ share_url }}" aria-label="{% trans "Share by email" %}">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
               <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"></path>
             </svg>
-            <span>{% trans "Email" %}</span>
           </a>
           <button type="button" class="cast-share-link" data-cast-copy-link data-url="{{ absolute_page_url }}" aria-label="{% trans "Copy link" %}">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
               <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z" fill="currentColor"></path>
               <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z" fill="currentColor"></path>
             </svg>
-            <span data-cast-copy-label>{% trans "Copy Link" %}</span>
           </button>
           <button type="button" class="cast-share-link" data-cast-web-share data-url="{{ absolute_page_url }}" data-title="{{ page.seo_title|default:page.title }}" aria-label="{% trans "Share" %}" hidden>
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
               <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z" fill="currentColor"></path>
             </svg>
-            <span>{% trans "Share..." %}</span>
           </button>
         </nav>
+        <span id="cast-copy-status" class="visually-hidden" aria-live="polite"></span>
         <a class="return-to-blog" href="{{ blog_url }}">{% trans "Return to blog" %}</a>
       </div>
     {% endwith %}
@@ -98,17 +94,21 @@
 
         // Copy Link
         var copyButtons = document.querySelectorAll('[data-cast-copy-link]');
+        var copyStatus = document.getElementById('cast-copy-status');
         if (navigator.clipboard) {
           Array.prototype.forEach.call(copyButtons, function (btn) {
+            var timer = null;
             btn.addEventListener('click', function () {
               var url = btn.getAttribute('data-url');
-              var label = btn.querySelector('[data-cast-copy-label]');
               navigator.clipboard.writeText(url).then(function () {
-                if (label) {
-                  var original = label.textContent;
-                  label.textContent = '{% trans "Copied!" %}';
-                  setTimeout(function () { label.textContent = original; }, 2000);
-                }
+                if (timer) clearTimeout(timer);
+                btn.classList.add('copied');
+                if (copyStatus) copyStatus.textContent = '{% trans "Link copied" %}';
+                timer = setTimeout(function () {
+                  btn.classList.remove('copied');
+                  if (copyStatus) copyStatus.textContent = '';
+                  timer = null;
+                }, 2000);
               });
             });
           });

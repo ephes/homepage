@@ -408,6 +408,7 @@ CAST_FOLLOW_LINKS = {
     "rss": "/blogs/ephes_blog/feed/rss.xml",
     "mastodon": "https://wersdoerfer.de/@jochen",
     "github": "https://github.com/ephes",
+    "linkedin": "https://www.linkedin.com/in/jochen-wersdoerfer/",
     "email": "mailto:jochen-www@wersdoerfer.de",
 }
 

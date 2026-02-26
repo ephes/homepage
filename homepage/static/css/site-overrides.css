@@ -51,6 +51,30 @@
   --cast-gallery-footer-bg: rgba(40, 53, 72, 1);
 }
 
+/* Search modal contrast and palette alignment */
+.cast-search-overlay {
+  background: var(--cast-modal-backdrop);
+}
+
+.cast-search-modal {
+  background: var(--cast-surface);
+}
+
+.cast-search-modal-close,
+.cast-btn-clear {
+  color: #5f6770;
+}
+
+[data-bs-theme="dark"] .cast-search-modal-close,
+[data-bs-theme="dark"] .cast-btn-clear {
+  color: #a8b3c0;
+}
+
+[data-bs-theme="dark"] .cast-btn-search,
+[data-bs-theme="dark"] .cast-ordering-pills .tag-pill.active {
+  color: #0f172a;
+}
+
 /* Hero typography from prototype */
 .cast-hero .blog-title {
   font-size: clamp(2.5rem, 5vw, var(--s4));

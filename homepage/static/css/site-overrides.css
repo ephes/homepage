@@ -81,6 +81,17 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   margin-bottom: var(--s-2);
+  color: #1a1a2e;
+}
+
+[data-bs-theme="dark"] .cast-hero .blog-title {
+  color: #f1f5f9;
+}
+
+.cast-hero .blog-title .tilde {
+  font-family: var(--cast-font-mono);
+  font-weight: 400;
+  opacity: 0.5;
 }
 
 .cast-hero .intro.lead {
@@ -88,10 +99,25 @@
   line-height: 1.5;
   margin-top: var(--s-1);
   font-style: italic;
+  color: #5a6072;
 }
 
-.cast-hero .intro.lead strong {
+[data-bs-theme="dark"] .cast-hero .intro.lead {
+  color: #94a3b8;
+}
+
+.cast-hero .intro.lead strong,
+.cast-hero .intro.lead b {
   font-style: normal;
   font-weight: 600;
-  color: var(--cast-text);
+  color: #1a1a2e;
+}
+
+[data-bs-theme="dark"] .cast-hero .intro.lead strong,
+[data-bs-theme="dark"] .cast-hero .intro.lead b {
+  color: #f1f5f9;
+}
+
+.cast-hero .intro.lead p {
+  margin-bottom: 0;
 }

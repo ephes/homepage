@@ -8,6 +8,14 @@
 
 {% block hero_canvas %}<canvas id="heroCanvas"></canvas>{% endblock hero_canvas %}
 
+{% block hero_title %}
+  {% if page.title|first == "~" %}
+    <span class="tilde">~</span>{{ page.title|slice:"1:" }}
+  {% else %}
+    {{ page.title }}
+  {% endif %}
+{% endblock hero_title %}
+
 {% block template_script %}
   <script>
     (function() {

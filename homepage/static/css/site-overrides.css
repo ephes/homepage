@@ -50,3 +50,24 @@
   --cast-gallery-header-bg: rgba(40, 53, 72, 1);
   --cast-gallery-footer-bg: rgba(40, 53, 72, 1);
 }
+
+/* Hero typography from prototype */
+.cast-hero .blog-title {
+  font-size: clamp(2.5rem, 5vw, var(--s4));
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--s-2);
+}
+
+.cast-hero .intro.lead {
+  font-size: var(--s1);
+  line-height: 1.5;
+  margin-top: var(--s-1);
+  font-style: italic;
+}
+
+.cast-hero .intro.lead strong {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--cast-text);
+}

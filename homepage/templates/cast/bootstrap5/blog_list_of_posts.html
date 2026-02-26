@@ -5,3 +5,128 @@
   {{ block.super }}
   {% webmention_endpoint_link %}
 {% endblock %}
+
+{% block hero_canvas %}<canvas id="heroCanvas"></canvas>{% endblock hero_canvas %}
+
+{% block template_script %}
+  <script>
+    (function() {
+      var canvas = document.getElementById('heroCanvas');
+      if (!canvas || canvas.dataset.heroInit) return;
+      canvas.dataset.heroInit = '1';
+      var ctx = canvas.getContext('2d');
+
+      function isDark() {
+        return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+      }
+
+      function resize() {
+        var hero = canvas.parentElement;
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = hero.offsetWidth * dpr;
+        canvas.height = hero.offsetHeight * dpr;
+        canvas.style.width = hero.offsetWidth + 'px';
+        canvas.style.height = hero.offsetHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function getW() {
+        return canvas.parentElement.offsetWidth;
+      }
+
+      function getH() {
+        return canvas.parentElement.offsetHeight;
+      }
+
+      function lineColor(alpha) {
+        if (isDark()) {
+          return 'rgba(56, 189, 248, ' + alpha + ')';
+        }
+        return 'rgba(0, 70, 180, ' + alpha + ')';
+      }
+
+      function bgColor() {
+        return isDark() ? '#1e293b' : '#eef0f3';
+      }
+
+      function noise(x, y, seed) {
+        var s = seed || 0;
+        return (
+          Math.sin(x * 0.012 + y * 0.009 + s) * 0.45 +
+          Math.sin(x * 0.008 - y * 0.014 + s + 1.7) * 0.35 +
+          Math.sin(x * 0.019 + y * 0.005 + s + 3.1) * 0.25 +
+          Math.cos(x * 0.01 + y * 0.012 + s + 0.5) * 0.3 +
+          Math.sin(x * 0.005 + y * 0.02 + s + 4.7) * 0.15
+        );
+      }
+
+      function drawTopo() {
+        resize();
+        var w = getW();
+        var h = getH();
+        ctx.fillStyle = bgColor();
+        ctx.fillRect(0, 0, w, h);
+
+        var levels = 22;
+        var step = 2.4 / levels;
+        var gridSize = 5;
+
+        for (var level = 0; level < levels; level++) {
+          var threshold = -1.2 + level * step;
+          var alpha = level % 3 === 0 ? 0.14 : (level % 3 === 1 ? 0.08 : 0.05);
+          ctx.strokeStyle = lineColor(alpha);
+          ctx.lineWidth = level % 3 === 0 ? 1.4 : 0.9;
+          ctx.beginPath();
+
+          for (var gx = 0; gx < w; gx += gridSize) {
+            for (var gy = 0; gy < h; gy += gridSize) {
+              var v00 = noise(gx, gy);
+              var v10 = noise(gx + gridSize, gy);
+              var v01 = noise(gx, gy + gridSize);
+              var v11 = noise(gx + gridSize, gy + gridSize);
+              var edges = [];
+
+              if ((v00 - threshold) * (v10 - threshold) < 0) {
+                var t0 = (threshold - v00) / (v10 - v00);
+                edges.push([gx + t0 * gridSize, gy]);
+              }
+              if ((v01 - threshold) * (v11 - threshold) < 0) {
+                var t1 = (threshold - v01) / (v11 - v01);
+                edges.push([gx + t1 * gridSize, gy + gridSize]);
+              }
+              if ((v00 - threshold) * (v01 - threshold) < 0) {
+                var t2 = (threshold - v00) / (v01 - v00);
+                edges.push([gx, gy + t2 * gridSize]);
+              }
+              if ((v10 - threshold) * (v11 - threshold) < 0) {
+                var t3 = (threshold - v10) / (v11 - v10);
+                edges.push([gx + gridSize, gy + t3 * gridSize]);
+              }
+
+              if (edges.length >= 2) {
+                ctx.moveTo(edges[0][0], edges[0][1]);
+                ctx.lineTo(edges[1][0], edges[1][1]);
+                if (edges.length === 4) {
+                  ctx.moveTo(edges[2][0], edges[2][1]);
+                  ctx.lineTo(edges[3][0], edges[3][1]);
+                }
+              }
+            }
+          }
+          ctx.stroke();
+        }
+      }
+
+      var rafId = 0;
+      function scheduleRedraw() {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(drawTopo);
+      }
+
+      drawTopo();
+      window.addEventListener('resize', scheduleRedraw);
+      new MutationObserver(scheduleRedraw)
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    })();
+  </script>
+{% endblock template_script %}

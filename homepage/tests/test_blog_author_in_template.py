@@ -36,7 +36,7 @@ class BlogAuthorTemplateTest(TestCase):
 
         # Check that the author is in the hidden h-card (fallback case without owner)
         self.assertIn("Jochen Wersdörfer", html)
-        self.assertIn('class="h-entry"', html)
+        self.assertRegex(html, r'class="[^"]*\bh-entry\b[^"]*"')
         # The h-card should be hidden
         self.assertIn('style="display: none;"', html)
         # Check for author info in the output

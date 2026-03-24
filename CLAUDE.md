@@ -70,8 +70,8 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 - Be careful with data migrations in production
 
 ## Deployment
-- Staging: `uv run python commands.py deploy_staging`
-- Production: `uv run python commands.py deploy_production`
+- Staging: `just deploy-staging`
+- Production: `just deploy-production`
 - Use environment variables for sensitive configuration
 - Static files served via WhiteNoise
 

@@ -2,7 +2,7 @@
 Tests for webmention sending integration with django-cast.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
@@ -21,9 +21,11 @@ class TestWebmentionIntegration(TestCase):
         mock_post = Mock()
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
-        
+
         # Mock the get_description method
-        mock_post.get_description = Mock(return_value='<p>Test content with <a href="https://external.com">link</a></p>')
+        mock_post.get_description = Mock(
+            return_value='<p>Test content with <a href="https://external.com">link</a></p>'
+        )
 
         # Create mock page with specific attribute returning our mock post
         mock_page = Mock()
@@ -44,9 +46,9 @@ class TestWebmentionIntegration(TestCase):
                     # Verify that get_description was called with correct parameters
                     mock_post.get_description.assert_called_once()
                     call_kwargs = mock_post.get_description.call_args.kwargs
-                    assert call_kwargs['render_detail'] is True
-                    assert call_kwargs['escape_html'] is False
-                    assert call_kwargs['remove_newlines'] is False
+                    assert call_kwargs["render_detail"] is True
+                    assert call_kwargs["escape_html"] is False
+                    assert call_kwargs["remove_newlines"] is False
 
                     # Verify webmentions were sent with correct parameters
                     mock_sender.send_webmentions.assert_called_once_with(
@@ -65,7 +67,7 @@ class TestWebmentionIntegration(TestCase):
         mock_post = Mock()
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
-        
+
         # Mock the get_description method
         mock_post.get_description = Mock(
             return_value='<p>Links: <a href="https://success.com">1</a> <a href="https://fail.com">2</a></p>'

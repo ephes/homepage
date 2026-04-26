@@ -43,5 +43,7 @@ def sort_webmentions_for_grouping(webmentions: Iterable[Any]) -> list[Any]:
         return sorted_mentions
 
     sorted_mentions.sort(key=_timestamp_for_sorting, reverse=True)
-    sorted_mentions.sort(key=lambda wm: MENTION_TYPE_ORDER.get(getattr(wm, "mention_type", ""), len(MENTION_TYPE_ORDER)))
+    sorted_mentions.sort(
+        key=lambda wm: MENTION_TYPE_ORDER.get(getattr(wm, "mention_type", ""), len(MENTION_TYPE_ORDER))
+    )
     return sorted_mentions

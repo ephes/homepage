@@ -28,8 +28,8 @@ dependencies = [
     "whitenoise",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "black",
     "coverage",
     "factory-boy",
@@ -46,6 +46,7 @@ dev-dependencies = [
     "django-removals",
     "sphinx",
     "furo",
+    "prek>=0.3.9",
 ]
 
 [tool.uv.sources]

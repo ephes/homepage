@@ -1,8 +1,6 @@
 import httpx
-
-from django.core.management.base import BaseCommand
-
 from cast.models import Blog, Post
+from django.core.management.base import BaseCommand
 
 
 def regenerate_renditions_for_image(image):
@@ -57,4 +55,3 @@ class Command(BaseCommand):
                 print(post.pk, post)
                 break
         print("generated renditions: ", len(new_renditions))
-

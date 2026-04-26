@@ -70,12 +70,10 @@ class WebmentionIntegrationTest(TestCase):
         from django.template import Context, Template
 
         # Test the webmention endpoint link tag
-        template = Template(
-            """
+        template = Template("""
             {% load webmention_tags %}
             {% webmention_endpoint_link %}
-        """
-        )
+        """)
 
         context = Context({})
         rendered = template.render(context)
@@ -195,8 +193,7 @@ class WebmentionIntegrationTest(TestCase):
         Webmention.objects.all().delete()
 
         # Test template rendering directly
-        template = Template(
-            """
+        template = Template("""
             {% load webmention_tags %}
             {% webmention_count url as wm_count %}
             Count: {{ wm_count }}
@@ -206,8 +203,7 @@ class WebmentionIntegrationTest(TestCase):
                     {% show_webmentions url %}
                 </section>
             {% endif %}
-        """
-        )
+        """)
 
         context = Context({"url": self.post_full_url})
         rendered = template.render(context)

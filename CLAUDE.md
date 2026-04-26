@@ -101,9 +101,9 @@ When working on dependencies like django-cast or cast-vue:
    uv run commands.py switch-to-git-sources
    ```
 
-3. **Pre-commit hook:** A pre-commit hook automatically prevents committing local paths. If you try to commit while in dev mode, it will:
+3. **prek hook:** A prek hook automatically prevents committing local paths. If you try to commit while in dev mode, it will:
    - Detect local paths in `tool.uv.sources`
    - Automatically switch back to git sources
    - Require you to stage the corrected `pyproject.toml`
 
-**Note:** The pre-commit hook ensures you never accidentally commit local development paths.
+**Note:** The prek hook ensures you never accidentally commit local development paths.

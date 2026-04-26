@@ -3,6 +3,7 @@
 Pre-commit hook to ensure tool.uv.sources doesn't contain local editable paths.
 Automatically switches back to git sources if local paths are detected.
 """
+
 import subprocess
 import sys
 from pathlib import Path

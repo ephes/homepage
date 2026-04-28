@@ -53,6 +53,8 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "django_filters",  # filter posts
     "django_extensions",  # shell_plus etc
+    "django_tasks",
+    "django_tasks_db",
     "indieweb",  # indieauth etc
     "cast.comments.apps.CastCommentsConfig",  # must be before django_comments
     "threadedcomments",
@@ -91,6 +93,19 @@ LOCAL_APPS = [
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# TASK CONFIGURATION
+# ------------------------------------------------------------------------------
+# Use the in-process ImmediateBackend for default tasks. Route long-running
+# Voxhelm transcript completion to the database-backed worker alias.
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
+    },
+    "cast_transcripts": {
+        "BACKEND": "django_tasks_db.DatabaseBackend",
+    },
+}
 
 # MIDDLEWARE CONFIGURATION
 # ------------------------------------------------------------------------------

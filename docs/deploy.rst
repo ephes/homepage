@@ -47,6 +47,20 @@ To backup the production database and restore it locally::
 
     postgres -D databases/postgres
 
+Transcript Worker
+-----------------
+
+Voxhelm transcript generation from Wagtail admin queues completion work on the
+``cast_transcripts`` Django Tasks database backend. The ops-control
+``deploy-homepage.yml`` playbook enables a managed systemd worker in addition
+to Gunicorn::
+
+    uv run python manage.py db_worker --backend cast_transcripts --worker-id homepage-transcripts
+
+The worker service uses the ``cast_transcripts`` backend alias and the stable
+``homepage-transcripts`` worker id. The worker requires the ``django_tasks_db``
+migrations to have been applied before it starts processing jobs.
+
 Legacy Deployment Process (Reference Only)
 ------------------------------------------
 

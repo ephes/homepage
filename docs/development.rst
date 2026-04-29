@@ -83,6 +83,30 @@ Deployment
 * ``just deploy-production`` - Deploy to production via ops-control (SOPS)
 * Deploy bootstraps ops-control collections via ``uvx ansible-galaxy`` and runs playbooks via ``uvx ansible-playbook``
 
+Blog Cover Image
+~~~~~~~~~~~~~~~~
+
+The default social cover image for blog posts without their own cover image is
+the ``cover_image`` field on the ``ephes_blog`` Wagtail blog page. Regenerate
+the screenshot from the production blog overview with::
+
+    just blog-cover-screenshot
+
+After deploying code that includes the ``update_blog_cover_image`` management
+command, generate the screenshot and install it on production with::
+
+    just blog-cover-update-production
+
+The recipes use ``shot-scraper`` through ``uvx``. Override
+``BLOG_COVER_URL``, ``BLOG_COVER_OUTPUT``, ``BLOG_COVER_REMOTE`` or
+``BLOG_COVER_SLUG`` if you need to target a different page, file, host, or
+blog. Wagtail revisions are attributed to the ``jochen`` user by default;
+override ``BLOG_COVER_USER`` to use a different username. To see all management
+command flags, including ``--title``, ``--alt-text``, ``--user`` and
+``--no-publish``, run::
+
+    just manage update_blog_cover_image --help
+
 Troubleshooting
 ~~~~~~~~~~~~~~~
 

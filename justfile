@@ -8,6 +8,15 @@ OPS_LIBRARY_PATH := env_var_or_default("OPS_LIBRARY_PATH", PROJECTS_ROOT + "/ops
 SOPS_AGE_KEY_FILE := env_var_or_default("SOPS_AGE_KEY_FILE", "~/.config/sops/age/keys.txt")
 ANSIBLE_PLAYBOOK_CMD := env_var_or_default("ANSIBLE_PLAYBOOK_CMD", "uvx --from ansible-core ansible-playbook")
 ANSIBLE_GALAXY_CMD := env_var_or_default("ANSIBLE_GALAXY_CMD", "uvx --from ansible-core ansible-galaxy")
+export BLOG_COVER_URL := env_var_or_default("BLOG_COVER_URL", "https://wersdoerfer.de/blogs/ephes_blog/")
+export BLOG_COVER_OUTPUT := env_var_or_default("BLOG_COVER_OUTPUT", "tmp/wersdoerfer-de-blogs-ephes_blog.jpg")
+export BLOG_COVER_REMOTE := env_var_or_default("BLOG_COVER_REMOTE", "root@wersdoerfer.de")
+export BLOG_COVER_REMOTE_APP := env_var_or_default("BLOG_COVER_REMOTE_APP", "/home/homepage/site")
+export BLOG_COVER_REMOTE_UPLOAD := env_var_or_default("BLOG_COVER_REMOTE_UPLOAD", "/tmp/wersdoerfer-de-blogs-ephes_blog.jpg")
+export BLOG_COVER_SLUG := env_var_or_default("BLOG_COVER_SLUG", "ephes_blog")
+export BLOG_COVER_TITLE := env_var_or_default("BLOG_COVER_TITLE", "wersdoerfer-de-blogs-ephes_blog")
+export BLOG_COVER_ALT_TEXT := env_var_or_default("BLOG_COVER_ALT_TEXT", "Just a screenshot of the blog overview page.")
+export BLOG_COVER_USER := env_var_or_default("BLOG_COVER_USER", "jochen")
 
 # Default recipe - show available commands
 default:
@@ -170,6 +179,33 @@ deploy-production: deploy-bootstrap
     PROJECTS_ROOT={{PROJECTS_ROOT}} \
     SOPS_AGE_KEY_FILE={{SOPS_AGE_KEY_FILE}} \
     {{ANSIBLE_PLAYBOOK_CMD}} -i inventories/prod/hosts.yml playbooks/deploy-homepage.yml
+
+# Generate the default blog cover image from the production blog overview.
+blog-cover-screenshot:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p "$(dirname "$BLOG_COVER_OUTPUT")"
+    uvx shot-scraper shot "$BLOG_COVER_URL" -o "$BLOG_COVER_OUTPUT" --width 1600 --height 800 --quality 90 --wait 1000
+
+# Generate and install the default blog cover image on production.
+blog-cover-update-production: blog-cover-screenshot
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {
+        printf 'set -euo pipefail\n'
+        printf 'blog_cover_remote_upload=%q\n' "$BLOG_COVER_REMOTE_UPLOAD"
+        printf 'trap '\''rm -f "$blog_cover_remote_upload"'\'' EXIT\n'
+        printf "base64 --decode > %q <<'BLOG_COVER_IMAGE'\n" "$BLOG_COVER_REMOTE_UPLOAD"
+        base64 < "$BLOG_COVER_OUTPUT"
+        printf '\nBLOG_COVER_IMAGE\n'
+        printf 'cd %q\n' "$BLOG_COVER_REMOTE_APP"
+        printf 'sudo -u homepage .venv/bin/python manage.py update_blog_cover_image %q --blog-slug %q --title %q --alt-text %q --user %q\n' \
+            "$BLOG_COVER_REMOTE_UPLOAD" \
+            "$BLOG_COVER_SLUG" \
+            "$BLOG_COVER_TITLE" \
+            "$BLOG_COVER_ALT_TEXT" \
+            "$BLOG_COVER_USER"
+    } | ssh "$BLOG_COVER_REMOTE" 'bash -s'
 
 # Help for common issues
 troubleshoot:

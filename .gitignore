@@ -110,6 +110,7 @@ yarn-error.log*
 
 # Runtime data
 pids
+/tmp/
 *.pid
 *.seed
 *.pid.lock

@@ -837,8 +837,8 @@ wheels = [
 
 [[package]]
 name = "django-indieweb"
-version = "0.6.0"
-source = { git = "https://github.com/ephes/django-indieweb?branch=develop#b4ee1891af5320918738a7e23b039b4b3fefae35" }
+version = "0.6.1"
+source = { git = "https://github.com/ephes/django-indieweb?branch=develop#5c910c44e311eadf9c4e44209715cca737635c82" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "cryptography" },

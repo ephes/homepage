@@ -729,7 +729,7 @@ wheels = [
 [[package]]
 name = "django-cast"
 version = "0.2.57"
-source = { git = "https://github.com/ephes/django-cast?branch=develop#aa2d0b58b69365bac65487b10b2d04282486f514" }
+source = { git = "https://github.com/ephes/django-cast?branch=develop#2e4520174783be374e04d17f1e508ab5d38d9e84" }
 dependencies = [
     { name = "crispy-bootstrap4" },
     { name = "django" },
@@ -923,14 +923,15 @@ wheels = [
 
 [[package]]
 name = "django-resume"
-version = "0.1.14"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
+    { name = "nh3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/82/de/6d52f38fe7b7d1cb541ed892e8635b398bed305ee5679ad176977e2dacdd/django_resume-0.1.14.tar.gz", hash = "sha256:ddf1b2666673ed040dd7d963b525eb18ae0021782a7b092d2db07e448806df50", size = 1238778, upload-time = "2025-12-08T18:25:32.445Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7c/41/5aba10756d7354ea76cfed8b523fdd2a849a17bc62f48aad3e4e83a69a33/django_resume-0.2.0.tar.gz", hash = "sha256:5b0dffe07186873d128bb652c1215c64d8750a8cfae907078a501eca8ca9f07c", size = 1238244, upload-time = "2026-05-12T16:38:12.222Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/83/5114148bd0d3a6c970cf4e88592d05e6f05e58fa189ba5c3286e1f3b8be4/django_resume-0.1.14-py3-none-any.whl", hash = "sha256:cb906b6cda39e0d04495a22b0bd23c1c5a89d4c7399d001c76d8354e6872e4e1", size = 1305817, upload-time = "2025-12-08T18:25:30.86Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/1a/b97a9397c6862f4db1138ab3eafc3840808b4fa54bce3bbfb27d94b91fed/django_resume-0.2.0-py3-none-any.whl", hash = "sha256:72969e2af9fb29b853aa33f7d43a60cff5ecdf6c5b3bfee792df1fd6f8332a8e", size = 1302721, upload-time = "2026-05-12T16:38:09.418Z" },
 ]
 
 [[package]]
@@ -1381,11 +1382,11 @@ wheels = [
 
 [[package]]
 name = "idna"
-version = "3.14"
+version = "3.15"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/05/b1/efac073e0c297ecf2fb33c346989a529d4e19164f1759102dee5953ee17e/idna-3.14.tar.gz", hash = "sha256:466d810d7a2cc1022bea9b037c39728d51ae7dad40d480fc9b7d7ecf98ba8ee3", size = 198272, upload-time = "2026-05-10T20:32:15.935Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/77/7b3966d0b9d1d31a36ddf1746926a11dface89a83409bf1483f0237aa758/idna-3.15.tar.gz", hash = "sha256:ca962446ea538f7092a95e057da437618e886f4d349216d2b1e294abfdb65fdc", size = 199245, upload-time = "2026-05-12T22:45:57.011Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/3c/3f62dee257eb3d6b2c1ef2a09d36d9793c7111156a73b5654d2c2305e5ce/idna-3.14-py3-none-any.whl", hash = "sha256:e677eaf072e290f7b725f9acf0b3a2bd55f9fd6f7c70abe5f0e34823d0accf69", size = 72184, upload-time = "2026-05-10T20:32:14.295Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/23/408243171aa9aaba178d3e2559159c24c1171a641aa83b67bdd3394ead8e/idna-3.15-py3-none-any.whl", hash = "sha256:048adeaf8c2d788c40fee287673ccaa74c24ffd8dcf09ffa555a2fbb59f10ac8", size = 72340, upload-time = "2026-05-12T22:45:55.733Z" },
 ]
 
 [[package]]
@@ -2978,15 +2979,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.59.0"
+version = "2.60.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/65/e0/9bf5e5fc7442b10880f3ec0eff0ef4208b84a099606f343ec4f5445227fb/sentry_sdk-2.59.0.tar.gz", hash = "sha256:cd265808ef8bf3f3edf69b527c0a0b2b6b1322762679e55b8987db2e9584aec1", size = 447331, upload-time = "2026-05-04T12:19:06.538Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/a2/2e6c090db384cc515069f4f85542bd5baf6786852073020ea73d4a76d3ea/sentry_sdk-2.60.0.tar.gz", hash = "sha256:0bd25e54e78ca02d0be512529fa644bbbf9e8470d7b26371294012d4ca93c978", size = 452946, upload-time = "2026-05-13T13:34:52.516Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/00/b8cc413748fb6383d1582e7cda51314f99743351c462a92dc690d5b5853b/sentry_sdk-2.59.0-py2.py3-none-any.whl", hash = "sha256:abcf65ee9a9d9cdebf9ad369782408ecca9c1c792686ef06ba34f5ab233527fe", size = 468432, upload-time = "2026-05-04T12:19:04.741Z" },
+    { url = "https://files.pythonhosted.org/packages/29/41/f2b800b7f12a05dd48c2a6280d4dd812d1425fc66ed3fe3fd99420c41d1a/sentry_sdk-2.60.0-py3-none-any.whl", hash = "sha256:28a536c03291c8bcb363cf35c611b32738ec118ff64d8d6383b096448ac4c803", size = 475616, upload-time = "2026-05-13T13:34:50.259Z" },
 ]
 
 [[package]]

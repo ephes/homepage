@@ -41,11 +41,11 @@ Database Backup
 
 To backup the production database and restore it locally::
 
-    uv run python commands.py production_db_to_local
+    uv run python commands.py production-db-to-local
 
 **Important**: Make sure only PostgreSQL is running locally (not the full development stack)::
 
-    postgres -D databases/postgres
+    just postgres
 
 Transcript Worker
 -----------------

@@ -165,7 +165,7 @@ The project uses ``honcho`` (installed via ``uvx``) to manage multiple processes
 You can also run services individually if needed::
 
     # Just PostgreSQL
-    postgres -D databases/postgres
+    just postgres
 
     # Just Django
     uv run python manage.py runserver

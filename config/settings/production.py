@@ -86,7 +86,14 @@ SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 INSTALLED_APPS += [
     "anymail",
 ]
-ANYMAIL = {"MAILGUN_API_KEY": env("DJANGO_MAILGUN_API_KEY"), "MAILGUN_SENDER_DOMAIN": env("MAILGUN_SENDER_DOMAIN")}
+ANYMAIL = {
+    "MAILGUN_API_KEY": env("DJANGO_MAILGUN_API_KEY"),
+    "MAILGUN_SENDER_DOMAIN": env("MAILGUN_SENDER_DOMAIN"),
+    # Optional override pointing at the self-hosted mailgun-relay
+    # (https://mailgun.home.xn--wersdrfer-47a.de/v3). Empty / unset falls
+    # back to Anymail's default https://api.mailgun.net/v3.
+    "MAILGUN_API_URL": env("MAILGUN_API_URL", default="https://api.mailgun.net/v3"),
+}
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 
 # TEMPLATE CONFIGURATION

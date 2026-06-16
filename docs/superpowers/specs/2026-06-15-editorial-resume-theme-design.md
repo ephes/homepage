@@ -91,6 +91,12 @@ Jedes Anschreiben ist ein **eigener `Resume`-Datensatz mit eigenem Slug** (z. B.
 ### Erweiterung: `education`
 Feld `degree` (Abschlusstitel, z. B. „Diplom Grafik- und Kommunikations-Design") ergänzen.
 
+**Entscheidung 2026-06-16 (Abweichung vom Plan):** `education` wird von einem `SimplePlugin`
+(genau ein Eintrag) zu einem **`ListPlugin`** umgebaut, weil der CV mehrere Bildungsstationen hat
+(Diplom 2007 **und** Abitur 2002). Felder je Eintrag: `school_name`, `school_url`, `degree`,
+`start`, `end`, `position` (analog `awards`/`languages`). List-Templates (content/flat/flat_form/
+item/item_form) für plain/headwind/editorial; Item-Kontext-Key `entry`.
+
 ## Theme `editorial`
 
 - **Schriften:**

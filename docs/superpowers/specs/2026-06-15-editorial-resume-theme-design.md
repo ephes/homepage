@@ -123,6 +123,17 @@ echter Text bleiben. Katharinas eigenes Deployment kann Cervanttis weiterhin als
   **Unterschrift** als transparentes PNG/SVG.
 - **Pflege:** Inline-Editing im Browser (`?edit=true`), kein Admin-Zwang.
 
+### Zugriffsschutz (Entscheidung 2026-06-16)
+- **CV: token-geschützt.** `token_is_required` bleibt `True`. Der Lebenslauf ist nicht
+  öffentlich auffindbar; Zugriff nur (a) als beliebiger authentifizierter User (eingeloggt —
+  `check_permissions` lässt jeden `request.user.is_authenticated` durch, nicht nur den Owner)
+  oder (b) anonym über `?token=<token>` mit einem gültigen, nicht abgelaufenen Token-Item
+  (TTL default 30 Tage, `TokenPlugin`).
+  Begründung: der CV enthält persönliche Daten (Adresse/Telefon); Links werden gezielt
+  pro Bewerbung weitergegeben statt frei indexierbar zu sein.
+- **Anschreiben: unlisted.** Jedes Anschreiben ist ein eigener `Resume`-Slug, erreichbar über
+  einen schwer ratbaren Slug, nicht verlinkt; `resume_detail` prüft keine Tokens.
+
 ## Dev-Workflow
 
 - **Lokale DB:** Produktions-Dump bereits eingespielt (`just`/`commands.py production-db-to-local`
@@ -151,5 +162,7 @@ echter Text bleiben. Katharinas eigenes Deployment kann Cervanttis weiterhin als
 ## Offene Punkte / Defaults
 
 - **Theme-Name:** Default `editorial` (kann vor Implementierung noch geändert werden).
+- **Zugriffsschutz CV:** ~~offen~~ → entschieden 2026-06-16: token-geschützt (siehe „Daten &
+  Persönliche Assets → Zugriffsschutz").
 - **Freie Script-Font:** 2–3 OFL-Kandidaten nahe Cervanttis werden in Phase 5 vorgeschlagen.
 - **Portraitfoto:** vorerst das vorhandene AI-Foto; ggf. später ersetzen.

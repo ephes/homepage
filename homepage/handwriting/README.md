@@ -49,6 +49,13 @@ The visual is built from two layers in one inline SVG:
    masked by it; `handwriting.js` animates `stroke-dashoffset` so the ink is
    revealed stroke-by-stroke in writing order. The mask pen is wide enough
    (`_MASK_COVER`) that the finished state reveals the whole glyph.
+   - **Pen `stroke-linecap` MUST be `butt`, not `round`** (`handwriting.css`).
+     A round cap renders a full dot (diameter = stroke-width) at a stroke's
+     origin the instant its `dashoffset` animation starts; the mask exposes that
+     as a black dot floating ahead of the writing (most visible on mobile).
+     `butt` draws nothing until the stroke has real length; the finished-state
+     coverage stays pixel-identical to the font (verified). `stroke-linejoin`
+     stays `round` to smooth interior bends.
 
 **Stem-darkening compensation (counter-safe).** The OS renders live *text* a
 touch bolder than a bare vector fill (font smoothing / stem darkening), so the

@@ -1,7 +1,67 @@
+import io
 from pathlib import Path
 
+import numpy as np
+from PIL import Image
+
+from homepage.handwriting.compose import compose_label
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _dark_px(shot):
+    """Count near-black (revealed ink) pixels in a PNG screenshot."""
+    return int((np.array(Image.open(io.BytesIO(shot)).convert("L")) < 128).sum())
+
+
+def _reveal_pens(page, dashoffset):
+    """Set every pen's --L = its length and freeze stroke-dashoffset.
+
+    dashoffset 0 == fully written; "L - 1" == only just started (1 unit drawn).
+    """
+    page.eval_on_selector_all(
+        ".hw-pen",
+        "(els, off) => els.forEach(p => {"
+        "  const L = p.getTotalLength();"
+        "  p.style.setProperty('--L', L);"
+        "  p.style.strokeDashoffset = off === 'start' ? (L - 1) : 0;"
+        "})",
+        dashoffset,
+    )
+
+
+def test_pens_reveal_no_ink_dot_when_a_stroke_just_starts(page):
+    """Regression: a stroke that has only just begun must not reveal an ink blob.
+
+    The reveal mask animates stroke-dashoffset from L to 0. With
+    `stroke-linecap: round`, a stroke at the very start of its animation renders
+    a round cap (a full dot, diameter = stroke-width) at its origin, which the
+    mask exposes as a black dot floating ahead of the writing — most visible on
+    mobile. `butt` caps draw nothing until the stroke has real length, so the
+    just-started state reveals (almost) no ink. We assert the just-started state
+    exposes a negligible fraction of the fully-written ink.
+    """
+    svg = compose_label("Work Experience")
+    assert svg is not None
+    page.set_viewport_size({"width": 2400, "height": 420})
+    page.set_content(
+        f"<!doctype html><meta charset=utf-8>"
+        f"<style>body{{margin:20px;background:#fff;color:#000;font-size:140px}}</style>"
+        f"<body>{svg}"
+    )
+    page.add_style_tag(path=str(ROOT / "static/handwriting/handwriting.css"))
+
+    _reveal_pens(page, "start")
+    just_started = _dark_px(page.locator(".hw-svg").screenshot())
+    _reveal_pens(page, 0)
+    written = _dark_px(page.locator(".hw-svg").screenshot())
+
+    assert written > 5000, "fully-written label should reveal substantial ink"
+    # round caps expose ~3.6% here (the dots); butt caps expose ~0%.
+    assert just_started < 0.005 * written, (
+        f"just-started strokes reveal too much ink ({just_started}px of "
+        f"{written}px written) — round-cap dots are leaking through the mask"
+    )
 
 
 def _animation_durations(page):

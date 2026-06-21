@@ -12,7 +12,13 @@
 /* .hw-ink-edge is a same-colour stroke (inline attrs) — stem-darkening.        */
 
 /* DEFAULT (no JS): ink visible, strokes fully revealed -> always readable.      */
-.hw-pen { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round;
+/* linecap MUST be `butt`, not `round`: the reveal animates stroke-dashoffset L->0,
+   and a round cap renders a full dot (diameter = stroke-width) at a stroke's
+   origin the instant it starts, which the mask exposes as a black dot floating
+   ahead of the writing (very visible on mobile). `butt` draws nothing until the
+   stroke has real length. linejoin stays `round` (smooths interior bends; the
+   fully-written coverage stays pixel-identical to the font — verified).         */
+.hw-pen { fill: none; stroke: #fff; stroke-linecap: butt; stroke-linejoin: round;
           stroke-dasharray: var(--L); stroke-dashoffset: 0; }
 
 /* JS present (html.js-hw is set inline in <head>, before first paint): hide the

@@ -88,6 +88,10 @@ outline + traced strokes + advance) in place of the component letters.
   always readable. JS *adds* a class to hide-then-animate on scroll.
 - **`prefers-reduced-motion: reduce`:** no hide, no animation; final state shows
   immediately.
+- **Replay:** returning to the page top or returning to the tab may replay the
+  currently visible labels after a 30-second cooldown since the last writing run.
+  No other replay trigger is registered. The default can be overridden with
+  `data-hw-replay-cooldown="<milliseconds>"` on `<html>`.
 
 ## Files
 
@@ -99,7 +103,7 @@ outline + traced strokes + advance) in place of the component letters.
   hidden real text + animated SVG; unsupported → plain text.
 - `static/handwriting/handwriting.css` / `.js` — default-written styling +
   IntersectionObserver scroll-trigger (reduced-motion / no-JS safe).
-- `tests/` — composer + template-tag tests.
+- `tests/` — composer, template-tag, and Playwright replay tests.
 
 Markup classes: `hw-label`, `hw-text`, `hw-svg`, `hw-ink-group`, `hw-ink`,
 `hw-ink-edge`, `hw-pen`.

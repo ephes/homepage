@@ -6,20 +6,49 @@
   padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0);
   white-space: nowrap; border: 0;
 }
-.hw-svg { display: block; height: 1em; width: auto; overflow: visible; color: inherit; }
-.hw-ink { fill: currentColor; }
-/* DEFAULT (no JS): fully written, so the label is always readable. */
+/* The SVG height is emitted inline in `em`, so it matches the label font-size.  */
+.hw-svg { display: inline-block; overflow: visible; color: inherit; vertical-align: baseline; }
+.hw-ink { fill: currentColor; }                 /* ink = exact font outline */
+/* .hw-ink-edge is a same-colour stroke (inline attrs) — stem-darkening.        */
+
+/* DEFAULT (no JS): ink visible, strokes fully revealed -> always readable.      */
 .hw-pen { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round;
           stroke-dasharray: var(--L); stroke-dashoffset: 0; }
 
-/* JS present: hide until triggered, then animate to revealed. */
-html.js-hw .hw-svg.hw-pending .hw-pen { stroke-dashoffset: var(--L); }
+/* JS present (html.js-hw is set inline in <head>, before first paint): hide the
+   ink up-front (no dependency on --L), then reveal+write each label on its turn.
+   This avoids the flash of finished text before the deferred script runs.       */
+html.js-hw .hw-ink-group { visibility: hidden; }
+html.js-hw .hw-svg.hw-go .hw-ink-group { visibility: visible; }
 html.js-hw .hw-svg.hw-go .hw-pen {
-  animation-name: hw-write; animation-timing-function: linear; animation-fill-mode: forwards;
+  animation-name: hw-write; animation-timing-function: cubic-bezier(.7, 0, .3, 1);
+  /* `both`: during a pen's animation-delay the `from` value (hidden) applies, so
+     not-yet-started strokes are NOT shown as already written; `forwards` alone
+     would leave them at the base offset:0 (written) until their delay elapses. */
+  animation-fill-mode: both;
 }
-@keyframes hw-write { to { stroke-dashoffset: 0; } }
+/* Explicit from/to so the start value (hidden) is robust across browsers.       */
+@keyframes hw-write {
+  from { stroke-dashoffset: var(--L); }
+  to   { stroke-dashoffset: 0; }
+}
 
-/* Respect reduced motion: never hide/animate. */
+/* Respect reduced motion: always show the final state, never hide/animate.      */
 @media (prefers-reduced-motion: reduce) {
+  html.js-hw .hw-ink-group { visibility: visible !important; }
   .hw-pen { stroke-dashoffset: 0 !important; animation: none !important; }
+}
+
+/* --- rotated rail labels --------------------------------------------------- */
+/* The composer wraps the SVG in `.hw-rot`, rotated -90deg and sized to its
+   rotated footprint (em). The rail <h2> uses writing-mode + rotate(180deg) for
+   vertical TEXT; reset that here so it does not also rotate our SVG.            */
+/* translateX re-centers the rotated SVG between the rail's two rules (its tight
+   footprint otherwise sits a few px right of the original font box).            */
+.cv-rail-label.hw-rail { writing-mode: horizontal-tb; transform: translateX(-5px); }
+/* The last rail (Resources) is pinned to the top of its tall track and nudged
+   down between the two pill buttons; replicate that without the rotation.       */
+.cv-aside > .cv-rail:last-child .cv-rail-label.hw-rail {
+  align-self: start;
+  transform: translateX(-5px) translateY(40px);
 }

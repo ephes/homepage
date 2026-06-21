@@ -58,8 +58,14 @@ def is_supported(text):
 
 
 @lru_cache(maxsize=512)
-def compose_label(text):
-    """Animated SVG markup for a fully-supported label, else None."""
+def compose_label(text, orientation="horizontal"):
+    """Animated SVG markup for a fully-supported label, else None.
+
+    orientation="vertical" wraps the SVG so it reads bottom-to-top (rotated -90°)
+    for the rotated CV rail labels; the wrapper reserves the rotated footprint in
+    `em` (the composer knows the viewBox), so it drops cleanly into the rail's
+    `auto` grid column.
+    """
     if not is_supported(text):
         return None
     d = _data()
@@ -116,11 +122,23 @@ def compose_label(text):
         ed = " ".join("M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in c) + " Z" for c in outer)
         ink += (f'<path class="hw-ink-edge" fill="none" stroke="currentColor" '
                 f'stroke-width="{_STEM_UNITS:.1f}" stroke-linejoin="round" d="{ed}"/>')
-    return (
-        f'<svg class="hw-svg" viewBox="{vbx:.1f} {vby:.1f} {vbw:.1f} {vbh:.1f}" '
-        f'preserveAspectRatio="xMinYMid meet" style="height:{h_em:.3f}em" '
-        f'aria-hidden="true" focusable="false">'
+    w_em = vbw / units
+    svg_inner = (
         f'<defs><mask id="{uid}" maskUnits="userSpaceOnUse" x="{vbx:.1f}" y="{vby:.1f}" '
         f'width="{vbw:.1f}" height="{vbh:.1f}">{pp}</mask></defs>'
-        f'<g class="hw-ink-group" mask="url(#{uid})">{ink}</g></svg>'
+        f'<g class="hw-ink-group" mask="url(#{uid})">{ink}</g>'
     )
+    svg_open = (
+        f'<svg class="hw-svg" viewBox="{vbx:.1f} {vby:.1f} {vbw:.1f} {vbh:.1f}" '
+        f'preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false"'
+    )
+    if orientation == "vertical":
+        # rotated -90° (reads bottom-to-top); wrapper reserves the rotated
+        # footprint (width = glyph height, height = glyph width) in em.
+        return (
+            f'<span class="hw-rot" style="display:inline-block;position:relative;'
+            f'width:{h_em:.3f}em;height:{w_em:.3f}em">'
+            f'{svg_open} style="position:absolute;top:50%;left:50%;height:{h_em:.3f}em;'
+            f'transform:translate(-50%,-50%) rotate(-90deg)">{svg_inner}</svg></span>'
+        )
+    return f'{svg_open} style="height:{h_em:.3f}em">{svg_inner}</svg>'

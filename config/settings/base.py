@@ -79,6 +79,7 @@ THIRD_PARTY_APPS = [
     "cast_vue.apps.CastVueConfig",  # cast_vue theme
     "django_vite",  # cast_vue theme
     "django_resume.apps.ResumeConfig",  # django-resume
+    "homepage.handwriting",             # handwriting label tag (overrides django_resume h2 labels)
 ]
 
 # Apps specific for this project go here.

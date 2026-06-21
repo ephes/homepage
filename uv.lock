@@ -924,14 +924,10 @@ wheels = [
 [[package]]
 name = "django-resume"
 version = "0.2.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/ephes/django-resume?branch=editorial-theme#6f825f47c6f850fe666cbdf6a82819dabe8eb013" }
 dependencies = [
     { name = "django" },
     { name = "nh3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/41/5aba10756d7354ea76cfed8b523fdd2a849a17bc62f48aad3e4e83a69a33/django_resume-0.2.0.tar.gz", hash = "sha256:5b0dffe07186873d128bb652c1215c64d8750a8cfae907078a501eca8ca9f07c", size = 1238244, upload-time = "2026-05-12T16:38:12.222Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/1a/b97a9397c6862f4db1138ab3eafc3840808b4fa54bce3bbfb27d94b91fed/django_resume-0.2.0-py3-none-any.whl", hash = "sha256:72969e2af9fb29b853aa33f7d43a60cff5ecdf6c5b3bfee792df1fd6f8332a8e", size = 1302721, upload-time = "2026-05-12T16:38:09.418Z" },
 ]
 
 [[package]]
@@ -1370,7 +1366,7 @@ requires-dist = [
     { name = "django-extensions" },
     { name = "django-indieweb", git = "https://github.com/ephes/django-indieweb?branch=develop" },
     { name = "django-proxy" },
-    { name = "django-resume" },
+    { name = "django-resume", git = "https://github.com/ephes/django-resume?branch=editorial-theme" },
     { name = "django-storages" },
     { name = "django-tasks", specifier = "==0.12.0" },
     { name = "django-tasks-db", specifier = "==0.12.0" },

@@ -293,6 +293,7 @@ def switch_to_dev_environment():
         ("cast-bootstrap5", projects_dir / "cast-bootstrap5"),
         ("django-cast", projects_dir / "django-cast"),
         ("django-indieweb", projects_dir / "django-indieweb"),
+        ("django-resume", projects_dir / "django-resume"),
     ]
 
     print("Switching to local development sources in pyproject.toml...")
@@ -334,6 +335,7 @@ def switch_to_git_sources():
         "cast-bootstrap5": {"git": "https://github.com/ephes/cast-bootstrap5"},
         "django-cast": {"git": "https://github.com/ephes/django-cast", "branch": "develop"},
         "django-indieweb": {"git": "https://github.com/ephes/django-indieweb", "branch": "develop"},
+        "django-resume": {"git": "https://github.com/ephes/django-resume", "branch": "editorial-theme"},
     }
 
     print("Restoring git sources in pyproject.toml...")

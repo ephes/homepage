@@ -1,0 +1,25 @@
+/* homepage/homepage/static/handwriting/handwriting.css */
+/* The label keeps real text for a11y/print; the SVG is the visual. */
+.hw-label { display: inline-block; }
+.hw-text {                      /* visually hidden, available to screen readers */
+  position: absolute !important; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+.hw-svg { display: block; height: 1em; width: auto; overflow: visible; color: inherit; }
+.hw-ink { fill: currentColor; }
+/* DEFAULT (no JS): fully written, so the label is always readable. */
+.hw-pen { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round;
+          stroke-dasharray: var(--L); stroke-dashoffset: 0; }
+
+/* JS present: hide until triggered, then animate to revealed. */
+html.js-hw .hw-svg.hw-pending .hw-pen { stroke-dashoffset: var(--L); }
+html.js-hw .hw-svg.hw-go .hw-pen {
+  animation-name: hw-write; animation-timing-function: linear; animation-fill-mode: forwards;
+}
+@keyframes hw-write { to { stroke-dashoffset: 0; } }
+
+/* Respect reduced motion: never hide/animate. */
+@media (prefers-reduced-motion: reduce) {
+  .hw-pen { stroke-dashoffset: 0 !important; animation: none !important; }
+}

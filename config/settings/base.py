@@ -89,6 +89,9 @@ LOCAL_APPS = [
     "homepage.fedi.apps.FediConfig",
     "homepage.core.apps.CoreConfig",
     "homepage.micropub",
+    # overrides django_resume's cover plugin with editorial closing + signature
+    # fields (loads after django_resume so its ready() wins the registry override)
+    "homepage.resume_cover.apps.ResumeCoverConfig",
     # Your stuff: custom apps go here
 ]
 

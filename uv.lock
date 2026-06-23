@@ -924,7 +924,7 @@ wheels = [
 [[package]]
 name = "django-resume"
 version = "0.2.0"
-source = { git = "https://github.com/ephes/django-resume?branch=editorial-theme#6f825f47c6f850fe666cbdf6a82819dabe8eb013" }
+source = { git = "https://github.com/ephes/django-resume?branch=editorial-theme#64fa0e4aaa9419fd3aa9dd945dae45207207b292" }
 dependencies = [
     { name = "django" },
     { name = "nh3" },

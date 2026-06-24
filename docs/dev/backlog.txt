@@ -1,0 +1,37 @@
+================
+Homepage Backlog
+================
+
+This page tracks planned and possible future work for the homepage project.
+Items here are not commitments; they are a shared planning list.
+
+Items should be removed when released, or rewritten if the next useful step
+changes.
+
+PDF Output (CV + Cover Letter)
+------------------------------
+
+* Produce downloadable **output PDFs** for both the CV and the cover letter,
+  assembled from the existing print version.
+
+  Today there is no real PDF download: the cover letter has only screen/print
+  CSS in progress, the CV has the django-resume base ``print.css``, and the
+  "Lebenslauf als PDF" link in the ``resume_cv.html`` override is a hardcoded
+  placeholder (``href="#"``). We want a clean, one-page A4 PDF for each
+  (handwriting in its final written state, hairlines drawn, no screen chrome)
+  that a reader can download.
+
+  **The generation mechanism is still open and must be tuned with a developer
+  before implementing.** Candidate approaches (decide later, do not commit to
+  one yet): on-demand server endpoint rendering the print view via headless
+  Chromium (Playwright — highest fidelity, same engine we verify with, but a
+  runtime dependency); on-demand WeasyPrint (pure Python, lighter, but print
+  CSS must be made WeasyPrint-compatible and handwriting/SVG fidelity is
+  uncertain); pre-generated files via a management command (fast to serve, can
+  go stale after edits); or relying on browser "Save as PDF" (simplest, no
+  download link).
+
+  This work lives in homepage along with the rest of the editorial cover-letter
+  / CV templates; it does not touch django-resume (that happens only at the end,
+  in the "Theme Extraction" backlog item over in django-resume). The download
+  links in the CV "Resources" rail would point here once this lands.

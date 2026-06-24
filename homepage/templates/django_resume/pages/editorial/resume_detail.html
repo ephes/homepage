@@ -38,7 +38,10 @@
     {% include theme.templates.main %}
   {% endif %}
 
-  {# The cover-letter body: date, recipient, subject, salutation, paragraphs, closing, signature. #}
+  {% comment %} Cover-letter meta-head (place/date, recipient, subject) — the
+  #cover-flat htmx swap target — then the body (salutation, paragraphs, closing,
+  signature). {% endcomment %}
+  {% include cover.templates.flat %}
   {% include cover.templates.main %}
 </div>
 </div>{# /cv-stage #}

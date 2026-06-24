@@ -1,0 +1,45 @@
+{% comment %} Editorial cover-letter flat edit form. Mirrors the django-resume
+original (title/avatar_alt hidden, avatar machinery preserved) and adds the
+editorial fields: closing, signature_name, and a signature image upload
+(file + clear), modelled on the avatar pair. Edit-form polish is out of scope.
+{% endcomment %}
+<editable-form id="cover-flat">
+  <form
+    id="form-cover"
+    hx-post="{{ edit_flat_post_url }}"
+    hx-target="#cover-flat"
+    hx-swap="outerHTML"
+    enctype="multipart/form-data"
+  >
+    <input type="hidden" data-field="title" name="title" value="{{ form.title.value|default:'' }}">
+    <input type="file" id="avatar-img" style="display:none;" name="avatar_img" accept="image/*"/>
+    <input type="hidden" data-field="avatar_alt" name="avatar_alt" value="{{ form.avatar_alt.value|default:'' }}">
+    <div class="stack cover-letter-meta">
+      <label>{{ form.place_date.label }}{{ form.place_date }}</label>
+      <label>{{ form.recipient.label }}{{ form.recipient }}</label>
+      <label>{{ form.subject.label }}{{ form.subject }}</label>
+      <label>{{ form.salutation.label }}{{ form.salutation }}</label>
+      <label>{{ form.closing.label }}{{ form.closing }}</label>
+      <label>{{ form.signature_name.label }}{{ form.signature_name }}</label>
+      <div class="stack cover-signature-edit">
+        {% if form.signature_img.value %}
+          <img class="cover-signature-img" src="{{ form.signature_img_url }}" alt="Signature preview">
+        {% endif %}
+        <label>{{ form.signature_img.label }}
+          <input type="file" name="signature_img" accept="image/*">
+        </label>
+        <label class="cluster">{{ form.clear_signature }} Remove signature image</label>
+        {% for error in form.signature_img.errors %}
+          <p class="error">{{ error|escape }}</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <button id="submit-cover" type="submit">
+        <svg class="edit-icon-small">
+          <use href="#ok"></use>
+        </svg>
+      </button>
+    </div>
+  </form>
+</editable-form>

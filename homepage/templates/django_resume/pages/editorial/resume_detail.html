@@ -38,13 +38,17 @@
     {% include theme.templates.main %}
   {% endif %}
 
-  {% comment %} Cover-letter meta-head (place/date, recipient, subject) — the
+  {% comment %} Cover-letter card: meta-head (place/date, recipient, subject) — the
   #cover-flat htmx swap target — then the body (salutation, paragraphs, closing,
-  signature). {% endcomment %}
-  {% include cover.templates.flat %}
-  {% include cover.templates.main %}
+  signature). The card carries the right vertical rule + rounded top-right corner. {% endcomment %}
+  <div class="cover-card stack">
+    {% include cover.templates.flat %}
+    {% include cover.templates.main %}
+  </div>
 </div>
 </div>{# /cv-stage #}
+{# Full-bleed black footer bar, echoing the CV's dark footer; ~4x the top edge strip. #}
+<footer class="cover-footer-bar" aria-hidden="true"></footer>
 </div>{# /cv-root #}
 {% if show_edit_button %}
   <script src="{% static "django_resume/js/edit.js" %}"></script>

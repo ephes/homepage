@@ -1,8 +1,9 @@
 /* Editorial cover-letter styles. All rules scoped under .cover-sheet (the letter
- * page's sheet) or .cover-letter (the letter content), so this file can be lifted
- * into the django-resume editorial theme as a clean copy without colliding with CV
- * rules. Reuses the editorial :root tokens (--s*, --editorial-rule,
- * --editorial-line, --editorial-bg) from screen.css. */
+ * page's sheet), .cover-card / .cover-head / .cover-letter (the letter content),
+ * or .cover-footer-bar, so this file can be lifted into the django-resume
+ * editorial theme as a clean copy without colliding with CV rules. Reuses the
+ * editorial :root tokens (--s*, --editorial-rule, --editorial-line,
+ * --editorial-bg) from screen.css. */
 
 /* ----------------------------------------------------- sheet mechanics ----- */
 /* On wide screens screen.css pulls .editorial-sheet up by -100dvh to overlay it
@@ -13,4 +14,160 @@
   .cover-sheet {
     margin-block-start: 0;
   }
+}
+
+.cover-sheet {
+  /* right gutter that holds the vertical hairline, mirroring the reference */
+  --cover-gutter: clamp(1rem, calc(8vw - 1rem), 5.5rem);
+  /* breathing room before the black footer bar */
+  padding-block-end: var(--s3);
+}
+
+/* Keep the sheet's torn vertical "paper edge" lines (the broken left/right rules
+ * the design wants). Remove only the header's horizontal rule — the cover-card's
+ * top+right "tile in bleed" outline below replaces it. */
+.cover-sheet .cv-header::after {
+  content: none;
+}
+
+/* On mobile screen.css reorders .cv-header to order:2 (in the CV it sits below
+ * the photo/intro there). The letter has no such reflow, so reset the shared
+ * header to the natural order — DOM order then keeps it first. */
+.cover-sheet > #identity {
+  order: 0;
+}
+
+/* ----------------------------------------------------- the letter card ----- */
+/* Right vertical hairline + rounded top-right corner: the right border curves
+ * inward at the top via the logical top-right radius, echoing the reference
+ * where the header rule turns down into the right edge. */
+.cover-card {
+  --stack-space: var(--s1);
+  position: relative;
+  /* butt the tile's top line right against the header bottom (where the removed
+     header rule sat): cancel the sheet's flex stack gap (--s-1) so there is no
+     gap between the header and the frame. */
+  margin-block-start: calc(-1 * var(--s-1));
+  /* bleed the top rule off to the left creme edge ("Kachel im Anschnitt");
+     padding restores the content position */
+  margin-inline-start: calc(-1 * var(--sheet-pad-inline));
+  padding-block: var(--s1) var(--s4);
+  padding-inline: var(--sheet-pad-inline) var(--cover-gutter);
+  /* tile outline: horizontal top + vertical right, joined by a rounded corner */
+  border-block-start: var(--editorial-rule) solid var(--editorial-line);
+  border-inline-end: var(--editorial-rule) solid var(--editorial-line);
+  border-start-end-radius: var(--s3);
+}
+
+/* ----------------------------------------------------- meta head ----------- */
+/* recipient (left) and date (right) share the top row so the address sits up
+ * near the date; subject spans the row below. */
+.cover-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "recipient date"
+    "subject   subject";
+  column-gap: var(--s1);
+  row-gap: var(--s2);
+}
+
+.cover-place-date {
+  grid-area: date;
+  justify-self: end;
+  text-align: end;
+  font-size: var(--s0);
+}
+
+.cover-recipient {
+  grid-area: recipient;
+  font-style: normal;
+  line-height: 1.5;
+  /* the address sits a little lower than the date */
+  margin-block-start: var(--s1);
+}
+/* The reference bolds only the addressee's first line. ::first-line is pure CSS
+ * and tracks the first rendered line (recipient is rendered with <br>). */
+.cover-recipient::first-line {
+  font-weight: 700;
+}
+
+.cover-subject {
+  grid-area: subject;
+  font-weight: 700;
+}
+
+.cover-head-edit {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: calc(-1 * var(--s1));
+}
+
+/* ----------------------------------------------------- body ---------------- */
+.cover-letter {
+  --stack-space: var(--s1);
+}
+
+/* short hairline divider, left-aligned (between subject and salutation) */
+.cover-rule {
+  inline-size: var(--s4);
+  margin-block: var(--s1);
+  margin-inline: 0 auto;
+  border: 0;
+  border-block-start: var(--editorial-rule) solid var(--editorial-line);
+}
+
+.cover-salutation {
+  font-weight: 700;
+}
+
+.cover-body {
+  --stack-space: var(--s1);
+  line-height: 1.6;
+  max-inline-size: 68ch;
+}
+
+.cover-para {
+  line-height: inherit;
+}
+
+/* ----------------------------------------------------- signature ----------- */
+.cover-sign {
+  --stack-space: var(--s0);
+  margin-block-start: var(--s2);
+}
+
+.cover-closing {
+  line-height: 1.6;
+}
+
+.cover-signature-img {
+  display: block;
+  max-block-size: 3.6rem;
+  inline-size: auto;
+}
+
+/* the handwriting fallback signs the name in script, signature-sized */
+.cover-signature-hw {
+  font-size: var(--s3);
+  line-height: 1;
+}
+/* The signature shows its final written state and never self-writes (the rest of
+ * the page still animates). Mirrors the reduced-motion path; !important beats the
+ * JS-set inline animation styles. */
+.cover-signature-hw .hw-ink-group {
+  visibility: visible !important;
+}
+.cover-signature-hw .hw-pen {
+  stroke-dashoffset: 0 !important;
+  animation: none !important;
+}
+
+/* ----------------------------------------------------- black footer bar ---- */
+/* Full-bleed dark footer echoing the CV's dark footer, ~4x the thin dark strip
+ * at the very top edge of the page. */
+.cover-footer-bar {
+  background-color: var(--editorial-line);
+  block-size: 6.25rem;
 }

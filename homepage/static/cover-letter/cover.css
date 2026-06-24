@@ -1,0 +1,16 @@
+/* Editorial cover-letter styles. All rules scoped under .cover-sheet (the letter
+ * page's sheet) or .cover-letter (the letter content), so this file can be lifted
+ * into the django-resume editorial theme as a clean copy without colliding with CV
+ * rules. Reuses the editorial :root tokens (--s*, --editorial-rule,
+ * --editorial-line, --editorial-bg) from screen.css. */
+
+/* ----------------------------------------------------- sheet mechanics ----- */
+/* On wide screens screen.css pulls .editorial-sheet up by -100dvh to overlay it
+ * on the sticky .cv-bg-layer (the CV's decorative side art, which occupies 100dvh
+ * of flow). The cover letter is a clean single-column sheet with NO side art and
+ * NO bg-layer, so that pull would yank it off-screen. Undo it for the letter. */
+@container editorial (min-width: 64rem) {
+  .cover-sheet {
+    margin-block-start: 0;
+  }
+}

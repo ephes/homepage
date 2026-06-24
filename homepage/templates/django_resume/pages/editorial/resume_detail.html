@@ -1,0 +1,51 @@
+{% extends "./base.html" %}
+{% load static %}
+{% load handwriting %}
+
+{% block title %}Anschreiben — {{ identity.name }}{% endblock title %}
+
+{% block meta %}
+  {{ block.super }}
+  <meta name="author" content="{{ identity.name }}">
+{% endblock meta %}
+
+{% block styles %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% handwriting_static "handwriting/handwriting.css" %}">
+  <link rel="stylesheet" href="{% handwriting_static "cover-letter/cover.css" %}">
+  {% comment %} Set js-hw before first paint so handwriting labels start hidden when JS
+  is on (no flash of finished text before the deferred script hides + animates them).
+  Without JS this never runs, so labels stay written and readable. {% endcomment %}
+  <script>document.documentElement.classList.add('js-hw');</script>
+{% endblock styles %}
+
+{% block body %}
+  {% if show_edit_button %}
+    <body class="editorial-page" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% else %}
+    <body class="editorial-page">
+  {% endif %}
+{# .cv-root is the layout container; the cover letter is single-column (no side art, no aside). #}
+<div class="cv-root">
+<div class="cv-stage">
+<div class="editorial-sheet cover-sheet stack">
+  {% if is_editable %}{% include "./edit_panel.html" %}{% endif %}
+
+  {# Recognizable header identical to the CV: name, role, "Contact" rail, icons (no photo). #}
+  {% include identity.templates.main %}
+
+  {% if show_edit_button %}
+    {% include theme.templates.main %}
+  {% endif %}
+
+  {# The cover-letter body: date, recipient, subject, salutation, paragraphs, closing, signature. #}
+  {% include cover.templates.main %}
+</div>
+</div>{# /cv-stage #}
+</div>{# /cv-root #}
+{% if show_edit_button %}
+  <script src="{% static "django_resume/js/edit.js" %}"></script>
+{% endif %}
+<script src="{% handwriting_static "handwriting/handwriting.js" %}" defer></script>
+</body>
+{% endblock body %}

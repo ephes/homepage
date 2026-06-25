@@ -6,14 +6,21 @@
  * --editorial-bg) from screen.css. */
 
 /* ----------------------------------------------------- sheet mechanics ----- */
-/* On wide screens screen.css pulls .editorial-sheet up by -100dvh to overlay it
- * on the sticky .cv-bg-layer (the CV's decorative side art, which occupies 100dvh
- * of flow). The cover letter is a clean single-column sheet with NO side art and
- * NO bg-layer, so that pull would yank it off-screen. Undo it for the letter. */
-@container editorial (min-width: 64rem) {
-  .cover-sheet {
-    margin-block-start: 0;
-  }
+/* The shared tablet/wide tiers in screen.css apply the side-art overlay
+ * (-100dvh) and a container-narrowed sheet to EVERY .editorial-sheet. The cover
+ * letter has no bg-layer yet, so that pull would yank it off-screen and the
+ * narrowing would float it with empty gaps. Neutralize both: the letter keeps a
+ * full-width sheet in normal flow. (Next: give the letter its own reduced
+ * illustration, then re-enable the overlay + peek per tier.) */
+.cover-sheet {
+  /* the editorial base sets .editorial-sheet { display: contents } on mobile (for
+     the CV's single-column dissolve); the cover letter is always a real centred
+     sheet box, so re-assert it (the base box props — creme bg, padding,
+     margin-inline:auto — then apply again). */
+  display: flex;
+  flex-direction: column;
+  margin-block-start: 0 !important;
+  max-inline-size: var(--sheet-max);
 }
 
 .cover-sheet {

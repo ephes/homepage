@@ -8,6 +8,31 @@ Items here are not commitments; they are a shared planning list.
 Items should be removed when released, or rewritten if the next useful step
 changes.
 
+Editorial CV + Cover Letter — open polish
+-----------------------------------------
+
+The editorial CV got a full responsive rework (single-column mobile structure up
+to a ~975px two-column breakpoint, side illustration as a fixed backdrop on
+tablet, continuous name clamp, fluid content padding, re-architected single-column
+header). It lives in django-resume ``editorial/screen.css`` on branch
+``editorial-theme`` @ ``c353b64`` (reviewed, round-2 clean). The cover letter
+(homepage overrides) was adapted to the shared structure. Remaining items:
+
+* **Mobile + tablet: one small refinement still pending (TODO — specify the exact
+  item).** Flagged during the responsive rework; re-check after it. Candidates:
+  the single-column photo size in the upper band (~850–975px, it scales up with
+  the name), and a full mobile-portrait pass across both pages.
+
+* **Cover-letter reduced illustration.** The cover letter currently has NO side
+  illustration on mobile/tablet. The owner will provide a strongly reduced asset
+  (separate from the CV's ``bg-cv-left/right``). The CV-side fixed-backdrop
+  mechanism already exists; re-add a scoped ``bg-layer`` to the letter and couple
+  it to the tiers (illustration in the side gaps, off in phone portrait).
+
+* **Cover-letter A4 print stylesheet** (cover-letter plan Task 6) + verification
+  (Task 7) are still open: ``homepage/static/cover-letter/cover-print.css`` linked
+  ``media="print"`` from the detail override, clean one-page A4.
+
 PDF Output (CV + Cover Letter)
 ------------------------------
 

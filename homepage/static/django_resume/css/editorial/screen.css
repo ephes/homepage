@@ -180,6 +180,10 @@ a { color: inherit; }
 /* nicer line breaks for body copy (avoids orphans / ragged last lines), so the
    content reads well even when columns stay narrow. Inherited by all text. */
 .editorial-sheet { text-wrap: pretty; }
+/* single source of truth for the firstname size — consumed by .cv-firstname AND by
+   --name-w / --id-col below. Defined on every sheet (incl. the cover, which also
+   renders a .cv-firstname) so .cv-firstname can read it everywhere. */
+.editorial-sheet { --name-font: clamp(min(3.2rem, 14.2vw), 8vw, 6.5rem); }
 
 /* CV single-column identity column: the photo and the name+contact block share
    one centred column (~firstname width + padding L/R), so the whole header block
@@ -193,9 +197,8 @@ a { color: inherit; }
      name is its own clamp, so it just centres inside. The inner min() caps it to the
      available width so the vertical "Contact" still fits its side gap. NB: only used
      in width/margin contexts — never font-size (a `%` there would resolve wrong). */
-  /* the firstname clamp (KEEP IN SYNC with .cv-firstname) and its rendered width.
-     "Katharina" measures ≈ 3.82× its font-size, the factor the photo column uses. */
-  --name-font: clamp(min(3.2rem, 14.2vw), 8vw, 6.5rem);
+  /* the firstname's rendered width: "Katharina" measures ≈ 3.82× its font-size,
+     the factor the photo column uses. (--name-font is defined on .editorial-sheet.) */
   --name-w: calc(3.82 * var(--name-font));
   --id-col: max(
     var(--photo-min),
@@ -236,8 +239,9 @@ a { color: inherit; }
    lands on the photo's bottom-left Spitze. The Spitze sits at 0.0349·--id-col right
    of the centred header edge (the clip insets the straight left edge 6.98% and the
    photo is nudged left half that), so the shift = that minus the rail label column.
-   The trailing +1px just offsets the line's own ::before -1px inset so its 1px
-   stroke lands ON the Spitze (was +6px, which pushed it ~5px to the right).
+   The trailing +0.25px is a small bias against the line's own ::before -1px inset
+   (a full +1px would over-cancel); the net ~-0.75px leaves the 1px stroke poking a
+   hair INTO the rounded Spitze, which reads as flush (was +6px = ~5px too far right).
    MUST use --id-col-safe, NOT --id-col: this aside lives inside .cv-header (width
    = id-col), so --id-col's `100%` term re-resolves against the header and the
    `avail` cap collapses it (~273 instead of 369 at 975px) — placing the line a few
@@ -386,15 +390,13 @@ a { color: inherit; }
   /* fluid; the vw term only bites below the 6.5rem cap (≈ phones/tablets), so the
      desktop name (capped) is unchanged — it just lets the name grow on phones,
      ~ up to the photo's right edge */
-  /* one continuous clamp from the phone size up to the 6.5rem cap, which it only
-     reaches on a wide desktop (~1300px = 8vw). So the name shrinks continuously
-     as the viewport narrows — THROUGH the two-column range (≥975px) and on into
-     single-column — instead of staying full-size until it suddenly reflows. The
-     photo column tracks the same clamp. The 3.2rem floor (vs 2.7) keeps the phone
-     photo at ~60vw; it meets the 8vw term continuously at ~640px (no jump), and
-     tablet/desktop stay in the 8vw region so they are unchanged. KEEP IN SYNC with
-     the --id-col clamp above. */
-  font-size: clamp(min(3.2rem, 14.2vw), 8vw, 6.5rem);
+  /* --name-font (on .editorial-sheet) is one continuous clamp from the phone size up
+     to the 6.5rem cap, reached only on a wide desktop (~1300px = 8vw). The name
+     shrinks continuously as the viewport narrows — THROUGH the two-column range
+     (≥975px) into single-column — instead of staying full-size until it reflows. The
+     photo column (--id-col) tracks the SAME token, so they can't drift. The 3.2rem
+     floor keeps the phone photo at ~60vw; it meets 8vw continuously at ~640px. */
+  font-size: var(--name-font);
   /* optically pull the first glyph flush with the tracked surname below it;
      em-based so it scales with the (fluid) name size */
   text-indent: -0.085em;

@@ -11,8 +11,19 @@ def test_supported_label_uses_nonzero_font_outline():
     assert '<path class="hw-ink"' in svg                  # single combined ink path
     assert 'mask="url(#hw' in svg                         # ink masked for the writing animation
     assert 'class="hw-pen"' in svg                        # skeleton reveal mask present
-    assert 'style="height:' in svg and 'em"' in svg       # em height -> size matches font
+    # horizontal label carries its em size as inline-size (width) with auto height,
+    # so max-inline-size:100% can shrink it proportionally on narrow columns
+    assert 'style="inline-size:' in svg and 'em"' in svg
     assert 'aria-hidden="true"' in svg
+
+def test_vertical_label_keeps_em_height():
+    # rotated rail labels size by em HEIGHT on the inner svg (the .hw-rot wrapper
+    # reserves the rotated footprint), so the horizontal inline-size swap must not
+    # touch them
+    svg = compose.compose_label("Contact", "vertical")
+    assert svg is not None
+    assert 'class="hw-rot"' in svg
+    assert 'height:' in svg and 'em' in svg
 
 def test_unsupported_char_falls_back_to_none():
     assert compose.compose_label("Œuvre") is None          # Œ not in the font/library

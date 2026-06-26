@@ -8,6 +8,14 @@
 }
 /* The SVG height is emitted inline in `em`, so it matches the label font-size.  */
 .hw-svg { display: inline-block; overflow: visible; color: inherit; vertical-align: baseline; }
+/* Horizontal labels (section headings): the SVG carries its natural size as
+   `inline-size` (em) with auto block-size, so `max-inline-size:100%` shrinks the
+   whole glyph proportionally when the heading would otherwise overflow a narrow
+   column (no horizontal scroll on small phones). The wrapper is capped too so the
+   percentage resolves against the heading's definite width, not the shrink-to-fit
+   inline-block. Rail (vertical) labels keep their rotated em footprint untouched. */
+.hw-label:not(.hw-label--rail) { max-inline-size: 100%; }
+.hw-label:not(.hw-label--rail) .hw-svg { max-inline-size: 100%; block-size: auto; }
 .hw-ink { fill: currentColor; }                 /* ink = exact font outline */
 /* .hw-ink-edge is a same-colour stroke (inline attrs) — stem-darkening.        */
 

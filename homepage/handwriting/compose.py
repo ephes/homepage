@@ -141,4 +141,8 @@ def compose_label(text, orientation="horizontal"):
             f'{svg_open} style="position:absolute;top:50%;left:50%;height:{h_em:.3f}em;'
             f'transform:translate(-50%,-50%) rotate(-90deg)">{svg_inner}</svg></span>'
         )
-    return f'{svg_open} style="height:{h_em:.3f}em">{svg_inner}</svg>'
+    # Horizontal: carry the natural size as `inline-size` (width) with auto height
+    # so the CSS `max-inline-size:100%` can shrink the whole glyph proportionally
+    # when the heading would overflow a narrow column (height stays in lock-step via
+    # the viewBox ratio). Emitting a fixed `height` instead would letterbox on shrink.
+    return f'{svg_open} style="inline-size:{w_em:.3f}em">{svg_inner}</svg>'

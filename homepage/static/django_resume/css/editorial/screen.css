@@ -63,6 +63,9 @@
   --sheet-pad-inline: clamp(1.25rem, calc(6.3vw - 1.6rem), 3.7rem);
   --script-lead: 4.6rem;         /* horizontal script labels: Work Experience + Awards (coupled) */
   --script-rail: 3rem;           /* vertical (rotated) rail labels: Contact / Let's talk about / Education */
+  --photo-min: 220px;            /* single-column photo floor: keeps the photo (and the
+                                    contact block sharing its width) from getting too small
+                                    on narrow phones. Floors --id-col; tune to taste. */
 
   --editorial-bg: #F0ECE2;       /* creme */
   --editorial-fg: #171410;       /* warm near-black */
@@ -184,15 +187,45 @@ a { color: inherit; }
    no photo. The two-column tier overrides both back to the desktop layout. */
 .editorial-sheet:not(.cover-sheet) {
   /* photo column = firstname width (~3.82x its font) + a sheet-padding each side,
-     so the photo is the name width plus 2x the inline padding. Same clamp as
-     .cv-firstname (keep in sync). The 3.2rem floor (not 2.7) is what lands the photo
-     at ~60% of the viewport on phones — below ~640px the vw term floors, so the photo
-     would otherwise shrink to ~53vw; 3.2rem keeps it the prominent "business card"
-     size the design started from. Capped so the vertical "Contact" still fits the gap. */
-  --id-col: min(
-    calc(3.82 * clamp(3.2rem, 8vw, 6.5rem) + 2 * var(--sheet-pad-inline)),
-    calc(100% - 2 * var(--script-rail))
+     so the photo is the name width plus 2x the inline padding. Same name clamp as
+     .cv-firstname (keep in sync). max(--photo-min, …) floors it so the photo (and
+     the contact block sharing this width) stays usable on the narrowest phones; the
+     name is its own clamp, so it just centres inside. The inner min() caps it to the
+     available width so the vertical "Contact" still fits its side gap. NB: only used
+     in width/margin contexts — never font-size (a `%` there would resolve wrong). */
+  /* the firstname clamp (KEEP IN SYNC with .cv-firstname) and its rendered width.
+     "Katharina" measures ≈ 3.82× its font-size, the factor the photo column uses. */
+  --name-font: clamp(min(3.2rem, 14.2vw), 8vw, 6.5rem);
+  --name-w: calc(3.82 * var(--name-font));
+  --id-col: max(
+    var(--photo-min),
+    min(
+      calc(var(--name-w) + 2 * var(--sheet-pad-inline)),
+      calc(100% - 2 * var(--script-rail))
+    )
   );
+  /* A faithful copy of --id-col that resolves correctly in margin / padding /
+     transform contexts. --id-col's `calc(100% - …)` cap CANNOT be reused there: a
+     `%` re-resolves against the using element's own box, collapsing id-col to its
+     220px floor (the trap that bit the photo transform). The cap DOES bind in a band
+     (~340–410px, where the available width is narrower than the name term), so it
+     must be kept — but expressed with `100cqw` (the editorial container = viewport),
+     which is identical everywhere regardless of the using element. */
+  --id-col-safe: max(
+    var(--photo-min),
+    min(
+      calc(var(--name-w) + 2 * var(--sheet-pad-inline)),
+      calc(100cqw - 2 * var(--sheet-pad-inline) - 2 * var(--script-rail))
+    )
+  );
+  /* The firstname is centred on the identity column; its left edge sits this far to
+     the RIGHT of the photo's bottom-left Spitze (= the contact line). The contact
+     text left-aligns to the name (icons sit under it) by using this as its inset
+     from the line. On the narrowest devices --name-line-gap shrinks below this so
+     the cluster slides toward the line and the long email still fits (see below). */
+  --gap-centered: calc(0.465123 * var(--id-col-safe) - 0.5 * var(--name-w));
+  /* never let the text/name crowd the line: keep at least 5px of breathing room. */
+  --name-line-gap: max(5px, var(--gap-centered));
 }
 .editorial-sheet:not(.cover-sheet) .cv-header {
   inline-size: 100%;
@@ -200,17 +233,26 @@ a { color: inherit; }
   margin-inline: auto;
 }
 /* shift the whole contact section left so the rail line (right of "Contact")
-   lands on the photo's bottom-left Spitze (≈ block-left + 3.49% of the photo
-   width, since the photo is optically nudged left by half its 6.98% inset).
-   Flexible: tracks the photo width via --id-col. */
+   lands on the photo's bottom-left Spitze. The Spitze sits at 0.0349·--id-col right
+   of the centred header edge (the clip insets the straight left edge 6.98% and the
+   photo is nudged left half that), so the shift = that minus the rail label column.
+   The trailing +1px just offsets the line's own ::before -1px inset so its 1px
+   stroke lands ON the Spitze (was +6px, which pushed it ~5px to the right).
+   MUST use --id-col-safe, NOT --id-col: this aside lives inside .cv-header (width
+   = id-col), so --id-col's `100%` term re-resolves against the header and the
+   `avail` cap collapses it (~273 instead of 369 at 975px) — placing the line a few
+   px left of the Spitze through the 638–975px band. --id-col-safe (100cqw-based)
+   matches the photo's actual id-col everywhere, so the line stays flush. */
 .editorial-sheet:not(.cover-sheet) .cv-header-aside {
-  margin-inline-start: calc(0.0349 * var(--id-col) - var(--script-rail) + 6px);
+  margin-inline-start: calc(0.0349 * var(--id-col-safe) - var(--script-rail) + 0.25px);
   /* the rail line rises to the photo's bottom Spitze (above the whole name).
      Empirical fluid curve that plateaus once the name font caps (~727px). It
      depends only on the photo/name geometry above — NOT on the number of contact
      rows below (those grow the line's anchored bottom) — so it stays docked if a
-     contact row is added. */
-  --contact-line-rise: clamp(124px, calc(17.8vw + 84px), 214px);
+     contact row is added. The +90 (was +84) lets the stroke poke a few px INTO the
+     photo's rounded bottom-left Spitze so it always visibly connects (no creme gap);
+     the 214px ceiling is unchanged so tablet (≥736px) stays exactly as before. */
+  --contact-line-rise: clamp(124px, calc(17.8vw + 90px), 214px);
 }
 /* irregular broken "paper edge" down the sheet's outer edges — different on each
    side, suggesting a torn sheet at the transition into the sketch decorations.
@@ -352,7 +394,7 @@ a { color: inherit; }
      photo at ~60vw; it meets the 8vw term continuously at ~640px (no jump), and
      tablet/desktop stay in the 8vw region so they are unchanged. KEEP IN SYNC with
      the --id-col clamp above. */
-  font-size: clamp(3.2rem, 8vw, 6.5rem);
+  font-size: clamp(min(3.2rem, 14.2vw), 8vw, 6.5rem);
   /* optically pull the first glyph flush with the tracked surname below it;
      em-based so it scales with the (fluid) name size */
   text-indent: -0.085em;
@@ -920,8 +962,15 @@ a { color: inherit; }
   margin-inline: auto;
   /* The clip insets the straight left edge by ~6.98% (Spitze top-left + bottom-
      left, square right), so a plain-centred box leaves a wider white strip on the
-     left. Shift left by HALF that inset so the white strips L/R are equal. */
-  transform: translateX(calc(-0.0349 * var(--id-col)));
+     left. Shift left by HALF that inset so the white strips L/R are equal.
+     MUST be a plain `%` (of the photo's own width), NOT calc(-0.0349*var(--id-col)):
+     --id-col contains `calc(100% - …)`, and in a `transform` a `%` resolves against
+     the ELEMENT'S OWN width — so that inner 100% would re-resolve to the photo's
+     width and collapse id-col to its 220px floor, shifting the photo too little and
+     pulling the bottom-left Spitze right of the contact line (the line's margin
+     resolves id-col's 100% against the container, so the two drifted apart). The
+     photo's own width already IS id-col, so -3.49% == -0.0349·id-col exactly. */
+  transform: translateX(-3.49%);
 }
 .cv-header { order: 2; flex-direction: column; padding-block-end: var(--s2); }  /* a touch more air to Work Experience on mobile */
 .cv-awards-bar { order: 4; margin-block-end: var(--s3); margin-inline: calc(-1 * var(--sheet-pad-inline)); }  /* full-bleed + air below */
@@ -950,6 +999,10 @@ a { color: inherit; }
   /* centre the name block under the (centred) photo, so its left/right insets are
      equal automatically, at any size */
   align-self: center;
+  /* Below 320px --name-line-gap drops below the centred gap, so slide the name left
+     by the same amount to keep it pinned over the contact icons (which use the same
+     gap). Zero at ≥320px (the two are equal there), so the name stays centred. */
+  transform: translateX(calc(var(--name-line-gap) - var(--gap-centered)));
 }
 .cv-role { text-align: start; font-size: clamp(1.1rem, 4.7vw, 1.4rem); }
 /* drop the optical first-glyph pull on phones: it shifts the visible name text
@@ -963,11 +1016,17 @@ a { color: inherit; }
      contact block is only as tall as its content (down to the email) */
   flex: 0 0 auto;
   margin-block-start: var(--s2);   /* clear gap below the name */
-  /* how far the contact divider line rises above the rail body to meet the
-     firstname's underline = vertical distance (lastname + role + the gap above).
-     Fluid so it tracks the name's vw-scaled type; tuned across phone widths. */
-  --contact-line-rise: calc(10vw + 59px);
+  /* NB: --contact-line-rise (how far the divider line rises above the rail body to
+     meet the photo's Spitze) is set on the higher-specificity
+     `.editorial-sheet:not(.cover-sheet) .cv-header-aside` rule above — that value
+     wins, so tune it there, not here. */
 }
+/* contact text left-aligns with the firstname above it: its inset from the line is
+   the firstname's own gap to the line (--name-line-gap), so the icons sit directly
+   under the name. Overrides the rail's default var(--s1). The name is centred on the
+   column, so above ~320px this just tracks the name; below that the gap shrinks (the
+   @container block further down moves BOTH name and icons toward the line to fit). */
+.cv-header-aside .cv-rail-body { padding-inline-start: var(--name-line-gap); }
 /* extend the contact rail line up so its top sits on the firstname's underline;
    trim the bottom so it ends flush with the last contact row (mail icon line) */
 .cv-header-aside .cv-rail-body::before {
@@ -983,6 +1042,27 @@ a { color: inherit; }
    there is no name column beside it here, so it just reads as a stray short line.
    (The contact rail line on its RIGHT stays.) The two-column tier restores it. */
 html.js-lines .cv-header-aside::before { display: none; }
+
+/* Smallest devices (≤320px, e.g. the original Galaxy Fold cover at 280px): the
+   contact line is pinned to the photo's bottom Spitze, so the space is tight on
+   BOTH sides — the rotated "Contact" label clips off the left edge and the long
+   email clips off the right. Below 320px compact the cluster so it seats cleanly.
+   At ≥320px the clamps cap at their normal values, so nothing changes (continuous).
+   • --script-rail shrinks the label's column AND its font (the label is
+     font-size:var(--script-rail)), pulling "Contact" in from the left edge. The
+     line stays EXACTLY on the Spitze because margin-inline-start subtracts
+     --script-rail, so it cancels out — the line's x is independent of this value.
+   • --name-line-gap (the shared name↔line / icon↔line inset) shrinks, sliding the
+     whole identity text — name AND the icons under it — toward the line so the long
+     email still fits. The name follows via its translate (see .cv-header-name), so
+     the icons stay left-aligned under it. min() keeps it = the normal centred gap
+     right at 320 (continuous), then it drops to a few px at 280. */
+@container editorial (max-width: 20rem) {
+  .cv-header-aside { --script-rail: clamp(32px, calc(40cqi - 80px), 48px); }
+  .editorial-sheet:not(.cover-sheet) {
+    --name-line-gap: max(5px, min(var(--gap-centered), clamp(5px, calc(35cqi - 96px), 24px)));
+  }
+}
 
 /* resources rail no longer fills height; work entries don't reach a divider;
  * date tabs bleed to the right edge */
@@ -1118,7 +1198,7 @@ html.js-lines .cv-header-aside::before { display: none; }
   }
   .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
   .cv-main h2 { text-align: start; }   /* lead label stays left on desktop */
-  .cv-header-name { align-self: flex-end; margin-inline-start: 0; }
+  .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }   /* no single-column name slide */
   .cv-firstname { text-indent: -0.085em; }
   .cv-role { text-align: end; font-size: var(--role-size); }
   .cv-header::after { display: block; }
@@ -1131,6 +1211,7 @@ html.js-lines .cv-header-aside::before { display: none; }
   }
   html.js-lines .cv-header-aside::before { display: block; }   /* divider returns beside the two-column name */
   /* contact line + label back to content-height / centred (the mobile rise is off) */
+  .cv-header-aside .cv-rail-body { padding-inline-start: var(--s1); }   /* drop the single-column name-alignment inset */
   .cv-header-aside .cv-rail-body::before { inset-block-start: 0; inset-block-end: 0; }
   .cv-header-aside .cv-rail-label { transform: rotate(180deg); }
   .cv-awards-bar { margin-inline: 0; margin-block-end: 0; }

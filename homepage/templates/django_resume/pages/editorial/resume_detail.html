@@ -25,9 +25,26 @@
   {% else %}
     <body class="editorial-page">
   {% endif %}
-{# .cv-root is the layout container; the cover letter is single-column (no side art, no aside). #}
+{# .cv-root is the layout container; the cover letter is single-column (no aside). #}
 <div class="cv-root">
 <div class="cv-stage">
+{% comment %} Decorative side illustrations beside the narrowed sheet from the tablet
+tier up — the SAME art + sizing as the CV (reused for now; a reduced cover-specific
+illustration replaces it later). Fixed backdrop peeking in the side gaps. {% endcomment %}
+<div class="cv-bg-layer" aria-hidden="true">
+  <div class="cv-bg cv-bg--left">
+    <picture>
+      <source srcset="{% static 'django_resume/img/editorial/bg-cv-left.avif' %}" type="image/avif">
+      <img src="{% static 'django_resume/img/editorial/bg-cv-left.webp' %}" alt="" decoding="async">
+    </picture>
+  </div>
+  <div class="cv-bg cv-bg--right">
+    <picture>
+      <source srcset="{% static 'django_resume/img/editorial/bg-cv-right.avif' %}" type="image/avif">
+      <img src="{% static 'django_resume/img/editorial/bg-cv-right.webp' %}" alt="" decoding="async">
+    </picture>
+  </div>
+</div>
 <div class="editorial-sheet cover-sheet stack">
   {% if is_editable %}{% include "./edit_panel.html" %}{% endif %}
 

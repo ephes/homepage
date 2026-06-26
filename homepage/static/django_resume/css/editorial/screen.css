@@ -1198,6 +1198,10 @@ html.js-lines .cv-header-aside::before { display: none; }
     margin-inline-end: 0;
     transform: none;   /* the single-column optical nudge does not apply in two columns */
   }
+  /* the two-column header is shared by the CV AND the cover letter: at this tier both
+     swing the contact rail out beside the name (the cover keeps the single-column
+     stacked header only below 61rem — see cover.css, which confines its single-column
+     contact-rail machinery to (max-width: 60.999rem) so these win here). */
   .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
   .cv-main h2 { text-align: start; }   /* lead label stays left on desktop */
   .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }   /* no single-column name slide */

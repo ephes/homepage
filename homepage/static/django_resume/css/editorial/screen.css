@@ -1198,28 +1198,28 @@ html.js-lines .cv-header-aside::before { display: none; }
     margin-inline-end: 0;
     transform: none;   /* the single-column optical nudge does not apply in two columns */
   }
-  /* the two-column header is shared by the CV AND the cover letter: at this tier both
-     swing the contact rail out beside the name (the cover keeps the single-column
-     stacked header only below 61rem — see cover.css, which confines its single-column
-     contact-rail machinery to (max-width: 60.999rem) so these win here). */
-  .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
+  /* the two-column header here is CV-only — the cover letter owns its own two-column
+     header in cover.css (it switches at a LOWER breakpoint, with a slimmer contact
+     column, because its body is a single-column letter with no 22rem sidebar to
+     match). Excluded via :not(.cover-sheet) so the cover's cover.css rules govern. */
+  .editorial-sheet:not(.cover-sheet) .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
   .cv-main h2 { text-align: start; }   /* lead label stays left on desktop */
-  .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }   /* no single-column name slide */
-  .cv-firstname { text-indent: -0.085em; }
-  .cv-role { text-align: end; font-size: var(--role-size); }
-  .cv-header::after { display: block; }
-  .cv-header-aside {
+  .editorial-sheet:not(.cover-sheet) .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }   /* no single-column name slide */
+  .editorial-sheet:not(.cover-sheet) .cv-firstname { text-indent: -0.085em; }
+  .editorial-sheet:not(.cover-sheet) .cv-role { text-align: end; font-size: var(--role-size); }
+  .editorial-sheet:not(.cover-sheet) .cv-header::after { display: block; }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside {
     border-inline-start: var(--editorial-rule) solid var(--editorial-line);
     padding-inline-start: var(--s-1);
     flex: 0 0 var(--aside-basis);
     margin-block-start: 0;
     margin-inline-start: 0;   /* no single-column Spitze shift in two columns */
   }
-  html.js-lines .cv-header-aside::before { display: block; }   /* divider returns beside the two-column name */
+  html.js-lines .editorial-sheet:not(.cover-sheet) .cv-header-aside::before { display: block; }   /* divider returns beside the two-column name */
   /* contact line + label back to content-height / centred (the mobile rise is off) */
-  .cv-header-aside .cv-rail-body { padding-inline-start: var(--s1); }   /* drop the single-column name-alignment inset */
-  .cv-header-aside .cv-rail-body::before { inset-block-start: 0; inset-block-end: 0; }
-  .cv-header-aside .cv-rail-label { transform: rotate(180deg); }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside .cv-rail-body { padding-inline-start: var(--s1); }   /* drop the single-column name-alignment inset */
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside .cv-rail-body::before { inset-block-start: 0; inset-block-end: 0; }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside .cv-rail-label { transform: rotate(180deg); }
   .cv-awards-bar { margin-inline: 0; margin-block-end: 0; }
   /* restore the desktop 3-column awards row + its insets/divider. The inner uses
      the same inline padding as the sheet body, and the last column is exactly

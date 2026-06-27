@@ -109,10 +109,11 @@
  * lands at that strip's right edge (--script-rail in), and the name / role / icons
  * all share ONE left edge a --name-line-gap further in. No photo-Spitze math.
  *
- * Confined to (max-width: 60.999rem): at ≥61rem the cover adopts the CV's shared
- * TWO-COLUMN header (contact rail swings out beside the name, per screen.css), so
- * these single-column overrides must NOT bleed into that tier. */
-@container editorial (max-width: 60.999rem) {
+ * Confined to (max-width: 52.999rem): at ≥53rem the cover switches to its OWN
+ * two-column header (below) — the contact rail swings out beside the name with a
+ * slimmer 20rem column, so it can hold the two-column look down to a narrower width
+ * than the CV's 61rem. These single-column overrides must NOT bleed into that tier. */
+@container editorial (max-width: 52.999rem) {
   .cover-sheet .cv-header {
     margin-inline: 0;            /* left-aligned, not centred */
     max-inline-size: none;
@@ -144,6 +145,45 @@
 @container editorial (max-width: 20rem) {
   .cover-sheet .cv-header { --script-rail: clamp(32px, calc(40cqi - 80px), 48px); }
   .cover-sheet { --name-line-gap: 8px; }
+}
+
+/* TWO-COLUMN header (≥53rem) — the cover's OWN, mirroring the CV's two-column header
+ * but switching ~8rem earlier. The CV holds its two-column header to 61rem because its
+ * BODY is a two-column grid sharing a 22rem (--aside-basis) sidebar; the cover's body
+ * is a single-column letter with no such sidebar, so its contact column can be slimmer
+ * (20rem — the email "katharina@wersdoerfer.de" + the script-rail/icon offsets still
+ * fit with slack). A narrower column means the name keeps a comfortable gutter beside
+ * it down to a narrower sheet, so the recognisable two-column look survives longer
+ * before collapsing to the single-column rail above. These rules are copied from the
+ * CV's screen.css ≥61rem header tier (now scoped :not(.cover-sheet) there) and re-scoped
+ * to .cover-sheet here — the cover-card body never gets the CV's two-column body. */
+@container editorial (min-width: 53rem) {
+  .cover-sheet { --aside-basis: 20rem; }
+  .cover-sheet .cv-header {
+    flex-direction: row;
+    padding-block-end: var(--s1);
+    max-inline-size: none;
+    margin-inline: 0;
+  }
+  .cover-sheet .cv-header-name {
+    align-self: flex-end;
+    margin-inline-start: 0;
+    transform: none;             /* no single-column name slide */
+  }
+  .cover-sheet .cv-firstname { text-indent: -0.085em; }
+  .cover-sheet .cv-role { text-align: end; font-size: var(--role-size); }
+  .cover-sheet .cv-header-aside {
+    border-inline-start: var(--editorial-rule) solid var(--editorial-line);
+    padding-inline-start: var(--s-1);
+    flex: 0 0 var(--aside-basis);
+    margin-block-start: 0;
+    margin-inline-start: 0;      /* no single-column Spitze shift in two columns */
+  }
+  html.js-lines .cover-sheet .cv-header-aside::before { display: block; }   /* divider beside the name */
+  /* contact line + label back to content-height / centred (the single-column rise is off) */
+  .cover-sheet .cv-header-aside .cv-rail-body { padding-inline-start: var(--s1); }
+  .cover-sheet .cv-header-aside .cv-rail-body::before { inset-block-start: 0; inset-block-end: 0; }
+  .cover-sheet .cv-header-aside .cv-rail-label { transform: rotate(180deg); }
 }
 
 /* ----------------------------------------------------- the letter card ----- */
@@ -210,15 +250,16 @@
   inset-inline-start: calc(-1 * var(--s1));
 }
 
-/* TWO-COLUMN tier (≥61rem): the header carries the contact rail out into a fixed
- * --aside-basis column on the right. Mirror that here so the date's LEFT edge lines
- * up exactly with the contact icons (phone/address) above it (owner's request).
- * The cover-card has extra right padding (--cover-gutter) the header doesn't, so the
- * date's column is (--aside-basis − --cover-gutter) wide — its left edge then lands on
- * the aside's left edge — and the date is indented by the aside's own internal offset
- * to the icon (border + label strip + rail-body padding): s-1 + rule + script-rail + s1.
- * Recipient takes the left column, subject spans both. */
-@container editorial (min-width: 61rem) {
+/* TWO-COLUMN tier (≥53rem, matching the header switch above): the header carries the
+ * contact rail out into a fixed --aside-basis column on the right. Mirror that here so
+ * the date's LEFT edge lines up exactly with the contact icons (phone/address) above it
+ * (owner's request). The cover-card has extra right padding (--cover-gutter) the header
+ * doesn't, so the date's column is (--aside-basis − --cover-gutter) wide — its left edge
+ * then lands on the aside's left edge — and the date is indented by the aside's own
+ * internal offset to the icon (border + label strip + rail-body padding): s-1 + rule +
+ * script-rail + s1. --aside-basis here resolves to the cover's slimmer 20rem (set above),
+ * so the date column tracks the narrower contact rail. Recipient left, subject spans. */
+@container editorial (min-width: 53rem) {
   .cover-head {
     display: grid;
     grid-template-columns: 1fr calc(var(--aside-basis) - var(--cover-gutter));

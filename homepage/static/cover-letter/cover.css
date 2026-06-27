@@ -271,7 +271,11 @@
   }
   .cover-recipient {
     grid-area: recipient;
-    margin-block-start: 0;
+    /* the date/place line holds the top; the recipient address drops ~1.5 lines
+       below it (letter convention — the address sitting level with or above the
+       date reads wrong). The grid keeps them in their own columns, this just
+       staggers them vertically so the date clearly sits highest. */
+    margin-block-start: var(--s2);
   }
   .cover-place-date {
     grid-area: date;

@@ -360,3 +360,49 @@
   background-color: var(--editorial-line);
   block-size: 6.25rem;
 }
+
+/* ----------------------------------------------------- print / PDF --------- */
+/* A4 print width is below the cover's 53rem two-column breakpoints, so re-assert
+ * the two-column header + the date/recipient grid here. The shared print.css
+ * already hides the footer bar, torn edges and illustrations and freezes the
+ * handwriting; this block only restores the two-column header geometry on paper. */
+@media print {
+  .cover-sheet { --aside-basis: 20rem; }
+  .cover-sheet .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
+  .cover-sheet .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }
+  .cover-sheet .cv-firstname { text-indent: -0.085em; }
+  .cover-sheet .cv-role { text-align: end; font-size: var(--role-size); }
+  .cover-sheet .cv-header-aside {
+    border-inline-start: var(--editorial-rule) solid var(--editorial-line);
+    padding-inline-start: var(--s-1);
+    flex: 0 0 var(--aside-basis);
+    margin-block-start: 0;
+    margin-inline-start: 0;
+  }
+  html.js-lines .cover-sheet .cv-header-aside::before { display: block; }
+  .cover-sheet .cv-header-aside .cv-rail-body { padding-inline-start: var(--s1); }
+  .cover-sheet .cv-header-aside .cv-rail-body::before { inset-block-start: 0; inset-block-end: 0; }
+  .cover-sheet .cv-header-aside .cv-rail-label { transform: rotate(180deg); }
+
+  /* date/recipient meta-head grid (mirrors the >=53rem screen rules) */
+  .cover-head {
+    display: grid;
+    grid-template-columns: 1fr calc(var(--aside-basis) - var(--cover-gutter));
+    grid-template-areas: "recipient date" "subject subject";
+    column-gap: var(--s1);
+    align-items: start;
+  }
+  .cover-recipient { grid-area: recipient; margin-block-start: var(--s2); }
+  .cover-place-date {
+    grid-area: date; text-align: start;
+    padding-inline-start: calc(var(--s-1) + var(--editorial-rule) + var(--script-rail) + var(--s1) + 1.6em);
+  }
+  .cover-subject { grid-area: subject; }
+
+  /* signature shows its final written state (mirrors the screen rule with !important) */
+  .cover-signature-hw .hw-ink-group { visibility: visible !important; }
+  .cover-signature-hw .hw-pen { stroke-dashoffset: 0 !important; animation: none !important; }
+
+  /* never split the letter card across a page break for the current one-pager */
+  .cover-card { break-inside: avoid; }
+}

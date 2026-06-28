@@ -39,6 +39,10 @@ html.js-hw .hw-ink-group { visibility: visible !important; }
  * sheet is not pulled up (-100dvh) and not narrowed for a peek — it fills the page.
  * ------------------------------------------------------------------------- */
 @media print {
+  /* Scale the whole rem-based layout down to fit on one A4.
+     Start at 12px (~75% of 16px) and tune ±1px until both PDFs are 1 page. */
+  :root { font-size: 10px; }
+
   .cv-root { display: block; padding: 0; background-color: transparent; max-inline-size: none; margin-inline: 0; }
   .cv-root:not(:has(.cover-sheet)) { max-inline-size: none; margin-inline: 0; }  /* undo tablet-tier 602px cap */
   .cv-root::after { content: none; }              /* no single-column creme panel */

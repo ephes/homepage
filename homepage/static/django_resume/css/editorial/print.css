@@ -25,7 +25,14 @@ body.editorial-page::before { display: none !important; }  /* thin black top str
 
 /* web-only chrome that must not appear inside the PDF */
 .cv-rail:has(.cv-resources) { display: none !important; }  /* "Resources" rail: CV-PDF + Portfolio links */
-.cover-head-edit { display: none !important; }             /* inline edit affordance */
+.cover-head-edit,
+.no-print,
+.edit-panel,
+.edit-icons,
+.edit-icon-small,
+.with-edit-icon-big,
+.edit-icon-big,
+.edit-icon-h1 { display: none !important; }               /* inline edit affordances + authenticated-user chrome */
 
 /* --- keep, frozen: handwriting labels + signature in final drawn state --- */
 /* mirrors the existing prefers-reduced-motion rule in handwriting.css */

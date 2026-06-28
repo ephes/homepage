@@ -46,7 +46,16 @@ class Command(BaseCommand):
                 # adds cv-line-drawn immediately under reduced-motion).
                 page.emulate_media(media="print", reduced_motion="reduce")
                 url = f"{base}{path}?token={token}"
-                page.goto(url, wait_until="networkidle")
+                response = page.goto(url, wait_until="networkidle")
+                if response is None or not response.ok:
+                    status = response.status if response else "no response"
+                    raise CommandError(
+                        f"{url} returned {status} — is the server up and the token correct?"
+                    )
+                if not page.query_selector(".editorial-sheet"):
+                    raise CommandError(
+                        f"{url} loaded but no .editorial-sheet found — check the slug and token"
+                    )
                 page.wait_for_timeout(500)
                 target = out_dir / filename
                 page.pdf(

@@ -36,27 +36,23 @@ header). It lives in django-resume ``editorial/screen.css`` on branch
 PDF Output (CV + Cover Letter)
 ------------------------------
 
-* Produce downloadable **output PDFs** for both the CV and the cover letter,
-  assembled from the existing print version.
+Downloadable A4 PDFs for the CV and cover letter are **implemented** (branch
+``editorial-resume-theme``). Pre-generated static files live in
+``homepage/static/resume/``:
 
-  Today there is no real PDF download: the cover letter has only screen/print
-  CSS in progress, the CV has the django-resume base ``print.css``, and the
-  "Lebenslauf als PDF" link in the ``resume_cv.html`` override is a hardcoded
-  placeholder (``href="#"``). We want a clean, one-page A4 PDF for each
-  (handwriting in its final written state, hairlines drawn, no screen chrome)
-  that a reader can download.
+* ``katharina-lebenslauf.pdf`` — one-page A4 CV
+* ``katharina-anschreiben.pdf`` — one-page A4 cover letter
 
-  **The generation mechanism is still open and must be tuned with a developer
-  before implementing.** Candidate approaches (decide later, do not commit to
-  one yet): on-demand server endpoint rendering the print view via headless
-  Chromium (Playwright — highest fidelity, same engine we verify with, but a
-  runtime dependency); on-demand WeasyPrint (pure Python, lighter, but print
-  CSS must be made WeasyPrint-compatible and handwriting/SVG fidelity is
-  uncertain); pre-generated files via a management command (fast to serve, can
-  go stale after edits); or relying on browser "Save as PDF" (simplest, no
-  download link).
+Generation uses ``manage.py render_resume_pdfs`` (headless Chromium via
+Playwright): runs against a live server, checks HTTP status and page structure
+before writing, and fails loudly on bad tokens or missing pages. The
+``just render-pdfs`` recipe starts its own isolated server on port 8765.
 
-  This work lives in homepage along with the rest of the editorial cover-letter
-  / CV templates; it does not touch django-resume (that happens only at the end,
-  in the "Theme Extraction" backlog item over in django-resume). The download
-  links in the CV "Resources" rail would point here once this lands.
+Download links in the CV "Resources" rail point to the committed static files;
+they are screen-only (hidden in print via the ``@media print`` block in
+``print.css``). Re-run the command after content edits and commit the updated
+PDFs.
+
+**Remaining:** PDFs can go stale after editorial content edits — no automatic
+re-generation hook exists yet. Consider wiring ``render-pdfs`` into the deploy
+pipeline or adding a CI check.

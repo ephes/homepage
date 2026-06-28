@@ -31,3 +31,76 @@ body.editorial-page::before { display: none !important; }  /* thin black top str
 /* mirrors the existing prefers-reduced-motion rule in handwriting.css */
 html.js-hw .hw-ink-group { visibility: visible !important; }
 .hw-pen { stroke-dashoffset: 0 !important; animation: none !important; }
+
+/* ---------------------------------------------------------------------------
+ * CV: force the desktop two-column architecture at A4 (the container is narrower
+ * than the 61rem screen breakpoint on paper). These mirror the screen.css
+ * @container (min-width: 61rem) block, but WITHOUT the side-art overlay: the
+ * sheet is not pulled up (-100dvh) and not narrowed for a peek — it fills the page.
+ * ------------------------------------------------------------------------- */
+@media print {
+  .cv-root { display: block; padding: 0; background-color: transparent; max-inline-size: none; margin-inline: 0; }
+  .cv-root:not(:has(.cover-sheet)) { max-inline-size: none; margin-inline: 0; }  /* undo tablet-tier 602px cap */
+  .cv-root::after { content: none; }              /* no single-column creme panel */
+  .cv-stage { display: block; }
+
+  .editorial-sheet:not(.cover-sheet) {
+    display: flex;
+    margin-block-start: 0;                          /* no desktop -100dvh overlay pull */
+    max-inline-size: none;                          /* fill the page (no side-art peek) */
+    margin-inline: 0;
+  }
+
+  /* header back to the full-width two-column row */
+  .editorial-sheet:not(.cover-sheet) .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
+  .editorial-sheet:not(.cover-sheet) .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }
+  .editorial-sheet:not(.cover-sheet) .cv-firstname { text-indent: -0.085em; }
+  .editorial-sheet:not(.cover-sheet) .cv-role { text-align: end; font-size: var(--role-size); }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside {
+    border-inline-start: var(--editorial-rule) solid var(--editorial-line);
+    padding-inline-start: var(--s-1);
+    flex: 0 0 var(--aside-basis);
+    margin-block-start: 0;
+    margin-inline-start: 0;
+  }
+  html.js-lines .editorial-sheet:not(.cover-sheet) .cv-header-aside::before { display: block; }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside .cv-rail-body { padding-inline-start: var(--s1); }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside .cv-rail-body::before { inset-block-start: 0; inset-block-end: 0; }
+  .editorial-sheet:not(.cover-sheet) .cv-header-aside .cv-rail-label { transform: rotate(180deg); }
+
+  /* two-column body */
+  .cv-body { display: flex; }
+  .cv-aside { display: flex; }
+  .cv-main {
+    display: flex;
+    flex: 0 1 auto; flex-basis: 0; flex-grow: 999;
+    min-inline-size: 50%;
+    padding-inline-end: var(--s2);
+    padding-block-end: 0;                           /* drop the huge screen bottom gap */
+  }
+  .cv-main h2 { text-align: start; }
+  .cv-photo {
+    inline-size: min(calc(100% + var(--photo-bleed-left)), 60vw);
+    margin-block-start: calc(-1 * (var(--s-1) + var(--editorial-rule)));
+    margin-inline-start: calc(-1 * var(--photo-bleed-left));
+    margin-inline-end: 0;
+    transform: none;
+  }
+
+  /* awards: full-bleed dark bar at the bottom edge, 3-column like desktop */
+  .cv-awards-bar { margin-inline: 0; margin-block-end: 0; }
+  .cv-awards-bar section { grid-template-columns: 0.5fr 1.2fr var(--aside-basis); gap: 0; }
+  .cv-awards-inner { max-inline-size: none; padding-block: var(--s2); padding-inline: var(--sheet-pad-inline); }
+  .cv-awards-bar h2 { text-align: start; line-height: 1.4; padding-block-end: 0; border-block-end: 0; margin-block-end: 0; }
+
+  /* density: condense the screen's generous per-entry breathing room to reference
+     density so today's content fills exactly one A4 */
+  :root { --entry-pad: var(--s-2); --entry-pad-top: calc(var(--date-tab-block) + var(--s-2)); }
+  .cv-main { padding-block-end: 0; }
+
+  /* restore document order (mobile rules set order:1–5 for card stacking) */
+  .cv-photo, .cv-header, .cv-main, .cv-awards-bar, .cv-rail { order: 0; }
+
+  /* multi-page: never split an entry/award/education item across a page break */
+  .timeline-entry, .cv-awards-bar .award-box, .cv-rail-body li { break-inside: avoid; }
+}

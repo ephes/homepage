@@ -353,6 +353,9 @@
   animation: none !important;
 }
 
+/* ----------------------------------------------------- PDF download link --- */
+.cover-download { margin-block-start: var(--s2); font-size: var(--s0); }
+
 /* ----------------------------------------------------- black footer bar ---- */
 /* Full-bleed dark footer echoing the CV's dark footer, ~4x the thin dark strip
  * at the very top edge of the page. */
@@ -419,4 +422,7 @@
      dark shows (also covers any area below a short letter). */
   .cover-sheet { max-inline-size: none; margin-inline: 0; }
   .cv-root:has(.cover-sheet) { background-color: var(--editorial-bg); }
+
+  /* hide the screen-only download link from the PDF */
+  .cover-download { display: none !important; }
 }

@@ -223,6 +223,20 @@ blog-cover-update-production: blog-cover-screenshot
             "$BLOG_COVER_USER"
     } | ssh "$BLOG_COVER_REMOTE" 'bash -s'
 
+# Render the editorial CV + cover letter to downloadable A4 PDFs (self-contained: starts its own server)
+render-pdfs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    port=8765
+    uv run python manage.py runserver "127.0.0.1:${port}" --noreload >/tmp/render-pdfs-server.log 2>&1 &
+    server_pid=$!
+    trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+    for _ in $(seq 1 30); do
+        curl -sf "http://127.0.0.1:${port}/resume/katharina/cv/?token=localpreview2026" -o /dev/null && break
+        sleep 1
+    done
+    uv run python manage.py render_resume_pdfs --base-url "http://127.0.0.1:${port}"
+
 # Help for common issues
 troubleshoot:
     @echo "Common issues and solutions:"

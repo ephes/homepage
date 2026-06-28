@@ -405,4 +405,12 @@
 
   /* never split the letter card across a page break for the current one-pager */
   .cover-card { break-inside: avoid; }
+
+  /* full-bleed creme like the reference: the tablet rule
+     (@container editorial (min-width:46rem)) narrows the sheet to a peek width at
+     A4 (min(--sheet-max, 100cqi - 2*--cv-peek)) and centers it, exposing the dark
+     page bg in the side gaps. Fill the page width and paint the backdrop creme so no
+     dark shows (also covers any area below a short letter). */
+  .cover-sheet { max-inline-size: none; margin-inline: 0; }
+  .cv-root:has(.cover-sheet) { background-color: var(--editorial-bg); }
 }

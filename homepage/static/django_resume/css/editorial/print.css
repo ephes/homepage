@@ -1,0 +1,33 @@
+/* Editorial theme — print / PDF. Homepage-vendored copy that SHADOWS the package
+ * print.css (linked via <link media="print"> in base.html). Produces a faithful
+ * A4 of the CONTENT AREA only: no side illustrations, no outer torn-edge lines,
+ * internal structural lines + handwriting kept frozen in final drawn state.
+ * CV two-column layout is forced here (Task 2); cover specifics live in cover.css. */
+
+@page {
+  size: A4;
+  /* full-bleed creme + dark bars to the page edges, like the reference; the sheet's
+     own padding provides the text inset (no white @page frame). */
+  margin: 0;
+}
+
+body.editorial-page {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;       /* keep creme bg, filled tags, dark bars on paper */
+}
+
+/* --- remove: illustrations + the outer lines that border them + page chrome --- */
+.cv-bg-layer { display: none !important; }                 /* peeking side illustrations */
+.editorial-sheet::before,
+.editorial-sheet::after { display: none !important; }      /* outer torn-paper edges */
+body.editorial-page::before { display: none !important; }  /* thin black top strip */
+.cover-footer-bar { display: none !important; }            /* cover's decorative dark footer */
+
+/* web-only chrome that must not appear inside the PDF */
+.cv-rail:has(.cv-resources) { display: none !important; }  /* "Resources" rail: CV-PDF + Portfolio links */
+.cover-head-edit { display: none !important; }             /* inline edit affordance */
+
+/* --- keep, frozen: handwriting labels + signature in final drawn state --- */
+/* mirrors the existing prefers-reduced-motion rule in handwriting.css */
+html.js-hw .hw-ink-group { visibility: visible !important; }
+.hw-pen { stroke-dashoffset: 0 !important; animation: none !important; }

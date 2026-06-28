@@ -367,6 +367,12 @@
  * already hides the footer bar, torn edges and illustrations and freezes the
  * handwriting; this block only restores the two-column header geometry on paper. */
 @media print {
+  /* The shared print.css sets :root { font-size: 10px } for the dense CV. The cover
+     letter only barely overflowed, so 10px over-shrinks its body text and leaves a
+     large empty band. cover.css loads AFTER print.css, so this :root rule wins for the
+     cover page only — restore a comfortably readable letter base while staying 1 page. */
+  :root { font-size: 12px; }
+
   .cover-sheet { --aside-basis: 20rem; }
   .cover-sheet .cv-header { flex-direction: row; padding-block-end: var(--s1); max-inline-size: none; margin-inline: 0; }
   .cover-sheet .cv-header-name { align-self: flex-end; margin-inline-start: 0; transform: none; }

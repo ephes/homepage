@@ -66,3 +66,8 @@ html.js-hw .hw-svg.hw-go .hw-pen {
   align-self: start;
   transform: translateX(-5px) translateY(40px);
 }
+/* The header "Contact" rail carries even-higher-specificity text rules
+   (.editorial-sheet … .cv-header-aside .cv-rail-label → rotate(180deg), in
+   screen.css desktop + print.css); reset those too so the SVG's own -90deg gives
+   the same bottom-to-top reading as the sidebar rails (German convention). */
+.editorial-sheet .cv-header-aside .cv-rail-label.hw-rail { transform: translateX(-5px); }

@@ -8,6 +8,8 @@ into appropriate Wagtail StreamField blocks.
 import re
 from typing import Any
 
+from django.utils.html import escape
+
 try:
     import bleach
 except ImportError:
@@ -133,9 +135,7 @@ class ContentConverter:
 
     def _element_to_block(self, element) -> tuple[str, Any] | None:
         """Convert a BeautifulSoup element to a StreamField block."""
-        if element.name in ["h2", "h3", "h4"]:
-            return ("heading", element.get_text().strip())
-        elif element.name == "pre":
+        if element.name == "pre":
             # Code block
             code_element = element.find("code")
             if code_element:
@@ -151,8 +151,8 @@ class ContentConverter:
                 return ("code", {"language": language, "code": code_element.get_text().strip()})
             else:
                 return ("code", {"language": "", "code": element.get_text().strip()})
-        elif element.name == "blockquote":
-            # Convert blockquote to rich text
+        elif element.name in ["blockquote", "h2", "h3", "h4"]:
+            # Convert block-level rich text elements preserving their markup
             return ("paragraph", str(element))
         elif element.name in ["p", "ul", "ol"]:
             # Rich text blocks
@@ -197,8 +197,9 @@ class ContentConverter:
                         if para.startswith("#"):
                             heading_match = re.match(r"^(#{1,4})\s+(.+)$", para)
                             if heading_match:
+                                level = min(max(len(heading_match.group(1)), 2), 4)
                                 heading_text = heading_match.group(2)
-                                blocks.append(("heading", heading_text))
+                                blocks.append(("paragraph", f"<h{level}>{escape(heading_text)}</h{level}>"))
                                 continue
 
                         # Regular paragraph

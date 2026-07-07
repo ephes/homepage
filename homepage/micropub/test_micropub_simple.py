@@ -89,9 +89,38 @@ class ContentConverterTests(TestCase):
         blocks = self.converter.convert_content(content, {})
 
         self.assertEqual(len(blocks), 2)
-        self.assertEqual(blocks[0][0], "heading")
-        self.assertEqual(blocks[0][1], "This is a heading")
+        self.assertEqual(blocks[0][0], "paragraph")
+        self.assertEqual(blocks[0][1], "<h2>This is a heading</h2>")
         self.assertEqual(blocks[1][0], "paragraph")
+
+    def test_convert_markdown_heading_levels(self):
+        """Test markdown headings become rich text paragraphs preserving levels."""
+        content = "## Foo\n\n### Bar\n\n#### Baz"
+        blocks = self.converter.convert_content(content, {})
+
+        self.assertEqual(
+            blocks,
+            [
+                ("paragraph", "<h2>Foo</h2>"),
+                ("paragraph", "<h3>Bar</h3>"),
+                ("paragraph", "<h4>Baz</h4>"),
+            ],
+        )
+
+    def test_convert_markdown_heading_escapes_html(self):
+        """Test markdown heading text is HTML escaped."""
+        content = "### <script>alert('x')</script>"
+        blocks = self.converter.convert_content(content, {})
+
+        self.assertEqual(blocks[0][0], "paragraph")
+        self.assertEqual(blocks[0][1], "<h3>&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;</h3>")
+
+    def test_convert_html_heading_preserves_level(self):
+        """Test HTML headings become rich text paragraphs preserving tags."""
+        content = "<h3>HTML Heading</h3>"
+        blocks = self.converter.convert_content(content, {})
+
+        self.assertEqual(blocks, [("paragraph", "<h3>HTML Heading</h3>")])
 
     def test_convert_code_block(self):
         """Test converting code blocks."""

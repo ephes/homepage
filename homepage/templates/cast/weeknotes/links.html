@@ -1,0 +1,18 @@
+{% load wagtailcore_tags %}
+
+{% for group in grouped_categories %}
+  <section class="weeknote-links weeknote-links--{{ group.key }}">
+    <h2>{{ group.label }}</h2>
+    <ul class="weeknote-link-list">
+      {% for item in group.items %}
+        <li class="weeknote-link-item weeknote-link-item--{{ item.kind }}">
+          <a class="weeknote-link-title" href="{{ item.url }}">{{ item.title }}</a>{% if item.source %}
+            <span class="weeknote-link-source">({% if item.source_url %}<a href="{{ item.source_url }}">{{ item.source }}</a>{% else %}{{ item.source }}{% endif %})</span>{% endif %}
+          {% if item.description %}
+            <span class="weeknote-link-description">{{ item.description|richtext }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endfor %}

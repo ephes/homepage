@@ -507,6 +507,12 @@ CAST_PODLOVE_PLAYER_THEMES = {
 # post repository for blog index page
 CAST_BLOG_INDEX_REPOSITORY = "raw"
 
+CAST_POST_BODY_BLOCKS = {
+    "overview": [
+        "homepage.core.weeknotes.blocks.weeknote_links_block",
+    ],
+}
+
 # IndieAuth and Micropub Configuration
 # ------------------------------------------------------------------------------
 INDIEWEB_ME_URL = env("INDIEWEB_ME_URL", default="http://localhost:8000")  # Your domain

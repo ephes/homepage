@@ -122,7 +122,7 @@
   margin-bottom: 0;
 }
 
-.post-card-title {
+.post-card .post-card-title {
   font-size: 1.65rem;
 }
 
@@ -136,13 +136,15 @@
   margin-block-end: var(--s-2);
 }
 
-.post-card-excerpt .weeknote-link-heading {
+.post-card .post-card-excerpt .weeknote-link-heading {
   color: var(--cast-text-muted);
   font-size: 1.05rem;
   font-weight: var(--cast-font-weight-semibold);
 }
 
-.post-card-excerpt :is(h2, h3, h4) {
+.post-card .post-card-excerpt :is(h2, h3, h4),
+.post-card .post-card-excerpt .block-paragraph :is(h2, h3, h4),
+.post-card .post-card-excerpt .block-heading :is(h2, h3, h4) {
   color: var(--cast-text-muted);
   font-size: 1.05rem;
   font-weight: var(--cast-font-weight-semibold);

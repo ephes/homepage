@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import io
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 from django.core.management import call_command
-from django.core.management.base import CommandError
+from django.core.management.base import CommandError as DjangoCommandError
 
 from homepage.core.management.commands.convert_weeknote_links import Command
 from homepage.core.weeknotes.converter import BodyConversion, convert_body, convert_paragraph_html
@@ -220,6 +221,37 @@ def test_convert_weeknote_links_command_write_and_publish(monkeypatch):
     assert "converted 1 post(s), published 1" in stdout.getvalue()
 
 
+def test_convert_weeknote_links_command_suppress_webmentions_requires_publish(monkeypatch):
+    _patch_post_model(monkeypatch, [])
+
+    with pytest.raises(DjangoCommandError, match="--suppress-webmentions requires --publish"):
+        call_command("convert_weeknote_links", "--suppress-webmentions", stdout=io.StringIO())
+
+
+def test_convert_weeknote_links_command_suppresses_webmentions_while_publishing(monkeypatch):
+    post = FakePost(
+        body=_overview(_paragraph('<h2>Articles</h2><ul><li><a href="https://example.com/a">A</a></li></ul>'))
+    )
+    _patch_post_model(monkeypatch, [post])
+    enter = Mock()
+    exit_ = Mock()
+
+    class FakeSuppression:
+        def __enter__(self):
+            enter()
+
+        def __exit__(self, *_args):
+            exit_()
+
+    monkeypatch.setattr(Command, "_suppress_webmentions", lambda self: FakeSuppression())
+
+    call_command("convert_weeknote_links", "--write", "--publish", "--suppress-webmentions", stdout=io.StringIO())
+
+    assert post.saved_revision.published is True
+    enter.assert_called_once_with()
+    exit_.assert_called_once_with()
+
+
 def test_convert_weeknote_links_command_write_skips_existing_unpublished_changes(monkeypatch):
     post = FakePost(
         body=_overview(_paragraph('<h2>Articles</h2><ul><li><a href="https://example.com/a">A</a></li></ul>')),
@@ -240,7 +272,7 @@ def test_convert_weeknote_links_command_fail_on_warnings(monkeypatch):
     )
     _patch_post_model(monkeypatch, [post])
 
-    with pytest.raises(CommandError):
+    with pytest.raises(DjangoCommandError):
         call_command("convert_weeknote_links", "--fail-on-warnings", stdout=io.StringIO())
 
 
@@ -253,6 +285,20 @@ def test_save_conversion_skips_pages_with_existing_unpublished_changes():
     assert post.body.raw_data == []
     assert post.saved_revision is None
     assert result == {"revision_id": None, "published": False, "skipped": "has_unpublished_changes"}
+
+
+def test_suppress_webmentions_disconnects_and_reconnects_signal(monkeypatch):
+    signal = Mock()
+    signal.disconnect.return_value = True
+    receiver = Mock()
+    monkeypatch.setattr("wagtail.signals.page_published", signal)
+    monkeypatch.setattr("homepage.core.webmention_integration.send_webmentions_on_publish", receiver)
+
+    with Command()._suppress_webmentions():
+        signal.disconnect.assert_called_once_with(receiver)
+        signal.connect.assert_not_called()
+
+    signal.connect.assert_called_once_with(receiver)
 
 
 def _patch_post_model(monkeypatch, posts):

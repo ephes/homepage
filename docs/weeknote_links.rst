@@ -124,6 +124,10 @@ Publish converted live pages that do not already have unpublished changes::
 
    uv run python manage.py convert_weeknote_links --write --publish --report /tmp/weeknote-links-report.json
 
+Publish converted pages without sending webmentions::
+
+   uv run python manage.py convert_weeknote_links --write --publish --suppress-webmentions --report /tmp/weeknote-links-report.json
+
 Pages that already have unpublished changes are skipped in write mode so the
 command does not replace an editor's existing draft revision. The report records
 these rows with ``skipped: "has_unpublished_changes"``.
@@ -138,6 +142,8 @@ Recommended workflow:
 4. Run ``--write`` only after the dry-run report is understood.
 5. Add ``--publish`` only when converted live pages should be published
    immediately. Without ``--publish``, live pages receive draft revisions.
+6. Add ``--suppress-webmentions`` for maintenance publishes of old posts where
+   sending webmentions again would be noisy.
 
 The command writes through Wagtail revisions. It records ``changed``,
 ``revision_id``, ``published``, and ``skipped`` per post in the JSON report.

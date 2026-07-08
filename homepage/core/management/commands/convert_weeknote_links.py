@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +19,19 @@ class Command(BaseCommand):
         parser.add_argument(
             "--publish", action="store_true", help="Publish converted live pages without draft changes."
         )
+        parser.add_argument(
+            "--suppress-webmentions",
+            action="store_true",
+            help="Temporarily disconnect the homepage webmention sender while publishing converted pages.",
+        )
         parser.add_argument("--report", help="Write a JSON conversion report to this path.")
         parser.add_argument("--fail-on-warnings", action="store_true", help="Exit non-zero when warnings are found.")
 
     def handle(self, *args, **options):
         from cast.models import Post
+
+        if options["suppress_webmentions"] and not options["publish"]:
+            raise CommandError("--suppress-webmentions requires --publish.")
 
         queryset = Post.objects.filter(slug__startswith="weeknotes-").order_by("visible_date")
         if options["slug"]:
@@ -35,22 +44,24 @@ class Command(BaseCommand):
         published_count = 0
         skipped_count = 0
 
-        for post in queryset:
-            conversion = convert_body(post.body.raw_data)
-            warning_count += len(conversion.warnings)
-            if conversion.changed:
-                changed_count += 1
-            entry = self._report_entry(post, conversion)
-            if conversion.changed and options["write"]:
-                save_result = self._save_conversion(post, conversion, publish=options["publish"])
-                entry.update(save_result)
-                if save_result["published"]:
-                    published_count += 1
-                if save_result["skipped"]:
-                    skipped_count += 1
-                else:
-                    saved_count += 1
-            report.append(entry)
+        publish_context = self._suppress_webmentions() if options["suppress_webmentions"] else nullcontext()
+        with publish_context:
+            for post in queryset:
+                conversion = convert_body(post.body.raw_data)
+                warning_count += len(conversion.warnings)
+                if conversion.changed:
+                    changed_count += 1
+                entry = self._report_entry(post, conversion)
+                if conversion.changed and options["write"]:
+                    save_result = self._save_conversion(post, conversion, publish=options["publish"])
+                    entry.update(save_result)
+                    if save_result["published"]:
+                        published_count += 1
+                    if save_result["skipped"]:
+                        skipped_count += 1
+                    else:
+                        saved_count += 1
+                report.append(entry)
 
         if options["report"]:
             Path(options["report"]).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
@@ -92,3 +103,16 @@ class Command(BaseCommand):
             "published": should_publish,
             "skipped": "",
         }
+
+    @contextmanager
+    def _suppress_webmentions(self):
+        from wagtail.signals import page_published
+
+        from homepage.core.webmention_integration import send_webmentions_on_publish
+
+        disconnected = page_published.disconnect(send_webmentions_on_publish)
+        try:
+            yield
+        finally:
+            if disconnected:
+                page_published.connect(send_webmentions_on_publish)

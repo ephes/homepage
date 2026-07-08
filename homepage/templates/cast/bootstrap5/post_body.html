@@ -1,6 +1,7 @@
 {% load wagtailcore_tags %}
 {% load i18n %}
 {% load indieweb_tags %}
+{% load post_body_blocks %}
 
 {% if page %}
   <article class="{% if render_detail %}post-detail{% else %}post-card{% endif %} h-entry">
@@ -60,7 +61,7 @@
             {% for block in block.value %}
             {# this is a block of content like image, gallery or audio #}
               <section class="block-{{ block.block_type }}">
-                {% include_block block %}
+                {% render_post_body_child block %}
               </section>
             {% endfor %}
           </section>

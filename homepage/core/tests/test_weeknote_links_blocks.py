@@ -147,11 +147,14 @@ def test_weeknote_links_block_renders_grouped_plain_markup():
     assert html.index("<h2>Articles</h2>") < html.index("<h2>Software</h2>") < html.index("<h2>Links</h2>")
     assert "Videos" not in html
     assert html.index("Article A") < html.index("Article B")
-    assert '<li class="weeknote-link-item weeknote-link-item--article">' in html
+    assert '<li class="weeknote-link-item weeknote-link-item--article" data-kind="article">' in html
+    assert '<p class="weeknote-link-head">' in html
     assert '<span class="weeknote-link-source">' in html
-    assert "(Plain source)" in " ".join(html.split())
+    assert "Plain source" in " ".join(html.split())
+    assert "(Plain source)" not in " ".join(html.split())
     assert '<a href="https://example.com/source/">Tool source</a>' in html
-    assert '<span class="weeknote-link-separator" aria-hidden="true"> | </span>' in html
+    assert "weeknote-link-separator" not in html
+    assert '<div class="weeknote-link-description">' in html
     assert "Useful <b>tool</b>." in html or "Useful <strong>tool</strong>." in html
 
 

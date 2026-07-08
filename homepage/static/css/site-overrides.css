@@ -122,9 +122,11 @@
   margin-bottom: 0;
 }
 
-/* Weeknote link collections keep the old h2 + ul reading rhythm. */
+/* Weeknote link collections keep the old h2 + ul rhythm with structured metadata. */
 .post-body .weeknote-links {
   margin-block: var(--s1);
+  --weeknote-link-description-color: color-mix(in srgb, var(--cast-text) 86%, var(--cast-text-muted));
+  --weeknote-link-marker-color: var(--cast-border-strong);
 }
 
 .post-body .weeknote-links h2 {
@@ -132,20 +134,66 @@
 }
 
 .post-body .weeknote-link-list {
-  padding-inline-start: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+  padding-inline-start: 0;
 }
 
 .post-body .weeknote-link-item {
-  margin-block: 0.35rem;
+  position: relative;
+  padding-inline-start: 1.15rem;
 }
 
-.post-body .weeknote-link-source,
-.post-body .weeknote-link-description {
+.post-body .weeknote-link-item::before {
+  background: var(--weeknote-link-marker-color);
+  border-radius: 999px;
+  content: "";
+  inline-size: 0.2rem;
+  inset-block: 0.32em 0.32em;
+  inset-inline-start: 0;
+  opacity: 0.75;
+  position: absolute;
+}
+
+.post-body .weeknote-link-head {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.55rem;
+  margin: 0;
+}
+
+.post-body .weeknote-link-title {
+  font-weight: 500;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.post-body .weeknote-link-source {
   color: var(--cast-text-muted);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.post-body .weeknote-link-source a {
+  color: inherit;
+  text-decoration-color: currentColor;
+}
+
+.post-body .weeknote-link-description {
+  color: var(--weeknote-link-description-color);
+  font-size: 0.94em;
+  line-height: 1.55;
+  margin-block-start: 0.15rem;
+  max-inline-size: 64ch;
 }
 
 .post-body .weeknote-link-description p {
-  display: inline;
   margin: 0;
 }
 

@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "argon2-cffi",
+    "beautifulsoup4",
     "django>=6.0,<7.0",
     "boto3",
     "cast-vue",

@@ -1239,6 +1239,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "argon2-cffi" },
+    { name = "beautifulsoup4" },
     { name = "boto3" },
     { name = "cast-bootstrap5" },
     { name = "cast-vue" },
@@ -1290,6 +1291,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "argon2-cffi" },
+    { name = "beautifulsoup4" },
     { name = "boto3" },
     { name = "cast-bootstrap5", git = "https://github.com/ephes/cast-bootstrap5" },
     { name = "cast-vue", git = "https://github.com/ephes/cast-vue" },

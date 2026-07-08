@@ -144,7 +144,11 @@ def test_weeknote_links_block_renders_grouped_plain_markup():
 
     html = block.render(value, context={"render_for_feed": False})
 
-    assert html.index("<h2>Articles</h2>") < html.index("<h2>Software</h2>") < html.index("<h2>Links</h2>")
+    assert (
+        html.index('<h2 class="weeknote-link-heading">Articles</h2>')
+        < html.index('<h2 class="weeknote-link-heading">Software</h2>')
+        < html.index('<h2 class="weeknote-link-heading">Links</h2>')
+    )
     assert "Videos" not in html
     assert html.index("Article A") < html.index("Article B")
     assert '<li class="weeknote-link-item weeknote-link-item--article" data-kind="article">' in html
@@ -182,7 +186,7 @@ def _post_body_with_weeknote_links(items):
     )
 
 
-def _render_post_body_template(template_name, *, render_for_feed=False):
+def _render_post_body_template(template_name, *, render_detail=True, render_for_feed=False):
     page = SimpleNamespace(
         body=_post_body_with_weeknote_links([link_item(title="Rendered through theme")]),
         owner=SimpleNamespace(username="jochen", profile=None),
@@ -197,7 +201,7 @@ def _render_post_body_template(template_name, *, render_for_feed=False):
             "comments_are_enabled": False,
             "episode_contributors": None,
             "page": page,
-            "render_detail": True,
+            "render_detail": render_detail,
             "render_for_feed": render_for_feed,
         },
     )
@@ -217,7 +221,15 @@ def test_weeknote_links_render_through_post_body_themes(template_name):
 
     assert "Rendered through theme" in html
     assert "weeknote-link-item--article" in html
-    assert "<h2>Articles</h2>" in html
+    assert '<h2 class="weeknote-link-heading">Articles</h2>' in html
+
+
+def test_weeknote_links_render_card_context_with_subordinate_heading():
+    html = _render_post_body_template("cast/bootstrap5/post_body.html", render_detail=False)
+
+    assert "Rendered through theme" in html
+    assert '<h3 class="weeknote-link-heading">Articles</h3>' in html
+    assert '<h2 class="weeknote-link-heading">Articles</h2>' not in html
 
 
 def test_weeknote_links_render_for_feed_context():

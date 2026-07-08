@@ -122,26 +122,30 @@
   margin-bottom: 0;
 }
 
-/* Weeknote link collections keep the old h2 + ul rhythm with structured metadata. */
-.post-body .weeknote-links {
+/* Weeknote link collections keep the old heading + ul rhythm with structured metadata. */
+:is(.post-body, .post-card-excerpt) .weeknote-links {
   margin-block: var(--s1);
   --weeknote-link-description-color: color-mix(in srgb, var(--cast-text) 92%, var(--cast-text-muted));
 }
 
-.post-body .weeknote-links h2 {
+:is(.post-body, .post-card-excerpt) .weeknote-link-heading {
   margin-block-end: var(--s-2);
 }
 
-.post-body .weeknote-link-list {
+.post-card-excerpt .weeknote-link-heading {
+  font-size: 1.15rem;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-list {
   padding-inline-start: 1.25rem;
 }
 
-.post-body .weeknote-link-item {
+:is(.post-body, .post-card-excerpt) .weeknote-link-item {
   margin-block: 0.75rem;
   padding-inline-start: 0.1rem;
 }
 
-.post-body .weeknote-link-head {
+:is(.post-body, .post-card-excerpt) .weeknote-link-head {
   align-items: baseline;
   display: flex;
   flex-wrap: wrap;
@@ -149,35 +153,35 @@
   margin: 0;
 }
 
-.post-body .weeknote-link-title {
+:is(.post-body, .post-card-excerpt) .weeknote-link-title {
   font-weight: 500;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
 }
 
-.post-body .weeknote-link-source {
+:is(.post-body, .post-card-excerpt) .weeknote-link-source {
   color: var(--cast-text-muted);
   font-size: 0.9em;
   white-space: nowrap;
 }
 
-.post-body .weeknote-link-source a {
+:is(.post-body, .post-card-excerpt) .weeknote-link-source a {
   color: inherit;
   text-decoration-color: currentColor;
 }
 
-.post-body .weeknote-link-description {
+:is(.post-body, .post-card-excerpt) .weeknote-link-description {
   color: var(--weeknote-link-description-color);
   font-size: 0.96em;
   line-height: 1.55;
   margin-block-start: 0.1rem;
 }
 
-.post-body .weeknote-link-description p {
+:is(.post-body, .post-card-excerpt) .weeknote-link-description p {
   margin: 0;
 }
 
-.post-body .weeknote-link-description p + p {
+:is(.post-body, .post-card-excerpt) .weeknote-link-description p + p {
   display: block;
   margin-block-start: 0.35rem;
 }

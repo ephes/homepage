@@ -2,7 +2,11 @@
 
 {% for group in grouped_categories %}
   <section class="weeknote-links weeknote-links--{{ group.key }}" aria-label="{{ group.label }}">
-    <h2>{{ group.label }}</h2>
+    {% if render_detail is False %}
+      <h3 class="weeknote-link-heading">{{ group.label }}</h3>
+    {% else %}
+      <h2 class="weeknote-link-heading">{{ group.label }}</h2>
+    {% endif %}
     <ul class="weeknote-link-list">
       {% for item in group.items %}
         <li class="weeknote-link-item weeknote-link-item--{{ item.kind }}" data-kind="{{ item.kind }}">

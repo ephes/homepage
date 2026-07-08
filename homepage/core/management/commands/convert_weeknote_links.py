@@ -31,7 +31,9 @@ class Command(BaseCommand):
         report: list[dict[str, Any]] = []
         warning_count = 0
         changed_count = 0
+        saved_count = 0
         published_count = 0
+        skipped_count = 0
 
         for post in queryset:
             conversion = convert_body(post.body.raw_data)
@@ -44,13 +46,21 @@ class Command(BaseCommand):
                 entry.update(save_result)
                 if save_result["published"]:
                     published_count += 1
+                if save_result["skipped"]:
+                    skipped_count += 1
+                else:
+                    saved_count += 1
             report.append(entry)
 
         if options["report"]:
             Path(options["report"]).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
 
+        action_count = saved_count if options["write"] else changed_count
         action = "converted" if options["write"] else "would convert"
-        self.stdout.write(f"{action} {changed_count} post(s), published {published_count}, warnings {warning_count}.")
+        self.stdout.write(
+            f"{action} {action_count} post(s), published {published_count}, "
+            f"skipped {skipped_count}, warnings {warning_count}."
+        )
         if warning_count and options["fail_on_warnings"]:
             raise CommandError(f"Conversion produced {warning_count} warning(s).")
 
@@ -62,9 +72,16 @@ class Command(BaseCommand):
             "warnings": [{"heading": warning.heading, "message": warning.message} for warning in conversion.warnings],
             "revision_id": None,
             "published": False,
+            "skipped": "",
         }
 
     def _save_conversion(self, post, conversion: BodyConversion, *, publish: bool) -> dict[str, Any]:
+        if post.has_unpublished_changes:
+            return {
+                "revision_id": None,
+                "published": False,
+                "skipped": "has_unpublished_changes",
+            }
         should_publish = publish and post.live and not post.has_unpublished_changes
         post.body = conversion.body
         revision = post.save_revision(changed=True)
@@ -73,4 +90,5 @@ class Command(BaseCommand):
         return {
             "revision_id": revision.id,
             "published": should_publish,
+            "skipped": "",
         }

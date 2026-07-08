@@ -124,11 +124,15 @@ Publish converted live pages that do not already have unpublished changes::
 
    uv run python manage.py convert_weeknote_links --write --publish --report /tmp/weeknote-links-report.json
 
+Pages that already have unpublished changes are skipped in write mode so the
+command does not replace an editor's existing draft revision. The report records
+these rows with ``skipped: "has_unpublished_changes"``.
+
 Recommended workflow:
 
 1. Run a dry run and inspect the summary.
 2. Run again with ``--report`` and review which posts changed, how many
-   sections were converted, and any warnings.
+   sections were converted, skipped posts, and any warnings.
 3. Use ``--fail-on-warnings`` in scripted checks when a clean conversion is
    required.
 4. Run ``--write`` only after the dry-run report is understood.
@@ -136,7 +140,7 @@ Recommended workflow:
    immediately. Without ``--publish``, live pages receive draft revisions.
 
 The command writes through Wagtail revisions. It records ``changed``,
-``revision_id``, and ``published`` per post in the JSON report.
+``revision_id``, ``published``, and ``skipped`` per post in the JSON report.
 
 Editor API round-trip status
 ----------------------------

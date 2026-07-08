@@ -121,6 +121,22 @@ def test_convert_paragraph_html_warns_and_preserves_ambiguous_heading():
     assert conversion.warnings[0].heading == "Podcasts / Videos"
 
 
+def test_convert_paragraph_html_warns_and_preserves_section_that_fails_block_validation():
+    conversion = convert_paragraph_html(
+        '<h2>Articles</h2><ul><li><a href="/internal/path/">Internal article</a></li></ul>'
+        '<h2>Software</h2><ul><li><a href="https://example.com/tool">Tool</a></li></ul>'
+    )
+
+    assert conversion.changed is True
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    assert conversion.blocks[0]["value"] == (
+        '<h2>Articles</h2><ul><li><a href="/internal/path/">Internal article</a></li></ul>'
+    )
+    assert _weeknote_values(conversion.blocks[1])[0]["title"] == "Tool"
+    assert conversion.warnings[0].heading == "Articles"
+    assert conversion.warnings[0].message == "List section failed structured block validation."
+
+
 def test_convert_body_only_rewrites_overview_paragraphs():
     body = _overview(
         _paragraph('<p>Intro.</p><h2>Weeknotes</h2><ul><li><a href="https://example.com/w">Weeklog</a></li></ul>'),
@@ -204,6 +220,20 @@ def test_convert_weeknote_links_command_write_and_publish(monkeypatch):
     assert "converted 1 post(s), published 1" in stdout.getvalue()
 
 
+def test_convert_weeknote_links_command_write_skips_existing_unpublished_changes(monkeypatch):
+    post = FakePost(
+        body=_overview(_paragraph('<h2>Articles</h2><ul><li><a href="https://example.com/a">A</a></li></ul>')),
+        has_unpublished_changes=True,
+    )
+    _patch_post_model(monkeypatch, [post])
+    stdout = io.StringIO()
+
+    call_command("convert_weeknote_links", "--write", stdout=stdout)
+
+    assert post.saved_revision is None
+    assert "converted 0 post(s), published 0, skipped 1" in stdout.getvalue()
+
+
 def test_convert_weeknote_links_command_fail_on_warnings(monkeypatch):
     post = FakePost(
         body=_overview(_paragraph('<h2>Podcasts / Videos</h2><ul><li><a href="https://example.com/a">A</a></li></ul>'))
@@ -214,15 +244,15 @@ def test_convert_weeknote_links_command_fail_on_warnings(monkeypatch):
         call_command("convert_weeknote_links", "--fail-on-warnings", stdout=io.StringIO())
 
 
-def test_save_conversion_creates_revision_without_publishing_drafts():
+def test_save_conversion_skips_pages_with_existing_unpublished_changes():
     post = FakePost(body=[], live=True, has_unpublished_changes=True)
     conversion = BodyConversion(body=[{"type": "overview", "value": []}], changed=True)
 
     result = Command()._save_conversion(post, conversion, publish=True)
 
-    assert post.body == conversion.body
-    assert post.saved_revision.published is False
-    assert result == {"revision_id": 42, "published": False}
+    assert post.body.raw_data == []
+    assert post.saved_revision is None
+    assert result == {"revision_id": None, "published": False, "skipped": "has_unpublished_changes"}
 
 
 def _patch_post_model(monkeypatch, posts):

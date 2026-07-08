@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from bs4 import BeautifulSoup, NavigableString, Tag
+from django.core.exceptions import ValidationError
 
 from .blocks import WeeknoteLinksBlock
 
@@ -167,6 +168,14 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 warnings.extend(section.warnings)
                 index = next_index + 1
                 continue
+            validation_warning = _validation_warning(section.items, heading=heading)
+            if validation_warning is not None:
+                flush_links()
+                pending_html.append(str(node))
+                pending_html.append(str(next_node))
+                warnings.append(validation_warning)
+                index = next_index + 1
+                continue
 
             flush_html()
             pending_links.extend(section.items)
@@ -321,6 +330,14 @@ def _prepared_weeknote_links(items: list[dict[str, Any]]) -> list[dict[str, Any]
     block = WeeknoteLinksBlock()
     value = block.clean(block.to_python(items))
     return block.get_prep_value(value)
+
+
+def _validation_warning(items: list[dict[str, Any]], *, heading: str) -> ConversionWarning | None:
+    try:
+        _prepared_weeknote_links(items)
+    except ValidationError:
+        return ConversionWarning("List section failed structured block validation.", heading=heading)
+    return None
 
 
 def _block(block_type: str, value: Any) -> dict[str, Any]:

@@ -7,10 +7,11 @@
       {% for item in group.items %}
         <li class="weeknote-link-item weeknote-link-item--{{ item.kind }}">
           <a class="weeknote-link-title" href="{{ item.url }}">{{ item.title }}</a>{% if item.source %}
-            <span class="weeknote-link-source">({% if item.source_url %}<a href="{{ item.source_url }}">{{ item.source }}</a>{% else %}{{ item.source }}{% endif %})</span>{% endif %}
-          {% if item.description %}
-            <span class="weeknote-link-description">{{ item.description|richtext }}</span>
-          {% endif %}
+            <span class="weeknote-link-source">
+              ({% if item.source_url %}<a href="{{ item.source_url }}">{{ item.source }}</a>{% else %}{{ item.source }}{% endif %})
+            </span>{% endif %}{% if item.description %}
+              <span class="weeknote-link-separator" aria-hidden="true"> | </span>
+              <span class="weeknote-link-description">{{ item.description|richtext }}</span>{% endif %}
         </li>
       {% endfor %}
     </ul>

@@ -121,3 +121,35 @@
 .cast-hero .intro.lead p {
   margin-bottom: 0;
 }
+
+/* Weeknote link collections keep the old h2 + ul reading rhythm. */
+.post-body .weeknote-links {
+  margin-block: var(--s1);
+}
+
+.post-body .weeknote-links h2 {
+  margin-block-end: var(--s-2);
+}
+
+.post-body .weeknote-link-list {
+  padding-inline-start: 1.25rem;
+}
+
+.post-body .weeknote-link-item {
+  margin-block: 0.35rem;
+}
+
+.post-body .weeknote-link-source,
+.post-body .weeknote-link-description {
+  color: var(--cast-text-muted);
+}
+
+.post-body .weeknote-link-description p {
+  display: inline;
+  margin: 0;
+}
+
+.post-body .weeknote-link-description p + p {
+  display: block;
+  margin-block-start: 0.35rem;
+}

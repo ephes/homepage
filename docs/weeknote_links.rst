@@ -148,12 +148,12 @@ Recommended workflow:
 The command writes through Wagtail revisions. It records ``changed``,
 ``revision_id``, ``published``, and ``skipped`` per post in the JSON report.
 
-Editor API round-trip status
-----------------------------
+Editor API round-trip
+---------------------
 
-The current homepage feature does not implement django-cast editor API support
-for custom blocks. The editor API custom-block round-trip is future
-``django-cast`` work: it must accept configured custom ``CAST_POST_BODY_BLOCKS``
-from author-facing JSON, validate and prepare through the Wagtail block API, and
-serialize custom blocks back to author-facing values instead of returning
-``unsupported`` placeholders.
+``django-cast`` 0.2.62 adds editor API support for custom blocks configured
+through ``CAST_POST_BODY_BLOCKS``. Once homepage's dependency is updated to a
+revision containing that change, daybook can send the author-facing JSON shape
+above. The editor API validates and prepares it through the Wagtail block API
+and returns the same logical value without exposing internal ``ListBlock`` item
+wrappers.

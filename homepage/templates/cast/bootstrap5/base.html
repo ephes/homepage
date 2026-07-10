@@ -3,7 +3,7 @@
 {% load cast_extras %}
 {% load webmention_tags %}
 
-{%block title %}{{ page.title }}{% endblock title %}
+{% block title %}{{ page.seo_title|default:page.title }}{% endblock title %}
 
 {% block meta %}
   {{ block.super }}

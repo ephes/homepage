@@ -16,6 +16,7 @@ Contents:
    backup_restore
    media_utils
    weeknote_links
+   seo
    deploy
    tests
 

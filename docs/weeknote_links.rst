@@ -18,10 +18,10 @@ need to construct nested section objects.
 Daybook author-facing JSON
 --------------------------
 
-Once django-cast supports configured custom ``CAST_POST_BODY_BLOCKS`` through
-the editor API, daybook should emit the author-facing block shape below. The
-editor API is expected to adapt this value through the configured Wagtail block's
-``to_python()``, ``clean()``, and ``get_prep_value()`` path before storing it.
+django-cast supports configured custom ``CAST_POST_BODY_BLOCKS`` through the
+editor API, so daybook emits the author-facing block shape below. The editor API
+adapts this value through the configured Wagtail block's ``to_python()``,
+``clean()``, and ``get_prep_value()`` path before storing it.
 
 .. code-block:: json
 
@@ -58,12 +58,16 @@ Field mapping from daybook data:
 * ``short_summary`` -> ``description`` as escaped rich-text HTML wrapped in a
   simple ``<p>...</p>`` paragraph when non-empty
 * ``category`` -> ``category``; ``links`` is the valid fallback
-* ``source_url`` may be omitted or set to ``""``
+* ``source_url`` -> ``source_url``; the key is required by automated Daybook
+  output but its value may be ``""``
 
 Validation constraints:
 
 * ``weeknote_links`` requires at least one item.
-* ``category``, ``kind``, ``title``, and ``url`` are required.
+* Every item must contain exactly ``category``, ``kind``, ``title``, ``url``,
+  ``source``, ``source_url``, and ``description``. The four primary fields must
+  be non-empty; ``source``, ``source_url``, and ``description`` may be empty
+  strings subject to the constraint below.
 * ``url`` and ``source_url`` must be valid URLs when present.
 * ``source_url`` requires a non-empty ``source`` label.
 
@@ -151,9 +155,8 @@ The command writes through Wagtail revisions. It records ``changed``,
 Editor API round-trip
 ---------------------
 
-``django-cast`` 0.2.62 adds editor API support for custom blocks configured
-through ``CAST_POST_BODY_BLOCKS``. Once homepage's dependency is updated to a
-revision containing that change, daybook can send the author-facing JSON shape
-above. The editor API validates and prepares it through the Wagtail block API
-and returns the same logical value without exposing internal ``ListBlock`` item
-wrappers.
+Homepage's django-cast dependency includes editor API support for custom blocks
+configured through ``CAST_POST_BODY_BLOCKS``. Daybook can send the author-facing
+JSON shape above; the editor API validates and prepares it through the Wagtail
+block API and returns the same logical value without exposing internal
+``ListBlock`` item wrappers.

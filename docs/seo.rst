@@ -18,12 +18,11 @@ owned by the Wagtail page and rendered as follows:
 * The ephes blog adds ``twitter:creator=@ephes`` locally. Generic django-cast
   themes do not hard-code a site account.
 
-The django-cast 0.2.62 development tree accepts ``seo_title`` and
+The deployed django-cast 0.2.64 lock accepts ``seo_title`` and
 ``search_description`` on post and episode create/update and returns them on
-reads. Homepage must update its django-cast and cast-bootstrap5 locks and deploy
-before production exposes that contract. Agent-authored weeknotes should then
-set the same metadata through their delivery sidecar once daybook's metadata
-delivery slice lands.
+reads. Homepage's matching cast-bootstrap5 templates expose that contract in
+production, and Daybook's validated metadata sidecar delivers the owned
+weeknote fields with the draft overview.
 
 Authoring guidance
 ------------------

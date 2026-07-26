@@ -149,8 +149,13 @@ CACHE_MIDDLEWARE_KEY_PREFIX = "homepage"
 
 # Sentry Configuration
 SENTRY_DSN = env("DJANGO_SENTRY_DSN")
+# Staging runs this same settings module. Without an explicit environment the
+# Sentry SDK defaults to "production", so staging incidents were indistinguishable
+# from real production ones.
+SENTRY_ENVIRONMENT = env("DJANGO_SENTRY_ENVIRONMENT", default="production")
 sentry_sdk.init(
     dsn=SENTRY_DSN,
+    environment=SENTRY_ENVIRONMENT,
     integrations=[DjangoIntegration()],
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.

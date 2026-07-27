@@ -138,6 +138,10 @@ Reihenfolge (Entscheidung Katharina): **Hero (welcome) → Recent Projects → A
 4. **(frei)** — hier saß bei Nexola die Video-Case-Study; bewusst offen gelassen.
 5. **About** — kurz, keine Unterseite (Entscheidung): Statement-Satz (50px-Klasse),
    kleines Porträt, 2–3 Fakten. Vorbild: Nexolas „Intro"-Section.
+   **Porträt-Außenform (Entscheidung Katharina, 2026-07-27):** kein 4:5-Rechteck, sondern ein
+   **Klecks mit abgelösten Spritzern**, umgesetzt als SVG-`clipPath` (`objectBoundingBox`,
+   dadurch größenunabhängig). In Wagtail bleibt es ein normales Bildfeld — die Form kommt
+   allein aus dem Template. Auf dem Smartphone steht das Porträt **vor** dem Text.
 6. **Contact** — CTA-Zeile („Lass uns sprechen") + Mail-Button.
 7. **Footer (entschieden 2026-07-27)** — schwarze Fläche mit **Sitemap in vier Spalten**:
    Marke/Kurzbeschreibung, Seitenabschnitte, **alle Projekte einzeln verlinkt** (Auffindbarkeit

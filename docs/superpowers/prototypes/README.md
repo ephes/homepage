@@ -21,7 +21,12 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln;
    eine CTA-Kachel über die volle Breite schließt das Raster unten ab.
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.
-4. **About** — kurzes Statement + Fakten + Handschrift-Signatur.
+4. **About** — kurzes Statement + Fakten + Handschrift-Signatur, dazu das Porträt als
+   **Klecks**: ein SVG-`clipPath` mit Hauptform und vier abgelösten Spritzern (mehrere
+   Teilpfade in einem `clipPath` ergeben zusammen die Maske). `clipPathUnits="objectBoundingBox"`
+   rechnet in Anteilen 0…1, die Form skaliert also mit dem Element; das Feld ist quadratisch,
+   damit die Spritzer ringsum Platz haben. Border und Diagonalkreuz entfallen — eine Border
+   würde von der Maske angeschnitten.
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.
 6. **Kontakt** — CTA + zwei Buttons.
 7. **Footer** — schwarz, mit Sitemap in vier Spalten: Marke, Seitenabschnitte, alle Projekte
@@ -36,6 +41,8 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
   Die CTA-Kachel bleibt darunter über die volle Breite.
 - **Leistungen:** derselbe Reel. `.svc-grid` trägt zusätzlich die Klasse `reel`; die
   Reel-Regeln greifen nur in der Mobile-Query, auf dem Desktop bleibt es ein 4er-Raster.
+- **About:** Der Klecks eröffnet auf dem Smartphone die Section (`order: -1`) statt am Ende
+  unterzugehen.
 - **Slide-Indicator** unter jedem Reel: eine Spur mit Anfasser für alle, die nicht wischen
   wollen. Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt; ziehbar per
   Pointer-Events, bedienbar per Tastatur (`role="slider"`, Pfeiltasten, Home/End). Er zeigt

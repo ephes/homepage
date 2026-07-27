@@ -228,7 +228,19 @@
   .about .facts { display: flex; flex-wrap: wrap; gap: 2rem; color: var(--muted); font-size: 0.85rem; }
   .about .facts b { display: block; color: var(--ink); font-size: 1rem; font-weight: 600; }
   .about .signature { font-size: 2.8rem; margin-block-start: 2rem; transform: rotate(-2deg); transform-origin: left; }
-  .about .portrait .frame { aspect-ratio: 4 / 5; }
+  /* Porträt als Klecks statt als Rechteck. Der clipPath vereint Hauptform und vier
+     abgelöste Spritzer — mehrere Teilpfade in einem clipPath ergeben zusammen die Maske.
+     `clipPathUnits="objectBoundingBox"` rechnet in Anteilen 0…1, die Form skaliert also
+     mit dem Element. Quadratisch, damit die Spritzer ringsum Platz haben.
+     Border und Diagonalkreuz entfallen: eine Border würde von der Maske angeschnitten. */
+  .about .portrait .frame {
+    aspect-ratio: 1 / 1;
+    border: none;
+    clip-path: url(#klecks);
+  }
+  .about .portrait .frame::before, .about .portrait .frame::after { content: none; }
+  /* trägt nur die Formdefinition, darf nichts zum Layout beitragen */
+  .shapes { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
 
   /* ── Kunden: schwarze Section, weißes Marquee-Band, full-bleed ─── */
   /* Farbgebung kommt aus .on-dark — dieselbe Klasse, die dem Liniengerüst die
@@ -468,6 +480,8 @@
   @media (max-width: 52rem) {
     .about { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 4rem); }
     .about > :first-child, .about > .portrait { grid-column: auto; }
+    /* Der Klecks eröffnet die Section, statt am Ende unterzugehen. */
+    .about > .portrait { order: -1; }
     .about > :first-child { padding-inline-end: var(--hero-inset); }
   }
   /* Die Kunden-Section trägt selbst KEIN Padding, damit das Marquee-Band randlos über die
@@ -716,7 +730,7 @@
         </div>
         <div class="script signature">Katharina</div>
       </div>
-      <div class="portrait"><div class="frame"><span>Porträt 4:5</span></div></div>
+      <div class="portrait"><div class="frame"><span>Porträt</span></div></div>
     </div>
     </section>
 
@@ -804,6 +818,29 @@
     <span>Gestaltet und gebaut in Düsseldorf</span>
   </div>
 </footer>
+<!-- Außenform des Porträts. Erster Teilpfad = Klecks, die vier weiteren = abgelöste
+     Spritzer; zusammen ergeben sie die Maske. Koordinaten in Anteilen 0…1 des Elements. -->
+<svg class="shapes" aria-hidden="true" focusable="false">
+  <clipPath id="klecks" clipPathUnits="objectBoundingBox">
+    <path d="M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50
+             C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88
+             C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63
+             C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19
+             C0.34 0.11 0.38 0.08 0.47 0.07Z"/>
+    <path d="M0.8550 0.1300C0.8550 0.1052 0.8752 0.0850 0.9000 0.0850
+             C0.9249 0.0850 0.9450 0.1052 0.9450 0.1300C0.9450 0.1549 0.9249 0.1750 0.9000 0.1750
+             C0.8752 0.1750 0.8550 0.1549 0.8550 0.1300Z"/>
+    <path d="M0.9270 0.4200C0.9270 0.4045 0.9395 0.3920 0.9550 0.3920
+             C0.9705 0.3920 0.9830 0.4045 0.9830 0.4200C0.9830 0.4355 0.9705 0.4480 0.9550 0.4480
+             C0.9395 0.4480 0.9270 0.4355 0.9270 0.4200Z"/>
+    <path d="M0.0650 0.8600C0.0650 0.8407 0.0807 0.8250 0.1000 0.8250
+             C0.1193 0.8250 0.1350 0.8407 0.1350 0.8600C0.1350 0.8793 0.1193 0.8950 0.1000 0.8950
+             C0.0807 0.8950 0.0650 0.8793 0.0650 0.8600Z"/>
+    <path d="M0.6740 0.9650C0.6740 0.9506 0.6856 0.9390 0.7000 0.9390
+             C0.7144 0.9390 0.7260 0.9506 0.7260 0.9650C0.7260 0.9794 0.7144 0.9910 0.7000 0.9910
+             C0.6856 0.9910 0.6740 0.9794 0.6740 0.9650Z"/>
+  </clipPath>
+</svg>
 <!-- Das EINE Liniengerüst der Seite: läuft ungebrochen vom Hero bis zum Footer.
      Keine Wiederholung je Section — sonst springt die Strichelung an jeder Grenze. -->
 <div class="pagegrid" aria-hidden="true">

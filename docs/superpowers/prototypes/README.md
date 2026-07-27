@@ -59,8 +59,17 @@ optisch zusammen:
 - **Hero-Höhe ist auf `min(100svh, 1200px)` gedeckelt.** Grund: In der Artifact-/iframe-Vorschau
   wird der Frame auf die volle Seitenhöhe gestreckt, wodurch `100svh` = gesamte Seitenhöhe wird.
   Ohne Deckel wächst der Hero auf mehrere tausend Pixel, die WebGL-Textur sprengt das Limit und
-  der Canvas (inkl. MOIN) verschwindet. Zusätzlich sind die Canvas-Dimensionen auf 4096px
-  gedeckelt.
+  der Canvas (inkl. MOIN) verschwindet.
+- **Der Canvas deckelt den MASSSTAB, nicht die Kanten einzeln** (`scale = min(dpr, 4096/cw,
+  4096/ch)`). Würde nur die Breite gekappt — auf einem 27-Zoll-Retina ist 2560 × 2 = 5120 → 4096,
+  die Höhe bleibt darunter —, stimmte das Seitenverhältnis des Canvas nicht mehr mit dem der
+  Textur überein. Der Composite-Shader macht einen *cover*-Fit und zoomte die Textur dann
+  seitlich aus dem Bild: MOIN lief links und rechts aus dem Screen.
+- **Die Texturbreite folgt der Canvas-Breite** (vorher fix auf 2048 gedeckelt). Da MOIN in die
+  Textur eingebrannt ist, wird jede zu kleine Textur hochskaliert — auf großen Screens um
+  Faktor 2, mit sichtbar ausgefransten Buchstabenkanten.
+  Verifiziert über 390 / 1440 / 2560 / 3008 px CSS-Breite bei dpr 2: MOIN-Ink-Box weicht ≤ 0,1 px
+  von der Sollposition (Padding-Linie + `--hero-inset`) ab.
 - **Nur hell** (`color-scheme: light`), Dark-Mode bewusst entfernt (helle Start-Section).
 - Bei fehlendem WebGL greift ein DOM-Fallback (statisches MOIN).
 - Der Prototyp ist der Design-Stand; die produktive Umsetzung erfolgt als **Wagtail**-App

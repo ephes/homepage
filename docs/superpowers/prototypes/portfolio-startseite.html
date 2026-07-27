@@ -735,7 +735,10 @@
     ctx.drawImage(t, 0, 0);
   }
   function buildTextures(){
-    var W = Math.min(2048, Math.max(1024, Math.round(stage.clientWidth*(window.devicePixelRatio||1))));
+    // Texturbreite = Canvas-Breite. Alles darunter wird beim Zeichnen hochskaliert und
+    // die Kanten des eingebrannten MOIN fransen sichtbar aus (vorher fix auf 2048 gedeckelt
+    // → auf großen Screens Faktor 2 Upscaling).
+    var W = Math.max(1024, canvas.width);
     var H = Math.round(W * stage.clientHeight/stage.clientWidth);
     // Base = Creme + solides MOIN
     var b=document.createElement('canvas'); b.width=W; b.height=H; var bx=b.getContext('2d');
@@ -765,7 +768,13 @@
 
   // ---- Größe ----
   function resize(){ var dpr=Math.min(2,window.devicePixelRatio||1);
-    var MAXD=4096; canvas.width=Math.min(MAXD,Math.round(stage.clientWidth*dpr)); canvas.height=Math.min(MAXD,Math.round(stage.clientHeight*dpr));
+    var MAXD=4096, cw=stage.clientWidth, ch=stage.clientHeight;
+    // Den MASSSTAB deckeln, nicht die Kanten einzeln: würde nur die Breite gekappt
+    // (großer Screen: 2560×2 = 5120 → 4096, Höhe bleibt ungekappt), stimmte das
+    // Seitenverhältnis des Canvas nicht mehr mit dem der Textur überein — der
+    // Composite-Shader macht einen cover-Fit und zoomt die Textur seitlich aus dem Bild.
+    var scale=Math.min(dpr, MAXD/cw, MAXD/ch);
+    canvas.width=Math.round(cw*scale); canvas.height=Math.round(ch*scale);
     // Einheitlicher Gap Wort↔Gridzelle: einmal berechnen, für Canvas (MOIN) UND DOM (Subline) nutzen.
     HERO_INSET = Math.max(8, Math.min(0.012*stage.clientWidth, 20));
     document.documentElement.style.setProperty('--hero-inset', HERO_INSET+'px');

@@ -170,7 +170,11 @@
   .reel > .tile:nth-child(6n + 5) .frame { aspect-ratio: 21 / 9; }
 
   .frame {
-    background: var(--ph);
+    /* DECKEND: Creme-Grund + Tonung darüber. Als halbtransparente Fläche (nur var(--ph))
+       schienen die Gridlinien durch — der Platzhalter muss sich wie ein echtes Bild
+       verhalten, und Inhalte liegen über dem Grid. */
+    background-color: var(--bg);
+    background-image: linear-gradient(var(--ph), var(--ph));
     border: 1px solid var(--rule-soft);
     display: grid;
     place-items: center;
@@ -340,8 +344,15 @@
   /* Subtext im unteren Viertel: links UND oben derselbe Gap zur Gridzelle wie beim MOIN. */
   /* Subline = randlose Milchglas-Fläche, füllt die verbundene Doppelzelle (2 Spalten × unteres
      Viertel). Kein Kästchen, KEINE Outline. Text links+oben um --hero-inset eingerückt. */
-  .sub{position:absolute;z-index:5;left:var(--pad);top:75%;width:calc(50vw - var(--pad)); /* Höhe = Inhalt → Unterkante wird gemessen */
-    padding:var(--hero-inset);
+  /* z-index MUSS auto bleiben: sonst macht .sub einen eigenen Stacking-Kontext auf und
+     die Fläche im ::before käme nicht unter das Liniengerüst. */
+  .sub{position:absolute;left:var(--pad);top:75%;width:calc(50vw - var(--pad)); /* Höhe = Inhalt → Unterkante wird gemessen */
+    padding:var(--hero-inset);}
+  /* Die Milchglas-Fläche ist eine FLÄCHE und liegt darum unter den Linien (-2), genau wie
+     die dunklen Sektionsflächen — sonst deckte sie die Außenlinien ab. Der Text darin
+     bleibt normaler Inhalt und damit über den Linien. Der Blur greift auf den Hero-Canvas
+     (-3) zu, die Linien darüber bleiben also scharf. */
+  .sub::before{content:"";position:absolute;inset:0;z-index:-2;
     background:color-mix(in srgb,var(--bg) 55%,transparent);
     backdrop-filter:blur(12px) saturate(1.08);-webkit-backdrop-filter:blur(12px) saturate(1.08);}
   .sub p{margin:0;font-size:clamp(1.05rem,1.8vw,1.45rem);font-weight:500;line-height:1.25;color:var(--ink);}
@@ -419,8 +430,9 @@
     background-size: 1px 100%;
     -webkit-mask-image: var(--dashes); mask-image: var(--dashes);
   }
-  /* Das obere Segment endet weit über der Kunden-Section — es bleibt immer dunkel. */
-  .pagegrid .vsplit  { top: 0; height: var(--gap-start); background-image: linear-gradient(var(--rule), var(--rule)); }
+  /* Beginnt am Dokumentanfang, teilt sich also die y-Achse mit --line-soft.
+     (Auf schmalen Breiten läuft es durch bis unten und quert die dunklen Bänder.) */
+  .pagegrid .vsplit  { top: 0; height: var(--gap-start); background-image: var(--line-soft); }
   /* Das untere Segment beginnt erst bei --gap-end; seine y-Achse ist um diesen Betrag
      verschoben, deshalb setzt buildLineGradients() seinen Verlauf eigens (inline). */
   .pagegrid .vsplit2 { top: var(--gap-end); bottom: 0; background-image: var(--line-soft); }
@@ -472,13 +484,14 @@
   /* muss NACH der Desktop-Regel stehen (gleiche Spezifität) */
   @media (max-width: 52rem) {
     .tile.cta { flex-direction: column; align-items: flex-start; }
-    /* Die Raster fallen auf 2 Spalten zurück — das Liniengerüst tut dasselbe,
-       sonst zeigten die Linien Viertel und die Raster Hälften. */
-    /* background-image, NICHT border-right: die Linien sind seit der Farbumkehr
-       Hintergrund-Ebenen. Sonst bliebe die 75-%-Linie stehen und die erste Spalte
-       wäre doppelt so breit wie die beiden anderen. */
-    .pagegrid .cols > i:nth-child(3) { background-image: none; }
-    .pagegrid .vsplit, .pagegrid .vsplit2 { display: none; }
+  }
+  /* Das Liniengerüst behält auf allen Breiten VIER gleich breite Spalten — die Raster
+     darüber dürfen ruhig auf zwei Spalten fallen, das Grundraster bleibt dasselbe. */
+  @media (max-width: 46rem) {
+    /* Hier liegt die Subline nicht mehr in der Doppelzelle, sondern über MOIN: die
+       1/4-Linie braucht also keine Lücke und läuft in einem Stück durch. */
+    .pagegrid .vsplit { height: auto; bottom: 0; }
+    .pagegrid .vsplit2 { display: none; }
   }
   .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
 
@@ -554,10 +567,11 @@
     .reel::-webkit-scrollbar { display: none; }
     /* --item-width unter 50 % garantiert, dass immer mindestens zwei Kacheln
        gleichzeitig zu sehen sind; die angeschnittene dritte zeigt, dass es weitergeht. */
+    /* Unterkante bleibt: als Flex-Items sind alle Kacheln gleich hoch, die Linie
+       schließt den Slider also bündig ab. */
     .reel > * {
       flex: 0 0 var(--item-width, min(45%, 17rem));
       scroll-snap-align: start;
-      border-bottom: none;
     }
     .reel > .tile .frame, .reel > .tile:nth-child(6n) .frame,
     .reel > .tile:nth-child(6n + 5) .frame { aspect-ratio: 3 / 2; }

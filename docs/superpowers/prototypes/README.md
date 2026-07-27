@@ -78,8 +78,18 @@ optisch zusammen:
   der Canvas nicht unter das seitenweite Gerüst; und die dunkle Fläche einer `.on-dark`-Section
   liegt als `::before` auf `-2` statt als deren `background` — sonst deckte sie die Linien zu,
   sobald diese im Hintergrund laufen.
-- **Folge für die Subline:** Die Milchglas-Fläche im Hero liegt jetzt über den Linien, sie
-  scheinen dort also durch, statt scharf oben aufzuliegen (vorher lag `.grid` auf `z-index: 6`).
+  Nach derselben Regel liegt auch die **Milchglas-Fläche der Subline** auf `-2`: als
+  `.sub::before` statt als `background` der `.sub` — sonst deckte sie die Außenlinien ab.
+  `.sub` muss dafür `z-index: auto` behalten, sonst macht sie einen eigenen Stacking-Kontext
+  auf und die Fläche käme nicht unter die Linien. Der Blur greift auf den Canvas (`-3`) zu,
+  die Linien darüber bleiben scharf; der Text darin ist normaler Inhalt und liegt oben.
+- **Platzhalterflächen müssen deckend sein.** `.frame` hatte nur `rgba(…, 0.06)` und ließ die
+  Linien durchscheinen — es sah aus, als läge das Grid über den Bildern. Jetzt Creme-Grund
+  plus Tonung darüber. Echte Bilder sind ohnehin deckend.
+- **Das Liniengerüst behält auf allen Breiten vier gleich breite Spalten** (gemessen bei
+  390 px: 88/87/88/87). Die Raster darüber dürfen auf zwei Spalten fallen, das Grundraster
+  bleibt dasselbe. Unter 46 rem läuft die 1/4-Linie in einem Stück durch, weil die Subline
+  dort über MOIN liegt und keine Lücke mehr braucht.
 - **Über dunklen Sections kehren die Linien ins Helle** — ohne zweite Struktur: die
   Linienfarbe ist eine Funktion von y. `buildLineGradients()` misst die Kanten **jeder**
   Section mit der Klasse `.on-dark` (aktuell Kunden und Footer) und baut daraus die Verläufe

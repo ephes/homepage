@@ -157,9 +157,17 @@
     text-decoration: none;
     color: inherit;
   }
-  .tile:nth-child(6n + 1), .tile:nth-child(6n) { grid-column: span 2; }
+  /* Wechselrhythmus: groß(span 2) + klein + klein / klein + klein + groß.
+     .lead und .reel lösen sich per display:contents auf, ihre Kacheln sind also wieder
+     direkte Grid-Elemente. Weil :nth-child aber innerhalb von .reel zählt (Projekt 2 = Kind 1),
+     ist das Muster um eins verschoben: 6n → Projekt 7, 6n+5 → Projekt 6. */
+  .lead, .tilegrid > .reel { display: contents; }
+  .lead > .tile,
+  .reel > .tile:nth-child(6n), .reel > .tile:nth-child(6n + 5) { grid-column: span 2; }
   .tile .frame { aspect-ratio: 3 / 2; }
-  .tile:nth-child(6n + 1) .frame, .tile:nth-child(6n) .frame { aspect-ratio: 21 / 9; }
+  .lead > .tile .frame,
+  .reel > .tile:nth-child(6n) .frame,
+  .reel > .tile:nth-child(6n + 5) .frame { aspect-ratio: 21 / 9; }
 
   .frame {
     background: var(--ph);
@@ -219,7 +227,11 @@
   .about .portrait .frame { aspect-ratio: 4 / 5; }
 
   /* ── Kunden: schwarze Section, weißes Marquee-Band, full-bleed ─── */
-  .clients { background: var(--dark-bg); color: var(--dark-ink); border-top: none; padding-inline: 0; }
+  /* Farbgebung kommt aus .on-dark — dieselbe Klasse, die dem Liniengerüst die
+     dunklen Bänder meldet. So gibt es die Umschaltung nur an einer Stelle. */
+  .on-dark { background: var(--dark-bg); color: var(--dark-ink); }
+  .on-dark .avail { color: var(--dark-muted); }
+  .clients { border-top: none; padding-inline: 0; }
   .clients .sec-label, .clients h2.big, .clients .cl-note { padding-inline: clamp(1.25rem, 4vw, 4rem); }
   .clients .sec-label { color: var(--dark-muted); }
   .clients .sec-label .scr { color: var(--dark-ink); }
@@ -286,9 +298,8 @@
     --pad:clamp(1.25rem,4vw,4rem);
     --hero-inset:1rem; /* einheitlicher Gap Wort↔Gridzelle; wird per JS in px gesetzt (Canvas+DOM synchron) */
     /* Vom Skript dokument-absolut gesetzt (s. updateGridVars): Lücke der 1/4-Linie um die
-       Subline-Zelle und Ober-/Unterkante der dunklen Kunden-Section. Die Startwerte legen
-       das dunkle Band außerhalb der Seite → ohne JS bleiben alle Linien dunkel. */
-    --gap-start:0px; --gap-end:0px; --dark-top:100%; --dark-bottom:100%;
+       Subline-Zelle. Ohne JS bleibt die Linie unsichtbar statt falsch zu sitzen. */
+    --gap-start:0px; --gap-end:0px;
   }
   /* Bewusst hell-only: cremefarbener Grund, warmes Schwarz für alle Schriften (helle Start-Section). */
   :root{ color-scheme: light; }
@@ -348,19 +359,17 @@
   body { position: relative; }
   .pagegrid { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
   .pagegrid > * { position: absolute; }
-  /* Über der dunklen Kunden-Section kehren die Linien ins Helle. Damit das OHNE eine
-     zweite Struktur geht, ist die Linienfarbe eine Funktion von y: ein Verlauf mit
-     harten Stopps an den Kanten des dunklen Bands (--dark-top / --dark-bottom, vom
-     Skript dokument-absolut gemessen wie --gap-start/--gap-end). Deshalb sind die
-     Linien Hintergrund-Ebenen statt Borders — eine Border kann keinen Verlauf tragen.
-     Die Strichelung kommt als Maske dazu, damit Farbe und Muster unabhängig bleiben. */
+  /* Über dunklen Sections kehren die Linien ins Helle. Damit das OHNE eine zweite
+     Struktur geht, ist die Linienfarbe eine Funktion von y: ein Verlauf mit harten
+     Stopps an den Kanten jeder Section, die `.on-dark` trägt (aktuell Kunden + Footer).
+     Die Verläufe baut `buildLineGradients()` aus den gemessenen Kanten — dadurch sind es
+     beliebig viele Bänder statt eines fest verdrahteten.
+     Deshalb sind die Linien Hintergrund-Ebenen statt Borders (eine Border kann keinen
+     Verlauf tragen); die Strichelung kommt als Maske dazu, damit Farbe und Muster
+     unabhängig bleiben. Ohne JS greift der Fallback: durchgehend dunkel. */
   .pagegrid {
-    --line-strong: linear-gradient(to bottom,
-      var(--rule-strong) 0 var(--dark-top), var(--dark-ink) var(--dark-top) var(--dark-bottom),
-      var(--rule-strong) var(--dark-bottom) 100%);
-    --line-soft: linear-gradient(to bottom,
-      var(--rule) 0 var(--dark-top), var(--dark-rule) var(--dark-top) var(--dark-bottom),
-      var(--rule) var(--dark-bottom) 100%);
+    --line-strong: linear-gradient(var(--rule-strong), var(--rule-strong));
+    --line-soft: linear-gradient(var(--rule), var(--rule));
     --dashes: repeating-linear-gradient(to bottom, #000 0 3px, transparent 3px 6px);
   }
   .pagegrid .pads {
@@ -396,15 +405,9 @@
   }
   /* Das obere Segment endet weit über der Kunden-Section — es bleibt immer dunkel. */
   .pagegrid .vsplit  { top: 0; height: var(--gap-start); background-image: linear-gradient(var(--rule), var(--rule)); }
-  /* Das untere Segment beginnt erst bei --gap-end, seine eigene y-Achse ist also um
-     diesen Betrag verschoben — die Stopps müssen gegengerechnet werden. */
-  .pagegrid .vsplit2 {
-    top: var(--gap-end); bottom: 0;
-    background-image: linear-gradient(to bottom,
-      var(--rule) 0 calc(var(--dark-top) - var(--gap-end)),
-      var(--dark-rule) calc(var(--dark-top) - var(--gap-end)) calc(var(--dark-bottom) - var(--gap-end)),
-      var(--rule) calc(var(--dark-bottom) - var(--gap-end)) 100%);
-  }
+  /* Das untere Segment beginnt erst bei --gap-end; seine y-Achse ist um diesen Betrag
+     verschoben, deshalb setzt buildLineGradients() seinen Verlauf eigens (inline). */
+  .pagegrid .vsplit2 { top: var(--gap-end); bottom: 0; background-image: var(--line-soft); }
 
   /* ── Einrückung: Text steht nie auf der Linie ──────────────────────────────
      Wie das MOIN im Hero rücken auch die Textblöcke um --hero-inset von der
@@ -460,6 +463,90 @@
   }
   .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
 
+  /* ══ Schwarzer Footer mit Sitemap ══════════════════════════════════════════
+     Vier Spalten auf demselben Raster wie die Seite: der Container liegt bündig
+     zwischen den Padding-Linien, die Textspalten rücken um --hero-inset ein. */
+  footer.site { border-top: none; }
+  .foot-cols {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    align-items: start;
+  }
+  .foot-col {
+    padding-inline: var(--hero-inset);
+    display: flex; flex-direction: column; gap: 1.5rem;
+    min-width: 0;
+  }
+  /* als Nachfahren-Selektoren, nicht nur direkte Kinder: in der vierten Spalte stecken
+     Überschrift und Liste in einem <nav> und behielten sonst ihre Default-Margins. */
+  .foot-col p, .foot-col ul, .foot-col h2 { margin: 0; }
+  .foot-col p { font-size: 0.88rem; line-height: 1.45; color: var(--dark-muted); max-width: 28ch; }
+  .foot-h {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--dark-muted); margin-block: 0 0.7rem;
+  }
+  .foot-col ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+  .foot-col a { color: inherit; text-decoration: none; font-size: 0.92rem; }
+  .foot-col a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
+  .foot-col nav + nav { margin-block-start: 1.5rem; }
+  .foot-bar { border-top: 1px solid var(--dark-rule); color: var(--dark-muted); }
+  .on-dark a:focus-visible { outline: 2px solid var(--dark-ink); outline-offset: 2px; }
+
+  /* ══ Reel + Slide-Indicator (Every Layout: Reel) ═══════════════════════════
+     Der Indicator ist eine Spur mit Anfasser für alle, die nicht wischen wollen.
+     Breite und Position des Anfassers spiegeln den sichtbaren Ausschnitt; das
+     Skript setzt --thumb-size/--thumb-pos und die Klasse .is-scrollable. */
+  .reelbar { display: none; }
+  .reelbar-track { position: relative; block-size: 1px; background: var(--rule); }
+  .reelbar-thumb {
+    position: absolute;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    block-size: 1.25rem;             /* Trefferfläche, deutlich größer als die Linie */
+    inline-size: var(--thumb-size, 30%);
+    inset-inline-start: var(--thumb-pos, 0%);
+    display: grid; align-items: center;
+    cursor: grab;
+    touch-action: none;              /* sonst schluckt der Browser das Ziehen */
+  }
+  .reelbar-thumb::before { content: ""; display: block; block-size: 3px; background: var(--ink); }
+  .reelbar-thumb:active { cursor: grabbing; }
+  .reelbar-thumb:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  @media (max-width: 52rem) {
+    /* Projekte: erste Kachel als Hero, alle weiteren als Reel darunter. */
+    .tilegrid { display: block; border: none; }
+    .lead { display: block; }
+    .lead > .tile { border-block: 1px solid var(--rule); border-inline: none; }
+    .lead > .tile .frame { aspect-ratio: 16 / 9; }
+
+    /* Die Selektoren müssen mindestens so spezifisch sein wie die Desktop-Regel
+       `.tilegrid > .reel { display: contents }`, sonst bleibt der Reel aufgelöst. */
+    .tilegrid > .reel, .svc-grid.reel {
+      display: flex;
+      overflow-x: auto; overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;         /* der eigene Indicator übernimmt */
+    }
+    .reel::-webkit-scrollbar { display: none; }
+    /* --item-width unter 50 % garantiert, dass immer mindestens zwei Kacheln
+       gleichzeitig zu sehen sind; die angeschnittene dritte zeigt, dass es weitergeht. */
+    .reel > * {
+      flex: 0 0 var(--item-width, min(45%, 17rem));
+      scroll-snap-align: start;
+      border-bottom: none;
+    }
+    .reel > .tile .frame, .reel > .tile:nth-child(6n) .frame,
+    .reel > .tile:nth-child(6n + 5) .frame { aspect-ratio: 3 / 2; }
+    .svc-grid.reel { border-top: 1px solid var(--rule); border-left: none; }
+    .svc-grid.reel > .svc { border-bottom: 1px solid var(--rule); }
+
+    .reelbar.is-scrollable { display: block; padding-block: 1rem 0.25rem; }
+    .foot-cols { grid-template-columns: repeat(2, 1fr); gap: 2.5rem 0; }
+  }
+
 </style>
 <header class="site">
   <span class="brand">Katharina Wersdörfer<sup>®</sup></span>
@@ -488,7 +575,13 @@
       <span class="count">(9)</span>
     </div>
     <div class="tilegrid">
+      <!-- Auf dem Smartphone: erste Kachel als Hero, der Rest als Reel darunter.
+           Auf dem Desktop lösen sich .lead und .reel per display:contents auf, damit
+           alle Kacheln wieder direkte Grid-Elemente im Wechselrhythmus sind. -->
+      <div class="lead">
       <a class="tile" href="#"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Studio-Website Relaunch</h3><span>→</span></div><div class="row2">Web · 2026</div></div></a>
+      </div>
+      <div class="reel">
       <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Buchgestaltung</h3><span>→</span></div><div class="row2">Print · 2025</div></div></a>
       <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Plakatserie</h3><span>→</span></div><div class="row2">Print · 2025</div></div></a>
       <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Illustrationsserie</h3><span>→</span></div><div class="row2">Illustration · 2025</div></div></a>
@@ -497,6 +590,10 @@
       <a class="tile" href="#"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Markenauftritt Praxis</h3><span>→</span></div><div class="row2">Web · 2024</div></div></a>
       <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Kinderbuch</h3><span>→</span></div><div class="row2">Illustration · 2023</div></div></a>
       <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Geschäftsausstattung</h3><span>→</span></div><div class="row2">Print · 2023</div></div></a>
+      </div>
+      <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
+        tabindex="0" aria-label="Durch die Projekte blättern"
+        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
       <a class="tile cta" href="#kontakt"><span class="k">Kontakt</span><strong>Projekt anfragen →</strong></a>
     </div>
     </section>
@@ -507,7 +604,9 @@
     <div class="proj-head">
       <h2 class="sec-title">Leistungen</h2>
     </div>
-    <div class="svc-grid">
+    <!-- Auf dem Desktop ein 4er-Raster, auf dem Smartphone derselbe Reel wie bei den
+         Projekten (die Klasse `reel` greift nur in der Mobile-Regel). -->
+    <div class="svc-grid reel">
       <div class="svc">
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18M6 21h12"/></svg></span>
         <h3>Webdesign</h3>
@@ -549,6 +648,9 @@
         <p>KI als Sparringspartner im Prozess — von Konzept bis Bildwelt.</p>
       </div>
     </div>
+    <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
+      tabindex="0" aria-label="Durch die Leistungen blättern"
+      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
     </section>
 
   <!-- 04 · About -->
@@ -569,7 +671,7 @@
     </section>
 
   <!-- 05 · Kunden -->
-  <section class="block pad clients" id="kunden">
+  <section class="block pad clients on-dark" id="kunden">
     <div class="sec-label"><span class="num">(04)</span><span>Vertrauen</span><span class="scr">für & mit</span></div>
     <h2 class="big">Für diese Marken<br>&amp; Menschen</h2>
     <div class="marquee">
@@ -594,6 +696,63 @@
     </section>
 
 </main>
+<!-- `on-dark` meldet dem Liniengerüst, dass hier die Linien ins Helle kehren. -->
+<footer class="site on-dark">
+  <div class="foot-cols pad">
+    <div class="foot-col">
+      <span class="brand">Katharina Wersdörfer<sup>®</sup></span>
+      <p>Web &amp; Digital Design, Illustration und Print — aus Düsseldorf.</p>
+      <span class="avail">Verfügbar für Projekte</span>
+    </div>
+    <nav class="foot-col" aria-labelledby="ft-seite">
+      <h2 class="foot-h" id="ft-seite">Seite</h2>
+      <ul>
+        <li><a href="#projekte">Projekte</a></li>
+        <li><a href="#leistungen">Leistungen</a></li>
+        <li><a href="#about">Über mich</a></li>
+        <li><a href="#kunden">Kunden</a></li>
+        <li><a href="#kontakt">Kontakt</a></li>
+      </ul>
+    </nav>
+    <nav class="foot-col" aria-labelledby="ft-projekte">
+      <h2 class="foot-h" id="ft-projekte">Projekte</h2>
+      <ul>
+        <li><a href="#">Studio-Website Relaunch</a></li>
+        <li><a href="#">Buchgestaltung</a></li>
+        <li><a href="#">Plakatserie</a></li>
+        <li><a href="#">Illustrationsserie</a></li>
+        <li><a href="#">Magazin-Layout</a></li>
+        <li><a href="#">Onlineshop Redesign</a></li>
+        <li><a href="#">Markenauftritt Praxis</a></li>
+        <li><a href="#">Kinderbuch</a></li>
+        <li><a href="#">Geschäftsausstattung</a></li>
+      </ul>
+    </nav>
+    <div class="foot-col">
+      <nav aria-labelledby="ft-kontakt">
+        <h2 class="foot-h" id="ft-kontakt">Kontakt</h2>
+        <ul>
+          <!-- PLATZHALTER: echte Adresse und Profile stehen noch aus -->
+          <li><a href="mailto:mail@example.com">mail@example.com</a></li>
+          <li><a href="#">Lebenslauf</a></li>
+          <li><a href="#">LinkedIn</a></li>
+          <li><a href="#">Instagram</a></li>
+        </ul>
+      </nav>
+      <nav aria-labelledby="ft-recht">
+        <h2 class="foot-h" id="ft-recht">Rechtliches</h2>
+        <ul>
+          <li><a href="#">Impressum</a></li>
+          <li><a href="#">Datenschutz</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  <div class="foot-bar pad">
+    <span>© 2026 Katharina Wersdörfer</span>
+    <span>Gestaltet und gebaut in Düsseldorf</span>
+  </div>
+</footer>
 <!-- Das EINE Liniengerüst der Seite: läuft ungebrochen vom Hero bis zum Footer.
      Keine Wiederholung je Section — sonst springt die Strichelung an jeder Grenze. -->
 <div class="pagegrid" aria-hidden="true">
@@ -603,15 +762,6 @@
   <div class="vsplit2"></div>
 </div>
 <div class="linen" aria-hidden="true"></div>
-<footer class="site">
-  <div class="foot-bar pad">
-    <span>© 2026 Katharina Wersdörfer</span>
-    <nav>
-      <a href="#">Impressum</a>
-      <a href="#">Datenschutz</a>
-    </nav>
-  </div>
-</footer>
 <script>
 "use strict";
 (function () {
@@ -812,13 +962,36 @@
       r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight) + 'px');
       r.setProperty('--gap-end',   (docTop + relBottom) + 'px');
     }
-    // Kanten der dunklen Kunden-Section: dort kehren die Linien ins Helle.
-    var dark = document.querySelector('.clients');
-    if (dark) {
-      var dr = dark.getBoundingClientRect();
-      r.setProperty('--dark-top',    (dr.top + window.scrollY) + 'px');
-      r.setProperty('--dark-bottom', (dr.bottom + window.scrollY) + 'px');
+    buildLineGradients();
+  }
+  // Die Linienfarbe ist eine Funktion von y: über jeder .on-dark-Section hell, sonst dunkel.
+  // Statt eines fest verdrahteten Bandes werden die Verläufe aus den gemessenen Kanten
+  // gebaut — beliebig viele dunkle Sections, eine Stelle.
+  function buildLineGradients(){
+    var pg = document.querySelector('.pagegrid'); if (!pg) return;
+    var bands = [].map.call(document.querySelectorAll('.on-dark'), function(el){
+      var r = el.getBoundingClientRect();
+      return [r.top + window.scrollY, r.bottom + window.scrollY];
+    }).sort(function(a,b){ return a[0]-b[0]; });
+
+    // offset = Abstand der Elementoberkante vom Dokumentanfang (nur .vsplit2 sitzt tiefer).
+    function grad(onLight, onDark, offset){
+      var stops = [], y = 0;
+      bands.forEach(function(b){
+        stops.push(onLight+' '+(y-offset)+'px '+(b[0]-offset)+'px');
+        stops.push(onDark +' '+(b[0]-offset)+'px '+(b[1]-offset)+'px');
+        y = b[1];
+      });
+      stops.push(onLight+' '+(y-offset)+'px 100%');
+      return 'linear-gradient(to bottom,'+stops.join(',')+')';
     }
+    pg.style.setProperty('--line-strong', grad('var(--rule-strong)','var(--dark-ink)',0));
+    pg.style.setProperty('--line-soft',   grad('var(--rule)','var(--dark-rule)',0));
+    // Das untere Segment der 1/4-Linie beginnt erst bei --gap-end; seine eigene y-Achse
+    // ist um diesen Betrag verschoben.
+    var v2 = pg.querySelector('.vsplit2');
+    if (v2) v2.style.backgroundImage =
+      grad('var(--rule)','var(--dark-rule)', parseFloat(getComputedStyle(v2).top) || 0);
   }
   addEventListener('resize', updateGridVars, { passive: true });
 
@@ -910,5 +1083,61 @@
   function start(){ resize(); addEventListener('resize',resize,{passive:true}); requestAnimationFrame(function(t){last=t;requestAnimationFrame(frame);}); }
   if(document.fonts && document.fonts.ready){ document.fonts.load('800 40px Saira').then(function(){ document.fonts.ready.then(start); }); }
   else start();
+})();
+</script>
+<script>
+"use strict";
+// Slide-Indicator für die Reels. Eigener Block, damit er auch ohne WebGL läuft —
+// das Hero-Skript steigt bei fehlendem Kontext früh aus.
+(function () {
+  var bars = document.querySelectorAll('.reelbar');
+  Array.prototype.forEach.call(bars, function (bar) {
+    var reel = bar.previousElementSibling;
+    var track = bar.querySelector('.reelbar-track');
+    var thumb = bar.querySelector('.reelbar-thumb');
+    if (!reel || !track || !thumb) return;
+
+    // Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt.
+    function sync() {
+      var max = reel.scrollWidth - reel.clientWidth;
+      bar.classList.toggle('is-scrollable', max > 1);
+      if (max <= 1) return;
+      var frac = reel.clientWidth / reel.scrollWidth;
+      var pos = reel.scrollLeft / max;
+      thumb.style.setProperty('--thumb-size', (frac * 100) + '%');
+      thumb.style.setProperty('--thumb-pos', (pos * (100 - frac * 100)) + '%');
+      thumb.setAttribute('aria-valuenow', Math.round(pos * 100));
+    }
+    reel.addEventListener('scroll', sync, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(sync).observe(reel);
+    addEventListener('resize', sync, { passive: true });
+    sync();
+
+    // Ziehen: zurückgelegte Strecke auf der Spur → Scrollstrecke im Reel.
+    var dragging = false, startX = 0, startScroll = 0;
+    thumb.addEventListener('pointerdown', function (e) {
+      dragging = true; startX = e.clientX; startScroll = reel.scrollLeft;
+      thumb.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    thumb.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      var travel = track.clientWidth - thumb.offsetWidth;
+      var max = reel.scrollWidth - reel.clientWidth;
+      if (travel > 0) reel.scrollLeft = startScroll + (e.clientX - startX) * (max / travel);
+    });
+    ['pointerup', 'pointercancel'].forEach(function (t) {
+      thumb.addEventListener(t, function () { dragging = false; });
+    });
+
+    // Tastatur: der Anfasser ist fokussierbar (role="slider").
+    thumb.addEventListener('keydown', function (e) {
+      var step = reel.clientWidth * 0.6;
+      if (e.key === 'ArrowRight') { reel.scrollLeft += step; e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { reel.scrollLeft -= step; e.preventDefault(); }
+      else if (e.key === 'Home') { reel.scrollLeft = 0; e.preventDefault(); }
+      else if (e.key === 'End') { reel.scrollLeft = reel.scrollWidth; e.preventDefault(); }
+    });
+  });
 })();
 </script>

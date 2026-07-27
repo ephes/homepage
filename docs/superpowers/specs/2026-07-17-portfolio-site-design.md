@@ -138,8 +138,25 @@ Reihenfolge (Entscheidung Katharina): **Hero (welcome) → Recent Projects → A
 4. **(frei)** — hier saß bei Nexola die Video-Case-Study; bewusst offen gelassen.
 5. **About** — kurz, keine Unterseite (Entscheidung): Statement-Satz (50px-Klasse),
    kleines Porträt, 2–3 Fakten. Vorbild: Nexolas „Intro"-Section.
-6. **Contact / Footer** — CTA-Zeile („Lass uns sprechen") + Mail-Button, Links zu
-   Impressum/Datenschutz.
+6. **Contact** — CTA-Zeile („Lass uns sprechen") + Mail-Button.
+7. **Footer (entschieden 2026-07-27)** — schwarze Fläche mit **Sitemap in vier Spalten**:
+   Marke/Kurzbeschreibung, Seitenabschnitte, **alle Projekte einzeln verlinkt** (Auffindbarkeit
+   + SEO), Kontakt/Social sowie Rechtliches; darunter eine schmale Copyright-Zeile. In Wagtail
+   speist sich die Projektspalte aus denselben Kindseiten wie die Kacheln. Offen: echte
+   E-Mail-Adresse und Social-Profile (aktuell Platzhalter).
+
+### Mobile-Verhalten (entschieden 2026-07-27)
+
+- **Projekte:** erste Kachel als Hero über die volle Breite, alle weiteren darunter als
+  horizontaler **Reel** (Every Layout). `--item-width` unter 50 %, damit immer mindestens
+  zwei Kacheln sichtbar sind.
+- **Leistungen:** derselbe Reel (Entscheidung Katharina: gleiches Bedienmuster wie Projekte).
+- **Slide-Indicator** unter jedem Reel: Spur mit Anfasser, dessen Breite den sichtbaren Anteil
+  spiegelt — ziehbar und per Tastatur bedienbar, für alle, die nicht wischen wollen.
+- Für die Wagtail-Umsetzung heißt das: Das Kachel-Template muss die **erste** Kindseite
+  gesondert ausgeben und den Rest in einen Reel-Container — auf dem Desktop lösen sich beide
+  Wrapper per `display: contents` auf, damit der Wechselrhythmus erhalten bleibt. Achtung: die
+  `:nth-child`-Regeln zählen dann innerhalb des Reels und sind um eins verschoben.
 
 ## Projekt-Unterseite (ProjectPage)
 

@@ -23,7 +23,24 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.
 4. **About** — kurzes Statement + Fakten + Handschrift-Signatur.
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.
-6. **Kontakt / Footer** — CTA + Impressum/Datenschutz-Links.
+6. **Kontakt** — CTA + zwei Buttons.
+7. **Footer** — schwarz, mit Sitemap in vier Spalten: Marke, Seitenabschnitte, alle Projekte
+   einzeln, Kontakt/Social und Rechtliches. Darunter eine schmale Zeile mit Copyright.
+
+## Mobile (unter 52rem)
+
+- **Projekte:** die erste Kachel steht als Hero über die volle Breite (16:9), alle weiteren
+  laufen darunter als **Reel** (Every Layout) horizontal durch. `--item-width` liegt mit
+  `min(45%, 17rem)` unter der Hälfte, damit immer **mindestens zwei Kacheln** gleichzeitig zu
+  sehen sind und die angeschnittene dritte zeigt, dass es weitergeht (gemessen: 2,2 Kacheln).
+  Die CTA-Kachel bleibt darunter über die volle Breite.
+- **Leistungen:** derselbe Reel. `.svc-grid` trägt zusätzlich die Klasse `reel`; die
+  Reel-Regeln greifen nur in der Mobile-Query, auf dem Desktop bleibt es ein 4er-Raster.
+- **Slide-Indicator** unter jedem Reel: eine Spur mit Anfasser für alle, die nicht wischen
+  wollen. Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt; ziehbar per
+  Pointer-Events, bedienbar per Tastatur (`role="slider"`, Pfeiltasten, Home/End). Er zeigt
+  sich nur, wenn der Reel wirklich überläuft (`.is-scrollable` setzt das Skript).
+- Beide Reels verstecken die native Scrollbar, weil der Indicator ihre Rolle übernimmt.
 
 ## Gridlinien-Gerüst (seitenweit)
 
@@ -48,9 +65,12 @@ optisch zusammen:
   Header (40) und Leinentextur (60). Es muss über dem Inhalt liegen, weil der Hero-Canvas eine
   deckende Fläche ist — darunter wäre er im Hero unsichtbar. Konsequenz: die Linien laufen
   über die Projektbilder, so wie sie im Hero über die Illustration laufen.
-- **Über der dunklen Kunden-Section kehren die Linien ins Helle** — ohne zweite Struktur:
-  die Linienfarbe ist eine Funktion von y (ein Verlauf mit harten Stopps an
-  `--dark-top` / `--dark-bottom`, ebenfalls dokument-absolut gemessen). Deshalb sind die
+- **Über dunklen Sections kehren die Linien ins Helle** — ohne zweite Struktur: die
+  Linienfarbe ist eine Funktion von y. `buildLineGradients()` misst die Kanten **jeder**
+  Section mit der Klasse `.on-dark` (aktuell Kunden und Footer) und baut daraus die Verläufe
+  mit harten Stopps — beliebig viele Bänder statt eines fest verdrahteten. Dieselbe Klasse
+  liefert auch die Farbgebung der Section selbst, die Umschaltung steht also an einer Stelle.
+  Deshalb sind die
   Linien **Hintergrund-Ebenen statt Borders** (eine Border kann keinen Verlauf tragen) und die
   Strichelung kommt als `mask-image` dazu, damit Farbe und Muster unabhängig bleiben.
   Nebeneffekt: alle Linien nutzen jetzt dasselbe Strichmuster — vorher mischten sich

@@ -17,7 +17,10 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    freigelegt (Verfahren analog zu noth.in, eigenständig implementiert); der Text schaltet
    deckungsgleich auf Outline um. Cremefarbener Grund, feine Gridlinien (4 Spalten, innere
    gestrichelt, Padding-Linien dunkel), Milchglas-Feld für die Subline, CV-Leinentextur über
-   der ganzen Seite.
+   der ganzen Seite. In der äußersten rechten Gridzelle oben steht ein Kurztext
+   („15+ years in branding."), unten in der Zelle ausgerichtet mit `--hero-inset` Abstand zur
+   25-%-Linie, in Schriftgröße der Wortmarke. Unter 46 rem ausgeblendet — dort wäre die
+   vierte Spalte nur gut 80 px breit.
 2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln;
    eine CTA-Kachel über die volle Breite schließt das Raster unten ab.
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.

@@ -375,6 +375,20 @@
     .sub{top:50%;transform:translateY(-50%);width:calc(100vw - 2*var(--pad));}
     .grid .under{display:none;}
   }
+  /* Kurztext in der äußersten rechten Gridzelle oben: unten in der Zelle ausgerichtet,
+     mit --hero-inset Abstand zur 25-%-Linie — demselben Gap, mit dem MOIN in seiner Zelle
+     sitzt. `bottom: 75%` ist die 25-%-Zeile von unten gerechnet. Links/rechts sitzt der
+     Block in der vierten Spalte, ebenfalls um --hero-inset eingerückt.
+     Schriftgröße wie die Wortmarke im Header. */
+  .hero-note{position:absolute;
+    left:calc(var(--pad) + 3*(100% - 2*var(--pad))/4 + var(--hero-inset));
+    right:calc(var(--pad) + var(--hero-inset));
+    bottom:calc(75% + var(--hero-inset));
+    margin:0;font-size:0.95rem;line-height:1.35;color:var(--ink);text-wrap:pretty;}
+  .hero-note strong{font-weight:700;}
+  /* In der schmalen Ansicht ist die vierte Spalte nur noch gut 80px breit — dort wäre der
+     Satz ein unlesbares Band. */
+  @media (max-width:46rem){ .hero-note{display:none;} }
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .wf-note{position:relative;z-index:3;margin:1.25rem var(--pad) 0;border:1px dashed var(--muted);color:var(--muted);font-size:0.78rem;line-height:1.45;padding:0.5rem 0.75rem;max-width:62rem;background:color-mix(in srgb,var(--bg) 85%,transparent);}
@@ -627,6 +641,7 @@
       <div class="under"></div>
       <div class="rows"><b></b><b></b></div>
     </div>
+    <p class="hero-note"><strong>15+ years in branding.</strong><br>Zwischen Kopfkino, Konzept und Feinschliff.</p>
     <div class="sub">
       <p>Web &amp; Digital Design ist mein Zuhause — mit einem Faible für Illustration. Print kann ich auch, wenn's das Projekt braucht.</p>
       <span class="hint">↖ Fahr mit der Maus über <span class="script" style="font-size:1.3em">Moin</span></span>
@@ -682,7 +697,9 @@
         <p>UX/UI für Apps &amp; digitale Produkte — im Team, mit dem Designpart bei mir.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20l7-7M14.5 6.5l3 3M13 5l6 6-8 3-1 4-4-1 3-8z"/></svg></span>
+        <!-- Versalie auf Grundlinie = Typografie/Satz. Die vorherige Federspitze zerfiel
+             bei dieser Größe in unlesbare Fragmente. -->
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 17l6-12 6 12M8.4 12.6h7.2M3.5 21h17"/></svg></span>
         <h3>Grafikdesign</h3>
         <p>Editorial, Layout und Typografie mit Blick fürs Detail.</p>
       </div>

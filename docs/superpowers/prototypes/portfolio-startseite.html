@@ -301,17 +301,9 @@
      und Subline-Feld. Papieranmutung wie im CV. */
   .linen{position:fixed;inset:0;z-index:60;pointer-events:none;background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsBAMAAAAfmfjxAAAAFVBMVEX////ExMS/v7/8/PyLi4ufn5+6uro3PuJqAAAAB3RSTlMARTAACxAlpkPg9gAAAWVJREFUeF7t1EENgEAABLF9wB8LBGXn3wQ+Jq2I7orYF7E3YnfEnoidCGtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZK8Ba1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1EqxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1kr4gcY9P+FkIkE1AAAAABJRU5ErkJggg==');background-repeat:repeat;mix-blend-mode:multiply;}
   #fluid{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;}
-  /* Grid-Overlay (DOM, scharf) */
+  /* Hero-Overlay: nur noch die WAAGERECHTEN Linien. Die Vertikalen kommen aus dem
+     einen seitenweiten .pagegrid (s. u.) — der Hero hatte sie vorher als zweite Kopie. */
   .grid{position:absolute;inset:0;z-index:6;pointer-events:none;} /* über der Milchglas-Fläche → Zelllinien bleiben sichtbar */
-  /* Padding-Linien links/rechts: volle Höhe, genau auf der Padding-Grenze. */
-  .grid .pads{position:absolute;top:0;bottom:0;left:var(--pad);right:var(--pad);border-inline:1px solid var(--rule-strong);}
-  /* 4 Spalten. 50%- und 75%-Linie voll durch; die 1/4-Linie fehlt im unteren Viertel (Doppelzelle). */
-  .grid .cols{position:absolute;top:0;bottom:0;left:var(--pad);right:var(--pad);display:grid;grid-template-columns:repeat(4,1fr);}
-  .grid .cols>i{border-right:1px dashed var(--rule);} /* innere Vertikale (50%, 75%) gestrichelt */
-  .grid .cols>i:nth-child(1),.grid .cols>i:nth-child(4){border-right:none;}
-  /* 1/4-Linie (gestrichelt) mit Lücke in der Subline-Doppelzelle: oben 0→75%, unten Zellen-Unterkante→100%. */
-  .grid .vsplit{position:absolute;top:0;height:75%;left:calc(var(--pad) + (100% - 2*var(--pad))/4);width:0;border-left:1px dashed var(--rule);}
-  .grid .vsplit2{position:absolute;top:var(--sub-bottom,85%);bottom:0;left:calc(var(--pad) + (100% - 2*var(--pad))/4);width:0;border-left:1px dashed var(--rule);}
   /* horizontale Linie an der Unterkante der Subline-Zelle, volle Breite */
   .grid .under{position:absolute;left:0;right:0;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
   .grid .rows{position:absolute;inset:0;}
@@ -330,7 +322,7 @@
   /* Zu wenig Platz → Milchglas-Fläche legt sich ÜBER MOIN (nicht darunter), volle Contentbreite. */
   @media (max-width:46rem),(max-height:34rem){
     .sub{top:50%;transform:translateY(-50%);width:calc(100vw - 2*var(--pad));}
-    .grid .under,.grid .vsplit2{display:none;}
+    .grid .under{display:none;}
   }
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
@@ -340,50 +332,37 @@
   .fallback h1{margin:0;font-size:calc((100vw - 2*var(--pad))/2.5168);font-weight:800;line-height:0.82;text-transform:uppercase;color:var(--ink);}
   .no-webgl #fluid{display:none;} .no-webgl .fallback{display:grid;}
 
-  /* ══ Durchgehendes Gridlinien-Gerüst ═══════════════════════════════════════
-     Die Liniensprache des Heros läuft über die ganze Seite weiter: zwei kräftige
-     Padding-Linien links/rechts (--rule-strong, wie im Hero) plus drei gestrichelte
-     Spaltenlinien auf den Viertelmarken. Jede Section zeichnet ihr eigenes Stück;
-     weil die Sections lückenlos aneinanderstoßen, lesen sie sich als durchgehende
-     Vertikalen vom Hero bis zum Footer.
-     z-index:-1 + isolation:isolate → die Linien liegen über der Sektionsfläche,
-     aber unter dem Inhalt (Painting-Order: Hintergrund → negative z-index → Inhalt). */
-  section.block, footer.site { position: relative; isolation: isolate; }
-  section.block::before, section.block::after,
-  footer.site::before,   footer.site::after {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    left: var(--pad);
-    right: var(--pad);
-    z-index: -1;
-    pointer-events: none;
-  }
-  /* äußere Padding-Linien — dieselbe Kraft wie im Hero.
-     Sie liegen ÜBER dem Inhalt (z-index:3, pointer-events:none), nicht darunter: sonst
-     übermalen die deckenden Raster-Hintergründe sie, und man sähe an diesen Stellen nur
-     die zarte Eigen-Border des Rasters — die Kante wäre abschnittsweise hell statt
-     durchgängig dunkel. Die gestrichelten Innenlinien bleiben dagegen hinter dem Inhalt. */
-  section.block::before, footer.site::before {
+  /* ══ EIN Gridlinien-Gerüst für die ganze Seite ═════════════════════════════
+     GENAU EINE Struktur, absolut über dem gesamten Dokument — nicht je Section
+     wiederholt. Das ist nicht nur weniger Code: gezeichnete Teilstücke pro Section
+     lassen die Strichelung an jeder Sektionsgrenze neu beginnen, was als feiner
+     Versatz sichtbar wird. Eine durchgehende Linie hat eine einzige Phase.
+     Sie liegt ÜBER dem Inhalt (Hero-Illustration und Projektbilder werden bewusst
+     überlaufen — dieselbe Sprache wie im Hero), aber unter Header und Leinentextur.
+     Der Hero bringt daher KEINE eigenen Vertikalen mehr mit, nur noch seine
+     waagerechten Linien und die Unterkante der Subline-Zelle. */
+  body { position: relative; }
+  .pagegrid { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+  .pagegrid > * { position: absolute; }
+  .pagegrid .pads {
+    top: 0; bottom: 0; left: var(--pad); right: var(--pad);
     border-inline: 1px solid var(--rule-strong);
-    z-index: 3;
   }
-  /* innere Spaltenlinien (25/50/75 %), gestrichelt wie im Hero.
-     Als 1px-breite Hintergrundebenen, weil ein Pseudo-Element keine drei Borders hat. */
-  section.block::after, footer.site::after {
-    --dash: repeating-linear-gradient(to bottom, var(--rule) 0 3px, transparent 3px 6px);
-    background-image: var(--dash), var(--dash), var(--dash);
-    background-size: 1px 100%;
-    background-position: 25% 0, 50% 0, 75% 0;
-    background-repeat: no-repeat;
+  .pagegrid .cols {
+    top: 0; bottom: 0; left: var(--pad); right: var(--pad);
+    display: grid; grid-template-columns: repeat(4, 1fr);
   }
-  /* Dunkle Kunden-Section: Linien invertieren. Die Selektoren brauchen `section.block`
-     davor, sonst gewinnen die allgemeinen Regeln oben (höhere Spezifität) und die Linien
-     blieben schwarz auf schwarz — also unsichtbar. */
-  section.block.clients::before { border-inline-color: var(--dark-ink); }
-  section.block.clients::after {
-    --dash: repeating-linear-gradient(to bottom, var(--dark-rule) 0 3px, transparent 3px 6px);
+  .pagegrid .cols > i { border-right: 1px dashed var(--rule); }
+  .pagegrid .cols > i:nth-child(1), .pagegrid .cols > i:nth-child(4) { border-right: none; }
+  /* Die 1/4-Linie hat im Hero eine Lücke: sie setzt an der Oberkante der Subline-
+     Doppelzelle aus und läuft unter deren Unterkante weiter. Beide Grenzen misst das
+     Skript dokument-absolut (--gap-start / --gap-end). */
+  .pagegrid .vsplit, .pagegrid .vsplit2 {
+    left: calc(var(--pad) + (100% - 2*var(--pad))/4);
+    border-left: 1px dashed var(--rule);
   }
+  .pagegrid .vsplit  { top: 0; height: var(--gap-start, 0); }
+  .pagegrid .vsplit2 { top: var(--gap-end, 0); bottom: 0; }
 
   /* ── Einrückung: Text steht nie auf der Linie ──────────────────────────────
      Wie das MOIN im Hero rücken auch die Textblöcke um --hero-inset von der
@@ -419,10 +398,6 @@
   section.block.clients { padding-inline: 0; }
   section.block.clients > .sec-label,
   section.block.clients > h2.big { padding-inline: calc(var(--pad) + var(--hero-inset)); }
-  /* Die Raster decken die Seitenlinien ab — sonst liefe die gestrichelte Linie quer
-     durch die transparenten span-2-Kacheln. Ihre eigenen Zelllinien sitzen exakt
-     an denselben Viertelmarken, die Struktur bleibt also lückenlos. */
-  .tilegrid, .svc-grid { background: var(--bg); }
   /* Die CTA-Kachel schließt das Raster ab: volle Breite statt einer offenen Restreihe
      (9 Projekte = exakt 3 Reihen, die CTA ist die 10. Kachel und beginnt immer eine neue). */
   .tile.cta {
@@ -436,12 +411,10 @@
   /* muss NACH der Desktop-Regel stehen (gleiche Spezifität) */
   @media (max-width: 52rem) {
     .tile.cta { flex-direction: column; align-items: flex-start; }
-    /* Die Raster fallen auf 2 Spalten zurück — die Seitenlinien tun dasselbe,
+    /* Die Raster fallen auf 2 Spalten zurück — das Liniengerüst tut dasselbe,
        sonst zeigten die Linien Viertel und die Raster Hälften. */
-    section.block::after, footer.site::after {
-      background-image: var(--dash);
-      background-position: 50% 0;
-    }
+    .pagegrid .cols > i:nth-child(3) { border-right: none; }
+    .pagegrid .vsplit, .pagegrid .vsplit2 { display: none; }
   }
   .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
 
@@ -458,10 +431,6 @@
     <canvas id="fluid" aria-hidden="true"></canvas>
     <div class="fallback"><h1>Moin</h1></div>
     <div class="grid" aria-hidden="true">
-      <div class="pads"></div>
-      <div class="cols"><i></i><i></i><i></i><i></i></div>
-      <div class="vsplit"></div>
-      <div class="vsplit2"></div>
       <div class="under"></div>
       <div class="rows"><b></b><b></b></div>
     </div>
@@ -583,6 +552,14 @@
     </section>
 
 </main>
+<!-- Das EINE Liniengerüst der Seite: läuft ungebrochen vom Hero bis zum Footer.
+     Keine Wiederholung je Section — sonst springt die Strichelung an jeder Grenze. -->
+<div class="pagegrid" aria-hidden="true">
+  <div class="pads"></div>
+  <div class="cols"><i></i><i></i><i></i><i></i></div>
+  <div class="vsplit"></div>
+  <div class="vsplit2"></div>
+</div>
 <div class="linen" aria-hidden="true"></div>
 <footer class="site">
   <div class="foot-bar pad">
@@ -783,7 +760,14 @@
   function updateSubBottom(){
     var s = document.querySelector('.sub'); if(!s) return;
     var st = stage.getBoundingClientRect(), sb = s.getBoundingClientRect();
-    document.documentElement.style.setProperty('--sub-bottom', (sb.bottom - st.top) + 'px');
+    var relBottom = sb.bottom - st.top;            // stage-relativ, für die Hero-Unterlinie
+    var docTop = st.top + window.scrollY;          // Stage-Oberkante dokument-absolut
+    var r = document.documentElement.style;
+    r.setProperty('--sub-bottom', relBottom + 'px');
+    // Grenzen der Lücke, die die durchgehende 1/4-Linie um die Subline-Zelle macht.
+    // Dokument-absolut, weil das Liniengerüst über der ganzen Seite liegt, nicht im Hero.
+    r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight) + 'px');
+    r.setProperty('--gap-end',   (docTop + relBottom) + 'px');
   }
   addEventListener('resize', updateSubBottom, { passive: true });
 

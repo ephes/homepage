@@ -30,29 +30,31 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 Die Liniensprache des Heros läuft über die **ganze** Seite weiter und klammert die Sections
 optisch zusammen:
 
-- Zwei kräftige Padding-Linien links/rechts (`--rule-strong`) plus drei gestrichelte
-  Spaltenlinien auf den Viertelmarken. Jede Section zeichnet ihr Stück selbst
-  (`section.block::before` / `::after`); weil die Sections lückenlos aneinanderstoßen,
-  lesen sich die Linien als durchgehende Vertikalen vom Hero bis zum Footer.
-- Technik: `isolation:isolate` auf der Section, die gestrichelten Innenlinien mit `z-index:-1`
-  → sie liegen über der Sektionsfläche, aber unter dem Inhalt. Sie sind 1px breite
-  `repeating-linear-gradient`-Ebenen, weil ein Pseudo-Element keine drei Borders hat.
-- **Die beiden äußeren Padding-Linien liegen dagegen ÜBER dem Inhalt** (`z-index:3`,
-  `pointer-events:none`). Grund: die Raster brauchen einen deckenden Hintergrund (s. u.) und
-  würden die Linie sonst übermalen — sichtbar wäre dann nur ihre eigene zarte Border, die
-  Außenkante wäre abschnittsweise hell statt durchgängig dunkel.
-- In der dunklen Kunden-Section invertieren die Linienfarben. **Achtung Spezifität:** diese
-  Overrides brauchen `section.block.clients…`, sonst gewinnen die allgemeinen
-  `section.block…`-Regeln und die Linien bleiben schwarz auf schwarz. Dasselbe gilt für
-  `padding-inline: 0` der Kunden-Section (sonst greift `.pad` und das Marquee-Band läuft
-  nicht mehr randlos) und für den Textanschlag von Label und Überschrift.
+- **Es gibt genau EINE Struktur dafür:** `<div class="pagegrid">`, absolut positioniert über
+  dem gesamten Dokument (`body { position: relative }` + `inset: 0`), direkt vor der
+  Leinentextur im Markup. Sie enthält die zwei kräftigen Padding-Linien (`--rule-strong`),
+  die gestrichelten 50-%- und 75-%-Linien und die 1/4-Linie.
+  **Nicht je Section wiederholen.** Gezeichnete Teilstücke pro Section lassen die Strichelung
+  an jeder Sektionsgrenze neu beginnen — die Phase springt, und das ist als feiner Versatz
+  sichtbar. Eine durchgehende Linie hat eine einzige Phase. (Genau diese Redundanz gab es
+  vorher: Section-Pseudoelemente *und* ein zweiter Satz Vertikalen im Hero.)
+- **Der Hero bringt keine eigenen Vertikalen mehr mit** — sein `.grid` enthält nur noch die
+  waagerechten Linien (25 % / 75 %) und die Unterkante der Subline-Zelle.
+- Die 1/4-Linie hat im Hero eine Lücke: sie setzt an der Oberkante der Subline-Doppelzelle aus
+  und läuft unter deren Unterkante weiter (zwei Segmente, `.vsplit` / `.vsplit2`). Weil das
+  Gerüst über der ganzen Seite liegt, misst `updateSubBottom()` die beiden Grenzen
+  **dokument-absolut** in `--gap-start` / `--gap-end`.
+- Das Gerüst liegt **über dem Inhalt** (`z-index: 30`, `pointer-events: none`), aber unter
+  Header (40) und Leinentextur (60). Es muss über dem Inhalt liegen, weil der Hero-Canvas eine
+  deckende Fläche ist — darunter wäre er im Hero unsichtbar. Konsequenz: die Linien laufen
+  über die Projektbilder, so wie sie im Hero über die Illustration laufen.
+- **Die dunkle Kunden-Section schluckt die Linien** (dunkel auf dunkel). Das ist der Preis der
+  einen Struktur: eine Farbumkehr ließe sich nicht ohne section-spezifische Ausnahme bauen.
 - **Bündig vs. eingerückt:** Die 4-spaltigen Raster (Kacheln, Leistungen, About-Porträt)
   liegen bündig — ihre Außenkanten fallen mit den Padding-Linien zusammen, ihre Zelllinien
   mit den gestrichelten Spaltenlinien (per Playwright nachgemessen: 57,59 px / 1382,41 px
   bei 1440 px Viewport, Porträt-Kante exakt auf 1051,20 px = 75-%-Linie). Textblöcke rücken
   dagegen um `--hero-inset` ein — derselbe Gap, mit dem das MOIN in seiner Zelle sitzt.
-  Die Raster bekommen einen deckenden Hintergrund, damit keine gestrichelte Linie durch die
-  transparenten span-2-Kacheln läuft.
 
 ## Technische Notizen (wichtig für die Weiterarbeit)
 

@@ -268,9 +268,15 @@ reveal = Illustration + MOIN-Outline) zuletzt.
 
 Erster Schritt des Design-Ausbaus der Sections unter dem Hero: Das Liniensystem des Heros
 läuft jetzt **über die ganze Seite** — zwei kräftige Padding-Linien links/rechts plus drei
-gestrichelte Spaltenlinien auf den Viertelmarken, von jeder Section selbst gezeichnet
-(`::before`/`::after`, `z-index:-1` + `isolation:isolate`, Linienfarben in der dunklen
-Kunden-Section invertiert). Details siehe Prototyp-README.
+gestrichelte Spaltenlinien auf den Viertelmarken.
+
+**Als GENAU EINE Struktur** (`<div class="pagegrid">`, absolut über dem gesamten Dokument),
+nicht je Section wiederholt — Vorgabe Katharina: „keine redundanten Strukturen, alles so
+reduziert wie möglich an einer Stelle". Der erste Versuch zeichnete die Linien pro Section
+(`::before`/`::after`) und der Hero brachte zusätzlich seinen eigenen Satz Vertikalen mit;
+dadurch begann die Strichelung an jeder Sektionsgrenze neu und der Phasensprung war als
+feiner Versatz sichtbar. Für die Wagtail-Umsetzung heißt das: **das Gerüst gehört ins
+Basis-Template, nicht in die Section-Includes.** Details siehe Prototyp-README.
 
 Die daraus folgende Grundregel: **Raster bündig, Text eingerückt.** Die 4-spaltigen Raster
 liegen exakt auf den Linien (Außenkanten = Padding-Linien, Zelllinien = gestrichelte

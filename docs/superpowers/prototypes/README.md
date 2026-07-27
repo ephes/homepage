@@ -34,10 +34,18 @@ optisch zusammen:
   Spaltenlinien auf den Viertelmarken. Jede Section zeichnet ihr Stück selbst
   (`section.block::before` / `::after`); weil die Sections lückenlos aneinanderstoßen,
   lesen sich die Linien als durchgehende Vertikalen vom Hero bis zum Footer.
-- Technik: `z-index:-1` + `isolation:isolate` → die Linien liegen über der Sektionsfläche,
-  aber unter dem Inhalt. Die drei gestrichelten Linien sind 1px breite
+- Technik: `isolation:isolate` auf der Section, die gestrichelten Innenlinien mit `z-index:-1`
+  → sie liegen über der Sektionsfläche, aber unter dem Inhalt. Sie sind 1px breite
   `repeating-linear-gradient`-Ebenen, weil ein Pseudo-Element keine drei Borders hat.
-- In der dunklen Kunden-Section invertieren die Linienfarben.
+- **Die beiden äußeren Padding-Linien liegen dagegen ÜBER dem Inhalt** (`z-index:3`,
+  `pointer-events:none`). Grund: die Raster brauchen einen deckenden Hintergrund (s. u.) und
+  würden die Linie sonst übermalen — sichtbar wäre dann nur ihre eigene zarte Border, die
+  Außenkante wäre abschnittsweise hell statt durchgängig dunkel.
+- In der dunklen Kunden-Section invertieren die Linienfarben. **Achtung Spezifität:** diese
+  Overrides brauchen `section.block.clients…`, sonst gewinnen die allgemeinen
+  `section.block…`-Regeln und die Linien bleiben schwarz auf schwarz. Dasselbe gilt für
+  `padding-inline: 0` der Kunden-Section (sonst greift `.pad` und das Marquee-Band läuft
+  nicht mehr randlos) und für den Textanschlag von Label und Überschrift.
 - **Bündig vs. eingerückt:** Die 4-spaltigen Raster (Kacheln, Leistungen, About-Porträt)
   liegen bündig — ihre Außenkanten fallen mit den Padding-Linien zusammen, ihre Zelllinien
   mit den gestrichelten Spaltenlinien (per Playwright nachgemessen: 57,59 px / 1382,41 px

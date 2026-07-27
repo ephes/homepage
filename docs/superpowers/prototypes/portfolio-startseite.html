@@ -359,8 +359,15 @@
     z-index: -1;
     pointer-events: none;
   }
-  /* äußere Padding-Linien — dieselbe Kraft wie im Hero */
-  section.block::before, footer.site::before { border-inline: 1px solid var(--rule-strong); }
+  /* äußere Padding-Linien — dieselbe Kraft wie im Hero.
+     Sie liegen ÜBER dem Inhalt (z-index:3, pointer-events:none), nicht darunter: sonst
+     übermalen die deckenden Raster-Hintergründe sie, und man sähe an diesen Stellen nur
+     die zarte Eigen-Border des Rasters — die Kante wäre abschnittsweise hell statt
+     durchgängig dunkel. Die gestrichelten Innenlinien bleiben dagegen hinter dem Inhalt. */
+  section.block::before, footer.site::before {
+    border-inline: 1px solid var(--rule-strong);
+    z-index: 3;
+  }
   /* innere Spaltenlinien (25/50/75 %), gestrichelt wie im Hero.
      Als 1px-breite Hintergrundebenen, weil ein Pseudo-Element keine drei Borders hat. */
   section.block::after, footer.site::after {
@@ -370,9 +377,11 @@
     background-position: 25% 0, 50% 0, 75% 0;
     background-repeat: no-repeat;
   }
-  /* dunkle Kunden-Section: Linien invertieren */
-  .clients::before { border-inline-color: var(--dark-ink); }
-  .clients::after {
+  /* Dunkle Kunden-Section: Linien invertieren. Die Selektoren brauchen `section.block`
+     davor, sonst gewinnen die allgemeinen Regeln oben (höhere Spezifität) und die Linien
+     blieben schwarz auf schwarz — also unsichtbar. */
+  section.block.clients::before { border-inline-color: var(--dark-ink); }
+  section.block.clients::after {
     --dash: repeating-linear-gradient(to bottom, var(--dark-rule) 0 3px, transparent 3px 6px);
   }
 
@@ -402,8 +411,14 @@
     .about > :first-child, .about > .portrait { grid-column: auto; }
     .about > :first-child { padding-inline-end: var(--hero-inset); }
   }
-  .clients > .sec-label,
-  .clients > h2.big { padding-inline: calc(var(--pad) + var(--hero-inset)); }
+  /* Die Kunden-Section trägt selbst KEIN Padding, damit das Marquee-Band randlos über die
+     volle Breite laufen kann; Label und Überschrift rücken einzeln ein — auf denselben
+     Textanschlag wie in allen anderen Sections. Auch hier ist `section.block` nötig:
+     ohne das gewinnt oben `.pad` (Padding zurück, Marquee nicht mehr randlos) bzw.
+     `section.block > .sec-label` (Label 57px links vom Überschrift-Anschlag). */
+  section.block.clients { padding-inline: 0; }
+  section.block.clients > .sec-label,
+  section.block.clients > h2.big { padding-inline: calc(var(--pad) + var(--hero-inset)); }
   /* Die Raster decken die Seitenlinien ab — sonst liefe die gestrichelte Linie quer
      durch die transparenten span-2-Kacheln. Ihre eigenen Zelllinien sitzen exakt
      an denselben Viertelmarken, die Struktur bleibt also lückenlos. */

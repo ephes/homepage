@@ -879,7 +879,19 @@
              C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88
              C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63
              C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19
-             C0.34 0.11 0.38 0.08 0.47 0.07Z"/>
+             C0.34 0.11 0.38 0.08 0.47 0.07Z">
+      <!-- Leichtes Wabern: drei Varianten derselben Kurvenfolge (gleiche Befehlsstruktur,
+           nur verschobene Punkte), langsam ineinander überblendet. Kostet nur das
+           Neuzeichnen dieses einen Elements — kein Layout, kein Reflow.
+           Die Spritzer bleiben bewusst ruhig, bewegte Punkte lesen sich als Flimmern. -->
+      <animate attributeName="d" dur="24s" repeatCount="indefinite"
+        calcMode="spline" keyTimes="0;0.34;0.67;1"
+        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+        values="M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z;
+                M0.49 0.06C0.64 0.06 0.76 0.15 0.80 0.26C0.84 0.35 0.79 0.44 0.83 0.52C0.87 0.60 0.91 0.69 0.84 0.77C0.77 0.85 0.65 0.81 0.56 0.86C0.46 0.92 0.33 0.96 0.24 0.89C0.15 0.82 0.21 0.71 0.15 0.64C0.09 0.56 0.04 0.44 0.09 0.35C0.14 0.26 0.25 0.28 0.30 0.20C0.35 0.12 0.40 0.07 0.49 0.06Z;
+                M0.46 0.08C0.61 0.04 0.75 0.12 0.78 0.23C0.82 0.32 0.82 0.41 0.85 0.49C0.89 0.57 0.88 0.67 0.82 0.75C0.75 0.83 0.67 0.85 0.58 0.89C0.48 0.95 0.35 0.94 0.26 0.87C0.17 0.80 0.18 0.69 0.13 0.62C0.07 0.54 0.06 0.46 0.11 0.37C0.16 0.28 0.23 0.25 0.28 0.18C0.33 0.10 0.37 0.09 0.46 0.08Z;
+                M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z"/>
+    </path>
     <path d="M0.8550 0.1300C0.8550 0.1052 0.8752 0.0850 0.9000 0.0850
              C0.9249 0.0850 0.9450 0.1052 0.9450 0.1300C0.9450 0.1549 0.9249 0.1750 0.9000 0.1750
              C0.8752 0.1750 0.8550 0.1549 0.8550 0.1300Z"/>
@@ -1328,5 +1340,19 @@
     document.documentElement.classList.remove('stage-hover');
     cancelAnimationFrame(raf); raf = 0;
   });
+})();
+</script>
+<script>
+"use strict";
+// SMIL kennt prefers-reduced-motion nicht, und display:none auf dem <animate> stoppt es
+// nicht zuverlässig. pauseAnimations() ist der dafür vorgesehene Weg — es friert die
+// Form in ihrer Ausgangslage ein.
+(function () {
+  var svg = document.querySelector('.shapes');
+  if (!svg || !svg.pauseAnimations) return;
+  var mq = matchMedia('(prefers-reduced-motion: reduce)');
+  var apply = function () { mq.matches ? svg.pauseAnimations() : svg.unpauseAnimations(); };
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
 })();
 </script>

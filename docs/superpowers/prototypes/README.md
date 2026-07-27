@@ -38,6 +38,13 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    rechnet in Anteilen 0…1, die Form skaliert also mit dem Element; das Feld ist quadratisch,
    damit die Spritzer ringsum Platz haben. Border und Diagonalkreuz entfallen — eine Border
    würde von der Maske angeschnitten.
+   Die Hauptform **wabert langsam** (SMIL, 24 s): drei Varianten derselben Kurvenfolge —
+   gleiche Befehlsstruktur, nur verschobene Punkte — werden ineinander übergeblendet. Das
+   kostet nur das Neuzeichnen dieses einen Elements, kein Layout und kein Reflow, und es
+   läuft ohne JavaScript pro Frame. Die Spritzer bleiben ruhig; bewegte Punkte lesen sich
+   als Flimmern. Bei `prefers-reduced-motion` friert `pauseAnimations()` die Form ein —
+   SMIL wertet die Einstellung nicht selbst aus, und `display: none` auf dem `<animate>`
+   stoppt sie nicht zuverlässig (nachgemessen).
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.
 6. **Kontakt** — CTA + zwei Buttons.
 7. **Footer** — schwarz, mit Sitemap in vier Spalten: Marke, Seitenabschnitte, alle Projekte

@@ -51,7 +51,7 @@
   h1, h2, h3, h4,
   .sec-title, .big, .statement, .brand, .avail, .foot-h,
   .meta h3, .svc h3, .tile.cta strong { text-wrap: balance; }
-  p, li, .hint, .meta .row2, .facts div { text-wrap: pretty; }
+  p, li, .meta .row2, .facts div { text-wrap: pretty; }
 
   /* Full-bleed: Sektionen laufen über die gesamte Breite, nur ein Innenabstand am Rand.
      Keine mittige, schmale Content-Spalte. */
@@ -386,13 +386,6 @@
   .sub p{margin:0;font-size:clamp(1.1rem,1.95vw,1.55rem);font-weight:400;line-height:1.25;color:var(--ink);}
   .sub p + p{margin-block-start:0.7em;}
   .sub strong{font-weight:700;}
-  /* `block` statt `inline-block`: als inline-block hängt der Hinweis in einer Zeilenbox und
-     schleppt deren Unterlänge als zusätzlichen Leerraum mit. Zusammen mit engerem
-     Zeilenabstand und kleinerem Abstand nach oben schrumpft der Block unter dem Text — sonst
-     wirkt die Polsterung unten doppelt so groß wie oben, erst recht wenn der Hinweis
-     nach der ersten Mausbewegung ausblendet und die Fläche leer stehen bleibt. */
-  .hint{display:block;margin-block-start:0.25rem;line-height:1.1;font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);transition:opacity .4s;}
-  .stage.touched .hint{opacity:0;}
   /* Zu wenig Platz → Milchglas-Fläche legt sich ÜBER MOIN (nicht darunter), volle Contentbreite. */
   @media (max-width:46rem),(max-height:34rem){
     .sub{top:50%;transform:translateY(-50%);width:calc(100vw - 2*var(--pad));}
@@ -668,7 +661,6 @@
     <div class="sub">
       <p><strong>Web &amp; Digital Design ist mein Zuhause</strong> – Print habe ich im Gepäck, Illustration im Kopf und gerade ziemlich viel Interface Design für Software und Apps auf dem Tisch.</p>
       <p>Ich denke über Medien hinweg – damit Gestaltung genau dort funktioniert, wo sie gebraucht wird.</p>
-      <span class="hint">↖ Fahr mit der Maus über <span class="script" style="font-size:1.3em">Moin</span></span>
     </div>
   </section>
   <section class="block pad" id="projekte">
@@ -1149,7 +1141,7 @@
   var pointer={x:0,y:0,px:0,py:0,down:false,moved:false};
   var touched=false, queue=[];
   function toUV(e){ var r=canvas.getBoundingClientRect(); var p=e.touches?e.touches[0]:e; return {x:(p.clientX-r.left)/r.width, y:1.0-(p.clientY-r.top)/r.height}; }
-  function onMove(e){ var u=toUV(e); if(!touched){touched=true;stage.classList.add('touched');pointer.x=u.x;pointer.y=u.y;}
+  function onMove(e){ var u=toUV(e); if(!touched){touched=true;pointer.x=u.x;pointer.y=u.y;}
     pointer.px=pointer.x; pointer.py=pointer.y; pointer.x=u.x; pointer.y=u.y; pointer.moved=true; }
   stage.addEventListener('pointermove',onMove,{passive:true});
   stage.addEventListener('touchmove',onMove,{passive:true});

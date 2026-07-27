@@ -358,7 +358,10 @@
      Viertel). Kein Kästchen, KEINE Outline. Text links+oben um --hero-inset eingerückt. */
   /* z-index MUSS auto bleiben: sonst macht .sub einen eigenen Stacking-Kontext auf und
      die Fläche im ::before käme nicht unter das Liniengerüst. */
-  .sub{position:absolute;left:var(--pad);top:75%;width:calc(50vw - var(--pad)); /* Höhe = Inhalt → Unterkante wird gemessen */
+  /* Beginnt an der 75-%-Linie (--sub-top). Reicht der Platz darunter nicht — kurzer
+     Viewport oder längerer Text —, setzt das Skript den Wert so weit nach oben, dass
+     nichts unten aus der Stage geschnitten wird. */
+  .sub{position:absolute;left:var(--pad);top:var(--sub-top,75%);width:calc(50vw - var(--pad)); /* Höhe = Inhalt → Unterkante wird gemessen */
     padding:var(--hero-inset);}
   /* Die Milchglas-Fläche ist eine FLÄCHE und liegt darum unter den Linien (-2), genau wie
      die dunklen Sektionsflächen — sonst deckte sie die Außenlinien ab. Der Text darin
@@ -643,7 +646,7 @@
     </div>
     <p class="hero-note"><strong>15+ years in branding.</strong><br>Zwischen Kopfkino, Konzept und Feinschliff.</p>
     <div class="sub">
-      <p>Web &amp; Digital Design ist mein Zuhause — mit einem Faible für Illustration. Print kann ich auch, wenn's das Projekt braucht.</p>
+      <p>Web &amp; Digital Design ist mein Zuhause – Print habe ich im Gepäck, Illustration im Kopf und gerade ziemlich viel Interface Design für Software und Apps auf dem Tisch. Ich denke über Medien hinweg – damit Gestaltung genau dort funktioniert, wo sie gebraucht wird.</p>
       <span class="hint">↖ Fahr mit der Maus über <span class="script" style="font-size:1.3em">Moin</span></span>
     </div>
   </section>
@@ -1058,7 +1061,15 @@
     var r = document.documentElement.style;
     var s = document.querySelector('.sub');
     if (s) {
-      var st = stage.getBoundingClientRect(), sb = s.getBoundingClientRect();
+      var st = stage.getBoundingClientRect();
+      // Oberkante der Subline: normal die 75-%-Linie, bei zu wenig Platz darunter so weit
+      // nach oben, dass die Zelle nicht unten aus der Stage läuft (Stage clippt).
+      // getBoundingClientRect statt offsetHeight: letzteres rundet auf ganze Pixel und
+      // ließe einen Sub-Pixel-Rest überstehen.
+      r.setProperty('--sub-top',
+        Math.min(0.75 * stage.clientHeight,
+                 stage.clientHeight - s.getBoundingClientRect().height) + 'px');
+      var sb = s.getBoundingClientRect();
       var relBottom = sb.bottom - st.top;          // stage-relativ, für die Hero-Unterlinie
       var docTop = st.top + window.scrollY;        // Stage-Oberkante dokument-absolut
       r.setProperty('--sub-bottom', relBottom + 'px');

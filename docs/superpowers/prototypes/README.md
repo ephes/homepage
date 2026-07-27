@@ -126,6 +126,10 @@ optisch zusammen:
 
 ## Technische Notizen (wichtig für die Weiterarbeit)
 
+- **Die Subline beginnt an der 75-%-Linie, weicht aber nach oben aus.** Reicht der Platz
+  darunter nicht — kurzer Viewport oder längerer Text —, setzt das Skript `--sub-top` so weit
+  nach oben, dass die Zelle nicht unten aus der Stage geschnitten wird (die clippt).
+  Geprüft bei 1440×900, 1440×700, 1280×800, 2560×1440 und 820×1180.
 - **Hero-Höhe ist auf `min(100svh, 1200px)` gedeckelt.** Grund: In der Artifact-/iframe-Vorschau
   wird der Frame auf die volle Seitenhöhe gestreckt, wodurch `100svh` = gesamte Seitenhöhe wird.
   Ohne Deckel wächst der Hero auf mehrere tausend Pixel, die WebGL-Textur sprengt das Limit und

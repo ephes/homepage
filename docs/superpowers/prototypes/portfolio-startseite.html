@@ -43,6 +43,16 @@
     line-height: 1.5;
   }
 
+  /* ── Zeilenumbrüche ──────────────────────────────────────────────────────
+     Überschriften und kurze Displayzeilen werden ausgeglichen (`balance`), damit
+     keine Zeile allein stehen bleibt; Fließtext bekommt `pretty`, das vor allem
+     einzelne Wörter in der letzten Zeile verhindert. Beides ist Progressive
+     Enhancement — Browser ohne Unterstützung brechen wie bisher um. */
+  h1, h2, h3, h4,
+  .sec-title, .big, .statement, .brand, .avail, .foot-h,
+  .meta h3, .svc h3, .tile.cta strong { text-wrap: balance; }
+  p, li, .hint, .meta .row2, .facts div { text-wrap: pretty; }
+
   /* Full-bleed: Sektionen laufen über die gesamte Breite, nur ein Innenabstand am Rand.
      Keine mittige, schmale Content-Spalte. */
   .pad { padding-inline: clamp(1.25rem, 4vw, 4rem); }
@@ -376,7 +386,12 @@
   .sub p{margin:0;font-size:clamp(1.1rem,1.95vw,1.55rem);font-weight:400;line-height:1.25;color:var(--ink);}
   .sub p + p{margin-block-start:0.7em;}
   .sub strong{font-weight:700;}
-  .hint{display:inline-block;margin-block-start:0.5rem;font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);transition:opacity .4s;}
+  /* `block` statt `inline-block`: als inline-block hängt der Hinweis in einer Zeilenbox und
+     schleppt deren Unterlänge als zusätzlichen Leerraum mit. Zusammen mit engerem
+     Zeilenabstand und kleinerem Abstand nach oben schrumpft der Block unter dem Text — sonst
+     wirkt die Polsterung unten doppelt so groß wie oben, erst recht wenn der Hinweis
+     nach der ersten Mausbewegung ausblendet und die Fläche leer stehen bleibt. */
+  .hint{display:block;margin-block-start:0.25rem;line-height:1.1;font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);transition:opacity .4s;}
   .stage.touched .hint{opacity:0;}
   /* Zu wenig Platz → Milchglas-Fläche legt sich ÜBER MOIN (nicht darunter), volle Contentbreite. */
   @media (max-width:46rem),(max-height:34rem){

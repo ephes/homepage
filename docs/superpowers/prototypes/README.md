@@ -40,6 +40,9 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
   wollen. Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt; ziehbar per
   Pointer-Events, bedienbar per Tastatur (`role="slider"`, Pfeiltasten, Home/End). Er zeigt
   sich nur, wenn der Reel wirklich überläuft (`.is-scrollable` setzt das Skript).
+  Die Spur ist auf den **Textanschlag** eingerückt (Padding-Linie + `--hero-inset`, gemessen
+  28…362 px bei 390 px Viewport) und sitzt eng unter dem Reel, aber mit deutlich mehr Abstand
+  zur CTA-Kachel darunter (14 px oben / 40 px unten) — sonst liest sie sich als deren Zubehör.
 - Beide Reels verstecken die native Scrollbar, weil der Indicator ihre Rolle übernimmt.
 
 ## Gridlinien-Gerüst (seitenweit)

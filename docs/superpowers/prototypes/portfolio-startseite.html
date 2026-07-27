@@ -543,7 +543,15 @@
     .svc-grid.reel { border-top: 1px solid var(--rule); border-left: none; }
     .svc-grid.reel > .svc { border-bottom: 1px solid var(--rule); }
 
-    .reelbar.is-scrollable { display: block; padding-block: 1rem 0.25rem; }
+    /* Einrückung auf denselben Textanschlag wie Überschriften und Sektionslabels
+       (Padding-Linie + --hero-inset), also mit Luft zu beiden Rändern.
+       Oben eng am Reel, unten deutlich mehr Abstand — sonst liest sich die Spur als
+       Zubehör der CTA-Kachel darunter statt als Anzeige des Reels darüber. */
+    .reelbar.is-scrollable {
+      display: block;
+      padding-inline: var(--hero-inset);
+      padding-block: 0.85rem 2.5rem;
+    }
     .foot-cols { grid-template-columns: repeat(2, 1fr); gap: 2.5rem 0; }
   }
 

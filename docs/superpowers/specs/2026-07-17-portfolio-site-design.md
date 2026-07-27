@@ -303,6 +303,8 @@ decken sie die Linien zu); aller Inhalt liegt darüber. Wichtig: Bildflächen m�
 sein, sonst scheinen die Linien durch und es sieht aus, als läge das Grid obenauf.
 Das Gerüst behält auf **allen** Breiten vier gleich breite Spalten, auch wenn die Raster
 darüber auf zwei Spalten fallen.
+**Ausnahme:** Die beiden äußeren Padding-Linien begrenzen die Seite und liegen als einzige
+über dem Inhalt — sonst liefe der mobile Slider über die rechte Berandung.
 
 Die daraus folgende Grundregel: **Raster bündig, Text eingerückt.** Die 4-spaltigen Raster
 liegen exakt auf den Linien (Außenkanten = Padding-Linien, Zelllinien = gestrichelte

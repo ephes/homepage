@@ -70,9 +70,17 @@ optisch zusammen:
   | Ebene | Was |
   |---|---|
   | `-3` | Hero-Canvas (Fläche) |
-  | `-2` | dunkle Sektionsflächen (`.on-dark::before`) |
-  | `-1` | Liniengerüst + waagerechte Hero-Linien |
+  | `-2` | dunkle Sektionsflächen + Milchglas der Subline (jeweils `::before`) |
+  | `-1` | innere Gridlinien + waagerechte Hero-Linien |
   | ab `0` | aller Inhalt: Kacheln, Bilder, Texte |
+  | `30` | **die beiden äußeren Padding-Linien** |
+  | `40` / `60` | Header / Leinentextur |
+
+  **Ausnahme für die Seitenberandung:** Die beiden Außenlinien begrenzen die Seite und dürfen
+  von nichts überlaufen werden — auch nicht von einem Slider, der bis an den Rand scrollt.
+  Sie liegen deshalb als einzige über dem Inhalt. Damit das in *einer* Struktur möglich ist,
+  trägt `.pagegrid` **bewusst kein `z-index`**: sonst machte es einen Stacking-Kontext auf und
+  alle Linien lägen zwangsläufig auf derselben Ebene. So wählt jede Linienart ihre eigene.
 
   Zwei Dinge sind dafür nötig: `.stage` darf **kein** `isolation: isolate` tragen, sonst käme
   der Canvas nicht unter das seitenweite Gerüst; und die dunkle Fläche einer `.on-dark`-Section

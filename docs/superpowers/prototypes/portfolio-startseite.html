@@ -381,11 +381,18 @@
      Der Hero bringt daher KEINE eigenen Vertikalen mehr mit, nur noch seine
      waagerechten Linien und die Unterkante der Subline-Zelle. */
   body { position: relative; }
-  /* z-index:-1 → das Gerüst läuft im HINTERGRUND: über den Flächen (Hero-Canvas -3,
-     dunkle Sections -2), aber hinter allem Inhalt. Kacheln, Bilder und Texte
-     überdecken die Linien also, statt von ihnen überzeichnet zu werden. */
-  .pagegrid { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  /* BEWUSST OHNE z-index: sonst macht .pagegrid einen Stacking-Kontext auf und alle
+     Linien lägen zwangsläufig auf derselben Ebene. So wählt jede Linienart ihre eigene:
+     die inneren laufen im Hintergrund, die beiden Außenlinien über allem. */
+  .pagegrid { position: absolute; inset: 0; pointer-events: none; }
   .pagegrid > * { position: absolute; }
+  /* Innen: über den Flächen (Hero-Canvas -3, dunkle Sections und Milchglas -2), aber
+     hinter allem Inhalt — Kacheln und Bilder überdecken sie. */
+  .pagegrid .cols, .pagegrid .vsplit, .pagegrid .vsplit2 { z-index: -1; }
+  /* Außen: die Seitenberandung begrenzt die Seite und darf von nichts überlaufen werden —
+     auch nicht von einem Slider, der bis an den Rand scrollt. Unter Header (40) und
+     Leinentextur (60). */
+  .pagegrid .pads { z-index: 30; }
   /* Über dunklen Sections kehren die Linien ins Helle. Damit das OHNE eine zweite
      Struktur geht, ist die Linienfarbe eine Funktion von y: ein Verlauf mit harten
      Stopps an den Kanten jeder Section, die `.on-dark` trägt (aktuell Kunden + Footer).

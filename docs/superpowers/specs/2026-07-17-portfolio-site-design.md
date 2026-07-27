@@ -295,6 +295,11 @@ dadurch begann die Strichelung an jeder Sektionsgrenze neu und der Phasensprung 
 feiner Versatz sichtbar. Für die Wagtail-Umsetzung heißt das: **das Gerüst gehört ins
 Basis-Template, nicht in die Section-Includes.** Details siehe Prototyp-README.
 
+**Schichtung (Vorgabe Katharina, 2026-07-27): Flächen dürfen unter das Grid, Bilder liegen
+immer darüber.** Das Gerüst läuft also im Hintergrund (`z-index: -1`), darunter die
+Hero-Canvas-Fläche (`-3`) und die dunklen Sektionsflächen (`-2`, als `::before` statt als
+`background`, sonst decken sie die Linien zu); aller Inhalt liegt darüber.
+
 Die daraus folgende Grundregel: **Raster bündig, Text eingerückt.** Die 4-spaltigen Raster
 liegen exakt auf den Linien (Außenkanten = Padding-Linien, Zelllinien = gestrichelte
 Spaltenlinien, per Playwright nachgemessen); Textblöcke rücken um `--hero-inset` ein — derselbe

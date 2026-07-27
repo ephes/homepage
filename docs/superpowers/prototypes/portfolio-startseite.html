@@ -229,7 +229,12 @@
   /* ── Kunden: schwarze Section, weißes Marquee-Band, full-bleed ─── */
   /* Farbgebung kommt aus .on-dark — dieselbe Klasse, die dem Liniengerüst die
      dunklen Bänder meldet. So gibt es die Umschaltung nur an einer Stelle. */
-  .on-dark { background: var(--dark-bg); color: var(--dark-ink); }
+  /* Die dunkle Fläche ist eine eigene Ebene UNTER dem Liniengerüst (-2 gegen dessen -1).
+     Läge sie als background der Section selbst, würde sie die Linien zudecken, sobald
+     diese im Hintergrund laufen — und genau das sollen sie. Wichtig: die Section darf
+     dafür keinen eigenen Stacking-Kontext aufmachen (position:relative, z-index:auto). */
+  .on-dark { color: var(--dark-ink); position: relative; }
+  .on-dark::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--dark-bg); }
   .on-dark .avail { color: var(--dark-muted); }
   .clients { border-top: none; padding-inline: 0; }
   .clients .sec-label, .clients h2.big, .clients .cl-note { padding-inline: clamp(1.25rem, 4vw, 4rem); }
@@ -311,14 +316,22 @@
   .avail{display:flex;align-items:center;gap:0.45rem;font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
   .avail::before{content:"";inline-size:0.5rem;block-size:0.5rem;border-radius:50%;background:#4a9e5c;}
   .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:0.82rem;font-weight:600;text-decoration:none;}
-  .stage{position:relative;min-height:min(100svh,1200px);max-height:1200px;overflow:hidden;isolation:isolate;}
+  /* KEIN isolation:isolate — die Stage darf keinen eigenen Stacking-Kontext aufmachen,
+     sonst käme der Hero-Canvas nicht unter das seitenweite Liniengerüst (s. u.). */
+  .stage{position:relative;min-height:min(100svh,1200px);max-height:1200px;overflow:hidden;}
   /* CV-Leinentextur über der GANZEN Seite (multiply, oberste Ebene) — auch über Navigation
      und Subline-Feld. Papieranmutung wie im CV. */
   .linen{position:fixed;inset:0;z-index:60;pointer-events:none;background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsBAMAAAAfmfjxAAAAFVBMVEX////ExMS/v7/8/PyLi4ufn5+6uro3PuJqAAAAB3RSTlMARTAACxAlpkPg9gAAAWVJREFUeF7t1EENgEAABLF9wB8LBGXn3wQ+Jq2I7orYF7E3YnfEnoidCGtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZK8Ba1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1EqxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1kr4gcY9P+FkIkE1AAAAABJRU5ErkJggg==');background-repeat:repeat;mix-blend-mode:multiply;}
-  #fluid{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;}
+  /* Der Canvas ist eine Hintergrundfläche und liegt deshalb UNTER dem Liniengerüst (-1)
+     und unter den dunklen Sektionsflächen (-2). */
+  #fluid{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:-3;}
   /* Hero-Overlay: nur noch die WAAGERECHTEN Linien. Die Vertikalen kommen aus dem
      einen seitenweiten .pagegrid (s. u.) — der Hero hatte sie vorher als zweite Kopie. */
-  .grid{position:absolute;inset:0;z-index:6;pointer-events:none;} /* über der Milchglas-Fläche → Zelllinien bleiben sichtbar */
+  /* Ebenfalls in den Hintergrund (-1), damit die waagerechten Hero-Linien auf derselben
+     Ebene liegen wie die Vertikalen des .pagegrid. Folge: die Milchglas-Fläche der
+     Subline liegt jetzt DARÜBER — die Linien scheinen dort durch, statt scharf oben
+     aufzuliegen. */
+  .grid{position:absolute;inset:0;z-index:-1;pointer-events:none;}
   /* horizontale Linie an der Unterkante der Subline-Zelle, volle Breite */
   .grid .under{position:absolute;left:0;right:0;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
   .grid .rows{position:absolute;inset:0;}
@@ -357,7 +370,10 @@
      Der Hero bringt daher KEINE eigenen Vertikalen mehr mit, nur noch seine
      waagerechten Linien und die Unterkante der Subline-Zelle. */
   body { position: relative; }
-  .pagegrid { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+  /* z-index:-1 → das Gerüst läuft im HINTERGRUND: über den Flächen (Hero-Canvas -3,
+     dunkle Sections -2), aber hinter allem Inhalt. Kacheln, Bilder und Texte
+     überdecken die Linien also, statt von ihnen überzeichnet zu werden. */
+  .pagegrid { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
   .pagegrid > * { position: absolute; }
   /* Über dunklen Sections kehren die Linien ins Helle. Damit das OHNE eine zweite
      Struktur geht, ist die Linienfarbe eine Funktion von y: ein Verlauf mit harten
@@ -458,7 +474,10 @@
     .tile.cta { flex-direction: column; align-items: flex-start; }
     /* Die Raster fallen auf 2 Spalten zurück — das Liniengerüst tut dasselbe,
        sonst zeigten die Linien Viertel und die Raster Hälften. */
-    .pagegrid .cols > i:nth-child(3) { border-right: none; }
+    /* background-image, NICHT border-right: die Linien sind seit der Farbumkehr
+       Hintergrund-Ebenen. Sonst bliebe die 75-%-Linie stehen und die erste Spalte
+       wäre doppelt so breit wie die beiden anderen. */
+    .pagegrid .cols > i:nth-child(3) { background-image: none; }
     .pagegrid .vsplit, .pagegrid .vsplit2 { display: none; }
   }
   .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
@@ -473,14 +492,16 @@
     padding-block: clamp(2.5rem, 6vw, 4.5rem);
     align-items: start;
   }
-  .foot-col {
-    padding-inline: var(--hero-inset);
-    display: flex; flex-direction: column; gap: 1.5rem;
-    min-width: 0;
-  }
-  /* als Nachfahren-Selektoren, nicht nur direkte Kinder: in der vierten Spalte stecken
-     Überschrift und Liste in einem <nav> und behielten sonst ihre Default-Margins. */
-  .foot-col p, .foot-col ul, .foot-col h2 { margin: 0; }
+  /* Blocklayout statt Flex mit gap: sonst bekämen nur die Überschriften, die direkte
+     Kinder der Spalte sind (Seite, Projekte), den Spalten-gap zusätzlich zur Margin —
+     die in <nav> verschachtelten (Kontakt, Rechtliches) aber nicht. Alle Abstände
+     kommen jetzt aus je einer Margin-Regel. */
+  .foot-col { padding-inline: var(--hero-inset); min-width: 0; }
+  .foot-col p, .foot-col ul { margin: 0; }
+  /* etwas mehr Luft als zwischen den Listenpunkten (0.35rem), aber keine Leerzeile */
+  .foot-col h2 { margin-block: 0 0.6rem; }
+  .foot-col .brand + p { margin-block-start: 1.1rem; }
+  .foot-col .avail { margin-block-start: 1.4rem; }
   .foot-col p { font-size: 0.88rem; line-height: 1.45; color: var(--dark-muted); max-width: 28ch; }
   .foot-h {
     font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
@@ -489,7 +510,7 @@
   .foot-col ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
   .foot-col a { color: inherit; text-decoration: none; font-size: 0.92rem; }
   .foot-col a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
-  .foot-col nav + nav { margin-block-start: 1.5rem; }
+  .foot-col nav + nav { margin-block-start: 2rem; }
   .foot-bar { border-top: 1px solid var(--dark-rule); color: var(--dark-muted); }
   .on-dark a:focus-visible { outline: 2px solid var(--dark-ink); outline-offset: 2px; }
 
@@ -744,7 +765,8 @@
           <li><a href="mailto:mail@example.com">mail@example.com</a></li>
           <li><a href="#">Lebenslauf</a></li>
           <li><a href="#">LinkedIn</a></li>
-          <li><a href="#">Instagram</a></li>
+          <!-- rel="me" macht den Link zur Identitätsbestätigung für Mastodon (IndieWeb) -->
+          <li><a href="#" rel="me">Mastodon</a></li>
         </ul>
       </nav>
       <nav aria-labelledby="ft-recht">

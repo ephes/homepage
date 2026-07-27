@@ -64,10 +64,22 @@ optisch zusammen:
   und läuft unter deren Unterkante weiter (zwei Segmente, `.vsplit` / `.vsplit2`). Weil das
   Gerüst über der ganzen Seite liegt, misst `updateSubBottom()` die beiden Grenzen
   **dokument-absolut** in `--gap-start` / `--gap-end`.
-- Das Gerüst liegt **über dem Inhalt** (`z-index: 30`, `pointer-events: none`), aber unter
-  Header (40) und Leinentextur (60). Es muss über dem Inhalt liegen, weil der Hero-Canvas eine
-  deckende Fläche ist — darunter wäre er im Hero unsichtbar. Konsequenz: die Linien laufen
-  über die Projektbilder, so wie sie im Hero über die Illustration laufen.
+- **Das Gerüst läuft im Hintergrund** (`z-index: -1`). Die Regel dahinter (Vorgabe Katharina):
+  **Flächen dürfen unter das Grid, Bilder liegen immer darüber.** Daraus die Schichtung:
+
+  | Ebene | Was |
+  |---|---|
+  | `-3` | Hero-Canvas (Fläche) |
+  | `-2` | dunkle Sektionsflächen (`.on-dark::before`) |
+  | `-1` | Liniengerüst + waagerechte Hero-Linien |
+  | ab `0` | aller Inhalt: Kacheln, Bilder, Texte |
+
+  Zwei Dinge sind dafür nötig: `.stage` darf **kein** `isolation: isolate` tragen, sonst käme
+  der Canvas nicht unter das seitenweite Gerüst; und die dunkle Fläche einer `.on-dark`-Section
+  liegt als `::before` auf `-2` statt als deren `background` — sonst deckte sie die Linien zu,
+  sobald diese im Hintergrund laufen.
+- **Folge für die Subline:** Die Milchglas-Fläche im Hero liegt jetzt über den Linien, sie
+  scheinen dort also durch, statt scharf oben aufzuliegen (vorher lag `.grid` auf `z-index: 6`).
 - **Über dunklen Sections kehren die Linien ins Helle** — ohne zweite Struktur: die
   Linienfarbe ist eine Funktion von y. `buildLineGradients()` misst die Kanten **jeder**
   Section mit der Klasse `.on-dark` (aktuell Kunden und Footer) und baut daraus die Verläufe

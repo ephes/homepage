@@ -348,8 +348,11 @@
      Subline liegt jetzt DARÜBER — die Linien scheinen dort durch, statt scharf oben
      aufzuliegen. */
   .grid{position:absolute;inset:0;z-index:-1;pointer-events:none;}
-  /* horizontale Linie an der Unterkante der Subline-Zelle, volle Breite */
-  .grid .under{position:absolute;left:0;right:0;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
+  /* Horizontale Linie an der Unterkante der Subline-Zelle. Sie endet an der 50-%-Linie,
+     schließt also nur die Doppelzelle ab — in den beiden freien Zellen rechts daneben
+     liefe sie ins Leere. `right:50%` trifft die Linie exakt: die Spaltenmitte liegt bei
+     halber Stagebreite, weil links und rechts dasselbe Padding steht. */
+  .grid .under{position:absolute;left:0;right:50%;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
   .grid .rows{position:absolute;inset:0;}
   .grid .rows>b{position:absolute;left:0;right:0;border-top:1px solid var(--rule);}
   .grid .rows>b:nth-child(1){top:25%;} .grid .rows>b:nth-child(2){top:75%;}
@@ -370,7 +373,9 @@
   .sub::before{content:"";position:absolute;inset:0;z-index:-2;
     background:color-mix(in srgb,var(--bg) 55%,transparent);
     backdrop-filter:blur(12px) saturate(1.08);-webkit-backdrop-filter:blur(12px) saturate(1.08);}
-  .sub p{margin:0;font-size:clamp(1.05rem,1.8vw,1.45rem);font-weight:500;line-height:1.25;color:var(--ink);}
+  .sub p{margin:0;font-size:clamp(1.05rem,1.8vw,1.45rem);font-weight:400;line-height:1.25;color:var(--ink);}
+  .sub p + p{margin-block-start:0.7em;}
+  .sub strong{font-weight:700;}
   .hint{display:inline-block;margin-block-start:0.5rem;font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);transition:opacity .4s;}
   .stage.touched .hint{opacity:0;}
   /* Zu wenig Platz → Milchglas-Fläche legt sich ÜBER MOIN (nicht darunter), volle Contentbreite. */
@@ -646,7 +651,8 @@
     </div>
     <p class="hero-note"><strong>15+ years in branding.</strong><br>Zwischen Kopfkino, Konzept und Feinschliff.</p>
     <div class="sub">
-      <p>Web &amp; Digital Design ist mein Zuhause – Print habe ich im Gepäck, Illustration im Kopf und gerade ziemlich viel Interface Design für Software und Apps auf dem Tisch. Ich denke über Medien hinweg – damit Gestaltung genau dort funktioniert, wo sie gebraucht wird.</p>
+      <p><strong>Web &amp; Digital Design ist mein Zuhause</strong> – Print habe ich im Gepäck, Illustration im Kopf und gerade ziemlich viel Interface Design für Software und Apps auf dem Tisch.</p>
+      <p>Ich denke über Medien hinweg – damit Gestaltung genau dort funktioniert, wo sie gebraucht wird.</p>
       <span class="hint">↖ Fahr mit der Maus über <span class="script" style="font-size:1.3em">Moin</span></span>
     </div>
   </section>

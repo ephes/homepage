@@ -69,7 +69,9 @@ optisch zusammen:
   sichtbar. Eine durchgehende Linie hat eine einzige Phase. (Genau diese Redundanz gab es
   vorher: Section-Pseudoelemente *und* ein zweiter Satz Vertikalen im Hero.)
 - **Der Hero bringt keine eigenen Vertikalen mehr mit** — sein `.grid` enthält nur noch die
-  waagerechten Linien (25 % / 75 %) und die Unterkante der Subline-Zelle.
+  waagerechten Linien (25 % / 75 %) und die Unterkante der Subline-Zelle. Letztere endet an
+  der 50-%-Linie und schließt damit nur die Doppelzelle ab — in den beiden freien Zellen
+  rechts daneben liefe sie ins Leere.
 - Die 1/4-Linie hat im Hero eine Lücke: sie setzt an der Oberkante der Subline-Doppelzelle aus
   und läuft unter deren Unterkante weiter (zwei Segmente, `.vsplit` / `.vsplit2`). Weil das
   Gerüst über der ganzen Seite liegt, misst `updateSubBottom()` die beiden Grenzen

@@ -18,11 +18,33 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    deckungsgleich auf Outline um. Cremefarbener Grund, feine Gridlinien (4 Spalten, innere
    gestrichelt, Padding-Linien dunkel), Milchglas-Feld für die Subline, CV-Leinentextur über
    der ganzen Seite.
-2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln.
+2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln;
+   eine CTA-Kachel über die volle Breite schließt das Raster unten ab.
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.
 4. **About** — kurzes Statement + Fakten + Handschrift-Signatur.
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.
 6. **Kontakt / Footer** — CTA + Impressum/Datenschutz-Links.
+
+## Gridlinien-Gerüst (seitenweit)
+
+Die Liniensprache des Heros läuft über die **ganze** Seite weiter und klammert die Sections
+optisch zusammen:
+
+- Zwei kräftige Padding-Linien links/rechts (`--rule-strong`) plus drei gestrichelte
+  Spaltenlinien auf den Viertelmarken. Jede Section zeichnet ihr Stück selbst
+  (`section.block::before` / `::after`); weil die Sections lückenlos aneinanderstoßen,
+  lesen sich die Linien als durchgehende Vertikalen vom Hero bis zum Footer.
+- Technik: `z-index:-1` + `isolation:isolate` → die Linien liegen über der Sektionsfläche,
+  aber unter dem Inhalt. Die drei gestrichelten Linien sind 1px breite
+  `repeating-linear-gradient`-Ebenen, weil ein Pseudo-Element keine drei Borders hat.
+- In der dunklen Kunden-Section invertieren die Linienfarben.
+- **Bündig vs. eingerückt:** Die 4-spaltigen Raster (Kacheln, Leistungen, About-Porträt)
+  liegen bündig — ihre Außenkanten fallen mit den Padding-Linien zusammen, ihre Zelllinien
+  mit den gestrichelten Spaltenlinien (per Playwright nachgemessen: 57,59 px / 1382,41 px
+  bei 1440 px Viewport, Porträt-Kante exakt auf 1051,20 px = 75-%-Linie). Textblöcke rücken
+  dagegen um `--hero-inset` ein — derselbe Gap, mit dem das MOIN in seiner Zelle sitzt.
+  Die Raster bekommen einen deckenden Hintergrund, damit keine gestrichelte Linie durch die
+  transparenten span-2-Kacheln läuft.
 
 ## Technische Notizen (wichtig für die Weiterarbeit)
 

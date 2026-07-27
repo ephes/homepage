@@ -228,7 +228,10 @@ in Komponenten geschnitten, die 1:1 zu Wagtail-Templates/Blöcken werden.
 1. **Akzentfarbe** — liefert Katharina; bis dahin Platzhalter-Token.
 2. **Handschrift-Einsatzorte** — Katharina wählt aus den Vorschlägen oben.
 3. **Freier Bereich** zwischen Projekt-Panel und About (Ex-Case-Study-Platz) — Idee folgt.
-4. **10.-Projekt-Restreihe** — CTA-Kachel als Lückenfüller ok?
+4. ~~**10.-Projekt-Restreihe** — CTA-Kachel als Lückenfüller ok?~~ **Entschieden
+   (2026-07-27):** Die CTA-Kachel läuft über die volle Breite (`grid-column: 1 / -1`) und
+   schließt das Raster als schmales dunkles Band ab — 9 Projekte ergeben exakt 3 Reihen,
+   die CTA beginnt also immer eine neue; als Einzelkachel bliebe die Reihe offen.
 5. **Impressum/Datenschutz** — bestehende Seiten der Homepage nutzen oder eigene
    (ggf. Katharina-spezifisches Impressum nötig)?
 6. **Saira-Weights** — Grauwert-Abstimmung live im Browser (Nexola-800/600 ≠ Saira-800/600).
@@ -260,6 +263,23 @@ MOIN verschwindet. Siehe Prototyp-README.
 **Illustration bleibt bewusst bis ganz zum Schluss** (User-Wunsch): aktuell bunter Platzhalter;
 Katharina liefert die zwei deckungsgleichen Fullscreen-Bilder (clean = Creme + MOIN gefüllt;
 reveal = Illustration + MOIN-Outline) zuletzt.
+
+## Gridlinien-Gerüst über die ganze Seite (2026-07-27)
+
+Erster Schritt des Design-Ausbaus der Sections unter dem Hero: Das Liniensystem des Heros
+läuft jetzt **über die ganze Seite** — zwei kräftige Padding-Linien links/rechts plus drei
+gestrichelte Spaltenlinien auf den Viertelmarken, von jeder Section selbst gezeichnet
+(`::before`/`::after`, `z-index:-1` + `isolation:isolate`, Linienfarben in der dunklen
+Kunden-Section invertiert). Details siehe Prototyp-README.
+
+Die daraus folgende Grundregel: **Raster bündig, Text eingerückt.** Die 4-spaltigen Raster
+liegen exakt auf den Linien (Außenkanten = Padding-Linien, Zelllinien = gestrichelte
+Spaltenlinien, per Playwright nachgemessen); Textblöcke rücken um `--hero-inset` ein — derselbe
+Gap, mit dem das MOIN in seiner Gridzelle sitzt. Damit das trägt, wurden zwei Blöcke ans
+System angepasst: **About** liegt jetzt im 4-Spalten-Raster (Statement über drei Spalten,
+Porträt füllt bündig die vierte zwischen 75-%-Linie und rechter Padding-Linie, vorher
+2,2fr/1fr und damit unverankert), und die **CTA-Kachel** schließt das Projektraster über die
+volle Breite ab (offener Punkt 4, s. o.).
 
 **Nächste Schritte:** (a) übrige Sections gestalterisch ausbauen + echte Inhalte; (b) Wagtail-
 Umsetzung `homepage.portfolio` gemäß Architektur oben, Fluid-Hero als wiederverwendbare Komponente

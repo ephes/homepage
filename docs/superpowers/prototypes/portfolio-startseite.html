@@ -340,6 +340,96 @@
   .fallback h1{margin:0;font-size:calc((100vw - 2*var(--pad))/2.5168);font-weight:800;line-height:0.82;text-transform:uppercase;color:var(--ink);}
   .no-webgl #fluid{display:none;} .no-webgl .fallback{display:grid;}
 
+  /* ══ Durchgehendes Gridlinien-Gerüst ═══════════════════════════════════════
+     Die Liniensprache des Heros läuft über die ganze Seite weiter: zwei kräftige
+     Padding-Linien links/rechts (--rule-strong, wie im Hero) plus drei gestrichelte
+     Spaltenlinien auf den Viertelmarken. Jede Section zeichnet ihr eigenes Stück;
+     weil die Sections lückenlos aneinanderstoßen, lesen sie sich als durchgehende
+     Vertikalen vom Hero bis zum Footer.
+     z-index:-1 + isolation:isolate → die Linien liegen über der Sektionsfläche,
+     aber unter dem Inhalt (Painting-Order: Hintergrund → negative z-index → Inhalt). */
+  section.block, footer.site { position: relative; isolation: isolate; }
+  section.block::before, section.block::after,
+  footer.site::before,   footer.site::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: var(--pad);
+    right: var(--pad);
+    z-index: -1;
+    pointer-events: none;
+  }
+  /* äußere Padding-Linien — dieselbe Kraft wie im Hero */
+  section.block::before, footer.site::before { border-inline: 1px solid var(--rule-strong); }
+  /* innere Spaltenlinien (25/50/75 %), gestrichelt wie im Hero.
+     Als 1px-breite Hintergrundebenen, weil ein Pseudo-Element keine drei Borders hat. */
+  section.block::after, footer.site::after {
+    --dash: repeating-linear-gradient(to bottom, var(--rule) 0 3px, transparent 3px 6px);
+    background-image: var(--dash), var(--dash), var(--dash);
+    background-size: 1px 100%;
+    background-position: 25% 0, 50% 0, 75% 0;
+    background-repeat: no-repeat;
+  }
+  /* dunkle Kunden-Section: Linien invertieren */
+  .clients::before { border-inline-color: var(--dark-ink); }
+  .clients::after {
+    --dash: repeating-linear-gradient(to bottom, var(--dark-rule) 0 3px, transparent 3px 6px);
+  }
+
+  /* ── Einrückung: Text steht nie auf der Linie ──────────────────────────────
+     Wie das MOIN im Hero rücken auch die Textblöcke um --hero-inset von der
+     Padding-Linie ein. Die 4-spaltigen Raster (Kacheln, Leistungen) bleiben
+     bewusst bündig: ihre Außenborders FALLEN MIT den Padding-Linien zusammen,
+     ihre inneren Zelllinien mit den gestrichelten Spaltenlinien. */
+  section.block > .sec-label,
+  section.block > .proj-head,
+  section.block > .stack { padding-inline: var(--hero-inset); }
+
+  /* About im 4-Spalten-System: Text über drei Spalten (eingerückt), Porträt füllt die
+     vierte Spalte bündig zwischen 75-%-Linie und rechter Padding-Linie — wie eine Kachel. */
+  .about {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .about > :first-child {
+    grid-column: 1 / 4;
+    padding-inline-start: var(--hero-inset);
+    padding-inline-end: clamp(1.5rem, 3vw, 3rem);
+  }
+  .about > .portrait { grid-column: 4 / -1; }
+  @media (max-width: 52rem) {
+    .about { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 4rem); }
+    .about > :first-child, .about > .portrait { grid-column: auto; }
+    .about > :first-child { padding-inline-end: var(--hero-inset); }
+  }
+  .clients > .sec-label,
+  .clients > h2.big { padding-inline: calc(var(--pad) + var(--hero-inset)); }
+  /* Die Raster decken die Seitenlinien ab — sonst liefe die gestrichelte Linie quer
+     durch die transparenten span-2-Kacheln. Ihre eigenen Zelllinien sitzen exakt
+     an denselben Viertelmarken, die Struktur bleibt also lückenlos. */
+  .tilegrid, .svc-grid { background: var(--bg); }
+  /* Die CTA-Kachel schließt das Raster ab: volle Breite statt einer offenen Restreihe
+     (9 Projekte = exakt 3 Reihen, die CTA ist die 10. Kachel und beginnt immer eine neue). */
+  .tile.cta {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: clamp(1rem, 2vw, 1.6rem);
+  }
+  /* muss NACH der Desktop-Regel stehen (gleiche Spezifität) */
+  @media (max-width: 52rem) {
+    .tile.cta { flex-direction: column; align-items: flex-start; }
+    /* Die Raster fallen auf 2 Spalten zurück — die Seitenlinien tun dasselbe,
+       sonst zeigten die Linien Viertel und die Raster Hälften. */
+    section.block::after, footer.site::after {
+      background-image: var(--dash);
+      background-position: 50% 0;
+    }
+  }
+  .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
+
 </style>
 <header class="site">
   <span class="brand">Katharina Wersdörfer<sup>®</sup></span>

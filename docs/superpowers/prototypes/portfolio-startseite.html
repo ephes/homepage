@@ -405,6 +405,26 @@
   /* In der schmalen Ansicht ist die vierte Spalte nur noch gut 80px breit — dort wäre der
      Satz ein unlesbares Band. */
   @media (max-width:46rem){ .hero-note{display:none;} }
+  /* ── Custom Cursor über dem Hero ─────────────────────────────────────────
+     Punkt mit umlaufendem Schriftring. `mix-blend-mode: difference` auf Weiß kehrt
+     den Untergrund um: über der Creme wird der Cursor fast schwarz, über MOIN fast
+     weiß — er bleibt also auf beiden Flächen sichtbar, ohne die Farbe zu wechseln.
+     Nur wo es einen echten Zeiger gibt; auf Touch bliebe sonst der Systemcursor weg. */
+  @media (hover: hover) and (pointer: fine) {
+    .stage{cursor:none;}
+    .cursor{position:fixed;left:0;top:0;inline-size:128px;block-size:128px;
+      margin:-64px 0 0 -64px;pointer-events:none;z-index:50;
+      mix-blend-mode:difference;color:#fff;opacity:0;transition:opacity .3s;
+      will-change:transform;}
+    .stage-hover .cursor{opacity:1;}
+  }
+  .cursor-dot{position:absolute;left:50%;top:50%;inline-size:9px;block-size:9px;
+    margin:-4.5px;border-radius:50%;background:currentColor;}
+  .cursor-ring{position:absolute;inset:0;animation:cursor-spin 16s linear infinite;}
+  .cursor-ring text{fill:currentColor;font-family:"Saira",system-ui,sans-serif;
+    font-size:8.5px;font-weight:600;}
+  @keyframes cursor-spin{to{rotate:360deg;}}
+  @media (prefers-reduced-motion: reduce){ .cursor-ring{animation:none;} }
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .wf-note{position:relative;z-index:3;margin:1.25rem var(--pad) 0;border:1px dashed var(--muted);color:var(--muted);font-size:0.78rem;line-height:1.45;padding:0.5rem 0.75rem;max-width:62rem;background:color-mix(in srgb,var(--bg) 85%,transparent);}
@@ -882,6 +902,16 @@
   <div class="vsplit"></div>
   <div class="vsplit2"></div>
 </div>
+<!-- Custom Cursor. textLength = Kreisumfang (2π·48) mit lengthAdjust="spacing" sorgt
+     dafür, dass der Ring exakt schließt, unabhängig von den Schriftmetriken. -->
+<div class="cursor" aria-hidden="true">
+  <span class="cursor-dot"></span>
+  <svg class="cursor-ring" viewBox="0 0 128 128">
+    <path id="cursor-circle" fill="none" d="M64,64 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0"/>
+    <text><textPath href="#cursor-circle" textLength="301.6" lengthAdjust="spacing"
+      >MOIN · FAHR MAL DRÜBER · MOIN · FAHR MAL DRÜBER · </textPath></text>
+  </svg>
+</div>
 <div class="linen" aria-hidden="true"></div>
 <script>
 "use strict";
@@ -1267,6 +1297,36 @@
       else if (e.key === 'Home') { reel.scrollLeft = 0; e.preventDefault(); }
       else if (e.key === 'End') { reel.scrollLeft = reel.scrollWidth; e.preventDefault(); }
     });
+  });
+})();
+</script>
+<script>
+"use strict";
+// Custom Cursor über dem Hero. Eigener Block, damit er auch ohne WebGL läuft.
+(function () {
+  var stage = document.getElementById('stage');
+  var cur = document.querySelector('.cursor');
+  if (!stage || !cur) return;
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  var tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+  // Nachlaufen mit Lerp: der Ring hängt dem Zeiger eine Spur hinterher, das nimmt ihm
+  // die Härte und passt zur trägen Bewegung der Flüssigkeitssimulation darunter.
+  function loop() {
+    x += (tx - x) * 0.2; y += (ty - y) * 0.2;
+    cur.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+    raf = requestAnimationFrame(loop);
+  }
+  addEventListener('pointermove', function (e) { tx = e.clientX; ty = e.clientY; }, { passive: true });
+  stage.addEventListener('pointerenter', function (e) {
+    tx = x = e.clientX; ty = y = e.clientY;      // ohne Sprung einsetzen
+    cur.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+    document.documentElement.classList.add('stage-hover');
+    if (!raf) raf = requestAnimationFrame(loop);
+  });
+  stage.addEventListener('pointerleave', function () {
+    document.documentElement.classList.remove('stage-hover');
+    cancelAnimationFrame(raf); raf = 0;
   });
 })();
 </script>

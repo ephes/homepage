@@ -21,6 +21,14 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    („15+ years in branding."), unten in der Zelle ausgerichtet mit `--hero-inset` Abstand zur
    25-%-Linie, in Schriftgröße der Wortmarke. Unter 46 rem ausgeblendet — dort wäre die
    vierte Spalte nur gut 80 px breit.
+   **Custom Cursor über dem Hero:** ein Punkt mit umlaufendem Schriftring in Versalien
+   („MOIN · FAHR MAL DRÜBER"), der langsam rotiert und dem Zeiger mit Lerp nachläuft.
+   `mix-blend-mode: difference` auf Weiß kehrt den Untergrund um — der Cursor bleibt über
+   Creme wie über dem schwarzen MOIN sichtbar, ohne die Farbe zu wechseln. Der Ring schließt
+   exakt, weil `textLength` auf den Kreisumfang (2π·48) gesetzt ist; damit hängt die Passung
+   nicht an den Schriftmetriken. Nur bei `(hover: hover) and (pointer: fine)` aktiv, sonst
+   bliebe auf Touch der Systemcursor weg. Er ersetzt die frühere Hinweiszeile im
+   Milchglas-Feld.
 2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln;
    eine CTA-Kachel über die volle Breite schließt das Raster unten ab.
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.

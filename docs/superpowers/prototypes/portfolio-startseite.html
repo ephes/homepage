@@ -285,6 +285,10 @@
     --rule-strong:#171410; /* kräftige Linie wie MOIN — für Padding-Linien + Header-Unterkante */
     --pad:clamp(1.25rem,4vw,4rem);
     --hero-inset:1rem; /* einheitlicher Gap Wort↔Gridzelle; wird per JS in px gesetzt (Canvas+DOM synchron) */
+    /* Vom Skript dokument-absolut gesetzt (s. updateGridVars): Lücke der 1/4-Linie um die
+       Subline-Zelle und Ober-/Unterkante der dunklen Kunden-Section. Die Startwerte legen
+       das dunkle Band außerhalb der Seite → ohne JS bleiben alle Linien dunkel. */
+    --gap-start:0px; --gap-end:0px; --dark-top:100%; --dark-bottom:100%;
   }
   /* Bewusst hell-only: cremefarbener Grund, warmes Schwarz für alle Schriften (helle Start-Section). */
   :root{ color-scheme: light; }
@@ -344,25 +348,63 @@
   body { position: relative; }
   .pagegrid { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
   .pagegrid > * { position: absolute; }
+  /* Über der dunklen Kunden-Section kehren die Linien ins Helle. Damit das OHNE eine
+     zweite Struktur geht, ist die Linienfarbe eine Funktion von y: ein Verlauf mit
+     harten Stopps an den Kanten des dunklen Bands (--dark-top / --dark-bottom, vom
+     Skript dokument-absolut gemessen wie --gap-start/--gap-end). Deshalb sind die
+     Linien Hintergrund-Ebenen statt Borders — eine Border kann keinen Verlauf tragen.
+     Die Strichelung kommt als Maske dazu, damit Farbe und Muster unabhängig bleiben. */
+  .pagegrid {
+    --line-strong: linear-gradient(to bottom,
+      var(--rule-strong) 0 var(--dark-top), var(--dark-ink) var(--dark-top) var(--dark-bottom),
+      var(--rule-strong) var(--dark-bottom) 100%);
+    --line-soft: linear-gradient(to bottom,
+      var(--rule) 0 var(--dark-top), var(--dark-rule) var(--dark-top) var(--dark-bottom),
+      var(--rule) var(--dark-bottom) 100%);
+    --dashes: repeating-linear-gradient(to bottom, #000 0 3px, transparent 3px 6px);
+  }
   .pagegrid .pads {
     top: 0; bottom: 0; left: var(--pad); right: var(--pad);
-    border-inline: 1px solid var(--rule-strong);
+    background-image: var(--line-strong), var(--line-strong);
+    background-size: 1px 100%;
+    background-position: left top, right top;
+    background-repeat: no-repeat;
   }
   .pagegrid .cols {
     top: 0; bottom: 0; left: var(--pad); right: var(--pad);
     display: grid; grid-template-columns: repeat(4, 1fr);
   }
-  .pagegrid .cols > i { border-right: 1px dashed var(--rule); }
-  .pagegrid .cols > i:nth-child(1), .pagegrid .cols > i:nth-child(4) { border-right: none; }
+  .pagegrid .cols > i {
+    background-image: var(--line-soft);
+    background-size: 1px 100%;
+    background-position: right top;
+    background-repeat: no-repeat;
+    -webkit-mask-image: var(--dashes); mask-image: var(--dashes);
+  }
+  /* Kante 1 wäre die 1/4-Linie (kommt separat, wegen der Lücke), Kante 4 die rechte
+     Padding-Linie (kommt aus .pads). */
+  .pagegrid .cols > i:nth-child(1), .pagegrid .cols > i:nth-child(4) { background-image: none; }
   /* Die 1/4-Linie hat im Hero eine Lücke: sie setzt an der Oberkante der Subline-
      Doppelzelle aus und läuft unter deren Unterkante weiter. Beide Grenzen misst das
      Skript dokument-absolut (--gap-start / --gap-end). */
   .pagegrid .vsplit, .pagegrid .vsplit2 {
     left: calc(var(--pad) + (100% - 2*var(--pad))/4);
-    border-left: 1px dashed var(--rule);
+    width: 1px;
+    background-repeat: no-repeat;
+    background-size: 1px 100%;
+    -webkit-mask-image: var(--dashes); mask-image: var(--dashes);
   }
-  .pagegrid .vsplit  { top: 0; height: var(--gap-start, 0); }
-  .pagegrid .vsplit2 { top: var(--gap-end, 0); bottom: 0; }
+  /* Das obere Segment endet weit über der Kunden-Section — es bleibt immer dunkel. */
+  .pagegrid .vsplit  { top: 0; height: var(--gap-start); background-image: linear-gradient(var(--rule), var(--rule)); }
+  /* Das untere Segment beginnt erst bei --gap-end, seine eigene y-Achse ist also um
+     diesen Betrag verschoben — die Stopps müssen gegengerechnet werden. */
+  .pagegrid .vsplit2 {
+    top: var(--gap-end); bottom: 0;
+    background-image: linear-gradient(to bottom,
+      var(--rule) 0 calc(var(--dark-top) - var(--gap-end)),
+      var(--dark-rule) calc(var(--dark-top) - var(--gap-end)) calc(var(--dark-bottom) - var(--gap-end)),
+      var(--rule) calc(var(--dark-bottom) - var(--gap-end)) 100%);
+  }
 
   /* ── Einrückung: Text steht nie auf der Linie ──────────────────────────────
      Wie das MOIN im Hero rücken auch die Textblöcke um --hero-inset von der
@@ -755,21 +797,30 @@
     // Einheitlicher Gap Wort↔Gridzelle: einmal berechnen, für Canvas (MOIN) UND DOM (Subline) nutzen.
     HERO_INSET = Math.max(8, Math.min(0.012*stage.clientWidth, 20));
     document.documentElement.style.setProperty('--hero-inset', HERO_INSET+'px');
-    buildTextures(); updateSubBottom(); }
+    buildTextures(); updateGridVars(); }
   // Unterkante der Subline-Zelle messen → Position von Unter-Linie + fortgesetzter 1/4-Linie.
-  function updateSubBottom(){
-    var s = document.querySelector('.sub'); if(!s) return;
-    var st = stage.getBoundingClientRect(), sb = s.getBoundingClientRect();
-    var relBottom = sb.bottom - st.top;            // stage-relativ, für die Hero-Unterlinie
-    var docTop = st.top + window.scrollY;          // Stage-Oberkante dokument-absolut
+  function updateGridVars(){
     var r = document.documentElement.style;
-    r.setProperty('--sub-bottom', relBottom + 'px');
-    // Grenzen der Lücke, die die durchgehende 1/4-Linie um die Subline-Zelle macht.
-    // Dokument-absolut, weil das Liniengerüst über der ganzen Seite liegt, nicht im Hero.
-    r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight) + 'px');
-    r.setProperty('--gap-end',   (docTop + relBottom) + 'px');
+    var s = document.querySelector('.sub');
+    if (s) {
+      var st = stage.getBoundingClientRect(), sb = s.getBoundingClientRect();
+      var relBottom = sb.bottom - st.top;          // stage-relativ, für die Hero-Unterlinie
+      var docTop = st.top + window.scrollY;        // Stage-Oberkante dokument-absolut
+      r.setProperty('--sub-bottom', relBottom + 'px');
+      // Grenzen der Lücke, die die durchgehende 1/4-Linie um die Subline-Zelle macht.
+      // Dokument-absolut, weil das Liniengerüst über der ganzen Seite liegt, nicht im Hero.
+      r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight) + 'px');
+      r.setProperty('--gap-end',   (docTop + relBottom) + 'px');
+    }
+    // Kanten der dunklen Kunden-Section: dort kehren die Linien ins Helle.
+    var dark = document.querySelector('.clients');
+    if (dark) {
+      var dr = dark.getBoundingClientRect();
+      r.setProperty('--dark-top',    (dr.top + window.scrollY) + 'px');
+      r.setProperty('--dark-bottom', (dr.bottom + window.scrollY) + 'px');
+    }
   }
-  addEventListener('resize', updateSubBottom, { passive: true });
+  addEventListener('resize', updateGridVars, { passive: true });
 
   // ---- Splat: Geschwindigkeit + Dye eintragen ----
   function splat(x, y, dx, dy){

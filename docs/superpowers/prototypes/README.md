@@ -48,8 +48,13 @@ optisch zusammen:
   Header (40) und Leinentextur (60). Es muss über dem Inhalt liegen, weil der Hero-Canvas eine
   deckende Fläche ist — darunter wäre er im Hero unsichtbar. Konsequenz: die Linien laufen
   über die Projektbilder, so wie sie im Hero über die Illustration laufen.
-- **Die dunkle Kunden-Section schluckt die Linien** (dunkel auf dunkel). Das ist der Preis der
-  einen Struktur: eine Farbumkehr ließe sich nicht ohne section-spezifische Ausnahme bauen.
+- **Über der dunklen Kunden-Section kehren die Linien ins Helle** — ohne zweite Struktur:
+  die Linienfarbe ist eine Funktion von y (ein Verlauf mit harten Stopps an
+  `--dark-top` / `--dark-bottom`, ebenfalls dokument-absolut gemessen). Deshalb sind die
+  Linien **Hintergrund-Ebenen statt Borders** (eine Border kann keinen Verlauf tragen) und die
+  Strichelung kommt als `mask-image` dazu, damit Farbe und Muster unabhängig bleiben.
+  Nebeneffekt: alle Linien nutzen jetzt dasselbe Strichmuster — vorher mischten sich
+  browser-gerenderte `dashed`-Borders und Gradient-Striche.
 - **Bündig vs. eingerückt:** Die 4-spaltigen Raster (Kacheln, Leistungen, About-Porträt)
   liegen bündig — ihre Außenkanten fallen mit den Padding-Linien zusammen, ihre Zelllinien
   mit den gestrichelten Spaltenlinien (per Playwright nachgemessen: 57,59 px / 1382,41 px

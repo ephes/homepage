@@ -426,7 +426,7 @@
      Leserichtung, jede Drehung würde die Wörter kippen. */
   .cursor-ring{position:absolute;inset:0;}
   .cursor-ring text{fill:currentColor;font-family:"Saira",system-ui,sans-serif;
-    font-size:16px;font-weight:700;letter-spacing:0.06em;}
+    font-size:16px;font-weight:400;letter-spacing:0.06em;}
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .wf-note{position:relative;z-index:3;margin:1.25rem var(--pad) 0;border:1px dashed var(--muted);color:var(--muted);font-size:0.78rem;line-height:1.45;padding:0.5rem 0.75rem;max-width:62rem;background:color-mix(in srgb,var(--bg) 85%,transparent);}
@@ -950,6 +950,9 @@
          Die Radien unterscheiden sich um die Versalhöhe (38,4 / 49,6): oben wachsen die
          Glyphen von ihrer Grundlinie nach außen, unten nach innen — so liegen beide Wörter
          im selben Ring statt versetzt.
+         Der Schriftschnitt lässt sich frei wählen, ohne die Geometrie anzufassen: Saira
+         ändert seine Laufweite über die Schnitte hinweg kaum (120,80 px bei 300 gegen
+         120,97 px bei 700 — nachgemessen), der Kreis bleibt also geschlossen.
          Die Aufteilung ist ausgerechnet, nicht geschätzt: oben 180,4° in natürlicher
          Laufweite, unten 127,6° (per textLength gesperrt, weil KREATIV kürzer ist), dazu
          zwei Lücken von je 26°, in denen die Trennpunkte sitzen. Summe exakt 360°. -->

@@ -412,19 +412,18 @@
      Nur wo es einen echten Zeiger gibt; auf Touch bliebe sonst der Systemcursor weg. */
   @media (hover: hover) and (pointer: fine) {
     .stage{cursor:none;}
-    .cursor{position:fixed;left:0;top:0;inline-size:128px;block-size:128px;
-      margin:-64px 0 0 -64px;pointer-events:none;z-index:50;
+    .cursor{position:fixed;left:0;top:0;inline-size:180px;block-size:180px;
+      margin:-90px 0 0 -90px;pointer-events:none;z-index:50;
       mix-blend-mode:difference;color:#fff;opacity:0;transition:opacity .3s;
       will-change:transform;}
     .stage-hover .cursor{opacity:1;}
   }
-  .cursor-dot{position:absolute;left:50%;top:50%;inline-size:9px;block-size:9px;
-    margin:-4.5px;border-radius:50%;background:currentColor;}
-  .cursor-ring{position:absolute;inset:0;animation:cursor-spin 16s linear infinite;}
+  .cursor-arrow{fill:currentColor;}
+  /* Der Ring dreht sich NICHT: „SEI MAL" oben und „KREATIV" unten haben eine feste
+     Leserichtung, jede Drehung würde die Wörter kippen. */
+  .cursor-ring{position:absolute;inset:0;}
   .cursor-ring text{fill:currentColor;font-family:"Saira",system-ui,sans-serif;
-    font-size:8.5px;font-weight:600;}
-  @keyframes cursor-spin{to{rotate:360deg;}}
-  @media (prefers-reduced-motion: reduce){ .cursor-ring{animation:none;} }
+    font-size:17px;font-weight:700;letter-spacing:0.06em;}
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .wf-note{position:relative;z-index:3;margin:1.25rem var(--pad) 0;border:1px dashed var(--muted);color:var(--muted);font-size:0.78rem;line-height:1.45;padding:0.5rem 0.75rem;max-width:62rem;background:color-mix(in srgb,var(--bg) 85%,transparent);}
@@ -880,30 +879,53 @@
              C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63
              C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19
              C0.34 0.11 0.38 0.08 0.47 0.07Z">
-      <!-- Leichtes Wabern: drei Varianten derselben Kurvenfolge (gleiche Befehlsstruktur,
-           nur verschobene Punkte), langsam ineinander überblendet. Kostet nur das
-           Neuzeichnen dieses einen Elements — kein Layout, kein Reflow.
-           Die Spritzer bleiben bewusst ruhig, bewegte Punkte lesen sich als Flimmern. -->
-      <animate attributeName="d" dur="24s" repeatCount="indefinite"
+      <!-- Wabern: drei Varianten derselben Kurvenfolge (gleiche Befehlsstruktur, nur
+           verschobene Punkte), ineinander übergeblendet. Kostet nur das Neuzeichnen
+           dieses einen Elements — kein Layout, kein Reflow. -->
+      <animate attributeName="d" dur="16s" repeatCount="indefinite"
         calcMode="spline" keyTimes="0;0.34;0.67;1"
         keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
         values="M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z;
-                M0.49 0.06C0.64 0.06 0.76 0.15 0.80 0.26C0.84 0.35 0.79 0.44 0.83 0.52C0.87 0.60 0.91 0.69 0.84 0.77C0.77 0.85 0.65 0.81 0.56 0.86C0.46 0.92 0.33 0.96 0.24 0.89C0.15 0.82 0.21 0.71 0.15 0.64C0.09 0.56 0.04 0.44 0.09 0.35C0.14 0.26 0.25 0.28 0.30 0.20C0.35 0.12 0.40 0.07 0.49 0.06Z;
-                M0.46 0.08C0.61 0.04 0.75 0.12 0.78 0.23C0.82 0.32 0.82 0.41 0.85 0.49C0.89 0.57 0.88 0.67 0.82 0.75C0.75 0.83 0.67 0.85 0.58 0.89C0.48 0.95 0.35 0.94 0.26 0.87C0.17 0.80 0.18 0.69 0.13 0.62C0.07 0.54 0.06 0.46 0.11 0.37C0.16 0.28 0.23 0.25 0.28 0.18C0.33 0.10 0.37 0.09 0.46 0.08Z;
+                M0.51 0.05C0.67 0.06 0.79 0.16 0.81 0.28C0.83 0.37 0.76 0.45 0.80 0.53C0.85 0.62 0.93 0.70 0.85 0.79C0.78 0.87 0.63 0.79 0.54 0.85C0.44 0.91 0.31 0.98 0.22 0.90C0.13 0.83 0.23 0.72 0.17 0.65C0.11 0.57 0.02 0.43 0.07 0.34C0.13 0.25 0.27 0.30 0.32 0.21C0.37 0.13 0.42 0.04 0.51 0.05Z;
+                M0.44 0.10C0.58 0.03 0.71 0.10 0.76 0.21C0.81 0.30 0.85 0.40 0.88 0.48C0.92 0.56 0.86 0.66 0.80 0.74C0.73 0.82 0.70 0.88 0.61 0.91C0.51 0.97 0.37 0.92 0.28 0.85C0.19 0.78 0.16 0.68 0.11 0.61C0.05 0.53 0.09 0.48 0.14 0.39C0.19 0.30 0.21 0.23 0.26 0.16C0.31 0.08 0.35 0.11 0.44 0.10Z;
                 M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z"/>
     </path>
     <path d="M0.8550 0.1300C0.8550 0.1052 0.8752 0.0850 0.9000 0.0850
              C0.9249 0.0850 0.9450 0.1052 0.9450 0.1300C0.9450 0.1549 0.9249 0.1750 0.9000 0.1750
-             C0.8752 0.1750 0.8550 0.1549 0.8550 0.1300Z"/>
+             C0.8752 0.1750 0.8550 0.1549 0.8550 0.1300ZZ">
+      <animateTransform attributeName="transform" type="translate"
+        dur="13s" repeatCount="indefinite" calcMode="spline"
+        keyTimes="0;0.33;0.66;1"
+        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+        values="0 0; 0.018 -0.022; -0.014 0.012; 0 0"/>
+    </path>
     <path d="M0.9270 0.4200C0.9270 0.4045 0.9395 0.3920 0.9550 0.3920
              C0.9705 0.3920 0.9830 0.4045 0.9830 0.4200C0.9830 0.4355 0.9705 0.4480 0.9550 0.4480
-             C0.9395 0.4480 0.9270 0.4355 0.9270 0.4200Z"/>
+             C0.9395 0.4480 0.9270 0.4355 0.9270 0.4200ZZ">
+      <animateTransform attributeName="transform" type="translate"
+        dur="17s" repeatCount="indefinite" calcMode="spline"
+        keyTimes="0;0.33;0.66;1"
+        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+        values="0 0; -0.020 0.016; 0.012 0.020; 0 0"/>
+    </path>
     <path d="M0.0650 0.8600C0.0650 0.8407 0.0807 0.8250 0.1000 0.8250
              C0.1193 0.8250 0.1350 0.8407 0.1350 0.8600C0.1350 0.8793 0.1193 0.8950 0.1000 0.8950
-             C0.0807 0.8950 0.0650 0.8793 0.0650 0.8600Z"/>
+             C0.0807 0.8950 0.0650 0.8793 0.0650 0.8600ZZ">
+      <animateTransform attributeName="transform" type="translate"
+        dur="21s" repeatCount="indefinite" calcMode="spline"
+        keyTimes="0;0.33;0.66;1"
+        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+        values="0 0; 0.022 0.014; -0.016 -0.018; 0 0"/>
+    </path>
     <path d="M0.6740 0.9650C0.6740 0.9506 0.6856 0.9390 0.7000 0.9390
              C0.7144 0.9390 0.7260 0.9506 0.7260 0.9650C0.7260 0.9794 0.7144 0.9910 0.7000 0.9910
-             C0.6856 0.9910 0.6740 0.9794 0.6740 0.9650Z"/>
+             C0.6856 0.9910 0.6740 0.9794 0.6740 0.9650ZZ">
+      <animateTransform attributeName="transform" type="translate"
+        dur="15s" repeatCount="indefinite" calcMode="spline"
+        keyTimes="0;0.33;0.66;1"
+        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+        values="0 0; -0.014 -0.018; 0.020 0.010; 0 0"/>
+    </path>
   </clipPath>
 </svg>
 <!-- Das EINE Liniengerüst der Seite: läuft ungebrochen vom Hero bis zum Footer.
@@ -917,11 +939,18 @@
 <!-- Custom Cursor. textLength = Kreisumfang (2π·48) mit lengthAdjust="spacing" sorgt
      dafür, dass der Ring exakt schließt, unabhängig von den Schriftmetriken. -->
 <div class="cursor" aria-hidden="true">
-  <span class="cursor-dot"></span>
-  <svg class="cursor-ring" viewBox="0 0 128 128">
-    <path id="cursor-circle" fill="none" d="M64,64 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0"/>
-    <text><textPath href="#cursor-circle" textLength="301.6" lengthAdjust="spacing"
-      >MOIN · FAHR MAL DRÜBER · MOIN · FAHR MAL DRÜBER · </textPath></text>
+  <svg class="cursor-ring" viewBox="0 0 180 180">
+    <!-- Zwei Halbkreise mit gegenläufiger Richtung: der obere im Uhrzeigersinn, damit die
+         Schrift über dem Scheitel richtig steht, der untere gegenläufig, damit sie auf der
+         Unterlinie nicht auf dem Kopf steht. startOffset 50 % + text-anchor middle zentriert
+         beide Wörter auf ihrem Bogen. -->
+    <path id="cursor-top" fill="none" d="M24,90 A66,66 0 0,1 156,90"/>
+    <path id="cursor-bottom" fill="none" d="M24,90 A66,66 0 0,0 156,90"/>
+    <text text-anchor="middle"><textPath href="#cursor-top" startOffset="50%">SEI MAL</textPath></text>
+    <text text-anchor="middle"><textPath href="#cursor-bottom" startOffset="50%">KREATIV</textPath></text>
+    <!-- Reduzierter Mauszeiger: klassische Pfeilspitze ohne Schweif, Spitze exakt auf dem
+         Zielpunkt in der Ringmitte. -->
+    <path class="cursor-arrow" d="M90 90 L90 115 L97 109 L107.5 107.5 Z"/>
   </svg>
 </div>
 <div class="linen" aria-hidden="true"></div>

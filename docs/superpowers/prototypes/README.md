@@ -21,8 +21,11 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    („15+ years in branding."), unten in der Zelle ausgerichtet mit `--hero-inset` Abstand zur
    25-%-Linie, in Schriftgröße der Wortmarke. Unter 46 rem ausgeblendet — dort wäre die
    vierte Spalte nur gut 80 px breit.
-   **Custom Cursor über dem Hero:** ein Punkt mit umlaufendem Schriftring in Versalien
-   („MOIN · FAHR MAL DRÜBER"), der langsam rotiert und dem Zeiger mit Lerp nachläuft.
+   **Custom Cursor über dem Hero:** ein reduzierter Mauszeiger (klassische Pfeilspitze ohne
+   Schweif, Spitze auf dem Zielpunkt) in einem Schriftring — **SEI MAL** über dem Scheitel,
+   **KREATIV** auf der Unterlinie. Zwei gegenläufige Halbkreise sorgen dafür, dass beide
+   Wörter richtig herum stehen; der Ring dreht sich deshalb nicht. Er läuft dem Zeiger mit
+   Lerp nach.
    `mix-blend-mode: difference` auf Weiß kehrt den Untergrund um — der Cursor bleibt über
    Creme wie über dem schwarzen MOIN sichtbar, ohne die Farbe zu wechseln. Der Ring schließt
    exakt, weil `textLength` auf den Kreisumfang (2π·48) gesetzt ist; damit hängt die Passung
@@ -38,11 +41,12 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    rechnet in Anteilen 0…1, die Form skaliert also mit dem Element; das Feld ist quadratisch,
    damit die Spritzer ringsum Platz haben. Border und Diagonalkreuz entfallen — eine Border
    würde von der Maske angeschnitten.
-   Die Hauptform **wabert langsam** (SMIL, 24 s): drei Varianten derselben Kurvenfolge —
-   gleiche Befehlsstruktur, nur verschobene Punkte — werden ineinander übergeblendet. Das
-   kostet nur das Neuzeichnen dieses einen Elements, kein Layout und kein Reflow, und es
-   läuft ohne JavaScript pro Frame. Die Spritzer bleiben ruhig; bewegte Punkte lesen sich
-   als Flimmern. Bei `prefers-reduced-motion` friert `pauseAnimations()` die Form ein —
+   Die Form **wabert** (SMIL, 16 s): drei Varianten derselben Kurvenfolge — gleiche
+   Befehlsstruktur, nur verschobene Punkte — werden ineinander übergeblendet. Die vier
+   Spritzer driften eigenständig mit (`animateTransform`, 13/17/21/15 s, damit sie nicht
+   im Gleichtakt laufen). Das kostet nur das Neuzeichnen dieses einen Elements, kein Layout
+   und kein Reflow, und es läuft ohne JavaScript pro Frame.
+   Bei `prefers-reduced-motion` friert `pauseAnimations()` alles ein —
    SMIL wertet die Einstellung nicht selbst aus, und `display: none` auf dem `<animate>`
    stoppt sie nicht zuverlässig (nachgemessen).
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.

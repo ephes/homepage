@@ -412,18 +412,21 @@
      Nur wo es einen echten Zeiger gibt; auf Touch bliebe sonst der Systemcursor weg. */
   @media (hover: hover) and (pointer: fine) {
     .stage{cursor:none;}
-    .cursor{position:fixed;left:0;top:0;inline-size:180px;block-size:180px;
-      margin:-90px 0 0 -90px;pointer-events:none;z-index:50;
+    /* Der Versatz ist NICHT die halbe Elementgröße, sondern die Position der Pfeilspitze
+       im viewBox (53/50 bei 120) — nur so sitzt die Spitze auf dem Zeiger und der Ring
+       trotzdem zentriert um den Pfeil. */
+    .cursor{position:fixed;left:0;top:0;inline-size:120px;block-size:120px;
+      margin:-50px 0 0 -53px;pointer-events:none;z-index:50;
       mix-blend-mode:difference;color:#fff;opacity:0;transition:opacity .3s;
       will-change:transform;}
     .stage-hover .cursor{opacity:1;}
   }
-  .cursor-arrow{fill:currentColor;}
+  .cursor-arrow, .cursor-sep{fill:currentColor;}
   /* Der Ring dreht sich NICHT: „SEI MAL" oben und „KREATIV" unten haben eine feste
      Leserichtung, jede Drehung würde die Wörter kippen. */
   .cursor-ring{position:absolute;inset:0;}
   .cursor-ring text{fill:currentColor;font-family:"Saira",system-ui,sans-serif;
-    font-size:17px;font-weight:700;letter-spacing:0.06em;}
+    font-size:16px;font-weight:700;letter-spacing:0.06em;}
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .wf-note{position:relative;z-index:3;margin:1.25rem var(--pad) 0;border:1px dashed var(--muted);color:var(--muted);font-size:0.78rem;line-height:1.45;padding:0.5rem 0.75rem;max-width:62rem;background:color-mix(in srgb,var(--bg) 85%,transparent);}
@@ -939,18 +942,28 @@
 <!-- Custom Cursor. textLength = Kreisumfang (2π·48) mit lengthAdjust="spacing" sorgt
      dafür, dass der Ring exakt schließt, unabhängig von den Schriftmetriken. -->
 <div class="cursor" aria-hidden="true">
-  <svg class="cursor-ring" viewBox="0 0 180 180">
-    <!-- Zwei Halbkreise mit gegenläufiger Richtung: der obere im Uhrzeigersinn, damit die
-         Schrift über dem Scheitel richtig steht, der untere gegenläufig, damit sie auf der
-         Unterlinie nicht auf dem Kopf steht. startOffset 50 % + text-anchor middle zentriert
-         beide Wörter auf ihrem Bogen. -->
-    <path id="cursor-top" fill="none" d="M24,90 A66,66 0 0,1 156,90"/>
-    <path id="cursor-bottom" fill="none" d="M24,90 A66,66 0 0,0 156,90"/>
-    <text text-anchor="middle"><textPath href="#cursor-top" startOffset="50%">SEI MAL</textPath></text>
-    <text text-anchor="middle"><textPath href="#cursor-bottom" startOffset="50%">KREATIV</textPath></text>
-    <!-- Reduzierter Mauszeiger: klassische Pfeilspitze ohne Schweif, Spitze exakt auf dem
-         Zielpunkt in der Ringmitte. -->
-    <path class="cursor-arrow" d="M90 90 L90 115 L97 109 L107.5 107.5 Z"/>
+  <svg class="cursor-ring" viewBox="0 0 120 120">
+    <!-- Geschlossener Schriftkreis. Zwei Bahnen mit gegenläufiger Richtung: die obere im
+         Uhrzeigersinn, damit die Schrift über dem Scheitel richtig steht, die untere
+         gegenläufig, damit sie auf der Unterlinie nicht auf dem Kopf steht. Beide sind
+         VOLLKREISE, startOffset 25 % trifft damit Scheitel bzw. Unterlinie.
+         Die Radien unterscheiden sich um die Versalhöhe (38,4 / 49,6): oben wachsen die
+         Glyphen von ihrer Grundlinie nach außen, unten nach innen — so liegen beide Wörter
+         im selben Ring statt versetzt.
+         Die Aufteilung ist ausgerechnet, nicht geschätzt: oben 180,4° in natürlicher
+         Laufweite, unten 127,6° (per textLength gesperrt, weil KREATIV kürzer ist), dazu
+         zwei Lücken von je 26°, in denen die Trennpunkte sitzen. Summe exakt 360°. -->
+    <path id="cursor-top" fill="none" d="M21.6,60 a38.4,38.4 0 1,1 76.8,0 a38.4,38.4 0 1,1 -76.8,0"/>
+    <path id="cursor-bottom" fill="none" d="M10.4,60 a49.6,49.6 0 1,0 99.2,0 a49.6,49.6 0 1,0 -99.2,0"/>
+    <text text-anchor="middle"><textPath href="#cursor-top" startOffset="25%">SEI DOCH MAL</textPath></text>
+    <text text-anchor="middle"><textPath href="#cursor-bottom" startOffset="25%"
+      textLength="110.5" lengthAdjust="spacing">KREATIV</textPath></text>
+    <circle class="cursor-sep" cx="102.8" cy="70" r="2.2"/>
+    <circle class="cursor-sep" cx="17.2" cy="70" r="2.2"/>
+    <!-- Reduzierter Mauszeiger: klassische Pfeilspitze ohne Schweif. Sie ist mit ihrer
+         Bounding-Box in der Ringmitte zentriert (60/60); die Spitze liegt dadurch bei
+         53/50 — genau dorthin wird das Element per margin auf den Zeiger gezogen. -->
+    <path class="cursor-arrow" d="M53 50 L53 70 L58.6 65.2 L67 64 Z"/>
   </svg>
 </div>
 <div class="linen" aria-hidden="true"></div>

@@ -21,11 +21,21 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    („15+ years in branding."), unten in der Zelle ausgerichtet mit `--hero-inset` Abstand zur
    25-%-Linie, in Schriftgröße der Wortmarke. Unter 46 rem ausgeblendet — dort wäre die
    vierte Spalte nur gut 80 px breit.
-   **Custom Cursor über dem Hero:** ein reduzierter Mauszeiger (klassische Pfeilspitze ohne
-   Schweif, Spitze auf dem Zielpunkt) in einem Schriftring — **SEI MAL** über dem Scheitel,
-   **KREATIV** auf der Unterlinie. Zwei gegenläufige Halbkreise sorgen dafür, dass beide
-   Wörter richtig herum stehen; der Ring dreht sich deshalb nicht. Er läuft dem Zeiger mit
-   Lerp nach.
+   **Custom Cursor über dem Hero:** ein reduzierter Mauszeiger (Pfeilspitze ohne Schweif) in
+   einem **geschlossenen Schriftkreis** — **SEI DOCH MAL** über dem Scheitel, **KREATIV** auf
+   der Unterlinie, dazwischen links und rechts je ein Trennpunkt. Zwei gegenläufige Bahnen
+   sorgen dafür, dass beide Wörter richtig herum stehen; der Ring dreht sich deshalb nicht.
+   Ihre Radien unterscheiden sich um die Versalhöhe (38,4 / 49,6 px bei 16 px Schrift), weil
+   die Glyphen oben von der Grundlinie nach außen und unten nach innen wachsen — sonst lägen
+   die Wörter in versetzten Ringen.
+   Die Aufteilung ist **ausgerechnet**, nicht geschätzt: aus der gemessenen Laufweite der
+   Wörter in Saira ergeben sich oben 180,4° in natürlicher Weite und unten 127,6°, per
+   `textLength` gesperrt, weil KREATIV kürzer ist; dazu zwei Lücken von je 26° für die
+   Trennpunkte. Summe exakt 360°, der Kreis ist damit lückenlos.
+   **Zentrierung:** Der Ring ist um die *Bounding-Box* des Pfeils zentriert, nicht um dessen
+   Spitze — sonst hinge der Pfeil sichtbar unten rechts im Ring. Damit die Spitze trotzdem
+   auf dem Zeiger liegt, ist der Margin-Versatz ihre Position im viewBox (53/50), nicht die
+   halbe Elementgröße. Er läuft dem Zeiger mit Lerp nach.
    `mix-blend-mode: difference` auf Weiß kehrt den Untergrund um — der Cursor bleibt über
    Creme wie über dem schwarzen MOIN sichtbar, ohne die Farbe zu wechseln. Der Ring schließt
    exakt, weil `textLength` auf den Kreisumfang (2π·48) gesetzt ist; damit hängt die Passung

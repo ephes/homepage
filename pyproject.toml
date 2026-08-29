@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "argon2-cffi",
     "beautifulsoup4",
-    "django>=6.0,<7.0",
+    "django>=6.1,<7.0",
     "boto3",
     "cast-vue",
     "cast-bootstrap5",
@@ -30,7 +30,7 @@ dependencies = [
     "python-dotenv",
     "pyzmq>=25.1.1",
     "sentry-sdk",
-    "wagtail>=7.4,<7.5",
+    "wagtail>=8.0,<8.1",
     "whitenoise",
 ]
 

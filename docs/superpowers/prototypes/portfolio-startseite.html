@@ -114,12 +114,41 @@
   section.block { border-top: 1px solid var(--rule); padding-block: clamp(3rem, 7vw, 6rem); }
   /* align-items:center statt baseline — das Blümchen hat keine Grundlinie, an der es
      sich sinnvoll ausrichten ließe; es soll mittig zur Versalhöhe stehen. */
-  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 2rem; }
+  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 0.7rem; }
   /* Auftaktzeichen: das ✳ aus dem Kunden-Marquee, in der Akzentfarbe. Als ::before am
      Container, damit im Markup nichts Dekoratives steht. `line-height:0` nimmt dem Glyph
      seinen Zeilenkasten, sonst schöbe er die Zeile auseinander. */
   .sec-label::before { content: "✳"; color: var(--accent); font-size: 1.15em; line-height: 0; letter-spacing: 0; }
   .sec-label .scr { font-family: "Astagina", cursive; font-size: 1.5rem; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink); }
+
+  /* ── Handschriftlicher Vermerk in der Headline ────────────────────────────
+     Reihenfolge: Eyebrow, Headline, Vermerk — der Vermerk liegt AUF der Headline, quer
+     über deren untere Hälfte, als hätte jemand mit der Hand darübergeschrieben.
+     Deutlich größer als zuvor (46 % der Headline-Größe; Astagina hat 0,85 em Tinte gegen
+     Sairas 0,70 em Versalhöhe, die sichtbare Höhe ist damit gut halb so hoch wie die
+     Versalien), leicht schräg.
+     Er liegt VOR der Headline und schneidet sich per Kontur frei: `paint-order: stroke fill`
+     legt die Kontur HINTER die Füllung — sonst frisst sie die Schreibschrift auf und macht
+     die Buchstabenüberschneidungen zum Klumpen (nachgemessen, siehe README).
+     `-webkit-text-stroke` ist die einzige breit unterstützte Schreibweise. */
+  h2.sec-title { position: relative; }
+  h2.sec-title .scr {
+    position: absolute;
+    left: 16%;
+    bottom: 22%;                 /* quer über die untere Hälfte der Versalien */
+    font-family: "Astagina", cursive;
+    font-size: 0.46em;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    rotate: -5deg;
+    color: var(--ink);
+    paint-order: stroke fill;
+    -webkit-text-stroke: 0.14em var(--bg);
+  }
+  .on-dark h2.sec-title .scr { color: var(--dark-ink); -webkit-text-stroke-color: var(--dark-bg); }
 
   /* ── Hero: fullscreen, „MOIN" edge-to-edge ────────────────────── */
   /* Hero trägt KEIN Inline-Padding — MOIN läuft bis an die Screenkante.
@@ -698,9 +727,11 @@
     </div>
   </section>
   <section class="block pad" id="projekte">
-    <div class="sec-label"><span>Ausgewählte Arbeiten</span><span class="scr">recent work</span></div>
+    <div class="sec-label"><span>Ein kleiner Einblick</span></div>
     <div class="proj-head">
-      <h2 class="sec-title">Projekte</h2>
+      <!-- Der handschriftliche Vermerk ist aus der Eyebrow gelöst und hängt jetzt in der
+           Headline. Er liegt IM h2-Wrapper, damit er sich auf dessen Kante bezieht. -->
+      <h2 class="sec-title"><span class="scr">recent work</span>Projekte</h2>
       <span class="count">(9)</span>
     </div>
     <div class="tilegrid">
@@ -729,9 +760,11 @@
 
   <!-- 03 · Leistungen / Skills -->
   <section class="block pad" id="leistungen">
-    <div class="sec-label"><span>Was ich anbiete</span><span class="scr">let's talk about</span></div>
+    <!-- PLATZHALTER: „Was ich anbiete" doppelt die Headline noch, wie zuvor bei Projekte.
+         Ein eigener Ton fehlt hier noch. -->
+    <div class="sec-label"><span>Was ich anbiete</span></div>
     <div class="proj-head">
-      <h2 class="sec-title">Leistungen</h2>
+      <h2 class="sec-title"><span class="scr">let's talk about</span>Leistungen</h2>
     </div>
     <!-- Auf dem Desktop ein 4er-Raster, auf dem Smartphone derselbe Reel wie bei den
          Projekten (die Klasse `reel` greift nur in der Mobile-Regel). -->

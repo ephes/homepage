@@ -99,6 +99,20 @@ Zur Auswahl siehe `farbpalette.html` (Tokenkarte mit Kontrastmatrix) — dort st
 verworfenen Kandidaten samt Begründung. Noch offen: ob das warme Schwarz durch Sacramento
 `#162114` ersetzt wird (grünlicher) und ob Pine `#294122` als mittlere Fläche dazukommt.
 
+**Sektionskopf:** Die Reihenfolge ist Eyebrow → Headline → handschriftlicher Vermerk. Der
+Vermerk hängt nicht mehr in der Eyebrow, sondern liegt **auf** der Headline, quer über deren
+unterer Hälfte — als hätte jemand mit der Hand darübergeschrieben. Er ist mit 46 % der
+Headline-Größe deutlich größer als zuvor (Astagina hat 0,85 em Tinte gegen Sairas 0,70 em
+Versalhöhe, die sichtbare Höhe ist damit gut halb so hoch wie die Versalien) und um 5°
+geneigt. Weil alle Maße in `em` relativ zur Headline stehen, skaliert er mit — von 21 px bei
+390 px Viewport bis 59 px bei 1440 px, ohne Überlauf (nachgemessen über 390/430/640/834/
+1024/1440/2560 px).
+
+Er liegt **vor** der Headline und schneidet sich per Kontur frei: `paint-order: stroke fill`
+legt die Kontur *hinter* die Füllung. Ohne das frisst die Kontur die Schreibschrift auf und
+macht die Buchstabenüberschneidungen zum Klumpen — der Unterschied ist erheblich, siehe die
+Gegenprobe in der Historie. Auf dunklem Grund wechselt die Konturfarbe mit.
+
 **Eyebrow-Auftakt:** Die Nummerierung `(01)`…`(05)` ist entfallen; stattdessen leitet das
 **✳ aus dem Kunden-Marquee** die Zeile ein, in der Akzentfarbe. Es steckt als `::before` am
 `.sec-label`, damit im Markup nichts Dekoratives steht. Zwei Details: `align-items: center`

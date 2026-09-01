@@ -254,9 +254,17 @@ in Komponenten geschnitten, die 1:1 zu Wagtail-Templates/Blöcken werden.
    Nahschwarz auf Sacramento `#162114` umstellen? Pine `#294122` als mittlere Fläche?
    Tokenkarte mit Kontrastmatrix: `../prototypes/farbpalette.html`.
 2. **Handschrift-Einsatzorte** — Katharina wählt aus den Vorschlägen oben.
-   Der handschriftliche Vermerk in den Sektionsköpfen soll aus der Eyebrow gelöst und
-   vergrößert in die Headline eingehängt werden (Kontur dahinter via `paint-order: stroke fill`,
-   damit die Buchstabenüberschneidungen intakt bleiben) — noch nicht umgesetzt.
+   **Umgesetzt (2026-09-01):** Der handschriftliche Vermerk ist aus der Eyebrow gelöst und
+   liegt jetzt AUF der Headline, quer über deren unterer Hälfte — als hätte jemand mit der Hand
+   darübergeschrieben. 46 % der Headline-Größe, 5° geneigt, Kontur dahinter via
+   `paint-order: stroke fill`, damit die Buchstabenüberschneidungen intakt bleiben. Alle Maße
+   in `em`, skaliert also mit; über 390–2560 px ohne Überlauf geprüft. Bislang bei Projekte und
+   Leistungen; Kunden und Kontakt haben zweizeilige Headlines (`h2.big`) und About gar keine —
+   dort ist die Platzierung noch zu klären.
+   **Eyebrow-Texte:** Bei Projekte steht jetzt „Ein kleiner Einblick" statt „Ausgewählte
+   Arbeiten" — die Eyebrow soll einen Ton setzen statt die Headline zu wiederholen (Vorbild:
+   „Vertrauen" bei Kunden). Offen: „Was ich anbiete" (Leistungen) und „Kontakt" doppeln ihre
+   Headline noch.
    **Umgesetzt (2026-09-01):** Die Sektionsnummern `(01)`…`(05)` sind entfallen, das ✳ aus dem
    Kunden-Marquee leitet die Eyebrow ein. Alternativen: `../prototypes/eyebrow-zeichen.html`.
 3. **Freier Bereich** zwischen Projekt-Panel und About (Ex-Case-Study-Platz) — Idee folgt.

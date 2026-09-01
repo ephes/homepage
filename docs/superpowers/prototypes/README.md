@@ -86,46 +86,76 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 
 ## Farben (Entwurf, 2026-09-01)
 
-Grundton (Creme `#F0ECE2`) und warmes Schwarz bleiben vorerst unverändert; dazugekommen sind
-**zwei Akzente**:
+Grundton (Creme `#F0ECE2`) und warmes Schwarz bleiben vorerst unverändert; dazugekommen ist
+**ein Akzent**:
 
-- **Tangerine `#EB3D00`** auf hellem Grund (Kontrast 3,42)
-- **Smaragd `#1C995C`** auf dunklem Grund (4,57) — Tangerine träte dort mit 4,12 zwar auch an,
-  Smaragd ist aber präsenter
+- **Tangerine `#EB3D00`** — trägt auf beiden Gründen (3,4 auf Creme, 4,6 auf Dunkel) und
+  bleibt deshalb seitenweit derselbe. Er hängt an `--accent`.
+- **Smaragd `#1C995C`** ist als Token vorhanden, aber **für Sonderfälle reserviert**
+  (Entscheidung Katharina). Die frühere Umschaltung auf Grün in dunklen Sections ist raus.
 
-Die Umschaltung übernimmt `.on-dark`, dieselbe Klasse, die schon Linienfarben und
-Sektionsflächen kippt: Sie setzt `--accent` neu, alle Akzentelemente folgen automatisch.
 Zur Auswahl siehe `farbpalette.html` (Tokenkarte mit Kontrastmatrix) — dort stehen auch die
 verworfenen Kandidaten samt Begründung. Noch offen: ob das warme Schwarz durch Sacramento
 `#162114` ersetzt wird (grünlicher) und ob Pine `#294122` als mittlere Fläche dazukommt.
 
-**Sektionskopf:** Die Reihenfolge ist Eyebrow → Headline → handschriftlicher Vermerk. Der
-Vermerk hängt nicht mehr in der Eyebrow, sondern liegt **auf** der Headline — als hätte
-jemand mit der Hand darübergeschrieben. Er sitzt auf der **Grundlinie** mit leichtem
-Überstand nach unten (`bottom: -0.10em`) und ist **mittig im Wort** verankert (`left: 50%`
-+ `translate: -50% 0`). Die Mitte ist als Anker robuster als ein fester Prozentwert: sie
-stimmt bei PROJEKTE wie bei LEISTUNGEN, ohne je Section nachjustiert zu werden.
-Mit 58 % der Headline-Größe ist er deutlich größer als zuvor (Astagina hat 0,85 em Tinte
-gegen Sairas 0,70 em Versalhöhe) und um 5° geneigt. Weil alle Maße in `em` relativ zur
-Headline stehen, skaliert er mit — von 26 px bei 390 px Viewport bis 74 px bei 1440 px, ohne
-Überlauf (nachgemessen über 390/430/640/834/1024/1440/2560 px).
+## Sektionskopf
+
+Reihenfolge: **Eyebrow → Headline → handschriftlicher Vermerk.** Der Vermerk hängt nicht in
+der Eyebrow, sondern liegt **auf** der Headline — als hätte jemand mit der Hand
+darübergeschrieben.
+
+**Der Vermerk ist SVG-Text, kein HTML-Text.** Das ist der Kern: Nur dort kann die Kontur
+gleichzeitig *glatt* und *rund* sein. Beide CSS-Wege scheitern an je einem Detail —
+`-webkit-text-stroke` verbindet die Ecken spitz und erzeugt Zacken an den Strichenden; ein
+Ring aus Schattenkopien rundet zwar, bekommt aber eine sichtbare **Wellenkante**, weil der
+Browser die Versätze auf ganze Pixel rundet und aus dem Kreis ein Vieleck wird.
+`stroke-linejoin: round` + `paint-order: stroke` löst beides exakt.
+Zwei Fallstricke dabei: Ein **0×0-SVG malt Chrome gar nicht**, trotz `overflow: visible` — es
+braucht eine reale Größe (1 px genügt). Und der Anker verschiebt sich: `bottom` liegt bei
+SVG-Text auf der **Grundlinie**, nicht auf der Unterkante wie bei HTML-Text.
+
+**Größe absolut, nicht proportional.** `--scr-size: clamp(1.96rem, 6.3vw, 5.6rem)` (= 0,70 ×
+der Sektionstitel-Skala). Damit ist der Vermerk über **allen** Headlines gleich groß — auch
+über den kleineren zweizeiligen, wo er sonst auf die Hälfte schrumpfte. Das SVG trägt die
+Schriftgröße selbst, wodurch `bottom` und `stroke-width` sich auf die Handschrift beziehen
+statt auf die Headline.
+
+**Platzierung:**
+- Einzeilige Headlines (Projekte, Leistungen): mittig im Wort (`left: 50%`).
+- Zweizeilige (Kunden, Kontakt): mittig auf dem **Zeilenende** der letzten Zeile
+  (`left: 100%`) — der Vermerk ragt zur Hälfte über die kürzere Schlusszeile hinaus, wie eine
+  Notiz ans Satzende. Die letzte Zeile bekommt dafür einen eigenen Bezugsrahmen
+  (`.lastline`, `inline-block`), sonst zentrierte er auf der Containerbreite.
+- `bottom: -0.271em`, 5° geneigt, `stroke-width: 0.11em`. Die Konturbreite ist gemessen: Die
+  Zahl der dünnen dunklen Reste hat ihr **Minimum bei ~0,105 em** und steigt danach wieder,
+  weil eine breitere Kontur von außen in die Headline frisst und dort neue Reste erzeugt.
+  Es gibt also keine Breite, bei der alles restlos geschlossen ist.
 
 **Optischer Randausgleich:** Sairas Versalien haben eine linke Seitenverkleinerung, das ✳ der
-Eyebrow praktisch keine. Ohne Korrektur stünde die Headline 10,5 px (bei 128 px Schriftgröße)
-weiter rechts als das Zeichen darüber — die *Kästen* sind bündig, die *Tinte* ist es nicht.
-`margin-left: -0.082em` gleicht das aus. Wichtig: Der Wert muss in derselben Regel stehen wie
-das `margin: 0` der Headline, ein früherer `margin-inline-start` würde überschrieben.
+Eyebrow praktisch keine. Ohne Korrektur stünde die Headline 10,5 px (bei 128 px) weiter rechts
+als das Zeichen darüber — die *Kästen* sind bündig, die *Tinte* ist es nicht.
+`margin-left: -0.082em` gleicht das aus, bei allen vier Headlines. Wichtig: Der Wert muss in
+derselben Regel stehen wie das `margin: 0` der Headline, ein früherer `margin-inline-start`
+würde überschrieben.
 
-Er liegt **vor** der Headline und schneidet sich per Kontur frei: `paint-order: stroke fill`
-legt die Kontur *hinter* die Füllung. Ohne das frisst die Kontur die Schreibschrift auf und
-macht die Buchstabenüberschneidungen zum Klumpen — der Unterschied ist erheblich, siehe die
-Gegenprobe in der Historie. Auf dunklem Grund wechselt die Konturfarbe mit.
+**Abstand Eyebrow → Headline:** proportional zur Headline (`0.086em` ≈ 11 px bei 128 px),
+damit er bei jeder Größe gleich *wirkt* — ein fester rem-Wert sieht unter einer 64-px-Headline
+nach mehr Luft aus als unter einer mit 128 px. Dazu `--dia` als Ausgleich für **Diakritika**:
+Bei „FÜR DIESE MARKEN" ragen die Umlautpunkte 12,5 px über die Versalhöhe (gemessen), sonst
+rückte die Eyebrow dort optisch zu nah heran. Der Wert ist **textabhängig** — bei geänderter
+Headline neu bestimmen.
 
 **Eyebrow-Auftakt:** Die Nummerierung `(01)`…`(05)` ist entfallen; stattdessen leitet das
 **✳ aus dem Kunden-Marquee** die Zeile ein, in der Akzentfarbe. Es steckt als `::before` am
 `.sec-label`, damit im Markup nichts Dekoratives steht. Zwei Details: `align-items: center`
 statt `baseline`, weil das Zeichen keine sinnvolle Grundlinie hat, und `line-height: 0`, sonst
 schöbe sein Zeilenkasten die Eyebrow auseinander. Alternativen siehe `eyebrow-zeichen.html`.
+
+**Eyebrow-Texte:** Sie sollen einen *Ton* setzen statt die Headline zu wiederholen — Vorbild
+war „Vertrauen" bei den Kunden. Umgestellt: „Ein kleiner Einblick" (Projekte, vorher
+„Ausgewählte Arbeiten" — das doppelte mit „recent work" und der Headline), „Gute Gesellschaft"
+(Kunden, vorher „Vertrauen"). Offen: „Was ich anbiete" (Leistungen) und „Kontakt" doppeln ihre
+Headline noch.
 
 ## Gridlinien-Gerüst (seitenweit)
 

@@ -114,7 +114,7 @@
   section.block { border-top: 1px solid var(--rule); padding-block: clamp(3rem, 7vw, 6rem); }
   /* align-items:center statt baseline — das Blümchen hat keine Grundlinie, an der es
      sich sinnvoll ausrichten ließe; es soll mittig zur Versalhöhe stehen. */
-  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 0.7rem; }
+  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 0; }
   /* Auftaktzeichen: das ✳ aus dem Kunden-Marquee, in der Akzentfarbe. Als ::before am
      Container, damit im Markup nichts Dekoratives steht. `line-height:0` nimmt dem Glyph
      seinen Zeilenkasten, sonst schöbe er die Zeile auseinander. */
@@ -136,27 +136,46 @@
      Schriftgröße) weiter rechts als das Zeichen darüber — gemessen an den echten Pixeln,
      nicht an den Kästen, die sind bündig. In em, damit es auf jeder Größe stimmt. */
   h2.sec-title { position: relative; }
-  h2.sec-title .scr {
+  h2.sec-title .scr, h2.big .lastline .scr {
+    /* SVG statt HTML-Text, weil nur dort die Kontur BEIDES kann: glatt UND rund.
+       Die beiden CSS-Wege scheitern je an einem Detail — `-webkit-text-stroke` verbindet
+       die Ecken spitz (Zacken an den Strichenden), ein Ring aus Schattenkopien rundet zwar,
+       bekommt aber eine Wellenkante, weil der Browser die Versätze auf ganze Pixel rundet
+       und aus dem Kreis ein Vieleck wird. `stroke-linejoin: round` löst beides exakt.
+       Das SVG selbst ist 0×0 und lässt überlaufen; der Text hängt an seinem Ursprung. */
     position: absolute;
-    /* Auf der Grundlinie sitzend, mit leichtem Überstand nach unten, mittig im Wort.
-       Die Mitte ist als Anker robuster als ein fester Prozentwert: sie stimmt bei
-       PROJEKTE wie bei LEISTUNGEN, ohne je Section nachjustiert zu werden. */
     left: 50%;
-    translate: -50% 0;
-    bottom: -0.10em;
+    /* ACHTUNG anderer Anker als bei HTML-Text: `bottom` liegt hier auf der GRUNDLINIE
+       der Handschrift (y=0 des SVG), nicht auf ihrer Unterkante. Die Grundlinie der
+       Headline liegt 0,2 em über der Kastenunterkante (line-height 0.9) — ein kleinerer
+       Wert setzt die Handschrift also entsprechend tiefer. */
+    /* Feinjustage: Der Querstrich des „t" sitzt damit mittig auf dem Fuß des J
+       (an mehreren Positionen gegengeprüft; -0.19em schneidet den Fuß des U in
+       LEISTUNGEN nicht mehr zu einem Splitter). */
+    font-size: var(--scr-size);
+    bottom: -0.271em;            /* = die bisherigen -0.19em der Sektionstitel-Größe */
+    /* 1px statt 0: ein 0x0-SVG malt Chrome trotz `overflow: visible` nicht.
+       Der Text hängt an dessen Ursprung und läuft über — das ist gewollt. */
+    inline-size: 1px; block-size: 1px;
+    overflow: visible;
+  }
+  h2.sec-title .scr text, h2.big .lastline .scr text {
     font-family: "Astagina", cursive;
-    font-size: 0.58em;
+    font-size: 1em;              /* erbt --scr-size vom SVG */
     font-weight: 400;
-    line-height: 1;
     letter-spacing: 0;
     text-transform: none;
-    white-space: nowrap;
-    rotate: -5deg;
-    color: var(--ink);
-    paint-order: stroke fill;
-    -webkit-text-stroke: 0.14em var(--bg);
+    text-anchor: middle;         /* zentriert im Wort */
+    fill: var(--ink);
+    stroke: var(--bg);
+    stroke-width: 0.11em;
+    stroke-linejoin: round;      /* keine spitzen Ecken */
+    stroke-linecap: round;
+    paint-order: stroke;         /* Kontur hinter die Füllung */
+    transform: rotate(-5deg);
+    transform-origin: center;
   }
-  .on-dark h2.sec-title .scr { color: var(--dark-ink); -webkit-text-stroke-color: var(--dark-bg); }
+  .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--dark-ink); stroke: var(--dark-bg); }
 
   /* ── Hero: fullscreen, „MOIN" edge-to-edge ────────────────────── */
   /* Hero trägt KEIN Inline-Padding — MOIN läuft bis an die Screenkante.
@@ -188,14 +207,19 @@
   .hero .sub { font-size: clamp(1.15rem, 2vw, 1.6rem); font-weight: 500; line-height: 1.25; margin: 0; }
 
   /* ── Projekt-Grid (Variante B), full-bleed ────────────────────── */
-  .proj-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block-end: 2rem; }
+  .proj-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block-end: clamp(2rem, 3.2vw, 3rem); }
   /* Optischer Randausgleich: Sairas Versalien haben eine linke Seitenverkleinerung, das ✳
      der Eyebrow praktisch keine. Ohne Korrektur stünde die Headline 10,5 px (bei 128 px
      Schriftgröße) weiter rechts als das Zeichen darüber — an den echten Pixeln gemessen,
      die Kästen selbst sind bündig. In em, damit es auf jeder Größe stimmt.
      Muss in DIESER Regel stehen: ein früheres `margin-inline-start` überschriebe das
-     `margin: 0` hier nicht. */
-  h2.sec-title { margin: 0 0 0 -0.082em; font-size: clamp(2.8rem, 9vw, 8rem); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
+     `margin: 0` hier nicht.
+     Der Abstand nach oben ist proportional zur Headline (0.086em ≈ 11px bei 128px), damit
+     er bei jeder Größe gleich WIRKT. `--dia` gleicht zusätzlich Diakritika aus: bei „FÜR
+     DIESE MARKEN" ragen die Umlautpunkte 12,5px über die Versalhöhe (gemessen), sonst
+     rückte die Eyebrow dort optisch zu nah heran. Wert ist textabhängig — bei geänderter
+     Headline neu prüfen. */
+  h2.sec-title { margin: calc(0.086em + var(--dia, 0em)) 0 0 -0.082em; font-size: clamp(2.8rem, 9vw, 8rem); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
   .proj-head .count { font-size: clamp(1.2rem, 2vw, 1.8rem); font-weight: 400; color: var(--muted); }
 
   .tilegrid {
@@ -307,16 +331,16 @@
      Läge sie als background der Section selbst, würde sie die Linien zudecken, sobald
      diese im Hintergrund laufen — und genau das sollen sie. Wichtig: die Section darf
      dafür keinen eigenen Stacking-Kontext aufmachen (position:relative, z-index:auto). */
-  /* Auf dunklen Flächen übernimmt Smaragd den Akzent — dieselbe Klasse, die schon
-     Linienfarben und Sektionsfläche umschaltet. */
-  .on-dark { color: var(--dark-ink); position: relative; --accent: var(--smaragd); }
+  /* Tangerine trägt auf hell wie dunkel (3,4 / 4,6) und bleibt deshalb überall der
+     Akzent; Smaragd ist für Sonderfälle reserviert. */
+  .on-dark { color: var(--dark-ink); position: relative; }
   .on-dark::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--dark-bg); }
   .on-dark .avail { color: var(--dark-muted); }
   .clients { border-top: none; padding-inline: 0; }
   .clients .sec-label, .clients h2.big, .clients .cl-note { padding-inline: clamp(1.25rem, 4vw, 4rem); }
   .clients .sec-label { color: var(--dark-muted); }
   .clients .sec-label .scr { color: var(--dark-ink); }
-  .clients h2.big { margin: 0 0 2.5rem; font-size: clamp(2rem, 5vw, 4rem); font-weight: 600; line-height: 1; text-transform: uppercase; }
+  .clients h2.big { --dia: 0.195em; margin: calc(0.086em + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: clamp(2rem, 5vw, 4rem); font-weight: 600; line-height: 1; text-transform: uppercase; }
 
   .marquee {
     border-block: 1px solid var(--dark-rule);
@@ -352,8 +376,18 @@
   }
 
   /* ── Contact / Footer ─────────────────────────────────────────── */
-  .contact .stack { display: flex; flex-direction: column; gap: 1.75rem; align-items: flex-start; }
-  .contact h2.big { margin: 0; font-size: clamp(2.6rem, 7vw, 6rem); font-weight: 600; line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
+  /* Der Abstand zu den Buttons muss den Überstand des handschriftlichen Vermerks
+     aufnehmen — bei 1.75rem blieb unter „lass uns sprechen" gut 22px weniger Luft als
+     unter den Vermerken der anderen Sections (gemessen an der sichtbaren Schrift). */
+  .contact .stack { display: flex; flex-direction: column; gap: clamp(2.1rem, 3.5vw, 3.15rem); align-items: flex-start; }
+  /* Bei zweizeiligen Headlines hängt der Vermerk an der LETZTEN Zeile; sie bekommt
+     dafür einen eigenen Bezugsrahmen, sonst zentrierte er auf der Containerbreite
+     statt auf dem Text. */
+  h2.big .lastline { position: relative; display: inline-block; }
+  /* Bei den zweizeiligen Headlines sitzt der Vermerk mittig auf dem ZEILENENDE statt
+     mittig im Wort — er ragt damit zur Hälfte über die kürzere letzte Zeile hinaus. */
+  h2.big .lastline .scr { left: 100%; }
+  .contact h2.big { margin: calc(0.086em + var(--dia, 0em)) 0 0 -0.082em; font-size: clamp(2.6rem, 7vw, 6rem); font-weight: 600; line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
   .contact .buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
   footer.site { border-top: 1px solid var(--rule); }
   .foot-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-block: 1.1rem; font-size: 0.78rem; color: var(--muted); }
@@ -386,6 +420,10 @@
     /* Vom Skript dokument-absolut gesetzt (s. updateGridVars): Lücke der 1/4-Linie um die
        Subline-Zelle. Ohne JS bleibt die Linie unsichtbar statt falsch zu sitzen. */
     --gap-start:0px; --gap-end:0px;
+    /* Größe des handschriftlichen Vermerks: 0,70 x der Sektionstitel-Skala
+       clamp(2.8rem, 9vw, 8rem). Absolut gesetzt, damit er über allen Headlines gleich
+       groß ist — auch über den kleineren zweizeiligen. */
+    --scr-size: clamp(1.96rem, 6.3vw, 5.6rem);
   }
   /* Bewusst hell-only: cremefarbener Grund, warmes Schwarz für alle Schriften (helle Start-Section). */
   :root{ color-scheme: light; }
@@ -438,7 +476,7 @@
   .sub::before{content:"";position:absolute;inset:0;z-index:-2;
     background:color-mix(in srgb,var(--bg) 55%,transparent);
     backdrop-filter:blur(12px) saturate(1.08);-webkit-backdrop-filter:blur(12px) saturate(1.08);}
-  .sub p{margin:0;font-size:clamp(1.1rem,1.95vw,1.55rem);font-weight:400;line-height:1.25;color:var(--ink);}
+  .sub p{margin:0;font-size:clamp(1.1rem,1.95vw,1.55rem);font-weight:300;line-height:1.25;color:var(--ink);}
   .sub p + p{margin-block-start:0.7em;}
   .sub strong{font-weight:700;}
   /* Zu wenig Platz → Milchglas-Fläche legt sich ÜBER MOIN (nicht darunter), volle Contentbreite. */
@@ -745,7 +783,7 @@
     <div class="proj-head">
       <!-- Der handschriftliche Vermerk ist aus der Eyebrow gelöst und hängt jetzt in der
            Headline. Er liegt IM h2-Wrapper, damit er sich auf dessen Kante bezieht. -->
-      <h2 class="sec-title"><span class="scr">recent work</span>Projekte</h2>
+      <h2 class="sec-title"><svg class="scr"><text>recent work</text></svg>Projekte</h2>
       <span class="count">(9)</span>
     </div>
     <div class="tilegrid">
@@ -778,7 +816,7 @@
          Ein eigener Ton fehlt hier noch. -->
     <div class="sec-label"><span>Was ich anbiete</span></div>
     <div class="proj-head">
-      <h2 class="sec-title"><span class="scr">let's talk about</span>Leistungen</h2>
+      <h2 class="sec-title"><svg class="scr"><text>let's talk about</text></svg>Leistungen</h2>
     </div>
     <!-- Auf dem Desktop ein 4er-Raster, auf dem Smartphone derselbe Reel wie bei den
          Projekten (die Klasse `reel` greift nur in der Mobile-Regel). -->
@@ -850,8 +888,8 @@
 
   <!-- 05 · Kunden -->
   <section class="block pad clients on-dark" id="kunden">
-    <div class="sec-label"><span>Vertrauen</span><span class="scr">für & mit</span></div>
-    <h2 class="big">Für diese Marken<br>&amp; Menschen</h2>
+    <div class="sec-label"><span>Gute Gesellschaft</span></div>
+    <h2 class="big">Für diese Marken<br><span class="lastline">&amp; Menschen<svg class="scr"><text>together</text></svg></span></h2>
     <div class="marquee">
       <div class="marquee-track" aria-label="Auswahl an Kunden">
         <!-- Liste doppelt für den nahtlosen Loop -->
@@ -863,9 +901,9 @@
 
   <!-- 06 · Kontakt -->
   <section class="block pad contact" id="kontakt">
-    <div class="sec-label"><span>Kontakt</span><span class="scr">lass uns sprechen</span></div>
+    <div class="sec-label"><span>Kontakt</span></div>
     <div class="stack">
-      <h2 class="big">Ein Projekt im Kopf?<br>Schreib mir.</h2>
+      <h2 class="big">Ein Projekt im Kopf?<br><span class="lastline">Schreib mir.<svg class="scr"><text>lass uns sprechen</text></svg></span></h2>
       <div class="buttons">
         <a class="pill" href="#">E-Mail schreiben</a>
         <a class="pill ghost" href="#">Mehr im Lebenslauf</a>

@@ -246,21 +246,24 @@ in Komponenten geschnitten, die 1:1 zu Wagtail-Templates/Blöcken werden.
 0. **Kachel-Bildformate** — vorläufig entschieden: Variante B (klein 3:2 / groß 21:9,
    oben bündig); am echten Aufbau mit echten Bildern verifizieren. Noch klären, wie die
    Texte unter den Bildern sitzen (Mock zeigt Titel + Kategorie·Jahr + Pfeil).
-1. ~~**Akzentfarbe** — liefert Katharina~~ **Entwurf steht (2026-09-01):** zwei Akzente,
-   **Tangerine `#EB3D00`** auf hell und **Smaragd `#1C995C`** auf dunkel; Umschaltung über die
-   bestehende `.on-dark`-Klasse via `--accent`. Grundton und Nahschwarz vorerst unverändert.
+1. ~~**Akzentfarbe** — liefert Katharina~~ **Entwurf steht (2026-09-01):** **Tangerine `#EB3D00`**
+   seitenweit als einziger Akzent — er trägt auf hell (3,4) wie dunkel (4,6). Smaragd
+   `#1C995C` bleibt als Token für Sonderfälle reserviert (Entscheidung Katharina); die
+   anfängliche Umschaltung auf Grün in dunklen Sections ist wieder raus. Grundton und Nahschwarz vorerst unverändert.
    Verworfen: Chiffon `#FFEDD2` als Grundton (16 Punkte weniger Blau als die Creme → sichtbarer
    Pfirsichstich) und ein helles Limettengrün als Zweitakzent (auf Creme nur 1,12). Noch offen:
    Nahschwarz auf Sacramento `#162114` umstellen? Pine `#294122` als mittlere Fläche?
    Tokenkarte mit Kontrastmatrix: `../prototypes/farbpalette.html`.
 2. **Handschrift-Einsatzorte** — Katharina wählt aus den Vorschlägen oben.
-   **Umgesetzt (2026-09-01):** Der handschriftliche Vermerk ist aus der Eyebrow gelöst und
-   liegt jetzt AUF der Headline, quer über deren unterer Hälfte — als hätte jemand mit der Hand
-   darübergeschrieben. 46 % der Headline-Größe, 5° geneigt, Kontur dahinter via
-   `paint-order: stroke fill`, damit die Buchstabenüberschneidungen intakt bleiben. Alle Maße
-   in `em`, skaliert also mit; über 390–2560 px ohne Überlauf geprüft. Bislang bei Projekte und
-   Leistungen; Kunden und Kontakt haben zweizeilige Headlines (`h2.big`) und About gar keine —
-   dort ist die Platzierung noch zu klären.
+   **Umgesetzt (2026-09-01), alle vier Headlines:** Der handschriftliche Vermerk ist aus der
+   Eyebrow gelöst und liegt AUF der Headline. Er ist **SVG-Text**, weil nur dort die Kontur
+   zugleich glatt und rund sein kann (`stroke-linejoin: round` + `paint-order: stroke`); die
+   beiden CSS-Wege erzeugen entweder spitze Zacken oder eine Wellenkante. Seine Größe ist
+   **absolut** gesetzt (`--scr-size`, 0,70 × der Sektionstitel-Skala), damit er über allen
+   Headlines gleich groß ist — auch über den kleineren zweizeiligen. Einzeilige Headlines:
+   mittig im Wort; zweizeilige: mittig auf dem Zeilenende der letzten Zeile. About hat keine
+   Headline — dort sitzt der Vermerk weiterhin in der Eyebrow.
+   Details und Fallstricke im Prototyp-README.
    **Eyebrow-Texte:** Bei Projekte steht jetzt „Ein kleiner Einblick" statt „Ausgewählte
    Arbeiten" — die Eyebrow soll einen Ton setzen statt die Headline zu wiederholen (Vorbild:
    „Vertrauen" bei Kunden). Offen: „Was ich anbiete" (Leistungen) und „Kontakt" doppeln ihre

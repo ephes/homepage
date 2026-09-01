@@ -246,8 +246,19 @@ in Komponenten geschnitten, die 1:1 zu Wagtail-Templates/Blöcken werden.
 0. **Kachel-Bildformate** — vorläufig entschieden: Variante B (klein 3:2 / groß 21:9,
    oben bündig); am echten Aufbau mit echten Bildern verifizieren. Noch klären, wie die
    Texte unter den Bildern sitzen (Mock zeigt Titel + Kategorie·Jahr + Pfeil).
-1. **Akzentfarbe** — liefert Katharina; bis dahin Platzhalter-Token.
+1. ~~**Akzentfarbe** — liefert Katharina~~ **Entwurf steht (2026-09-01):** zwei Akzente,
+   **Tangerine `#EB3D00`** auf hell und **Smaragd `#1C995C`** auf dunkel; Umschaltung über die
+   bestehende `.on-dark`-Klasse via `--accent`. Grundton und Nahschwarz vorerst unverändert.
+   Verworfen: Chiffon `#FFEDD2` als Grundton (16 Punkte weniger Blau als die Creme → sichtbarer
+   Pfirsichstich) und ein helles Limettengrün als Zweitakzent (auf Creme nur 1,12). Noch offen:
+   Nahschwarz auf Sacramento `#162114` umstellen? Pine `#294122` als mittlere Fläche?
+   Tokenkarte mit Kontrastmatrix: `../prototypes/farbpalette.html`.
 2. **Handschrift-Einsatzorte** — Katharina wählt aus den Vorschlägen oben.
+   Der handschriftliche Vermerk in den Sektionsköpfen soll aus der Eyebrow gelöst und
+   vergrößert in die Headline eingehängt werden (Kontur dahinter via `paint-order: stroke fill`,
+   damit die Buchstabenüberschneidungen intakt bleiben) — noch nicht umgesetzt.
+   **Umgesetzt (2026-09-01):** Die Sektionsnummern `(01)`…`(05)` sind entfallen, das ✳ aus dem
+   Kunden-Marquee leitet die Eyebrow ein. Alternativen: `../prototypes/eyebrow-zeichen.html`.
 3. **Freier Bereich** zwischen Projekt-Panel und About (Ex-Case-Study-Platz) — Idee folgt.
 4. ~~**10.-Projekt-Restreihe** — CTA-Kachel als Lückenfüller ok?~~ **Entschieden
    (2026-07-27):** Die CTA-Kachel läuft über die volle Breite (`grid-column: 1 / -1`) und

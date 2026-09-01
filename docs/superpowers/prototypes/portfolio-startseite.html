@@ -112,8 +112,13 @@
 
   /* ── Sektionsrahmen ───────────────────────────────────────────── */
   section.block { border-top: 1px solid var(--rule); padding-block: clamp(3rem, 7vw, 6rem); }
-  .sec-label { display: flex; align-items: baseline; gap: 0.8rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 2rem; }
-  .sec-label .num { font-weight: 400; }
+  /* align-items:center statt baseline — das Blümchen hat keine Grundlinie, an der es
+     sich sinnvoll ausrichten ließe; es soll mittig zur Versalhöhe stehen. */
+  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 2rem; }
+  /* Auftaktzeichen: das ✳ aus dem Kunden-Marquee, in der Akzentfarbe. Als ::before am
+     Container, damit im Markup nichts Dekoratives steht. `line-height:0` nimmt dem Glyph
+     seinen Zeilenkasten, sonst schöbe er die Zeile auseinander. */
+  .sec-label::before { content: "✳"; color: var(--accent); font-size: 1.15em; line-height: 0; letter-spacing: 0; }
   .sec-label .scr { font-family: "Astagina", cursive; font-size: 1.5rem; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink); }
 
   /* ── Hero: fullscreen, „MOIN" edge-to-edge ────────────────────── */
@@ -259,7 +264,9 @@
      Läge sie als background der Section selbst, würde sie die Linien zudecken, sobald
      diese im Hintergrund laufen — und genau das sollen sie. Wichtig: die Section darf
      dafür keinen eigenen Stacking-Kontext aufmachen (position:relative, z-index:auto). */
-  .on-dark { color: var(--dark-ink); position: relative; }
+  /* Auf dunklen Flächen übernimmt Smaragd den Akzent — dieselbe Klasse, die schon
+     Linienfarben und Sektionsfläche umschaltet. */
+  .on-dark { color: var(--dark-ink); position: relative; --accent: var(--smaragd); }
   .on-dark::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--dark-bg); }
   .on-dark .avail { color: var(--dark-muted); }
   .clients { border-top: none; padding-inline: 0; }
@@ -326,6 +333,11 @@
   :root{
     --bg:#F0ECE2; --ink:#171410; --muted:#7d766a; --rule:rgba(23,20,16,0.2);
     --rule-strong:#171410; /* kräftige Linie wie MOIN — für Padding-Linien + Header-Unterkante */
+    /* ENTWURF (2026-09-01): Akzentfarben, noch nicht final. Tangerine trägt auf hellem wie
+       dunklem Grund (3,4 / 4,1), auf der dunklen Fläche übernimmt aber Smaragd, weil es
+       dort mit 4,6 präsenter ist. Grundton und Nahschwarz bleiben vorerst unverändert. */
+    --tangerine:#EB3D00; --smaragd:#1C995C;
+    --accent:var(--tangerine);
     --pad:clamp(1.25rem,4vw,4rem);
     --hero-inset:1rem; /* einheitlicher Gap Wort↔Gridzelle; wird per JS in px gesetzt (Canvas+DOM synchron) */
     /* Vom Skript dokument-absolut gesetzt (s. updateGridVars): Lücke der 1/4-Linie um die
@@ -686,7 +698,7 @@
     </div>
   </section>
   <section class="block pad" id="projekte">
-    <div class="sec-label"><span class="num">(01)</span><span>Ausgewählte Arbeiten</span><span class="scr">recent work</span></div>
+    <div class="sec-label"><span>Ausgewählte Arbeiten</span><span class="scr">recent work</span></div>
     <div class="proj-head">
       <h2 class="sec-title">Projekte</h2>
       <span class="count">(9)</span>
@@ -717,7 +729,7 @@
 
   <!-- 03 · Leistungen / Skills -->
   <section class="block pad" id="leistungen">
-    <div class="sec-label"><span class="num">(02)</span><span>Was ich anbiete</span><span class="scr">let's talk about</span></div>
+    <div class="sec-label"><span>Was ich anbiete</span><span class="scr">let's talk about</span></div>
     <div class="proj-head">
       <h2 class="sec-title">Leistungen</h2>
     </div>
@@ -774,7 +786,7 @@
 
   <!-- 04 · About -->
   <section class="block pad" id="about">
-    <div class="sec-label"><span class="num">(03)</span><span>Über mich</span><span class="scr">hallo!</span></div>
+    <div class="sec-label"><span>Über mich</span><span class="scr">hallo!</span></div>
     <div class="about">
       <div>
         <p class="statement">Platzhalter-Statement: ein bis zwei Sätze dazu, wie du als Art Directorin arbeitest und was Kunden von dir bekommen.</p>
@@ -791,7 +803,7 @@
 
   <!-- 05 · Kunden -->
   <section class="block pad clients on-dark" id="kunden">
-    <div class="sec-label"><span class="num">(04)</span><span>Vertrauen</span><span class="scr">für & mit</span></div>
+    <div class="sec-label"><span>Vertrauen</span><span class="scr">für & mit</span></div>
     <h2 class="big">Für diese Marken<br>&amp; Menschen</h2>
     <div class="marquee">
       <div class="marquee-track" aria-label="Auswahl an Kunden">
@@ -804,7 +816,7 @@
 
   <!-- 06 · Kontakt -->
   <section class="block pad contact" id="kontakt">
-    <div class="sec-label"><span class="num">(05)</span><span>Kontakt</span><span class="scr">lass uns sprechen</span></div>
+    <div class="sec-label"><span>Kontakt</span><span class="scr">lass uns sprechen</span></div>
     <div class="stack">
       <h2 class="big">Ein Projekt im Kopf?<br>Schreib mir.</h2>
       <div class="buttons">

@@ -84,6 +84,27 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
   zur CTA-Kachel darunter (14 px oben / 40 px unten) — sonst liest sie sich als deren Zubehör.
 - Beide Reels verstecken die native Scrollbar, weil der Indicator ihre Rolle übernimmt.
 
+## Farben (Entwurf, 2026-09-01)
+
+Grundton (Creme `#F0ECE2`) und warmes Schwarz bleiben vorerst unverändert; dazugekommen sind
+**zwei Akzente**:
+
+- **Tangerine `#EB3D00`** auf hellem Grund (Kontrast 3,42)
+- **Smaragd `#1C995C`** auf dunklem Grund (4,57) — Tangerine träte dort mit 4,12 zwar auch an,
+  Smaragd ist aber präsenter
+
+Die Umschaltung übernimmt `.on-dark`, dieselbe Klasse, die schon Linienfarben und
+Sektionsflächen kippt: Sie setzt `--accent` neu, alle Akzentelemente folgen automatisch.
+Zur Auswahl siehe `farbpalette.html` (Tokenkarte mit Kontrastmatrix) — dort stehen auch die
+verworfenen Kandidaten samt Begründung. Noch offen: ob das warme Schwarz durch Sacramento
+`#162114` ersetzt wird (grünlicher) und ob Pine `#294122` als mittlere Fläche dazukommt.
+
+**Eyebrow-Auftakt:** Die Nummerierung `(01)`…`(05)` ist entfallen; stattdessen leitet das
+**✳ aus dem Kunden-Marquee** die Zeile ein, in der Akzentfarbe. Es steckt als `::before` am
+`.sec-label`, damit im Markup nichts Dekoratives steht. Zwei Details: `align-items: center`
+statt `baseline`, weil das Zeichen keine sinnvolle Grundlinie hat, und `line-height: 0`, sonst
+schöbe sein Zeilenkasten die Eyebrow auseinander. Alternativen siehe `eyebrow-zeichen.html`.
+
 ## Gridlinien-Gerüst (seitenweit)
 
 Die Liniensprache des Heros läuft über die **ganze** Seite weiter und klammert die Sections

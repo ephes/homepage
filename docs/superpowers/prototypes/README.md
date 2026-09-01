@@ -100,13 +100,21 @@ verworfenen Kandidaten samt Begründung. Noch offen: ob das warme Schwarz durch 
 `#162114` ersetzt wird (grünlicher) und ob Pine `#294122` als mittlere Fläche dazukommt.
 
 **Sektionskopf:** Die Reihenfolge ist Eyebrow → Headline → handschriftlicher Vermerk. Der
-Vermerk hängt nicht mehr in der Eyebrow, sondern liegt **auf** der Headline, quer über deren
-unterer Hälfte — als hätte jemand mit der Hand darübergeschrieben. Er ist mit 46 % der
-Headline-Größe deutlich größer als zuvor (Astagina hat 0,85 em Tinte gegen Sairas 0,70 em
-Versalhöhe, die sichtbare Höhe ist damit gut halb so hoch wie die Versalien) und um 5°
-geneigt. Weil alle Maße in `em` relativ zur Headline stehen, skaliert er mit — von 21 px bei
-390 px Viewport bis 59 px bei 1440 px, ohne Überlauf (nachgemessen über 390/430/640/834/
-1024/1440/2560 px).
+Vermerk hängt nicht mehr in der Eyebrow, sondern liegt **auf** der Headline — als hätte
+jemand mit der Hand darübergeschrieben. Er sitzt auf der **Grundlinie** mit leichtem
+Überstand nach unten (`bottom: -0.10em`) und ist **mittig im Wort** verankert (`left: 50%`
++ `translate: -50% 0`). Die Mitte ist als Anker robuster als ein fester Prozentwert: sie
+stimmt bei PROJEKTE wie bei LEISTUNGEN, ohne je Section nachjustiert zu werden.
+Mit 58 % der Headline-Größe ist er deutlich größer als zuvor (Astagina hat 0,85 em Tinte
+gegen Sairas 0,70 em Versalhöhe) und um 5° geneigt. Weil alle Maße in `em` relativ zur
+Headline stehen, skaliert er mit — von 26 px bei 390 px Viewport bis 74 px bei 1440 px, ohne
+Überlauf (nachgemessen über 390/430/640/834/1024/1440/2560 px).
+
+**Optischer Randausgleich:** Sairas Versalien haben eine linke Seitenverkleinerung, das ✳ der
+Eyebrow praktisch keine. Ohne Korrektur stünde die Headline 10,5 px (bei 128 px Schriftgröße)
+weiter rechts als das Zeichen darüber — die *Kästen* sind bündig, die *Tinte* ist es nicht.
+`margin-left: -0.082em` gleicht das aus. Wichtig: Der Wert muss in derselben Regel stehen wie
+das `margin: 0` der Headline, ein früherer `margin-inline-start` würde überschrieben.
 
 Er liegt **vor** der Headline und schneidet sich per Kontur frei: `paint-order: stroke fill`
 legt die Kontur *hinter* die Füllung. Ohne das frisst die Kontur die Schreibschrift auf und

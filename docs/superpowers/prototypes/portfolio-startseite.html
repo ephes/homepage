@@ -131,13 +131,21 @@
      legt die Kontur HINTER die Füllung — sonst frisst sie die Schreibschrift auf und macht
      die Buchstabenüberschneidungen zum Klumpen (nachgemessen, siehe README).
      `-webkit-text-stroke` ist die einzige breit unterstützte Schreibweise. */
+  /* Optischer Randausgleich: Sairas Versalien haben eine linke Seitenverkleinerung, das
+     ✳ der Eyebrow praktisch keine. Ohne Korrektur stünde die Headline 10,5 px (bei 128 px
+     Schriftgröße) weiter rechts als das Zeichen darüber — gemessen an den echten Pixeln,
+     nicht an den Kästen, die sind bündig. In em, damit es auf jeder Größe stimmt. */
   h2.sec-title { position: relative; }
   h2.sec-title .scr {
     position: absolute;
-    left: 16%;
-    bottom: 22%;                 /* quer über die untere Hälfte der Versalien */
+    /* Auf der Grundlinie sitzend, mit leichtem Überstand nach unten, mittig im Wort.
+       Die Mitte ist als Anker robuster als ein fester Prozentwert: sie stimmt bei
+       PROJEKTE wie bei LEISTUNGEN, ohne je Section nachjustiert zu werden. */
+    left: 50%;
+    translate: -50% 0;
+    bottom: -0.10em;
     font-family: "Astagina", cursive;
-    font-size: 0.46em;
+    font-size: 0.58em;
     font-weight: 400;
     line-height: 1;
     letter-spacing: 0;
@@ -181,7 +189,13 @@
 
   /* ── Projekt-Grid (Variante B), full-bleed ────────────────────── */
   .proj-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block-end: 2rem; }
-  h2.sec-title { margin: 0; font-size: clamp(2.8rem, 9vw, 8rem); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
+  /* Optischer Randausgleich: Sairas Versalien haben eine linke Seitenverkleinerung, das ✳
+     der Eyebrow praktisch keine. Ohne Korrektur stünde die Headline 10,5 px (bei 128 px
+     Schriftgröße) weiter rechts als das Zeichen darüber — an den echten Pixeln gemessen,
+     die Kästen selbst sind bündig. In em, damit es auf jeder Größe stimmt.
+     Muss in DIESER Regel stehen: ein früheres `margin-inline-start` überschriebe das
+     `margin: 0` hier nicht. */
+  h2.sec-title { margin: 0 0 0 -0.082em; font-size: clamp(2.8rem, 9vw, 8rem); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
   .proj-head .count { font-size: clamp(1.2rem, 2vw, 1.8rem); font-weight: 400; color: var(--muted); }
 
   .tilegrid {

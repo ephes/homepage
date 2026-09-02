@@ -204,17 +204,16 @@ machte daraus ein exklusives Akkordeon, bei dem sich beim Öffnen der einen die 
 schließt. Beim Laden ist keine offen. Die ganze Kachel schließt, nicht nur die Kopfzeile —
 außer man hat im Text etwas markiert, dann wollte man lesen und nicht klappen.
 
-**`align-items: start` ist die tragende Regel.** Die Kacheln werden NICHT auf gleiche Höhe
-gezogen, jede ist so hoch wie ihr Inhalt. Dadurch hängt die Lage eines Kopfes nicht davon
-ab, was die Nachbarkachel tut — alle Köpfe sitzen in jedem Zustand an derselben Stelle
-(gemessen: geschlossen 144 px, offen 429 px hohe Kacheln, Köpfe überall gleich).
-Vorher zog das Raster die geschlossenen auf die Höhe der geöffneten; ihre Köpfe rutschten
-in die Mitte, die der offenen blieben oben — bei mehreren unabhängig öffnenbaren Kacheln
-ergab das eine beliebige Mischung. Ein Versuch, das per `:has()` mit umgeschaltetem
-`justify-content` zu heilen, war der falsche Weg: **diese Eigenschaft springt, sie
-animiert nicht** — die Köpfe kehrten zwar zurück, aber sie wanderten nicht mehr.
-Die Abschlusslinie sitzt deshalb am Container statt an den Kacheln, sonst endete sie unter
-einer geschlossenen Kachel bis zu 285 px zu früh.
+**Die Kacheln stehen auf gleicher Höhe** (Rastervorgabe, kein `align-items: start`). Der
+Kopf einer geschlossenen Kachel sitzt dadurch mittig in der vollen Höhe statt oben;
+geöffnete und geschlossene Köpfe fluchten dann nicht, und das ist so gewollt — die
+zentrierten Köpfe sehen besser aus (Entscheidung Katharina).
+Zwei Zwischenstände sind daran verworfen: `justify-content` per `:has()` umschalten, sobald
+eine Kachel offen ist — **diese Eigenschaft springt, sie animiert nicht**, die Köpfe
+kehrten zwar zurück, wanderten aber nicht mehr. Und `align-items: start`, das alle Köpfe
+auf eine Linie brachte, aber eben nicht mehr zentriert.
+Die Abschlusslinie sitzt am Container statt an den Kacheln — bei gleicher Höhe dasselbe
+Ergebnis, aber unabhängig davon, ob eine Kachel einmal ausschert.
 
 ### Wie der Fließtext erscheint
 
@@ -230,13 +229,15 @@ Stellschraube:
 |---|---|---|
 | 660 ms / 70 ms | 9,4 | alle zugleich unterwegs — der Absatz ist durchgehend auseinandergezogen |
 | 190 ms / 105 ms | 1,8 | genau eine Fuge, aber jede Zeile springt für sich: Staccato |
-| **660 ms / 95 ms** | **2,9 sichtbar** | die Fuge wird übergeben, bevor sie zu ist: eine durchlaufende Welle |
+| **640 ms / 105 ms** | **3,5 sichtbar** | die Fuge wird übergeben, bevor sie zu ist: eine durchlaufende Welle |
 
 Als Kurve eine **echte Feder** statt einer Bézier-Näherung: die Sprungantwort eines
 gedämpften Feder-Masse-Systems (Dämpfungsgrad 0,58), über `linear()` als Stützstellen
-hinterlegt — anders lässt sich Überschwingen in CSS nicht sauber ausdrücken. 10,6 %
-Überschwingen, 90 % des Wegs in 19 % der Zeit. Deshalb 660 ms Dauer, obwohl die Zeile nur
-rund 280 ms *sichtbar* in Bewegung ist; für das Verhältnis oben zählt die sichtbare
+hinterlegt — anders lässt sich das Ausschwingen in CSS nicht sauber ausdrücken.
+**Dämpfungsgrad 0,86**: praktisch kein Überschwingen (0,5 %) und ein gemächlicher Anlauf —
+90 % des Wegs erst bei 46 % der Zeit. Straffere Federn wirkten schnappend (0,58 kam auf
+10,6 % Überschwingen und 90 % bereits bei 19 %). Deshalb 640 ms Dauer, obwohl die Zeile nur
+rund 371 ms *sichtbar* in Bewegung ist; für das Verhältnis oben zählt die sichtbare
 Bewegung.
 
 ### Zeilen zerlegen — und der Fallstrick dabei
@@ -247,6 +248,12 @@ so bleibt der Absatz für Seitensuche und Screenreader ein zusammenhängender Sa
 Zurücksetzen löst zugleich den Resize-Fall: Zeilen-Spans tragen festen Inhalt und `nowrap`,
 sie brechen bei einer Fensteränderung nicht neu um; als reiner Text tut der Absatz das von
 selbst. Zusätzlich setzt ein Resize *während* der Animation sofort zurück.
+
+**Gemessen wird erst im nächsten Frame**, nicht im `toggle`-Ereignis selbst: Dort ist der
+Inhalt teilweise noch `content-visibility: hidden` mit Höhe 0, die Zerlegung findet dann
+keine Zeilen und die Animation fällt ersatzlos aus. Das trat nur beim schnellen
+Zu-und-wieder-Auf auf und war deshalb schwer zu fassen; ein Frame (~16 ms) ist unsichtbar,
+macht die Messung aber verlässlich.
 
 **Der Fallstrick**, der zweimal falsche Trennungen erzeugt hat: Das erste Zeichen nach
 einem *getrennten* Umbruch meldet **zwei** Rechtecke — eines am Ende der alten Zeile, wo

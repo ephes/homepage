@@ -356,17 +356,16 @@
      nur oben und unten — die senkrechten Kanten übernimmt das Seitenraster, dessen
      gestrichelte Spaltenlinien ohnehin genau dort liegen. Eine zweite, durchgezogene
      Linie daneben wäre eine Verdoppelung. */
-  /* `align-items: start` ist der Kern: Die Kacheln werden NICHT auf gleiche Höhe
-     gezogen, jede ist so hoch wie ihr eigener Inhalt. Dadurch hängt die Lage eines
-     Kopfes nicht mehr davon ab, ob eine NACHBARkachel offen ist — alle Köpfe sitzen
-     immer an derselben Stelle, in jedem Zustand, ganz ohne Sonderregel.
-     Vorher zog das Raster die geschlossenen Kacheln auf die Höhe der geöffneten; ihre
-     Köpfe rutschten dadurch in die Mitte, die der offenen blieben oben.
-     Die Abschlusslinie sitzt deshalb am Container statt an den Kacheln: So bleibt sie
-     eine gerade Linie unter der höchsten, statt mit jeder Kachel zu treppen. */
+  /* Die Kacheln werden auf GLEICHE Höhe gezogen (Vorgabe des Rasters, kein
+     `align-items: start`). Das ist Absicht: Der Kopf einer geschlossenen Kachel steht
+     dadurch mittig in der vollen Kachelhöhe statt oben — geöffnete und geschlossene
+     Köpfe fluchten dann zwar nicht, aber genau das ist gewollt.
+     (Ein Zwischenstand mit `align-items: start` brachte alle Köpfe auf eine Linie;
+     verworfen, weil die zentrierten Köpfe besser aussehen.)
+     Die Abschlusslinie sitzt am Container, nicht an den Kacheln — bei gleicher Höhe
+     dasselbe Ergebnis, aber unabhängig davon, ob eine Kachel einmal ausschert. */
   .about > .me-text {
     display: grid; grid-template-columns: repeat(3, 1fr);
-    align-items: start;
     border-block: 1px solid var(--rule);
   }
   .about .me-row {
@@ -374,8 +373,11 @@
     min-width: 0;
     display: flex; flex-direction: column;
   }
-  /* Der Kopf hat eine feste Grundhöhe und zentriert Titel und Subline darin. Weil die
-     Kachel ihrem Inhalt folgt, ist das in JEDEM Zustand dieselbe Stelle. */
+  /* `flex: 1 1 auto`: Der Kopf nimmt den Platz ein, der neben dem Text übrig bleibt,
+     und zentriert Titel und Subline darin. Bei der geöffneten Kachel bleibt er deshalb
+     auf der Grundhöhe und der Text schließt direkt an; die geschlossenen werden vom
+     Raster auf dieselbe Höhe gezogen, dort wächst der Kopf mit und hält seinen Inhalt
+     mittig in der Kachel. */
   .about .me-row summary {
     flex: 1 1 auto;
     min-block-size: clamp(9rem, 15vh, 12rem);
@@ -473,20 +475,20 @@
      gleichzeitig unterwegs sind, und damit den Charakter der Bewegung:
        660ms / 70ms  = 9,4 -> alle zugleich, der Absatz ist durchgehend auseinandergezogen
        190ms / 105ms = 1,8 -> genau eine Fuge, aber jede Zeile springt für sich: Staccato
-       280ms / 95ms  = 2,9 -> die Fuge wird an die nächste Zeile ÜBERGEBEN, bevor sie ganz
+       371ms / 105ms = 3,5 -> die Fuge wird an die nächste Zeile ÜBERGEBEN, bevor sie ganz
                               zu ist. Das ergibt eine durchlaufende Welle.
      Als Kurve eine echte FEDER statt einer Bézier-Näherung: Die Werte sind die
-     Sprungantwort eines gedämpften Feder-Masse-Systems (Dämpfungsgrad 0,58), über
-     `linear()` als Stützstellen hinterlegt — anders lässt sich ein Überschwingen in CSS
-     nicht sauber ausdrücken. Sie legt 90 % des Wegs in 19 % der Zeit zurück, schießt
-     um 10,6 % über das Ziel hinaus und schwingt dann aus.
-     Deshalb steht die Dauer auf 660ms, obwohl die Zeile nur rund 280ms sichtbar in
-     Bewegung ist: Der lange Rest ist das Ausschwingen, das den Zeilenabstand nicht
-     mehr merklich aufzieht. Für das Verhältnis oben zählt die SICHTBARE Bewegung —
-     280 / 95 = 2,9, also unverändert eine Welle. */
+     Sprungantwort eines gedämpften Feder-Masse-Systems, über `linear()` als Stützstellen
+     hinterlegt — anders lässt sich das Ausschwingen in CSS nicht sauber ausdrücken.
+     Dämpfungsgrad 0,86: praktisch kein Überschwingen mehr (0,5 %) und ein gemächlicher
+     Anlauf — 90 % des Wegs erst bei 46 % der Zeit. Straffere Federn wirkten schnappend
+     (0,58 kam auf 10,6 % Überschwingen und 90 % bereits bei 19 %).
+     Deshalb steht die Dauer auf 0,64s, obwohl die Zeile nur rund 371ms sichtbar in
+     Bewegung ist: Der Rest ist das Ausschwingen, das den Zeilenabstand nicht mehr
+     merklich aufzieht. Für das Verhältnis oben zählt die SICHTBARE Bewegung. */
   .about .me-row[open] p .ln > span {
-    animation: me-line-up .66s linear(0 0%, 0.1162 4%, 0.3645 8%, 0.6312 12%, 0.8517 15%, 1.0009 19%, 1.0807 23%, 1.1064 27%, 1.0978 31%, 1.0726 35%, 1.0438 38%, 1.0192 42%, 1.002 46%, 0.9923 50%, 0.9888 54%, 0.9892 58%, 0.9918 62%, 0.9948 65%, 0.9976 69%, 0.9996 73%, 1.0007 77%, 1.0012 81%, 1.0012 85%, 1.0009 88%, 1.0006 92%, 1.0003 96%, 1 100%) backwards;
-    animation-delay: calc(var(--i) * 95ms);
+    animation: me-line-up .64s linear(0 0%, 0.0311 4%, 0.1065 8%, 0.2055 12%, 0.3136 15%, 0.4212 19%, 0.5224 23%, 0.6135 27%, 0.6932 31%, 0.761 35%, 0.8175 38%, 0.8636 42%, 0.9004 46%, 0.9294 50%, 0.9517 54%, 0.9685 58%, 0.9809 62%, 0.9898 65%, 0.996 69%, 1.0001 73%, 1.0027 77%, 1.0042 81%, 1.0049 85%, 1.005 88%, 1.0048 92%, 1.0044 96%, 1 100%) backwards;
+    animation-delay: calc(var(--i) * 105ms);
   }
   /* Etwa eine Zeilenhöhe — jede Zeile legt also genau den Weg einer Zeile zurück. */
   @keyframes me-line-up {
@@ -1979,18 +1981,31 @@
     // Es löst zugleich das Resize-Problem: Zeilen-Spans tragen festen Inhalt und
     // `nowrap`, sie brechen bei einer Fensteränderung nicht neu um. Als reiner Text
     // tut der Absatz das von selbst.
-    var timer = 0;
+    var timer = 0, frame = 0;
+    var DAUER = 640, VERSATZ = 105;   // muss zu den Werten im CSS passen
+
     function zeigen() {
       clearTimeout(timer);
-      if (!row.open) { zurueck(); return; }
-      if (reduce.matches || !zerlegen()) { zurueck(); return; }
-      var n = p.querySelectorAll(".ln").length;
-      timer = setTimeout(zurueck, 660 + (n - 1) * 95 + 150);
+      cancelAnimationFrame(frame);
+      if (!row.open || reduce.matches) { zurueck(); return; }
+      // ERST IM NÄCHSTEN FRAME messen. Im `toggle`-Ereignis selbst ist der Inhalt noch
+      // `content-visibility: hidden` und hat die Höhe 0 — dann findet die Zerlegung
+      // keine Zeilen und die Animation fiel ersatzlos aus. Das trat nur beim schnellen
+      // Zu-und-wieder-Auf auf, war deshalb schwer zu fassen. Ein Frame Verzögerung
+      // (~16ms) ist unsichtbar, macht die Messung aber verlässlich.
+      frame = requestAnimationFrame(function () {
+        if (!row.open) { zurueck(); return; }
+        if (!zerlegen()) { zurueck(); return; }
+        var n = p.querySelectorAll(".ln").length;
+        timer = setTimeout(zurueck, DAUER + (n - 1) * VERSATZ + 150);
+      });
     }
     row.addEventListener("toggle", zeigen);
     // Sicherheitsnetz: Wird während der Animation die Breite geändert, sofort zurück
     // auf reinen Text — sonst stünden dort Zeilen, die zur neuen Breite nicht passen.
-    addEventListener("resize", function () { clearTimeout(timer); zurueck(); }, { passive: true });
+    addEventListener("resize", function () {
+      clearTimeout(timer); cancelAnimationFrame(frame); zurueck();
+    }, { passive: true });
   });
 })();
 </script>

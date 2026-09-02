@@ -45,9 +45,68 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln;
    eine CTA-Kachel über die volle Breite schließt das Raster unten ab.
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.
-4. **About** — kurzes Statement + Fakten + Handschrift-Signatur, dazu das Porträt als
-   **Klecks**: ein SVG-`clipPath` mit Hauptform und vier abgelösten Spritzern (mehrere
-   Teilpfade in einem `clipPath` ergeben zusammen die Maske). `clipPathUnits="objectBoundingBox"`
+4. **About** — auf dem 4-Spalten-Raster: **Spalte 1 trägt das Porträt, die Spalten 2–4
+   allen Text.** Oben das **Statement** („Ich bin Katharina / und bleibe gern neugierig."
+   — der Umbruch steht als `<br>` fest im Markup), darunter der Fließtext als **drei
+   Rasterspalten**, jede mit einer **Ein-Wort-Kopfzeile**: Verstehen / Gestalten /
+   Umsetzen. Das ist der Effekt: Fließtext, der als eine Spalte unter der Headline
+   weiterliefe, bliebe Fließtext; so wird ein Magazinsatz daraus, und die Kopfzeilen geben
+   ihm seine Gliederung. Die drei Spalten stehen bei 1440 px gleich hoch (10/10/10 Zeilen).
+   Die Kopfzeilen sind wie die übrigen kleinen Überschriften der Seite behandelt (versal,
+   gesperrt, klein), aber in `--ink` statt `--muted`, weil sie einen Absatz anführen und
+   nicht nur beschriften.
+   **Das Statement ist ein `<h2>`, die Kopfzeilen sind `<h3>`.** Vorher war das Statement
+   ein `<p>` — die Section hatte damit gar keine Überschrift, und `<h3>`-Kopfzeilen hätten
+   in der Luft gehangen. Darunter schließt eine **eigene Rasterzeile** ab, durch eine
+   **Trennlinie** vom Fließtext abgesetzt: links die Verortung „Digital Creative ·
+   Based in Düsseldorf", rechts **„Mehr im Lebenslauf"** (aus der Kontakt-Section hierher
+   gewandert). Die Linie läuft über die **Textbahn** (Spalten 2–4), nicht über die volle
+   Breite: sonst ragte sie links unter dem Porträt hervor und schösse über die Kante
+   hinaus, an der alle drei Textzeilen beginnen. Ihre Kanten fallen auf die Spaltenlinie
+   und die rechte Padding-Linie; der Inhalt der Zeile rückt davon noch um `--hero-inset`
+   ein, es ist ja Text und UI, kein Raster.
+   Die Luft um die Linie kommt aus zwei Quellen: der `row-gap` des About-Grids bemisst den
+   Abstand **Text → Linie**, die größere Fuge nach dem Statement liegt separat als `margin`
+   auf dem Statement. Ein einziger gap-Wert zöge sonst beide Fugen gleich weit auf. Eckdaten-Trio und Handschrift-Signatur sind an dieser Stelle **entfallen**;
+   damit ist die Klasse `.script` im Markup nicht mehr in Gebrauch.
+   **Der handschriftliche Vermerk der Section sitzt auf der Unterkante des Porträtfeldes**
+   und sagt „that's me" — das frühere `hallo!` in der Eyebrow ist entfallen, samt der
+   nun gegenstandslosen Regel `.sec-label .scr`. Technik und Fallstricke wie bei den
+   Vermerken auf den Headlines (SVG-Text, `paint-order: stroke`, reale SVG-Größe statt
+   0×0, `bottom` = Grundlinie); Größe ebenfalls `--scr-size`, damit alle Vermerke der
+   Seite gleich groß sind. Er bleibt dabei innerhalb der Porträtspalte — nachgemessen bei
+   1440/900/390 px: 62/38/76 px Luft links, 79/49/82 px rechts.
+   **Der Name im Statement steht in der Handschrift**, als `<span class="katha">` mitten im
+   Satz, in der Akzentfarbe — der einzigen Stelle neben dem ✳, an der sie Text trägt (bei
+   51 px greift die Schwelle für große Schrift, 3:1; Tangerine liegt mit 3,4 darüber).
+   Die Größe `1.75em` ist gemessen, nicht geschätzt: Astagina hat bei *gleicher* Größe eine
+   kleinere x-Höhe als Saira (19,2 gegen 26,1 px bei 51,2 px), aber eine höhere Versalie
+   (36,2 gegen 35,2) — Cap- und x-Höhe fordern also gegensätzliche Werte (0,97 em bzw.
+   1,36 em). Verglichen wurden 1,30/1,50/1,70/1,90× am echten Font: bei 1,75 em trägt der
+   Name wie eine Unterschrift, ab 1,90× wird das K zum Solisten. Weil der Umbruch vor
+   „und" fest im Markup steht, kann die Handschrift breit laufen, ohne den Zeilenfall zu
+   verschieben.
+   Dazu `line-height: 0.63` am Span: `line-height` wird als Zahl vererbt, der Span bekäme
+   sonst 1,1 × 1,75 em und zöge die beiden Headline-Zeilen auseinander. 0,63 × 1,75 ≈ 1,1,
+   also genau die Zeilenhöhe des Absatzes.
+   Dazu ein gemessener Tiefstand `top: 0.15em` (auf die **Span**-Größe bezogen): auf der
+   Grundlinie säße die Handschrift 13,7 px zu hoch, weil Astaginas Oberlänge über Sairas
+   Versalhöhe hinausragt. Bei 0,15 em treffen sich die Tintenmitten auf 0,3 px genau.
+   Der Wert hängt an der Schriftgröße — bei Änderung neu messen, nicht mitskalieren.
+   **Die Eyebrow wandert mit** in Spalte 2 (`margin-inline-start: 25 %` — 25 % der
+   Sektionsbreite ist genau eine Rasterspalte, weil der Innenbereich nach `--pad` in vier
+   gleiche Spalten geteilt ist). Bliebe sie am linken Rand, stünde sie allein über dem
+   Bild, und die zwischen ✳ und Headline ausgemessene Tintenflucht (`-0.082em`) hinge in
+   der Luft. Auf dem Smartphone wird der Versatz zurückgenommen.
+   Spalte 1 trägt über alle Zeilen das Porträt als **Klecks** —
+   `grid-row: 1 / span 3` mit `align-self: start`, **nicht** `1 / -1`: ohne
+   `grid-template-rows` gibt es kein explizites Zeilenraster, `-1` zeigt dann auf Linie 1
+   und der Klecks landet wieder in Zeile 1. Dort bestimmte seine quadratische Höhe
+   (331 px bei 1440 px) die Zeilenhöhe, und unter dem zweizeiligen Statement stünden
+   ~250 px Leere.
+   Die Maske selbst: ein SVG-`clipPath` mit Hauptform und vier abgelösten Spritzern
+   (mehrere Teilpfade in einem `clipPath` ergeben zusammen die Maske).
+   `clipPathUnits="objectBoundingBox"`
    rechnet in Anteilen 0…1, die Form skaliert also mit dem Element; das Feld ist quadratisch,
    damit die Spritzer ringsum Platz haben. Border und Diagonalkreuz entfallen — eine Border
    würde von der Maske angeschnitten.
@@ -60,7 +119,8 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    SMIL wertet die Einstellung nicht selbst aus, und `display: none` auf dem `<animate>`
    stoppt sie nicht zuverlässig (nachgemessen).
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.
-6. **Kontakt** — CTA + zwei Buttons.
+6. **Kontakt** — CTA + ein Button („E-Mail schreiben"); der Lebenslauf-Link steht
+   jetzt in About.
 7. **Footer** — schwarz, mit Sitemap in vier Spalten: Marke, Seitenabschnitte, alle Projekte
    einzeln, Kontakt/Social und Rechtliches. Darunter eine schmale Zeile mit Copyright.
 
@@ -140,10 +200,29 @@ würde überschrieben.
 
 **Abstand Eyebrow → Headline:** proportional zur Headline (`0.086em` ≈ 11 px bei 128 px),
 damit er bei jeder Größe gleich *wirkt* — ein fester rem-Wert sieht unter einer 64-px-Headline
-nach mehr Luft aus als unter einer mit 128 px. Dazu `--dia` als Ausgleich für **Diakritika**:
-Bei „FÜR DIESE MARKEN" ragen die Umlautpunkte 12,5 px über die Versalhöhe (gemessen), sonst
-rückte die Eyebrow dort optisch zu nah heran. Der Wert ist **textabhängig** — bei geänderter
-Headline neu bestimmen.
+nach mehr Luft aus als unter einer mit 128 px. Dazu `--dia` als **optischer Ausgleich pro
+Headline**, von Tinte zu Tinte gemessen (nicht an den Kästen). Zwei Anlässe dafür:
+
+- **Diakritika:** Bei „FÜR DIESE MARKEN" ragten die Umlautpunkte 12,5 px über die Versalhöhe,
+  die Eyebrow rückte dort optisch zu nah heran. Die aktuelle Headline „MIT DIESEN MARKEN"
+  hat keine mehr — Überstand 0,5 px.
+- **Größe:** Der em-proportionale Grundabstand geht nicht auf, wenn nur *eine* Seite der
+  Lücke mitskaliert. Die Eyebrow steht in allen Sections fix auf `0.75rem`, die Headlines
+  aber auf 51 bis 128 px. Je kleiner die Headline, desto knapper fällt der Abstand aus —
+  gemessen von Tinte zu Tinte, vor dem Ausgleich:
+
+  | Section | Headline | ohne `--dia` | `--dia` | jetzt |
+  |---|---|---|---|---|
+  | Projekte, Leistungen | 128 px | 28,8 px | — | 28,8 px |
+  | Kontakt | 96 px | 25,3 px | — | 25,3 px |
+  | Kunden | 64 px | 19,9 px | `0.139em` | 28,8 px |
+  | About | 51 px | 12,9 px | `0.225em` | 28,8 px |
+
+  **Offen:** Kontakt liegt mit 25,3 px noch 3,5 px unter den übrigen.
+  Bei About kommt ein zweiter Effekt dazu: der Ausgleich rückt auch den Aufstrich des
+  handschriftlichen K von der Eyebrow ab, unter der er sonst fast hängt.
+
+Der Wert ist **textabhängig und größenabhängig** — bei geänderter Headline neu messen.
 
 **Eyebrow-Auftakt:** Die Nummerierung `(01)`…`(05)` ist entfallen; stattdessen leitet das
 **✳ aus dem Kunden-Marquee** die Zeile ein, in der Akzentfarbe. Es steckt als `::before` am
@@ -151,11 +230,22 @@ Headline neu bestimmen.
 statt `baseline`, weil das Zeichen keine sinnvolle Grundlinie hat, und `line-height: 0`, sonst
 schöbe sein Zeilenkasten die Eyebrow auseinander. Alternativen siehe `eyebrow-zeichen.html`.
 
-**Eyebrow-Texte:** Sie sollen einen *Ton* setzen statt die Headline zu wiederholen — Vorbild
-war „Vertrauen" bei den Kunden. Umgestellt: „Ein kleiner Einblick" (Projekte, vorher
-„Ausgewählte Arbeiten" — das doppelte mit „recent work" und der Headline), „Gute Gesellschaft"
-(Kunden, vorher „Vertrauen"). Offen: „Was ich anbiete" (Leistungen) und „Kontakt" doppeln ihre
-Headline noch.
+**Eyebrow-Texte:** Sie sollen einen *Ton* setzen statt die Headline zu wiederholen. In
+Seitenreihenfolge gelesen ergeben die fünf einen Satz — das ist der Grund für die Auswahl,
+nicht Zufall:
+
+> *Ein kleiner Einblick, was ich anbiete, wie ich arbeite, über die Jahre — auf ein Wort.*
+
+| Section | Eyebrow | vorher |
+|---|---|---|
+| Projekte | Ein kleiner Einblick | „Ausgewählte Arbeiten" (doppelte „recent work") |
+| Leistungen | Was ich anbiete | — |
+| About | Wie ich arbeite | „Über mich", dann „Wer dahinter steckt" |
+| Kunden | Über die Jahre | „Vertrauen", dann „Gute Gesellschaft" |
+| Kontakt | Auf ein Wort | „Kontakt" (doppelte die Headline) |
+
+Der Footer-Navigationspunkt heißt weiterhin schlicht „Über mich" — Sprungmarken dürfen
+nüchterner sein als die Eyebrows, die einen Ton setzen sollen.
 
 ## Gridlinien-Gerüst (seitenweit)
 
@@ -227,6 +317,34 @@ optisch zusammen:
   mit den gestrichelten Spaltenlinien (per Playwright nachgemessen: 57,59 px / 1382,41 px
   bei 1440 px Viewport, Porträt-Kante exakt auf 1051,20 px = 75-%-Linie). Textblöcke rücken
   dagegen um `--hero-inset` ein — derselbe Gap, mit dem das MOIN in seiner Zelle sitzt.
+
+## Sprache, Dokumentkopf und Silbentrennung
+
+Die Datei hat **bewusst kein `<html>`/`<head>`**: sie wird auch als Artifact veröffentlicht,
+und dort liefert der Wrapper das Grundgerüst — eigene Dokument-Tags kollidierten damit.
+Browser bauen die fehlenden Elemente selbst und ziehen `<title>`, `<meta>` und `<script>`
+vom Dateianfang in den impliziten `<head>`. Was sich dort *nicht* raten lässt, muss man
+trotzdem liefern:
+
+- `<meta charset>` und `<meta name="viewport">` stehen am Dateianfang. Ohne Viewport-Meta
+  rendert ein echtes Telefon mit ~980 px Layoutbreite und zoomt heraus — die gesamte
+  Mobile-Arbeit (Reel, Indicator, Subline über MOIN) liefe ins Leere.
+- **Die Sprache** geht ohne `<html>`-Tag nur per Skript ans Wurzelelement
+  (`document.documentElement.lang = "de"`). Damit sie auch ohne JavaScript wirkt, steht
+  `lang="de"` zusätzlich an `<header>`, `<main>` und `<footer>`; die Silbentrennung erbt
+  von dort.
+
+Soll die Datei einmal **nicht** mehr als Artifact veröffentlicht werden, ist der saubere
+Weg ein echter `<!doctype html><html lang="de"><head>…` — dann entfällt das Skript.
+
+**Silbentrennung:** `hyphens: auto` mit `hyphenate-limit-chars: 6 3 3` (Wörter erst ab
+6 Zeichen trennen, mindestens 3 Zeichen vor und nach dem Bindestrich — sonst entstehen
+Zwergsilben). Sie greift **nur** bei gesetzter Sprache. Deutsch trennt deutlich häufiger
+als Englisch, und die Textspalten sind schmal (About: 331 px bei 1440 px) — ohne Trennung
+reißen dort einzelne lange Wörter ganze Zeilen auf.
+**Displayzeilen trennen nicht** (`hyphens: manual` auf Headlines, Wortmarke, Kopfzeilen,
+Kachel- und Leistungstiteln): ein Bindestrich in einer 128-px-Headline ist ein Bruch im
+Bild, kein Lesehilfsmittel.
 
 ## Technische Notizen (wichtig für die Weiterarbeit)
 

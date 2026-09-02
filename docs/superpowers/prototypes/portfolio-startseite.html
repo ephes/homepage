@@ -1,3 +1,13 @@
+<!-- Diese Datei hat bewusst KEIN <html>/<head>: sie wird auch als Artifact
+     veröffentlicht, und dort liefert der Wrapper das Grundgerüst — eigene
+     Dokument-Tags kollidierten damit. charset und viewport hoisten Browser
+     selbst in den impliziten <head>, die dürfen also hier stehen.
+     Die Sprache lässt sich ohne <html>-Tag nur per Skript am Wurzelelement setzen;
+     sie steht zusätzlich an den drei Wurzel-Elementen, damit die Silbentrennung
+     auch ohne JavaScript nach deutschen Regeln arbeitet. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.documentElement.lang = "de";</script>
 <title>Portfolio Startseite — Fluid-Hero integriert</title>
 <style>
 /* ===== Sections (Wireframe) ===== */
@@ -51,7 +61,21 @@
   h1, h2, h3, h4,
   .sec-title, .big, .statement, .brand, .avail, .foot-h,
   .meta h3, .svc h3, .tile.cta strong { text-wrap: balance; }
-  p, li, .meta .row2, .facts div { text-wrap: pretty; }
+  p, li, .meta .row2 { text-wrap: pretty; }
+
+  /* ── Silbentrennung ──────────────────────────────────────────────────────
+     Deutsch trennt viel häufiger als Englisch, und die Textspalten sind schmal
+     (About: 331 px bei 1440 px). Ohne Trennung reißen dort einzelne lange Wörter
+     ganze Zeilen auf. `hyphens: auto` greift NUR mit gesetzter Sprache — die steht
+     am Wurzelelement und an den drei Wurzel-Containern (s. Kopf der Datei).
+     `hyphenate-limit-chars` verhindert Zwergsilben: Wörter erst ab 6 Zeichen
+     trennen, mindestens 3 Zeichen vor und nach dem Bindestrich. */
+  p, li { -webkit-hyphens: auto; hyphens: auto; hyphenate-limit-chars: 6 3 3; }
+  /* Displayzeilen NICHT trennen: ein Bindestrich in einer 128-px-Headline ist ein
+     Bruch im Bild, kein Lesehilfsmittel. */
+  h1, h2, h3, h4,
+  .sec-title, .big, .statement, .brand, .avail, .foot-h, .me-col h3,
+  .meta h3, .svc h3, .tile.cta strong { -webkit-hyphens: manual; hyphens: manual; }
 
   /* Full-bleed: Sektionen laufen über die gesamte Breite, nur ein Innenabstand am Rand.
      Keine mittige, schmale Content-Spalte. */
@@ -119,7 +143,6 @@
      Container, damit im Markup nichts Dekoratives steht. `line-height:0` nimmt dem Glyph
      seinen Zeilenkasten, sonst schöbe er die Zeile auseinander. */
   .sec-label::before { content: "✳"; color: var(--accent); font-size: 1.15em; line-height: 0; letter-spacing: 0; }
-  .sec-label .scr { font-family: "Astagina", cursive; font-size: 1.5rem; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink); }
 
   /* ── Handschriftlicher Vermerk in der Headline ────────────────────────────
      Reihenfolge: Eyebrow, Headline, Vermerk — der Vermerk liegt AUF der Headline, quer
@@ -305,11 +328,63 @@
   .svc p { margin: 0; font-size: 0.85rem; line-height: 1.35; color: var(--muted); max-width: 30ch; }
 
   /* ── About ────────────────────────────────────────────────────── */
-  .about { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: start; }
-  .about .statement { margin: 0 0 1.5rem; font-size: clamp(1.6rem, 3.6vw, 3.2rem); font-weight: 600; line-height: 1.1; text-wrap: balance; }
-  .about .facts { display: flex; flex-wrap: wrap; gap: 2rem; color: var(--muted); font-size: 0.85rem; }
-  .about .facts b { display: block; color: var(--ink); font-size: 1rem; font-weight: 600; }
-  .about .signature { font-size: 2.8rem; margin-block-start: 2rem; transform: rotate(-2deg); transform-origin: left; }
+  .about { display: grid; align-items: start; }
+  /* Abstand zur Eyebrow wie in allen anderen Sections: derselbe Grundwert 0.086em plus
+     der ausgemessene Ausgleich. Er ist hier am größten, weil diese Headline mit 51px die
+     kleinste der Seite ist — die Eyebrow steht überall fix auf 0.75rem, der proportionale
+     Grundabstand fällt also entsprechend knapp aus. Ohne den Ausgleich blieben 12,9px
+     Tinten-Abstand gegen 28,8px bei den großen Headlines; 0.086em + 0.225em = 15,9px
+     schließen die Lücke genau (nachgemessen).
+     Nebeneffekt, der hier zählt: der Aufstrich des handschriftlichen K rückt damit von
+     der Eyebrow ab, unter der er sonst fast hängt. */
+  .about .statement { margin: calc(0.086em + var(--dia, 0em)) 0 0; --dia: 0.225em;
+    font-size: clamp(1.6rem, 3.6vw, 3.2rem); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+  /* Der Name in der Handschrift, mitten im Satz — in der Akzentfarbe, der einzigen Stelle
+     neben dem ✳, an der sie Text trägt. Bei 51px greift die Schwelle für große Schrift
+     (3:1), Tangerine liegt mit 3,4 darüber.
+     Zur Größe: Astagina hat bei GLEICHER Größe eine kleinere x-Höhe als Saira (19,2 gegen
+     26,1 px bei 51,2 px), aber eine höhere Versalie (36,2 gegen 35,2) — Cap- und x-Höhe
+     fordern also gegensätzliche Werte (0,97em bzw. 1,36em). Verglichen wurden 1,30/1,50/
+     1,70/1,90× am echten Font; bei 1.75em trägt der Name wie eine Unterschrift, ab 1,90×
+     wird das K zum Solisten. Weil der Umbruch vor „und" fest im Markup steht (<br>), kann
+     die Handschrift breiter laufen, ohne den Zeilenfall zu verschieben.
+     `line-height: 0.63` hält den Zeilenkasten: line-height wird als Zahl vererbt, der Span
+     bekäme sonst 1.1 × 1.75em und zöge die beiden Headline-Zeilen auseinander.
+     0.63 × 1.75 ≈ 1.1, also genau die Zeilenhöhe des Absatzes. */
+  .about .statement .katha {
+    font-family: "Astagina", cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 1.75em;
+    line-height: 0.63;
+    /* Tiefer gesetzt, damit die Handschrift MITTIG zur Zeile sitzt statt auf deren
+       Grundlinie. Auf der Grundlinie stünde sie zwangsläufig zu hoch: Astagina bringt bei
+       dieser Größe 38,2 em-Anteile Oberlänge mit, Sairas Versalhöhe misst nur 35,2 px —
+       die Tinte der Handschrift läge also weit über der Mitte der Zeile.
+       `position: relative` statt `vertical-align`, weil der Versatz das Layout nicht
+       anfassen und den Zeilenkasten nicht aufziehen soll.
+       0.15em ist nachgemessen: die Tintenmitte der Handschrift trifft damit die Tintenmitte
+       von „Ich bin" auf 0,3px genau (ohne Versatz läge sie 13,7px zu hoch, bei 0,18em
+       2,4px zu tief). Der Wert hängt an der Schriftgröße — bei geänderter Größe neu
+       messen, nicht mitskalieren lassen.
+       Der Versatz bezieht sich auf die SPAN-Größe, nicht auf die des Absatzes. */
+    position: relative;
+    top: 0.15em;
+    letter-spacing: 0;
+    color: var(--accent);
+  }
+  .about .me-text p { margin: 0; font-size: 0.95rem; line-height: 1.55; }
+  /* Kopfzeile je Spalte. Gleiche Behandlung wie die anderen kleinen Überschriften der
+     Seite (Eyebrow, Footer-Spalten): versal, gesperrt, klein — aber in --ink statt
+     --muted, weil sie den Absatz anführt und nicht nur beschriftet. */
+  .about .me-col h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
   /* Porträt als Klecks statt als Rechteck. Der clipPath vereint Hauptform und vier
      abgelöste Spritzer — mehrere Teilpfade in einem clipPath ergeben zusammen die Maske.
      `clipPathUnits="objectBoundingBox"` rechnet in Anteilen 0…1, die Form skaliert also
@@ -321,6 +396,39 @@
     clip-path: url(#klecks);
   }
   .about .portrait .frame::before, .about .portrait .frame::after { content: none; }
+  /* Vermerk auf der Unterkante des Porträts. Gleiche Technik wie in den Sektionsköpfen:
+     SVG-Text, weil nur dort die Kontur glatt UND rund sein kann (`stroke-linejoin: round`
+     + `paint-order: stroke`). Auch dieselben zwei Fallstricke: das SVG braucht eine reale
+     Größe — ein 0×0-SVG malt Chrome trotz `overflow: visible` nicht —, und `bottom` liegt
+     bei SVG-Text auf der GRUNDLINIE, nicht auf der Unterkante. Die Schrift sitzt damit
+     genau auf der Kante des Feldes, statt darüber zu schweben.
+     Größe: dieselbe --scr-size wie über den Sektions-Headlines, damit ALLE Vermerke der
+     Seite gleich groß sind. Er bleibt damit innerhalb der Porträtspalte — nachgemessen
+     bei 1440/900/390px Viewport: 62/38/76px Luft links, 79/49/82px rechts. */
+  .about .portrait { position: relative; }
+  .about .portrait .scr {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    font-size: var(--scr-size);
+    inline-size: 1px; block-size: 1px;
+    overflow: visible;
+  }
+  .about .portrait .scr text {
+    font-family: "Astagina", cursive;
+    font-size: 1em;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-anchor: middle;
+    fill: var(--ink);
+    stroke: var(--bg);
+    stroke-width: 0.11em;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    paint-order: stroke;
+    transform: rotate(-4deg);
+    transform-origin: center;
+  }
   /* trägt nur die Formdefinition, darf nichts zum Layout beitragen */
   .shapes { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
 
@@ -340,7 +448,13 @@
   .clients .sec-label, .clients h2.big, .clients .cl-note { padding-inline: clamp(1.25rem, 4vw, 4rem); }
   .clients .sec-label { color: var(--dark-muted); }
   .clients .sec-label .scr { color: var(--dark-ink); }
-  .clients h2.big { --dia: 0.195em; margin: calc(0.086em + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: clamp(2rem, 5vw, 4rem); font-weight: 600; line-height: 1; text-transform: uppercase; }
+  /* Optischer Ausgleich, von Tinte zu Tinte gemessen (nicht an den Kästen):
+     Der em-proportionale Grundabstand 0.086em geht hier nicht auf, weil nur EINE Seite
+     der Lücke mitskaliert — die Eyebrow steht in allen Sections fix auf 0.75rem, die
+     Headline hier aber auf 64px statt 128px. Gemessen blieben so nur 19,9px Tinten-
+     Abstand gegen 28,8px bei den großen Headlines; 0.139em (= 8,9px bei 64px) schließt
+     die Differenz. Der Wert ist textabhängig — bei geänderter Headline neu messen. */
+  .clients h2.big { --dia: 0.139em; margin: calc(0.086em + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: clamp(2rem, 5vw, 4rem); font-weight: 600; line-height: 1; text-transform: uppercase; }
 
   .marquee {
     border-block: 1px solid var(--dark-rule);
@@ -377,7 +491,7 @@
 
   /* ── Contact / Footer ─────────────────────────────────────────── */
   /* Der Abstand zu den Buttons muss den Überstand des handschriftlichen Vermerks
-     aufnehmen — bei 1.75rem blieb unter „lass uns sprechen" gut 22px weniger Luft als
+     aufnehmen — bei 1.75rem blieb unter dem Vermerk gut 22px weniger Luft als
      unter den Vermerken der anderen Sections (gemessen an der sichtbaren Schrift). */
   .contact .stack { display: flex; flex-direction: column; gap: clamp(2.1rem, 3.5vw, 3.15rem); align-items: flex-start; }
   /* Bei zweizeiligen Headlines hängt der Vermerk an der LETZTEN Zeile; sie bekommt
@@ -609,25 +723,78 @@
   section.block > .sec-label,
   section.block > .proj-head,
   section.block > .stack { padding-inline: var(--hero-inset); }
+  /* About: Text und Eyebrow stehen in den Spalten 2–4, links liegt das Porträt. Die
+     Eyebrow muss mitwandern, sonst stünde sie allein über dem Bild — und die zwischen ✳
+     und Headline ausgemessene Tintenflucht (-0.082em) hinge in der Luft.
+     25 % der Sektionsbreite ist genau eine Rasterspalte, weil der Innenbereich der
+     Section (nach `--pad`) in vier gleiche Spalten geteilt ist. */
+  section.block#about > .sec-label { margin-inline-start: 25%; }
 
   /* About im 4-Spalten-System: Text über drei Spalten (eingerückt), Porträt füllt die
      vierte Spalte bündig zwischen 75-%-Linie und rechter Padding-Linie — wie eine Kachel. */
+  /* About auf dem 4-Spalten-Raster, in zwei Bahnen:
+     Spalte 1 über alle Zeilen: der Klecks, oben hängend.
+     Spalten 2–4 tragen ALLEN Text:
+     Zeile 1  Statement.
+     Zeile 2  die drei Absätze als drei Rasterspalten darunter — ein Absatz je Spalte,
+              wie ein Magazinsatz. Das ist der eigentliche Effekt: Fließtext, der als
+              EINE Spalte unter der Headline weiterläuft, bleibt Fließtext.
+     Zeile 3  Abschlusszeile: Verortung links, Lebenslauf rechts.
+     Alle drei Zeilen beginnen damit auf derselben Kante (Spaltenlinie 1 + --hero-inset).
+     Die Spaltenkanten fallen dabei mit den Linien des Seitengrids zusammen.
+     Spalten-gap bleibt 0 (sonst lägen die Textkanten nicht auf den Linien), der
+     Zeilenabstand kommt aus row-gap. */
   .about {
     grid-template-columns: repeat(4, 1fr);
-    gap: 0;
+    /* Der row-gap bemisst jetzt den Abstand Text → Trennlinie. Die größere Luft nach dem
+       Statement kommt separat als margin, sonst zöge ein einziger gap-Wert beide Fugen
+       gleich weit auf. */
+    gap: clamp(1.75rem, 3vw, 2.5rem) 0;
   }
-  .about > :first-child {
-    grid-column: 1 / 4;
-    padding-inline-start: var(--hero-inset);
-    padding-inline-end: clamp(1.5rem, 3vw, 3rem);
-  }
-  .about > .portrait { grid-column: 4 / -1; }
+  .about > .statement { grid-row: 1; grid-column: 2 / -1; padding-inline: var(--hero-inset);
+    margin-block-end: clamp(0.75rem, 1.5vw, 1.5rem); }
+  /* Der Klecks läuft über ALLE Zeilen und hängt oben (`align-self: start`). Läge er nur
+     in Zeile 1, bestimmte seine quadratische Höhe (331px bei 1440px) die Zeilenhöhe —
+     unter dem zweizeiligen Statement stünden dann ~250px Leere, die nach Versehen
+     aussieht statt nach Luft. So gibt allein das Statement die erste Zeile vor.
+     `span 3` statt `1 / -1`: ohne `grid-template-rows` gibt es kein explizites
+     Zeilenraster, und `-1` zeigt dann auf Linie 1 — der Klecks landete damit wieder
+     in Zeile 1 (nachgemessen). */
+  .about > .portrait  { grid-row: 1 / span 3; grid-column: 1 / 2; align-self: start; }
+  .about > .me-text   { grid-row: 2; grid-column: 2 / -1; display: grid; grid-template-columns: repeat(3, 1fr); }
+  /* Abschlusszeile über die volle Breite: Verortung links, Lebenslauf rechts. Beide
+     Kanten liegen auf dem Textanschlag (Padding-Linie + --hero-inset), nicht auf der
+     Rasterlinie — es ist Text und UI, kein Raster. */
+  /* Die Trennlinie macht aus Text und Abschluss zwei erkennbare Rasterzeilen. Sie sitzt
+     auf dem Element, das über 1 / -1 läuft, und reicht damit exakt von Padding-Linie zu
+     Padding-Linie — bündig wie die Rahmen der Kachel- und Leistungsraster. */
+  .about > .me-bar    { grid-row: 3; grid-column: 2 / -1;
+    border-top: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem 2rem;
+    padding-inline: var(--hero-inset);
+    padding-block-start: clamp(1.5rem, 2.5vw, 2rem); }
+  .about .me-claim { margin: 0; font-size: 1.05rem; font-weight: 500; }
+  /* Wie bei den Footer-Spalten: jede Textspalte rückt beidseitig um --hero-inset ein,
+     damit kein Absatz auf einer Rasterlinie klebt. */
+  .about > .me-text > .me-col { padding-inline: var(--hero-inset); }
+
   @media (max-width: 52rem) {
-    .about { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 4rem); }
-    .about > :first-child, .about > .portrait { grid-column: auto; }
-    /* Der Klecks eröffnet die Section, statt am Ende unterzugehen. */
+    section.block#about > .sec-label { margin-inline-start: 0; }
+    .about { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 3rem); }
+    .about > .statement, .about > .portrait,
+    .about > .me-bar, .about > .me-text { grid-row: auto; grid-column: auto; align-self: auto; }
+    /* Der Klecks eröffnet die Section, statt am Ende unterzugehen; die Abschlusszeile
+       schließt sie ab. */
     .about > .portrait { order: -1; }
-    .about > :first-child { padding-inline-end: var(--hero-inset); }
+    .about > .statement { order: 1; padding-inline: var(--hero-inset); }
+    .about > .me-text   { order: 2; grid-template-columns: 1fr; }
+    /* Nebeneinander wird es hier zu eng — Verortung und Button stapeln. */
+    .about > .me-bar    { order: 3; flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+    .about > .me-text > .me-col { padding-inline: var(--hero-inset); }
+    /* Untereinander brauchen die Spalten eine Fuge, die deutlich größer ist als der
+       Abstand Kopfzeile → Absatz, sonst hängt eine Kopfzeile am Absatz darüber. */
+    .about > .me-text > .me-col + .me-col { margin-block-start: 2rem; }
   }
   /* Die Kunden-Section trägt selbst KEIN Padding, damit das Marquee-Band randlos über die
      volle Breite laufen kann; Label und Überschrift rücken einzeln ein — auf denselben
@@ -757,12 +924,12 @@
   }
 
 </style>
-<header class="site">
+<header class="site" lang="de">
   <span class="brand">Katharina Wersdörfer<sup>®</sup></span>
   <span class="avail">Verfügbar für Projekte</span>
   <a class="pill" href="#">Kontakt</a>
 </header>
-<main>
+<main lang="de">
 
   <section class="stage" id="stage">
     <h1 class="sr-only">Moin</h1> <!-- echtes Text-Äquivalent für Screenreader/SEO -->
@@ -812,8 +979,6 @@
 
   <!-- 03 · Leistungen / Skills -->
   <section class="block pad" id="leistungen">
-    <!-- PLATZHALTER: „Was ich anbiete" doppelt die Headline noch, wie zuvor bei Projekte.
-         Ein eigener Ton fehlt hier noch. -->
     <div class="sec-label"><span>Was ich anbiete</span></div>
     <div class="proj-head">
       <h2 class="sec-title"><svg class="scr"><text>let's talk about</text></svg>Leistungen</h2>
@@ -871,25 +1036,41 @@
 
   <!-- 04 · About -->
   <section class="block pad" id="about">
-    <div class="sec-label"><span>Über mich</span><span class="scr">hallo!</span></div>
+    <div class="sec-label"><span>Wie ich arbeite</span></div>
     <div class="about">
-      <div>
-        <p class="statement">Platzhalter-Statement: ein bis zwei Sätze dazu, wie du als Art Directorin arbeitest und was Kunden von dir bekommen.</p>
-        <div class="facts">
-          <div><b>Düsseldorf</b>Senior Art Directorin</div>
-          <div><b>ADC 2020 &amp; 2024</b>3× Bronze</div>
-          <div><b>Diplom-Designerin</b>Grafik- &amp; Kommunikationsdesign</div>
+      <!-- Der erste Absatz setzt den Satz der Headline fort („… rein. In neue Themen, in
+           Marken …"), deshalb steht er ohne eigenen Auftakt direkt daneben. -->
+      <h2 class="statement">Ich bin <span class="katha">Katharina</span><br>und bleibe gern neugierig.</h2>
+      <!-- Der handschriftliche Vermerk liegt auf der Unterkante des Porträtfeldes,
+           dieselbe Geste wie die Vermerke auf den Sektions-Headlines. -->
+      <div class="portrait"><div class="frame"><span>Porträt</span></div><svg class="scr"><text>that's me</text></svg></div>
+      <div class="me-text">
+        <div class="me-col">
+          <h3>Verstehen</h3>
+          <p>Mich interessiert, was eine Marke ausmacht und was Gestaltung für sie leisten kann. Beruflich ging es im Dialogmarketing los. Die Frage „Für wen ist das gedacht?“ begleitet mich seitdem. Die Erfahrung aus unterschiedlichen Branchen – von Beauty über Food bis Retail – hilft mir, mich schnell in dein Thema einzuarbeiten und auch ungewohnte Aufgaben mit frischem Blick zu lösen.</p>
         </div>
-        <div class="script signature">Katharina</div>
+        <div class="me-col">
+          <h3>Gestalten</h3>
+          <p>Illustration begleitet mich schon den ganzen Weg. Ich denke oft in Bildern – und setze sie gern selbst um, wenn das Projekt es braucht. Über die Jahre habe ich aus Neugier vieles ausprobiert und dazugelernt. So kann ich heute einen Auftritt über verschiedene Medien hinweg gestalten und bis ins Detail ausarbeiten. Dabei habe ich schon beim Entwerfen im Blick, wie es sich umsetzen lässt.</p>
+        </div>
+        <div class="me-col">
+          <h3>Umsetzen</h3>
+          <p>Im Team arbeite ich am liebsten – zum Beispiel mit meinem Mann Jochen. Er kümmert sich um die Software hinter dem Design, mit Schwerpunkt auf Backend und Machine Learning. Je nach Aufgabe können wir auch weitere Kollegen aus unserem Netzwerk dazuholen. Gemeinsam bleiben wir dran, bis wir ein gutes Konzept auch tatsächlich auf die Straße gebracht haben. Kurze Wege inklusive.</p>
+        </div>
       </div>
-      <div class="portrait"><div class="frame"><span>Porträt</span></div></div>
+      <!-- Abschlusszeile über die volle Rasterbreite: die Verortung links, der Lebenslauf
+           rechts an derselben Kante wie der Textanschlag. -->
+      <div class="me-bar">
+        <p class="me-claim">Digital Creative · Based in Düsseldorf</p>
+        <a class="pill ghost" href="#">Mehr im Lebenslauf</a>
+      </div>
     </div>
     </section>
 
   <!-- 05 · Kunden -->
   <section class="block pad clients on-dark" id="kunden">
-    <div class="sec-label"><span>Gute Gesellschaft</span></div>
-    <h2 class="big">Für diese Marken<br><span class="lastline">&amp; Menschen<svg class="scr"><text>together</text></svg></span></h2>
+    <div class="sec-label"><span>Über die Jahre</span></div>
+    <h2 class="big">Mit diesen Marken<br><span class="lastline">&amp; Menschen<svg class="scr"><text>together</text></svg></span></h2>
     <div class="marquee">
       <div class="marquee-track" aria-label="Auswahl an Kunden">
         <!-- Liste doppelt für den nahtlosen Loop -->
@@ -901,19 +1082,18 @@
 
   <!-- 06 · Kontakt -->
   <section class="block pad contact" id="kontakt">
-    <div class="sec-label"><span>Kontakt</span></div>
+    <div class="sec-label"><span>Auf ein Wort</span></div>
     <div class="stack">
-      <h2 class="big">Ein Projekt im Kopf?<br><span class="lastline">Schreib mir.<svg class="scr"><text>lass uns sprechen</text></svg></span></h2>
+      <h2 class="big">Ein Projekt im Kopf?<br><span class="lastline">Schreib mir.<svg class="scr"><text>tell me more</text></svg></span></h2>
       <div class="buttons">
         <a class="pill" href="#">E-Mail schreiben</a>
-        <a class="pill ghost" href="#">Mehr im Lebenslauf</a>
       </div>
     </div>
     </section>
 
 </main>
 <!-- `on-dark` meldet dem Liniengerüst, dass hier die Linien ins Helle kehren. -->
-<footer class="site on-dark">
+<footer class="site on-dark" lang="de">
   <div class="foot-cols pad">
     <div class="foot-col">
       <span class="brand">Katharina Wersdörfer<sup>®</sup></span>

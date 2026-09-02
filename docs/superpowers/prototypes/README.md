@@ -47,28 +47,16 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.
 4. **About** — auf dem 4-Spalten-Raster: **Spalte 1 trägt das Porträt, die Spalten 2–4
    allen Text.** Oben das **Statement** („Ich bin Katharina / und bleibe gern neugierig."
-   — der Umbruch steht als `<br>` fest im Markup), darunter der Fließtext als **drei
-   Rasterspalten**, jede mit einer **Ein-Wort-Kopfzeile**: Verstehen / Gestalten /
-   Umsetzen. Das ist der Effekt: Fließtext, der als eine Spalte unter der Headline
-   weiterliefe, bliebe Fließtext; so wird ein Magazinsatz daraus, und die Kopfzeilen geben
-   ihm seine Gliederung. Die drei Spalten stehen bei 1440 px gleich hoch (10/10/10 Zeilen).
-   Die Kopfzeilen sind wie die übrigen kleinen Überschriften der Seite behandelt (versal,
-   gesperrt, klein), aber in `--ink` statt `--muted`, weil sie einen Absatz anführen und
-   nicht nur beschriften.
-   **Das Statement ist ein `<h2>`, die Kopfzeilen sind `<h3>`.** Vorher war das Statement
-   ein `<p>` — die Section hatte damit gar keine Überschrift, und `<h3>`-Kopfzeilen hätten
-   in der Luft gehangen. Darunter schließt eine **eigene Rasterzeile** ab, durch eine
-   **Trennlinie** vom Fließtext abgesetzt: links die Verortung „Digital Creative ·
-   Based in Düsseldorf", rechts **„Mehr im Lebenslauf"** (aus der Kontakt-Section hierher
-   gewandert). Die Linie läuft über die **Textbahn** (Spalten 2–4), nicht über die volle
-   Breite: sonst ragte sie links unter dem Porträt hervor und schösse über die Kante
-   hinaus, an der alle drei Textzeilen beginnen. Ihre Kanten fallen auf die Spaltenlinie
-   und die rechte Padding-Linie; der Inhalt der Zeile rückt davon noch um `--hero-inset`
-   ein, es ist ja Text und UI, kein Raster.
-   Die Luft um die Linie kommt aus zwei Quellen: der `row-gap` des About-Grids bemisst den
-   Abstand **Text → Linie**, die größere Fuge nach dem Statement liegt separat als `margin`
-   auf dem Statement. Ein einziger gap-Wert zöge sonst beide Fugen gleich weit auf. Eckdaten-Trio und Handschrift-Signatur sind an dieser Stelle **entfallen**;
-   damit ist die Klasse `.script` im Markup nicht mehr in Gebrauch.
+   — der Umbruch steht als `<br>` fest im Markup), darunter **drei Akkordeon-Kacheln**
+   (Verstehen / Gestalten / Umsetzen), darunter eine Abschlusszeile: links die Verortung
+   „Digital Creative · Based in Düsseldorf", rechts **„Mehr im Lebenslauf"** (aus der
+   Kontakt-Section hierher gewandert). Beide sitzen auf dem Textanschlag; eine eigene
+   Trennlinie hat die Zeile nicht — die Unterkante der Kachelreihe trennt bereits, ein
+   zweiter Strich wäre ein Doppelstrich.
+   **Das Statement ist ein `<h2>`, die Kacheltitel sind `<h3>`.** Vorher war das Statement
+   ein `<p>` — die Section hatte damit gar keine Überschrift, und `<h3>` hätte in der Luft
+   gehangen. Eckdaten-Trio und Handschrift-Signatur sind entfallen; damit ist die Klasse
+   `.script` im Markup nicht mehr in Gebrauch.
    **Der handschriftliche Vermerk der Section sitzt auf der Unterkante des Porträtfeldes**
    und sagt „that's me" — das frühere `hallo!` in der Eyebrow ist entfallen, samt der
    nun gegenstandslosen Regel `.sec-label .scr`. Technik und Fallstricke wie bei den
@@ -144,19 +132,142 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
   zur CTA-Kachel darunter (14 px oben / 40 px unten) — sonst liest sie sich als deren Zubehör.
 - Beide Reels verstecken die native Scrollbar, weil der Indicator ihre Rolle übernimmt.
 
-## Farben (Entwurf, 2026-09-01)
+## Farben
 
-Grundton (Creme `#F0ECE2`) und warmes Schwarz bleiben vorerst unverändert; dazugekommen ist
-**ein Akzent**:
+Alle fünf Rollen aus `farbpalette.html` sind integriert; dort stehen Herleitung,
+Kontrastmatrix und die verworfenen Kandidaten.
 
-- **Tangerine `#EB3D00`** — trägt auf beiden Gründen (3,4 auf Creme, 4,6 auf Dunkel) und
-  bleibt deshalb seitenweit derselbe. Er hängt an `--accent`.
-- **Smaragd `#1C995C`** ist als Token vorhanden, aber **für Sonderfälle reserviert**
-  (Entscheidung Katharina). Die frühere Umschaltung auf Grün in dunklen Sections ist raus.
+| Rolle | Token | Wert | Einsatz |
+|---|---|---|---|
+| Grundton | `--creme` | `#F0ECE2` | Fläche der ganzen Seite |
+| Nahschwarz | `--sacramento` | `#162114` | Schrift auf Hell, dunkle Sections, Footer |
+| Akzent | `--tangerine` | `#EB3D00` | trägt auf hell (3,42) wie dunkel (4,12) |
+| Zweitakzent | `--limette` | `#C7F03C` | **nur** auf Dunkel: 12,65 dort, aber 1,12 auf Creme |
+| Mittlere Fläche | `--pine` | `#294122` | Verfügbarkeits-Punkt auf Hell; als Fläche noch **reserviert** |
 
-Zur Auswahl siehe `farbpalette.html` (Tokenkarte mit Kontrastmatrix) — dort stehen auch die
-verworfenen Kandidaten samt Begründung. Noch offen: ob das warme Schwarz durch Sacramento
-`#162114` ersetzt wird (grünlicher) und ob Pine `#294122` als mittlere Fläche dazukommt.
+**Eine Quelle statt drei.** Die Tokens standen vorher auf zwei `:root`-Blöcke verteilt,
+plus einen toten `[data-theme="light"]`-Rest des entfernten Dark Mode. Dadurch waren
+`--pill-bg`/`--pill-ink` faktisch tot (eine zweite `.pill`-Regel überschrieb sie) und
+`--smaragd` war definiert, aber nirgends benutzt. Alles liegt jetzt in einem Block.
+
+**Der Akzent wechselt auf dunklem Grund** — `.on-dark { --accent: var(--limette) }`, eine
+Regel für alle dunklen Flächen. Das kehrt eine frühere Entscheidung um (dort hieß es,
+Tangerine bleibe seitenweit derselbe und Grün sei für Sonderfälle reserviert), folgt aber
+der Palettenseite: Tangerine käme auf Sacramento nur auf 4,12, die Limette auf 12,65.
+Der handschriftliche Vermerk auf Dunkel („together") trägt ihn ebenfalls — Limette auf
+Sacramento liegt bei 12,65. Auf Hell bleibt der Vermerk dunkel: Tangerine wäre dort mit
+3,42 zu schwach für eine Schreibschrift.
+Der Verfügbarkeits-Punkt folgt derselben Logik — Pine auf Hell, Limette auf Dunkel; sein
+früheres `#4a9e5c` stand außerhalb der Palette.
+
+**Pine ist als Fläche nicht vergeben.** Zwei Versuche sind verworfen (beide Entscheidung
+Katharina):
+
+- **CTA-Kachel** — sie bleibt auf dem Nahschwarz der dunklen Sections und liest damit als
+  deren zweite Ebene statt als eigene Farbe.
+- **About-Section auf Pine** — technisch lief das über die vorhandene `.on-dark`-Mechanik
+  mit `--dark-bg: var(--pine)`, die Kontraste trugen alle (Creme 9,50 · Limette 8,52).
+  Gegen die Variante sprach die Nachbarschaft: About liegt direkt über der Kunden-Section
+  in Sacramento, und die beiden dunklen Grüntöne stoßen ohne helle Zäsur aneinander — das
+  liest sich eher wie ein Fehler in derselben Fläche als wie zwei Ebenen. Dazu verlöre die
+  Seite ihren hellen Grundcharakter: zwei von fünf Sections wären dann dunkel.
+
+Pine trägt damit nur den Verfügbarkeits-Punkt auf hellem Grund. Sein vorgesehener Platz
+laut Palettenseite sind **Hover-Zustände** — die gibt es im Prototyp noch nicht. Wichtig
+dabei: Tangerine erreicht auf Pine nur 2,78, ein Akzent kann auf dieser Fläche also nicht
+mitkommen.
+
+**Linien und Platzhalter sind Sacramento mit Deckkraft**, keine eigenen Farben — so bleiben
+sie beim Ton, wenn der Grundton wechselt.
+
+**`--muted` ist nachgerechnet:** `#686D62` ist Sacramento zu 38 % mit Creme gemischt und
+damit der hellste Ton dieser Reihe, der auf Creme noch **4,50:1** erreicht. Der frühere
+warme Grauton `#7d766a` lag bei 3,81 und riss damit alle Eyebrows, Kachel-Metazeilen und
+Leistungssätze unter AA. `--dark-muted` ist aus demselben Grund von 55 % auf 62 % Deckkraft
+gegangen (5,18 → 6,20).
+
+Bleibt bewusst außerhalb der Palette: die **Platzhalter-Illustration** hinter dem MOIN
+(bunte Blobs im Skript) — sie wird durch Katharinas echtes Bild ersetzt.
+
+
+## About-Akkordeon
+
+Drei Kacheln nebeneinander, je eine Rasterspalte breit — **keine Karten, sondern
+Rasterzellen** (Vorbild: das Skillset bei Nexola). Begrenzt wird die Reihe nur oben und
+unten; die senkrechten Kanten übernimmt das Seitenraster, dessen gestrichelte
+Spaltenlinien ohnehin genau dort liegen.
+
+**`<details>` statt eigener Klapp-Logik.** Der Fließtext bleibt im Dokument, ist per
+Tastatur erreichbar und wird von der Seitensuche gefunden — bei About wichtiger als
+anderswo, weil dort die Selbstbeschreibung steht. Bewusst **ohne `name`**: das Attribut
+machte daraus ein exklusives Akkordeon, bei dem sich beim Öffnen der einen die andere
+schließt. Beim Laden ist keine offen. Die ganze Kachel schließt, nicht nur die Kopfzeile —
+außer man hat im Text etwas markiert, dann wollte man lesen und nicht klappen.
+
+**`align-items: start` ist die tragende Regel.** Die Kacheln werden NICHT auf gleiche Höhe
+gezogen, jede ist so hoch wie ihr Inhalt. Dadurch hängt die Lage eines Kopfes nicht davon
+ab, was die Nachbarkachel tut — alle Köpfe sitzen in jedem Zustand an derselben Stelle
+(gemessen: geschlossen 144 px, offen 429 px hohe Kacheln, Köpfe überall gleich).
+Vorher zog das Raster die geschlossenen auf die Höhe der geöffneten; ihre Köpfe rutschten
+in die Mitte, die der offenen blieben oben — bei mehreren unabhängig öffnenbaren Kacheln
+ergab das eine beliebige Mischung. Ein Versuch, das per `:has()` mit umgeschaltetem
+`justify-content` zu heilen, war der falsche Weg: **diese Eigenschaft springt, sie
+animiert nicht** — die Köpfe kehrten zwar zurück, aber sie wanderten nicht mehr.
+Die Abschlusslinie sitzt deshalb am Container statt an den Kacheln, sonst endete sie unter
+einer geschlossenen Kachel bis zu 285 px zu früh.
+
+### Wie der Fließtext erscheint
+
+Alle Zeilen starten eine Zeilenhöhe tiefer und rücken **nacheinander** an ihren Platz:
+erst die oberste dichter an die Kopfzeile, dann die zweite an die erste. Keine Zeile
+entfaltet oder blendet sich ein — reine Bewegung, keine Deckkraft, keine Kante, hinter der
+etwas hervorkommt.
+
+**Das Verhältnis von Dauer zu Versatz bestimmt den Charakter** und war die eigentliche
+Stellschraube:
+
+| Dauer / Versatz | Verhältnis | Wirkung |
+|---|---|---|
+| 660 ms / 70 ms | 9,4 | alle zugleich unterwegs — der Absatz ist durchgehend auseinandergezogen |
+| 190 ms / 105 ms | 1,8 | genau eine Fuge, aber jede Zeile springt für sich: Staccato |
+| **660 ms / 95 ms** | **2,9 sichtbar** | die Fuge wird übergeben, bevor sie zu ist: eine durchlaufende Welle |
+
+Als Kurve eine **echte Feder** statt einer Bézier-Näherung: die Sprungantwort eines
+gedämpften Feder-Masse-Systems (Dämpfungsgrad 0,58), über `linear()` als Stützstellen
+hinterlegt — anders lässt sich Überschwingen in CSS nicht sauber ausdrücken. 10,6 %
+Überschwingen, 90 % des Wegs in 19 % der Zeit. Deshalb 660 ms Dauer, obwohl die Zeile nur
+rund 280 ms *sichtbar* in Bewegung ist; für das Verhältnis oben zählt die sichtbare
+Bewegung.
+
+### Zeilen zerlegen — und der Fallstrick dabei
+
+CSS kann einzelne Zeilen eines umbrochenen Absatzes nicht ansprechen. Ein Skript zerlegt
+ihn deshalb beim Öffnen in seine **gesetzten** Zeilen und nimmt das nach dem Lauf zurück —
+so bleibt der Absatz für Seitensuche und Screenreader ein zusammenhängender Satz. Das
+Zurücksetzen löst zugleich den Resize-Fall: Zeilen-Spans tragen festen Inhalt und `nowrap`,
+sie brechen bei einer Fensteränderung nicht neu um; als reiner Text tut der Absatz das von
+selbst. Zusätzlich setzt ein Resize *während* der Animation sofort zurück.
+
+**Der Fallstrick**, der zweimal falsche Trennungen erzeugt hat: Das erste Zeichen nach
+einem *getrennten* Umbruch meldet **zwei** Rechtecke — eines am Ende der alten Zeile, wo
+der erzeugte Trennstrich sitzt, und eines am Anfang der neuen:
+
+```
+'s': tops=[3695, 3695]   ← Zeilenende
+'m': tops=[3695, 3720]   ← erstes Zeichen der neuen Zeile
+```
+
+`getBoundingClientRect()` bildet daraus die **Vereinigung** und meldet die obere Kante. Das
+Zeichen sieht damit aus, als gehörte es noch zur alten Zeile, und die Umbruchstelle landet
+eins zu spät: aus „aus-macht" wird „ausm-acht". Die Lösung ist, nicht die Vereinigung zu
+nehmen, sondern das **unterste** der Rechtecke. Über sechs Breiten gegengemessen: alle
+nicht getrennten Zeilen stimmen auf 3 px, getrennte liegen um genau eine Trennstrichbreite
+(5–9 px) daneben — der Strich gehört nicht zum Textknoten und fehlt deshalb im gemessenen
+Rechteck. Vorher lag der Fehler bei 18 px, also einer ganzen Silbe.
+
+Der Trennstrich muss beim Zerlegen **von Hand zurück**, weil er beim Setzen erzeugt wird
+und nicht im Text steht. Die Leerzeichen an den Zeilenenden bleiben stehen: ohne sie
+klebten beim Auslesen die Wörter aneinander („schon denganzen Weg").
 
 ## Sektionskopf
 
@@ -352,10 +463,36 @@ Bild, kein Lesehilfsmittel.
   darunter nicht — kurzer Viewport oder längerer Text —, setzt das Skript `--sub-top` so weit
   nach oben, dass die Zelle nicht unten aus der Stage geschnitten wird (die clippt).
   Geprüft bei 1440×900, 1440×700, 1280×800, 2560×1440 und 820×1180.
-- **Hero-Höhe ist auf `min(100svh, 1200px)` gedeckelt.** Grund: In der Artifact-/iframe-Vorschau
-  wird der Frame auf die volle Seitenhöhe gestreckt, wodurch `100svh` = gesamte Seitenhöhe wird.
-  Ohne Deckel wächst der Hero auf mehrere tausend Pixel, die WebGL-Textur sprengt das Limit und
-  der Canvas (inkl. MOIN) verschwindet.
+- **Hero-Höhe = genau EIN Bildschirm, Navigation eingerechnet:**
+  `min-height: clamp(var(--hero-floor), calc(100svh - var(--header-h)), 1600px)`.
+  Ein `clamp` erledigt beide Grenzen ohne Media Query.
+  **Der Header-Abzug ist der Punkt:** `header.site` ist `sticky` und steht damit IM FLUSS —
+  seine Höhe kam zur vollen `100svh` der Stage hinzu. Die erste Bildschirmseite war dadurch
+  auf *jeder* Größe um exakt die Header-Höhe zu hoch (gemessen: 62,3 px bei 1366/1440/1512/
+  1680/1920/2560 px Breite), und die Subline wurde unten um denselben Betrag angeschnitten.
+  `--header-h` setzt ein **ResizeObserver** am Header — keine Media Query, und es folgt auch
+  dem Umbruch der Wortmarke auf schmalen Breiten.
+  `--hero-floor` (33 rem) greift erst unterhalb von ~590 px Viewporthöhe; darüber ist der Hero
+  immer exakt ein Bildschirm.
+  Die Obergrenze von 1600 px ist kein Designwert, sondern Schutz: in der Artifact-/iframe-
+  Vorschau wird der Frame auf die volle Seitenhöhe gestreckt, `100svh` ist dann die gesamte
+  Seitenhöhe. Ohne Deckel wüchse der Hero auf mehrere tausend Pixel, die WebGL-Textur spränge
+  das Limit und der Canvas (inkl. MOIN) verschwände. 1600 px lässt einen 27-Zöller
+  (1440 px Viewport + Header = 1378 px) noch voll durch.
+- **Leistungen und About sind ebenfalls mindestens ein sichtbarer Bildschirm**, dieselbe
+  Rechnung wie der Hero (`100svh` minus `--header-h`). Die Mehrhöhe wird verschieden
+  verteilt: Bei den Leistungen füllt sie das Raster (`grid-auto-rows: 1fr`), damit die
+  Haarlinien bis ans Ende reichen; bei About gibt es kein Raster zu füllen, dort steht der
+  Block mittig. In den Leistungskacheln sitzt der Inhalt **optisch** mittig statt
+  geometrisch — angehoben um die halbe Höhe von Icon plus Zeilenfuge, weil das Icon oben
+  leicht und der Textblock darunter schwer ist.
+- **Scroll-Hinweis (`.scrollcue`).** Weil der Hero jetzt exakt auf dem Viewport endet, fehlt
+  das „hier geht es weiter", das die frühere Überlänge unfreiwillig geliefert hat. Eine
+  Haarlinie mit wanderndem Segment — dieselbe Liniensprache wie das Seitenraster, nur in
+  Bewegung. Ohne Text: der Custom Cursor über dem Hero trägt schon welchen. Sie sitzt am
+  rechten Textanschlag (Padding-Linie + `--hero-inset`), also gegenüber der Subline, und
+  blendet aus, sobald gescrollt wurde — ein Hinweis, der nach dem Befolgen stehen bleibt,
+  ist nur noch Dekoration. `prefers-reduced-motion` friert das Segment oben ein.
 - **Der Canvas deckelt den MASSSTAB, nicht die Kanten einzeln** (`scale = min(dpr, 4096/cw,
   4096/ch)`). Würde nur die Breite gekappt — auf einem 27-Zoll-Retina ist 2560 × 2 = 5120 → 4096,
   die Höhe bleibt darunter —, stimmte das Seitenverhältnis des Canvas nicht mehr mit dem der

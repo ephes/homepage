@@ -251,9 +251,16 @@ selbst. Zusätzlich setzt ein Resize *während* der Animation sofort zurück.
 
 **Gemessen wird erst im nächsten Frame**, nicht im `toggle`-Ereignis selbst: Dort ist der
 Inhalt teilweise noch `content-visibility: hidden` mit Höhe 0, die Zerlegung findet dann
-keine Zeilen und die Animation fällt ersatzlos aus. Das trat nur beim schnellen
-Zu-und-wieder-Auf auf und war deshalb schwer zu fassen; ein Frame (~16 ms) ist unsichtbar,
-macht die Messung aber verlässlich.
+keine Zeilen und die Animation fällt ersatzlos aus. Schlägt es auch dann fehl, wird bis zu
+dreimal erneut versucht — ein Frame ist unsichtbar, ein sporadisch ausbleibender Effekt
+fühlt sich dagegen kaputt an. **Achtung: sporadische Ausfälle sind gemeldet, aber in 96
+protokollierten Öffnungen mit zufälligen Klickfolgen und dichter Abtastung des Versatzes
+nicht reproduzierbar.** Die Wiederholversuche decken die bekannte Ursache ab; falls es
+erneut auftritt, braucht es die genaue Klickfolge und den Browser.
+
+Zurückgesetzt wird beim `animationend` der **letzten** Zeile, nicht nach einer gerechneten
+Wartezeit — sonst müsste die bei jeder Änderung an Dauer oder Versatz nachgezogen werden.
+Ein Zeitgeber bleibt als Netz, falls das Ereignis ausbleibt.
 
 **Der Fallstrick**, der zweimal falsche Trennungen erzeugt hat: Das erste Zeichen nach
 einem *getrennten* Umbruch meldet **zwei** Rechtecke — eines am Ende der alten Zeile, wo

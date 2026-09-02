@@ -1984,21 +1984,36 @@
     var timer = 0, frame = 0;
     var DAUER = 640, VERSATZ = 105;   // muss zu den Werten im CSS passen
 
+    // Gemessen wird NICHT im `toggle`-Ereignis selbst: Dort ist der Inhalt teilweise noch
+    // `content-visibility: hidden` mit Höhe 0, die Zerlegung findet dann keine Zeilen und
+    // die Animation fällt ersatzlos aus. Deshalb ein Frame später — und wenn es dann immer
+    // noch nicht klappt, bis zu drei weitere Male. Der Aufwand ist gering (ein Frame
+    // Verzögerung ist unsichtbar), aber ein sporadisch ausfallender Effekt fühlt sich
+    // kaputt an, und die Ursache ließ sich in 96 Öffnungen nicht reproduzieren.
+    function versuchen(rest) {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(function () {
+        if (!row.open) { zurueck(); return; }
+        if (!zerlegen()) {
+          if (rest > 0) { versuchen(rest - 1); return; }
+          zurueck(); return;
+        }
+        var zeilen = p.querySelectorAll(".ln").length;
+        var letzte = p.querySelector(".ln:last-child > span");
+        // Zurücksetzen, wenn die LETZTE Zeile fertig ist — verlässlicher als eine
+        // gerechnete Wartezeit, die bei jeder Änderung an Dauer oder Versatz nachgezogen
+        // werden müsste. Der Zeitgeber bleibt als Netz, falls das Ereignis ausbleibt
+        // (etwa weil die Kachel zwischendurch geschlossen wurde).
+        if (letzte) letzte.addEventListener("animationend", zurueck, { once: true });
+        timer = setTimeout(zurueck, DAUER + (zeilen - 1) * VERSATZ + 400);
+      });
+    }
+
     function zeigen() {
       clearTimeout(timer);
       cancelAnimationFrame(frame);
       if (!row.open || reduce.matches) { zurueck(); return; }
-      // ERST IM NÄCHSTEN FRAME messen. Im `toggle`-Ereignis selbst ist der Inhalt noch
-      // `content-visibility: hidden` und hat die Höhe 0 — dann findet die Zerlegung
-      // keine Zeilen und die Animation fiel ersatzlos aus. Das trat nur beim schnellen
-      // Zu-und-wieder-Auf auf, war deshalb schwer zu fassen. Ein Frame Verzögerung
-      // (~16ms) ist unsichtbar, macht die Messung aber verlässlich.
-      frame = requestAnimationFrame(function () {
-        if (!row.open) { zurueck(); return; }
-        if (!zerlegen()) { zurueck(); return; }
-        var n = p.querySelectorAll(".ln").length;
-        timer = setTimeout(zurueck, DAUER + (n - 1) * VERSATZ + 150);
-      });
+      versuchen(3);
     }
     row.addEventListener("toggle", zeigen);
     // Sicherheitsnetz: Wird während der Animation die Breite geändert, sofort zurück

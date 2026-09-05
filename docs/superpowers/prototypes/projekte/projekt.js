@@ -103,10 +103,12 @@ document.body.innerHTML = `
         <div class="more-grid">
           ${moreProjects.map((item) => `
             <a class="more-card" href="${item.slug}.html">
-              <div class="frame"><span>21:9</span></div>
-              <div class="meta">
-                <div class="row1"><h3>${item.title}</h3><span class="tile-arrow" aria-hidden="true">→</span></div>
-                <div class="row2">${item.field} · ${item.year}</div>
+              <div class="tile-depth">
+                <div class="frame"><span>21:9</span></div>
+                <div class="meta">
+                  <div class="row1"><h3>${item.title}</h3><span class="tile-arrow" aria-hidden="true">→</span></div>
+                  <div class="row2">${item.field} · ${item.year}</div>
+                </div>
               </div>
             </a>`).join("")}
         </div>

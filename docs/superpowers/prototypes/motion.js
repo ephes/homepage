@@ -56,6 +56,261 @@
 
   startHeadlineReveal();
 
+  /* Die Leistungsinhalte laufen zeitbasiert, damit ein schneller Scrollsprung ihre
+     Bewegung nicht vorspult. Beim Herunterscrollen gibt die normale Leistungen-Headline
+     den Einsatz; die Astagina-Handschrift gehört ausdrücklich nicht zu diesem Gate. */
+  function startServiceMotion() {
+    var cards = [].slice.call(document.querySelectorAll(".svc"));
+    if (!cards.length || reduce.matches || !("IntersectionObserver" in window)) return;
+
+    var heading = document.querySelector("#leistungen .motion-heading");
+    var headlineReady = !heading;
+    var headlineTimer = 0;
+    var fallbackTimer = 0;
+    var pending = new Set();
+    var states = new WeakMap();
+    var direction = 1;
+    var previousY = window.scrollY;
+
+    function setDirection() {
+      var nextY = window.scrollY;
+      if (Math.abs(nextY - previousY) > 1) direction = nextY > previousY ? 1 : -1;
+      previousY = nextY;
+    }
+    addEventListener("scroll", setDirection, { passive: true });
+
+    function orderFor(card, scrollDirection) {
+      var index = cards.indexOf(card);
+      return scrollDirection > 0 ? index : cards.length - 1 - index;
+    }
+
+    function enter(card, scrollDirection) {
+      var order = orderFor(card, scrollDirection);
+      card.style.setProperty(
+        "--service-enter-y",
+        scrollDirection > 0
+          ? "var(--service-travel)"
+          : "calc(-1 * var(--service-travel))"
+      );
+      card.style.setProperty("--service-card-delay", order * 85 + "ms");
+      card.classList.remove("is-service-leaving");
+      card.classList.add("is-service-entering");
+      states.set(card, "visible");
+    }
+
+    function leave(card, scrollDirection) {
+      var order = orderFor(card, scrollDirection);
+      pending.delete(card);
+      card.style.setProperty(
+        "--service-exit-y",
+        scrollDirection > 0
+          ? "calc(-1 * var(--service-travel))"
+          : "var(--service-travel)"
+      );
+      card.style.setProperty("--service-leave-delay", order * 55 + "ms");
+      card.classList.remove("is-service-entering");
+      card.classList.add("is-service-leaving");
+      states.set(card, "outside");
+    }
+
+    function releasePending() {
+      headlineReady = true;
+      clearTimeout(fallbackTimer);
+      fallbackTimer = 0;
+      pending.forEach(function (card) { enter(card, 1); });
+      pending.clear();
+    }
+
+    function releaseShortlyAfterHeadline() {
+      clearTimeout(headlineTimer);
+      headlineTimer = setTimeout(releasePending, 0);
+    }
+
+    /* Die Kacheln liegen beim Start der Headline auf großen Screens oft noch knapp
+       unterhalb ihrer eigenen 20-%-Schwelle. Sie werden deshalb schon hier vorgemerkt,
+       damit nach dem Headline-Ende keine zweite, scrollabhängige Wartephase entsteht.
+       Die horizontale Prüfung lässt im mobilen Reel nur tatsächlich nahe Kacheln zu. */
+    function armNearbyCards() {
+      cards.forEach(function (card) {
+        var rect = card.getBoundingClientRect();
+        var nearVertically = rect.top < innerHeight * 1.8 && rect.bottom > -innerHeight * .2;
+        var nearHorizontally = rect.left < innerWidth * 1.1 && rect.right > -innerWidth * .1;
+        if (nearVertically && nearHorizontally && states.get(card) !== "visible") {
+          pending.add(card);
+        }
+      });
+      if (pending.size && !fallbackTimer) {
+        fallbackTimer = setTimeout(releasePending, 1700);
+      }
+    }
+
+    if (heading) {
+      heading.addEventListener("animationstart", function (event) {
+        if (event.animationName !== "headline-reveal") return;
+        headlineReady = false;
+        clearTimeout(headlineTimer);
+        if (direction > 0) armNearbyCards();
+      });
+      heading.addEventListener("animationend", function (event) {
+        if (event.animationName === "headline-reveal") releaseShortlyAfterHeadline();
+      });
+    }
+
+    root.classList.add("service-motion-ready");
+    var thresholds = [0, .2, .75, 1];
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var card = entry.target;
+        var rect = entry.boundingClientRect;
+        var state = states.get(card) || "outside";
+
+        if (entry.intersectionRatio >= .2 && state !== "visible") {
+          if (direction > 0 && !headlineReady) {
+            pending.add(card);
+            if (!fallbackTimer) fallbackTimer = setTimeout(releasePending, 1700);
+          } else {
+            enter(card, direction);
+          }
+          return;
+        }
+
+        var leavesAtTop = direction > 0 && rect.top < 0;
+        var leavesAtBottom = direction < 0 && rect.bottom > innerHeight;
+        if (state === "visible" && entry.intersectionRatio <= .75 &&
+            (leavesAtTop || leavesAtBottom)) {
+          leave(card, direction);
+        }
+      });
+    }, { threshold: thresholds });
+
+    cards.forEach(function (card) { observer.observe(card); });
+  }
+
+  startServiceMotion();
+
+  /* Im About-Akkordeon bewegen sich ausschließlich Titel und Subline. Das Plus/Minus
+     bleibt als festes Bedienelement unangetastet. */
+  function startAboutMotion() {
+    var rows = [].slice.call(document.querySelectorAll("#about .me-row"));
+    if (!rows.length || reduce.matches || !("IntersectionObserver" in window)) return;
+
+    var heading = document.querySelector("#about .motion-heading");
+    var headlineReady = !heading;
+    var headlineTimer = 0;
+    var fallbackTimer = 0;
+    var pending = new Set();
+    var states = new WeakMap();
+    var direction = 1;
+    var previousY = window.scrollY;
+
+    function setDirection() {
+      var nextY = window.scrollY;
+      if (Math.abs(nextY - previousY) > 1) direction = nextY > previousY ? 1 : -1;
+      previousY = nextY;
+    }
+    addEventListener("scroll", setDirection, { passive: true });
+
+    function orderFor(row, scrollDirection) {
+      var index = rows.indexOf(row);
+      return scrollDirection > 0 ? index : rows.length - 1 - index;
+    }
+
+    function enter(row, scrollDirection) {
+      var order = orderFor(row, scrollDirection);
+      row.style.setProperty(
+        "--about-enter-y",
+        scrollDirection > 0 ? "var(--about-travel)" : "calc(-1 * var(--about-travel))"
+      );
+      row.style.setProperty("--about-row-delay", order * 110 + "ms");
+      row.classList.remove("is-about-leaving");
+      row.classList.add("is-about-entering");
+      states.set(row, "visible");
+    }
+
+    function leave(row, scrollDirection) {
+      var order = orderFor(row, scrollDirection);
+      pending.delete(row);
+      row.style.setProperty(
+        "--about-exit-y",
+        scrollDirection > 0 ? "calc(-1 * var(--about-travel))" : "var(--about-travel)"
+      );
+      row.style.setProperty("--about-leave-delay", order * 70 + "ms");
+      row.classList.remove("is-about-entering");
+      row.classList.add("is-about-leaving");
+      states.set(row, "outside");
+    }
+
+    function releasePending() {
+      headlineReady = true;
+      clearTimeout(fallbackTimer);
+      fallbackTimer = 0;
+      pending.forEach(function (row) { enter(row, 1); });
+      pending.clear();
+    }
+
+    function armNearbyRows() {
+      rows.forEach(function (row) {
+        var rect = row.getBoundingClientRect();
+        if (rect.top < innerHeight * 1.8 && rect.bottom > -innerHeight * .2 &&
+            states.get(row) !== "visible") {
+          pending.add(row);
+        }
+      });
+      if (pending.size && !fallbackTimer) {
+        fallbackTimer = setTimeout(releasePending, 1700);
+      }
+    }
+
+    if (heading) {
+      heading.addEventListener("animationstart", function (event) {
+        if (event.animationName !== "headline-reveal") return;
+        headlineReady = false;
+        clearTimeout(headlineTimer);
+        if (direction > 0) {
+          armNearbyRows();
+          /* Die Textwelle setzt schon in der ruhigen Endphase der Headline ein. Dadurch
+             liest sich die parallel mögliche Handschrift nicht als zusätzliche Pause. */
+          headlineTimer = setTimeout(releasePending, 720);
+        }
+      });
+      heading.addEventListener("animationend", function (event) {
+        if (event.animationName !== "headline-reveal") return;
+        clearTimeout(headlineTimer);
+        headlineTimer = setTimeout(releasePending, 0);
+      });
+    }
+
+    root.classList.add("about-motion-ready");
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var row = entry.target;
+        var rect = entry.boundingClientRect;
+        var state = states.get(row) || "outside";
+
+        if (entry.intersectionRatio >= .2 && state !== "visible") {
+          if (direction > 0 && !headlineReady) {
+            pending.add(row);
+            if (!fallbackTimer) fallbackTimer = setTimeout(releasePending, 1700);
+          } else {
+            enter(row, direction);
+          }
+          return;
+        }
+
+        var leavesAtTop = direction > 0 && rect.top < 0;
+        var leavesAtBottom = direction < 0 && rect.bottom > innerHeight;
+        if (state === "visible" && entry.intersectionRatio <= .75 &&
+            (leavesAtTop || leavesAtBottom)) {
+          leave(row, direction);
+        }
+      });
+    }, { threshold: [0, .2, .75, 1] });
+
+    rows.forEach(function (row) { observer.observe(row); });
+  }
+
+  startAboutMotion();
+
   /* Die sichtbare Ebene stammt aus dem bewährten CV-Composer: echte Font-Outlines,
      nicht erneut gerenderter SVG-Text. Ohne diese Daten bleibt das Original unangetastet. */
   if (window.PORTFOLIO_HANDWRITING) glyphs = window.PORTFOLIO_HANDWRITING;

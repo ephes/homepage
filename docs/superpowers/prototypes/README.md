@@ -457,11 +457,41 @@ Link-Haarlinien sind CSS.
 
 Die Fließtexte auf den Projektseiten (`project-lead`, alle Case-Texte und das
 Kundenstatement) sortieren sich über native CSS-View-Timelines ruhig von rechts an ihrer
-Satzkante ein. In den Leistungskacheln bleiben Rasterfläche und Icon fest; nur Titel und
-Subline folgen derselben horizontalen Bewegung innerhalb jeder Kachel leicht zeitversetzt.
-Beide Effekte verändern weder Deckkraft noch Textproportionen, benötigen kein JavaScript und
-fallen in Browsern ohne View-Timeline-Unterstützung auf die vollständig sichtbare statische
-Darstellung zurück. `prefers-reduced-motion` schaltet sie vollständig ab.
+Satzkante ein. Die Leistungskacheln verwenden dagegen bewusst keine CSS-View-Timeline mehr:
+Bei schnellem Scrollen sprang deren Fortschritt unmittelbar mit der Scrollposition. Ein
+kleiner `IntersectionObserver` meldet stattdessen ausschließlich Eintritt, Austritt und
+Scrollrichtung; Bewegung, Easing und Staffelung liegen weiterhin im CSS. Dadurch laufen die
+Animationen nach dem Auslösen mit stabiler Zeitbasis weiter, unabhängig von der
+Scrollgeschwindigkeit. Beim Herunterscrollen sammelt der Observer die sichtbaren Kacheln,
+bis die normale `headline-reveal`-Animation der großen Leistungen-Headline beendet ist.
+Bereits beim Start dieser Headline werden die räumlich nahen Kacheln vorgemerkt, damit nach
+ihrem Ende nicht noch die eigene 20-Prozent-Sichtbarkeitsschwelle der Kacheln abgewartet
+wird. Unmittelbar mit dem Headline-Ende beginnt die Kachelfolge; die Astagina-Handschrift
+ist ausdrücklich kein Teil dieses Gates. Ein 1.700-ms-Fallback verhindert Stillstand,
+falls die Headline bei einem extremen Sprung vollständig überscrollt wurde.
+
+Der Eintritt dauert 1.350 Millisekunden, der Austritt 1.050 Millisekunden. Die acht Kacheln
+folgen mit 85 Millisekunden Abstand; innerhalb jeder Kachel folgen Titel und Text 100 bzw.
+210 Millisekunden nach dem Icon. Beim Austritt läuft eine etwas engere Staffelung in
+Scrollrichtung. So bleibt die gewünschte Bewegung der Einzelelemente erhalten, während
+Kacheln und Reihen eine kontinuierliche Sequenz bilden. Beim Rückweg werden Richtung und
+Reihenfolge umgekehrt. Es gibt weiterhin keinerlei Hover-Reaktion.
+
+Der Bewegungsweg wächst über `clamp(2rem, 3vw, 3.75rem)` fluid mit dem Viewport: Auf einem
+1.920 px breiten Screen sind es 3,6 rem, auf kleinen Geräten mindestens 2 rem. Damit bleibt
+der Effekt auf großen Displays deutlich lesbar, ohne die Zellen selbst zu verschieben.
+Die Effekte verändern weder Deckkraft noch Textproportionen. Ohne JavaScript stehen alle
+Inhalte sichtbar an ihrer normalen Position; `prefers-reduced-motion` schaltet die Bewegung
+vollständig ab.
+
+Die drei geschlossenen About-Akkordeons „Verstehen“, „Gestalten“ und „Umsetzen“ übernehmen
+dieselbe zeitbasierte Ein- und Austrittswelle. Innerhalb jeder Kachel folgt die Subline dem
+Titel leicht verzögert; die drei Kacheln folgen einander ebenfalls versetzt. Animiert werden
+ausschließlich Titel und Subline. Das Plus/Minus, die Rasterfläche und die vorhandene
+Akkordeonbewegung bleiben vollständig unangetastet. Beim Herunterscrollen schließt die Welle
+ohne zusätzliche Sichtbarkeitspause an: Sie beginnt bereits in der ruhigen Endphase der
+normalen About-Headline-Animation und damit unabhängig von der parallel laufenden
+Astagina-Handschrift.
 
 Die Case-Labels „Das Projekt“, „Die Aufgabe“ und „Die Lösung“ fluchten auf breiten
 Projektseiten mit der Textkante der Eyebrow „Case Study“, sodass deren Tangerine-Asterix
@@ -534,11 +564,18 @@ cremefarbene Vorderfläche sichtbar ist. Erst kurz vor deren unterem Anschlag we
 auf Creme über dem ausdrücklich warm-schwarzen Untergrund. So entsteht während des Folds
 kein cremefarbener Text auf cremefarbener Fläche.
 
-Die Projektkacheln behalten ihren Platz im Raster, heben sich beim Hover bzw. Tastaturfokus
-aber als Ganzes leicht mit Schatten und geschlossener Kontur an; Nachbarzellen werden nicht verschoben. Im aktiven
-Zustand liegt die Kachel mit `z-index: 35` über dem seitenweiten Grid (`30`), aber unter dem
-Sticky-Header (`40`), und erhält einen deckenden Cremegrund. Dadurch schiebt sich die
-angehobene Fläche nicht transparent unter ihre obere Begrenzungslinie. Auf der Startseite
+Die Projektkacheln behalten ihren Platz und ihre vorhandene Kontur im Raster. Beim Hover bzw.
+Tastaturfokus sinkt ausschließlich der gemeinsame Inhaltswrapper `.tile-depth`
+perspektivisch nach innen; Nachbarzellen und Gridkanten werden nicht verschoben. Dafür bewegt
+`perspective(45rem) translateZ(-.5rem)` den Inhalt optisch hinter die Rasterebene. Der
+ausschließlich innere Schatten sitzt dagegen fest an der tatsächlichen Außenkante des
+Rasterfelds. So bleibt die Gridkontur stehen, während Bild und Text gemeinsam zurückweichen,
+ohne den flachen Stil durch einen äußeren Schlagschatten zu verlassen. Die Kacheln bleiben unter
+den seitenweiten Begrenzungslinien und erhalten im aktiven Zustand einen deckenden Cremegrund.
+Ein kurzer Druckpunkt macht die Bewegung taktil: Der Inhalt sinkt zunächst geringfügig über
+die Endtiefe hinaus, federt einmal zurück und setzt sich dann; der Innenschatten verdichtet
+sich synchron und entspannt sich auf seinen Endwert.
+Bei reduzierter Bewegung entfällt die perspektivische Verschiebung vollständig. Auf der Startseite
 wechseln Titel und der dort bereits gestaltete Pfeil gemeinsam auf Tangerine; nur der Pfeil
 bewegt sich zusätzlich. Die „Weitersehen“-Projektteaser der Unterseiten verwenden nun
 denselben Pfeil und dieselbe Reaktion, damit sie tatsächlich dieselbe Kachelkomponente
@@ -551,8 +588,14 @@ tangerinefarbene, von links einfahrende Haarlinie und erzeugen daher keinen Farb
 Bewegungsübergänge.
 
 Die breite Projektanfrage unter dem Kachelraster ist ausdrücklich kein Button und keine
-weitere Projektkachel. Ihre dunkle Rasterfläche bleibt beim Hover vollständig unbewegt;
-nur die Schrift wechselt zu Tangerine und der separat ausgezeichnete Pfeil rückt nach rechts.
+weitere Projektkachel. Ihre dunkle Rasterzeile bleibt unbewegt. Beim Hover oder
+Tastaturfokus wächst die Tangerine-Fläche in einer kurzen Anlaufphase von etwa einer
+Viertelsekunde vollständig unter „Projekt anfragen“ samt Pfeil. Anschließend läuft sie
+bewusst langsam weiter und erreicht nach insgesamt 6,4 Sekunden die Layoutmitte. Die Fläche
+füllt die komplette Balkenhöhe, schließt rechts bündig ab und ist nur links pillförmig
+gerundet. Beim Verlassen zieht sie
+sich in 640 Millisekunden vollständig zur rechten Kante zurück und verschwindet erst danach.
+Die Füllung läuft nicht über die gesamte Zeile.
 
 `projekt.js` ist nur die clientseitige Templating-Abkürzung des eigenständig öffnenden
 Design-Prototyps; es ist **nicht** die Zielarchitektur. Das Repository besitzt bereits einen
@@ -847,11 +890,10 @@ optisch zusammen:
   | `30` | **die beiden äußeren Padding-Linien** |
   | `40` / `60` | Header / Leinentextur |
 
-  **Ausnahme für die Seitenberandung:** Die beiden Außenlinien begrenzen die Seite und liegen
-  deshalb im Ruhezustand über dem Inhalt — auch über einem Slider, der bis an den Rand scrollt.
-  Nur eine aktiv angehobene Projektkachel darf sie kurzfristig überdecken; sonst würde die
-  Kachel trotz Lift weiterhin unter dem Grid erscheinen. Damit die Linien in *einer*
-  Struktur bleiben können,
+  Die beiden Außenlinien begrenzen die Seite und liegen deshalb über dem Inhalt — auch über
+  einem Slider, der bis an den Rand scrollt. Die Projektkacheln bleiben ebenfalls unter
+  diesen Linien: Ihr aktiver Zustand hebt sie nicht mehr aus dem Raster, sondern versenkt
+  sie perspektivisch darin. Damit die Linien in *einer* Struktur bleiben können,
   trägt `.pagegrid` **bewusst kein `z-index`**: sonst machte es einen Stacking-Kontext auf und
   alle Linien lägen zwangsläufig auf derselben Ebene. So wählt jede Linienart ihre eigene.
 

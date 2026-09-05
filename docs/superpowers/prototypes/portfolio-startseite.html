@@ -1281,8 +1281,9 @@
   section.block.clients { padding-inline: 0; }
   section.block.clients > .sec-label,
   section.block.clients > h2.big { padding-inline: calc(var(--pad) + var(--hero-inset)); }
-  /* Der Projektanfrage-Link schließt das Raster als ruhige, volle Textzeile ab. Er ist
-     ausdrücklich keine zehnte Kachel und übernimmt deshalb keinen Kachel-Hover. */
+  /* Der Projektanfrage-Link schließt das Raster als volle Textzeile ab. Er ist ausdrücklich
+     keine zehnte Kachel: Statt des Kachel-Hovers wächst nur hinter dem rechten Linktext eine
+     Tangerine-Fläche bis zur Layoutmitte; die eigentliche Rasterzeile bleibt unbewegt. */
   .project-inquiry {
     grid-column: 1 / -1;
     border-right: 1px solid var(--rule);
@@ -1497,17 +1498,17 @@
            Auf dem Desktop lösen sich .lead und .reel per display:contents auf, damit
            alle Kacheln wieder direkte Grid-Elemente im Wechselrhythmus sind. -->
       <div class="lead">
-      <a class="tile" href="projekte/studio-website-relaunch.html"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Studio-Website Relaunch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2026</div></div></a>
+      <a class="tile" href="projekte/studio-website-relaunch.html"><div class="tile-depth"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Studio-Website Relaunch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2026</div></div></div></a>
       </div>
       <div class="reel">
-      <a class="tile" href="projekte/buchgestaltung.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Buchgestaltung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></a>
-      <a class="tile" href="projekte/plakatserie.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Plakatserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></a>
-      <a class="tile" href="projekte/illustrationsserie.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Illustrationsserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2025</div></div></a>
-      <a class="tile" href="projekte/magazin-layout.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Magazin-Layout</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2024</div></div></a>
-      <a class="tile" href="projekte/onlineshop-redesign.html"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Onlineshop Redesign</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Digital · 2024</div></div></a>
-      <a class="tile" href="projekte/markenauftritt-praxis.html"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Markenauftritt Praxis</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2024</div></div></a>
-      <a class="tile" href="projekte/kinderbuch.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Kinderbuch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2023</div></div></a>
-      <a class="tile" href="projekte/geschaeftsausstattung.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Geschäftsausstattung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2023</div></div></a>
+      <a class="tile" href="projekte/buchgestaltung.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Buchgestaltung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></div></a>
+      <a class="tile" href="projekte/plakatserie.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Plakatserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></div></a>
+      <a class="tile" href="projekte/illustrationsserie.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Illustrationsserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2025</div></div></div></a>
+      <a class="tile" href="projekte/magazin-layout.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Magazin-Layout</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2024</div></div></div></a>
+      <a class="tile" href="projekte/onlineshop-redesign.html"><div class="tile-depth"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Onlineshop Redesign</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Digital · 2024</div></div></div></a>
+      <a class="tile" href="projekte/markenauftritt-praxis.html"><div class="tile-depth"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Markenauftritt Praxis</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2024</div></div></div></a>
+      <a class="tile" href="projekte/kinderbuch.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Kinderbuch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2023</div></div></div></a>
+      <a class="tile" href="projekte/geschaeftsausstattung.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Geschäftsausstattung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2023</div></div></div></a>
       </div>
       <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
         tabindex="0" aria-label="Durch die Projekte blättern" aria-orientation="horizontal"

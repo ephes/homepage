@@ -53,9 +53,8 @@
 }
 
 /* Fließtexte auf den Projektseiten sortieren sich von rechts an ihrer Satzkante ein.
-   Das Raster bleibt stehen; weder Deckkraft noch Buchstabenform werden verändert. Bei den
-   Leistungskarten bewegen sich ausschließlich Titel und Subline leicht zeitversetzt,
-   während Kachel und Icon ruhig bleiben. Ohne View-Timeline-Support ist alles sichtbar. */
+   Das Raster bleibt stehen; weder Deckkraft noch Buchstabenform werden verändert. Ohne
+   View-Timeline-Support ist alles sichtbar. */
 @supports (animation-timeline: view()) {
   .project-lead,
   .case-copy,
@@ -64,26 +63,98 @@
     animation-timeline: view(block);
     animation-range: entry 0% entry 68%;
   }
-
-  .svc {
-    view-timeline-name: --service-card;
-    view-timeline-axis: block;
-  }
-  .svc h3,
-  .svc p {
-    animation: service-copy-settle linear both;
-    animation-timeline: --service-card;
-  }
-  .svc h3 { animation-range: entry 5% entry 50%; }
-  .svc p { animation-range: entry 15% entry 60%; }
 }
 @keyframes body-copy-settle {
   from { transform: translateX(.85rem); }
   to { transform: none; }
 }
-@keyframes service-copy-settle {
-  from { transform: translateX(.85rem); }
-  to { transform: none; }
+
+/* Leistungen besitzen keinen Hover. JavaScript meldet lediglich Eintritt, Austritt und
+   Richtung; Bewegung, Dauer und Staffelung bleiben CSS. Dadurch läuft die Sequenz nach
+   einem Scrollimpuls mit stabiler Framerate weiter, statt einen schnellen Scrollsprung
+   direkt in einen Bewegungssprung zu übersetzen. */
+.svc-grid { --service-travel: clamp(2rem, 3vw, 3.75rem); }
+html.service-motion-ready .svc > .ico,
+html.service-motion-ready .svc > h3,
+html.service-motion-ready .svc > p {
+  transform: translate3d(0, var(--service-enter-y, var(--service-travel)), 0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+html.service-motion-ready .svc.is-service-entering > .ico,
+html.service-motion-ready .svc.is-service-entering > h3,
+html.service-motion-ready .svc.is-service-entering > p {
+  animation: service-copy-enter 1350ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.service-motion-ready .svc.is-service-entering > .ico {
+  animation-delay: var(--service-card-delay, 0ms);
+}
+html.service-motion-ready .svc.is-service-entering > h3 {
+  animation-delay: calc(var(--service-card-delay, 0ms) + 100ms);
+}
+html.service-motion-ready .svc.is-service-entering > p {
+  animation-delay: calc(var(--service-card-delay, 0ms) + 210ms);
+}
+html.service-motion-ready .svc.is-service-leaving > .ico,
+html.service-motion-ready .svc.is-service-leaving > h3,
+html.service-motion-ready .svc.is-service-leaving > p {
+  animation: service-copy-exit 1050ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.service-motion-ready .svc.is-service-leaving > .ico {
+  animation-delay: var(--service-leave-delay, 0ms);
+}
+html.service-motion-ready .svc.is-service-leaving > h3 {
+  animation-delay: calc(var(--service-leave-delay, 0ms) + 70ms);
+}
+html.service-motion-ready .svc.is-service-leaving > p {
+  animation-delay: calc(var(--service-leave-delay, 0ms) + 140ms);
+}
+@keyframes service-copy-enter {
+  from { transform: translate3d(0, var(--service-enter-y, var(--service-travel)), 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes service-copy-exit {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, var(--service-exit-y, calc(-1 * var(--service-travel))), 0); }
+}
+
+/* Die drei About-Akkordeons übernehmen dieselbe ruhige Textwelle. Bewusst bewegt werden
+   nur Titel und Subline: Raster, Summary-Fläche und das Plus/Minus bleiben vollständig
+   stehen und behalten damit ihre Bedien- und Öffnungsbewegung unverändert. */
+.me-text { --about-travel: clamp(2rem, 3vw, 3.75rem); }
+html.about-motion-ready .me-row > summary > h3,
+html.about-motion-ready .me-row > summary > .me-lead {
+  transform: translate3d(0, var(--about-enter-y, var(--about-travel)), 0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+html.about-motion-ready .me-row.is-about-entering > summary > h3,
+html.about-motion-ready .me-row.is-about-entering > summary > .me-lead {
+  animation: about-copy-enter 1350ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.about-motion-ready .me-row.is-about-entering > summary > h3 {
+  animation-delay: var(--about-row-delay, 0ms);
+}
+html.about-motion-ready .me-row.is-about-entering > summary > .me-lead {
+  animation-delay: calc(var(--about-row-delay, 0ms) + 140ms);
+}
+html.about-motion-ready .me-row.is-about-leaving > summary > h3,
+html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
+  animation: about-copy-exit 1050ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.about-motion-ready .me-row.is-about-leaving > summary > h3 {
+  animation-delay: var(--about-leave-delay, 0ms);
+}
+html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
+  animation-delay: calc(var(--about-leave-delay, 0ms) + 100ms);
+}
+@keyframes about-copy-enter {
+  from { transform: translate3d(0, var(--about-enter-y, var(--about-travel)), 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes about-copy-exit {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, var(--about-exit-y, calc(-1 * var(--about-travel))), 0); }
 }
 
 /* Die sichtbare Tinte bleibt echter Astagina-Text. Die handgetracten Mittellinien in
@@ -264,25 +335,50 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .pill > .pill-label { position: relative; z-index: 2; }
 .pill > .pill-label { display: inline-flex; align-items: center; gap: inherit; }
 
-/* Die Kachel hebt sich als Ganzes an; ihr Platz im Raster und alle Nachbarzellen bleiben
-   unverändert. Der Bildausschnitt selbst bekommt bis zur Nexola-Prüfung keinen Effekt. */
+/* Das Rasterfeld selbst bleibt unverändert. Nur sein Inhalt sinkt per `translateZ()`
+   perspektivisch nach innen; Kontur und innerer Schatten sitzen fest auf der vorhandenen
+   Gridkante. Der Bildausschnitt bekommt bis zur Nexola-Prüfung keinen separaten Effekt. */
 .tile:not(.cta),
 .more-card {
   position: relative;
   z-index: 0;
-  outline: 1px solid transparent;
-  outline-offset: -1px;
-  transition: transform var(--motion-hover) var(--motion-ease), box-shadow var(--motion-hover) var(--motion-ease), outline-color var(--motion-hover) ease;
+  transition: box-shadow var(--motion-hover) var(--motion-ease), background-color var(--motion-hover) ease;
+}
+.tile-depth {
+  display: flex;
+  flex: 1;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: inherit;
+  transform-origin: center;
+  transition: transform var(--motion-hover) var(--motion-ease);
 }
 .tile:not(.cta):hover,
 .tile:not(.cta):focus-visible,
 .more-card:hover,
 .more-card:focus-visible {
-  /* Über den seitenweiten Linien (30), aber weiterhin unter dem Sticky-Header (40). */
-  z-index: 35;
-  transform: translateY(-.38rem);
-  outline-color: var(--rule);
-  box-shadow: 0 .9rem 1.8rem rgba(23, 20, 16, .18);
+  animation: tile-shadow-in 360ms var(--motion-ease) both;
+  box-shadow:
+    inset 0 0 .65rem rgba(23, 20, 16, .3),
+    inset 0 0 0 1px rgba(23, 20, 16, .14);
+}
+.tile:not(.cta):hover .tile-depth,
+.tile:not(.cta):focus-visible .tile-depth,
+.more-card:hover .tile-depth,
+.more-card:focus-visible .tile-depth {
+  animation: tile-press-in 360ms var(--motion-ease) both;
+  transform: perspective(45rem) translateZ(-.5rem);
+}
+@keyframes tile-press-in {
+  0% { transform: perspective(45rem) translateZ(0); }
+  62% { transform: perspective(45rem) translateZ(-.68rem); }
+  82% { transform: perspective(45rem) translateZ(-.44rem); }
+  100% { transform: perspective(45rem) translateZ(-.5rem); }
+}
+@keyframes tile-shadow-in {
+  0% { box-shadow: inset 0 0 0 rgba(23, 20, 16, 0), inset 0 0 0 1px rgba(23, 20, 16, 0); }
+  62% { box-shadow: inset 0 0 .72rem rgba(23, 20, 16, .35), inset 0 0 0 1px rgba(23, 20, 16, .16); }
+  100% { box-shadow: inset 0 0 .65rem rgba(23, 20, 16, .3), inset 0 0 0 1px rgba(23, 20, 16, .14); }
 }
 .tile:not(.cta):hover,
 .tile:not(.cta):focus-visible,
@@ -344,12 +440,43 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .pill:hover .ar,
 .pill:focus-visible .ar { transform: translateX(.38rem); }
 
-/* Die breite Projektanfrage ist eine flache Rasterzeile, kein Button und keine Kachel.
-   Nur Typografie und Pfeil reagieren; die Fläche selbst bleibt vollkommen ruhig. */
-.project-inquiry { transition: color var(--motion-hover) ease; }
+/* Die breite Projektanfrage bleibt eine Rasterzeile. Ihre Tangerine-Fläche liegt beim
+   Eintritt sofort vollständig unter Label und Pfeil und wächst anschließend von rechts
+   bis zur Layoutmitte. Rechts schließt sie bündig; nur links trägt sie die Pill-Rundung.
+   Beim Austritt fährt erst die Breite zurück, bevor die Ausgangsfläche verschwindet. */
+.project-inquiry {
+  --inquiry-pill-rest: clamp(12rem, 16vw, 15rem);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: color var(--motion-hover) ease;
+}
+.project-inquiry::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: 0;
+  border-radius: 999rem 0 0 999rem;
+  background: var(--tangerine);
+  opacity: 0;
+  transition:
+    inline-size 640ms var(--motion-ease),
+    opacity 0s linear 640ms;
+}
+.project-inquiry > * { position: relative; z-index: 1; }
 .project-inquiry .ar { transition: transform var(--motion-hover) var(--motion-ease); }
 .project-inquiry:hover,
-.project-inquiry:focus-visible { color: var(--tangerine); }
+.project-inquiry:focus-visible { color: #fff; }
+.project-inquiry:hover::before,
+.project-inquiry:focus-visible::before {
+  inline-size: 50%;
+  opacity: 1;
+  transition:
+    inline-size 6400ms linear(0, .4 4%, 1),
+    opacity 0s;
+}
 .project-inquiry:hover .ar,
 .project-inquiry:focus-visible .ar { transform: translateX(.38rem); }
 
@@ -385,14 +512,18 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   html:not(.has-js) .motion-heading,
   html:not(.has-js) .no-js-content h1,
   .project-lead, .case-copy, .quote p,
-  .svc h3, .svc p { transform: none; animation: none; }
+  .svc > .ico, .svc > h3, .svc > p,
+  .me-row > summary > h3, .me-row > summary > .me-lead {
+    transform: none;
+    animation: none;
+  }
   html.js-hw .hw-label .hw-final { visibility: visible; }
   html.js-hw .hw-label .hw-svg { visibility: hidden; }
   .hw-pen,
   .hw-outline-pen { animation: none !important; stroke-dashoffset: 0 !important; }
   .pill, .pill::before,
-  .tile, .more-card, .tile .meta h3, .more-card h3, .tile-arrow,
-  .pill .ar, .project-inquiry, .project-inquiry .ar, .brand,
+  .tile, .more-card, .tile-depth, .tile .meta h3, .more-card h3, .tile-arrow,
+  .pill .ar, .project-inquiry, .project-inquiry::before, .project-inquiry .ar, .brand,
   .foot-col a:not(.pill), .foot-bar a, .project-footer a { transition: none; }
   .pill:hover::before, .pill:focus-visible::before {
     animation: none;
@@ -402,4 +533,15 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
     animation: none;
     color: var(--fold-ink);
   }
+  .tile:not(.cta):hover .tile-depth,
+  .tile:not(.cta):focus-visible .tile-depth,
+  .more-card:hover .tile-depth,
+  .more-card:focus-visible .tile-depth { transform: none; animation: none; }
+  .tile:not(.cta):hover,
+  .tile:not(.cta):focus-visible,
+  .more-card:hover,
+  .more-card:focus-visible { animation: none; }
+  .project-inquiry::before,
+  .project-inquiry:hover::before,
+  .project-inquiry:focus-visible::before { transition: none; }
 }

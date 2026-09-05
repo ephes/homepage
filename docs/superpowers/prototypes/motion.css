@@ -1,0 +1,405 @@
+/* Gemeinsames Motion-System: Reveal (Headlines), Write (Astagina), Fold (Buttons).
+   Die Geometrie der Projekt-Raster bleibt dabei vollständig unbewegt. */
+:root {
+  --motion-ease: cubic-bezier(.16, 1, .3, 1);
+  --motion-fold-ease: cubic-bezier(.65, 0, .2, 1);
+  --motion-enter: 760ms;
+  --motion-hover: 320ms;
+}
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  inset-block-start: .5rem;
+  inset-inline-start: .5rem;
+  padding: .65rem 1rem;
+  background: var(--warm-black);
+  color: var(--creme);
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+}
+.skip-link:focus { transform: translateY(0); }
+
+/* JavaScript setzt ausschließlich den Eintrittsstatus; Form, Timing und Bewegung bleiben
+   CSS. Die Grunddarstellung bleibt absichtlich sichtbar (fail-open): Bleibt ein Observer-
+   Signal aus, fehlt höchstens die Animation, niemals die Headline. */
+.motion-heading { transform-origin: left bottom; }
+.motion-heading.is-visible {
+  animation: headline-reveal 1040ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes headline-reveal {
+  from { transform: translateY(var(--headline-enter-y, .42em)); }
+  to { transform: none; }
+}
+
+/* Ohne JavaScript übernimmt eine native View-Timeline denselben Richtungswechsel:
+   Eintritt unten = von unten nach oben, Eintritt oben = von oben nach unten. Die lange
+   ruhige Mitte verhindert, dass die Headline beim Durchscrollen ständig weiterwandert. */
+@supports (animation-timeline: view()) {
+  html:not(.has-js) .motion-heading,
+  html:not(.has-js) .no-js-content h1 {
+    animation: headline-view-in linear forwards,
+               headline-view-out linear forwards;
+    animation-timeline: view(block);
+    animation-range: entry, exit;
+  }
+}
+@keyframes headline-view-in {
+  from { transform: translateY(.42em); }
+  to { transform: none; }
+}
+@keyframes headline-view-out {
+  from { transform: none; }
+  to { transform: translateY(-.42em); }
+}
+
+/* Fließtexte auf den Projektseiten sortieren sich von rechts an ihrer Satzkante ein.
+   Das Raster bleibt stehen; weder Deckkraft noch Buchstabenform werden verändert. Bei den
+   Leistungskarten bewegen sich ausschließlich Titel und Subline leicht zeitversetzt,
+   während Kachel und Icon ruhig bleiben. Ohne View-Timeline-Support ist alles sichtbar. */
+@supports (animation-timeline: view()) {
+  .project-lead,
+  .case-copy,
+  .quote p {
+    animation: body-copy-settle linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 68%;
+  }
+
+  .svc {
+    view-timeline-name: --service-card;
+    view-timeline-axis: block;
+  }
+  .svc h3,
+  .svc p {
+    animation: service-copy-settle linear both;
+    animation-timeline: --service-card;
+  }
+  .svc h3 { animation-range: entry 5% entry 50%; }
+  .svc p { animation-range: entry 15% entry 60%; }
+}
+@keyframes body-copy-settle {
+  from { transform: translateX(.85rem); }
+  to { transform: none; }
+}
+@keyframes service-copy-settle {
+  from { transform: translateX(.85rem); }
+  to { transform: none; }
+}
+
+/* Die sichtbare Tinte bleibt echter Astagina-Text. Die handgetracten Mittellinien in
+   motion.js dienen ausschließlich als Maske und schreiben ihn in realer Strichfolge. */
+.scr.hw-label { display: block; }
+.scr.hw-label .hw-final {
+  position: absolute;
+  inset: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: visible;
+}
+.scr.hw-label .hw-svg {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: var(--hw-base);
+  display: block;
+  max-inline-size: none;
+  block-size: auto;
+  overflow: visible;
+  color: var(--ink);
+  transform: translateX(-50%) rotate(-5deg);
+  transform-origin: center;
+}
+.scr.hw-label.hw-start .hw-svg {
+  inset-inline-start: var(--hw-origin);
+  transform: rotate(-5deg);
+}
+.scr.hw-label .hw-svg .hw-ink {
+  fill: currentColor;
+}
+.scr.hw-label .hw-svg .hw-ink-edge {
+  stroke: currentColor;
+}
+/* Die zusätzliche generierte Kantenlinie produziert bei „that's me“ an den engen
+   Selbstüberschneidungen Doppelkonturen. Tintenfläche, Außenkontur und Schreibmaske
+   reichen dort allein aus und ergeben die unverfälschte Astagina-Glyphe. */
+.scr.hw-label .hw-svg.hw-clean-joins .hw-ink-edge { display: none; }
+.scr.hw-label .hw-svg .hw-outline {
+  fill: none;
+  stroke: var(--hw-outline, var(--creme));
+  stroke-width: 225px; /* 0.11 × 2048: exakt die Kontur des Originals */
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.on-dark .scr.hw-label .hw-svg { color: var(--tangerine); --hw-outline: var(--dark-bg); }
+.about .statement .katha .scr.hw-label .hw-svg { color: var(--accent); }
+.hw-pen,
+.hw-outline-pen {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--L);
+  stroke-dashoffset: 0;
+}
+.hw-outline-pen {
+  /* Die Außenkontur braucht eine größere Abdeckung, läuft aber auf einem eigenen
+     Maskenpfad. Die Tinte behält die schmale 86,9er CV-Stiftbreite. */
+  stroke-width: 312px !important;
+}
+/* Während und nach dem Schreiben bleibt dieselbe normalisierte Ebene sichtbar. Ein
+   Rückwechsel auf das anders verankerte Original würde die Notiz seitlich springen lassen. */
+html.js-hw .hw-label .hw-final { visibility: hidden; }
+html.js-hw .hw-ink-group,
+html.js-hw .hw-outline-group { visibility: hidden; }
+html.js-hw .hw-svg.hw-go .hw-ink-group,
+html.js-hw .hw-svg.hw-go .hw-outline-group { visibility: visible; }
+html.js-hw .hw-svg.hw-go .hw-pen,
+html.js-hw .hw-svg.hw-go .hw-outline-pen {
+  animation: hw-write var(--hw-duration) cubic-bezier(.7, 0, .3, 1) var(--hw-delay) both;
+}
+@keyframes hw-write {
+  /* Die kurze Opacity-Schwelle verhindert den isolierten Punkt, den eine runde
+     Maskenkappe bei exakt null gezeichneter Länge sonst am Strichanfang erzeugt. */
+  from { stroke-dashoffset: var(--L); opacity: 0; }
+  .5% { opacity: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Gefüllte Buttons besitzen eine echte Vorderfläche. Sie ist an der Unterkante
+   angeschlagen und fällt von dort nach hinten: So schließt sich die Fläche optisch nach
+   unten, statt wie eine nach oben herausgezogene Blende zu wirken. */
+.pill {
+  --fold-face: var(--warm-black);
+  --fold-bg: var(--tangerine);
+  --fold-face-ink: var(--creme);
+  --fold-ink: #fff;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--fold-bg);
+  color: var(--fold-face-ink);
+  perspective: 22rem;
+  perspective-origin: center bottom;
+  transform-style: preserve-3d;
+  transition: color 140ms ease 120ms;
+}
+.pill::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--fold-face);
+  transform: translate3d(0, 0, 0) rotateX(0deg);
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+  transition: transform 460ms var(--motion-fold-ease);
+  pointer-events: none;
+}
+.pill:hover,
+.pill:focus-visible { color: var(--fold-ink); }
+.pill:hover::before,
+.pill:focus-visible::before {
+  animation: fold-fall 760ms both;
+}
+@keyframes fold-fall {
+  /* Erst beschleunigt die Klappe wie angestoßene Pappe zum unteren Anschlag. */
+  0% {
+    transform: translate3d(0, 0, 0) rotateX(0deg);
+    animation-timing-function: cubic-bezier(.58, .02, .92, .36);
+  }
+  58% {
+    transform: translate3d(0, 0, -.75rem) rotateX(88deg);
+    animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+  }
+  /* Der erste Rückprall ist deutlich, die zweite Bewegung nur noch ein Nachfedern. */
+  76% {
+    transform: translate3d(0, 0, -.18rem) rotateX(50deg);
+    animation-timing-function: cubic-bezier(.55, .05, .72, .42);
+  }
+  88% {
+    transform: translate3d(0, 0, -.72rem) rotateX(89deg);
+    animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+  }
+  95% {
+    transform: translate3d(0, 0, -.5rem) rotateX(78deg);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: translate3d(0, 0, -.7rem) rotateX(88deg);
+  }
+}
+.pill.ghost {
+  --fold-face: var(--creme);
+  --fold-bg: var(--warm-black);
+  --fold-face-ink: var(--warm-black);
+  --fold-ink: var(--creme);
+  background: var(--fold-bg);
+  color: var(--fold-face-ink);
+}
+.pill.ghost:hover,
+.pill.ghost:focus-visible {
+  /* Schwarz bleibt lesbar, solange die cremefarbene Vorderfläche sichtbar ist.
+     Erst am Anschlag wechselt die Schrift auf Creme über dem dunklen Untergrund. */
+  animation: ghost-fold-ink 760ms linear both;
+}
+@keyframes ghost-fold-ink {
+  0%, 54% { color: var(--fold-face-ink); }
+  62%, 100% { color: var(--fold-ink); }
+}
+.pill.prio {
+  --fold-face: var(--tangerine);
+  --fold-bg: var(--warm-black);
+  --fold-face-ink: #fff;
+  --fold-ink: #fff;
+}
+.contact .pill.prio {
+  background: var(--fold-bg);
+  color: var(--fold-face-ink);
+  box-shadow: none;
+}
+.contact .pill.prio:hover,
+.contact .pill.prio:focus-visible { color: var(--fold-ink); }
+.pill > .pill-label { position: relative; z-index: 2; }
+.pill > .pill-label { display: inline-flex; align-items: center; gap: inherit; }
+
+/* Die Kachel hebt sich als Ganzes an; ihr Platz im Raster und alle Nachbarzellen bleiben
+   unverändert. Der Bildausschnitt selbst bekommt bis zur Nexola-Prüfung keinen Effekt. */
+.tile:not(.cta),
+.more-card {
+  position: relative;
+  z-index: 0;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  transition: transform var(--motion-hover) var(--motion-ease), box-shadow var(--motion-hover) var(--motion-ease), outline-color var(--motion-hover) ease;
+}
+.tile:not(.cta):hover,
+.tile:not(.cta):focus-visible,
+.more-card:hover,
+.more-card:focus-visible {
+  /* Über den seitenweiten Linien (30), aber weiterhin unter dem Sticky-Header (40). */
+  z-index: 35;
+  transform: translateY(-.38rem);
+  outline-color: var(--rule);
+  box-shadow: 0 .9rem 1.8rem rgba(23, 20, 16, .18);
+}
+.tile:not(.cta):hover,
+.tile:not(.cta):focus-visible,
+.more-card:hover,
+.more-card:focus-visible { background: var(--creme); }
+.tile-arrow,
+.pill .ar,
+.project-inquiry .ar {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: .65rem;
+  overflow: visible;
+  font-size: 0;
+  line-height: 0;
+}
+.tile-arrow::before,
+.pill .ar::before,
+.project-inquiry .ar::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0 .32rem;
+  inset-block-start: 50%;
+  block-size: 1.25px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+.tile-arrow::after,
+.pill .ar::after,
+.project-inquiry .ar::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: 50%;
+  inline-size: 0;
+  block-size: 0;
+  border-block: .22rem solid transparent;
+  border-inline-start: .42rem solid currentColor;
+  transform: translateY(-50%);
+}
+.tile .meta h3,
+.more-card h3,
+.tile-arrow,
+.pill .ar {
+  transition: color var(--motion-hover) var(--motion-ease), transform var(--motion-hover) var(--motion-ease);
+}
+.tile:hover .meta h3,
+.tile:focus-visible .meta h3,
+.more-card:hover h3,
+.more-card:focus-visible h3 { color: var(--tangerine); }
+.tile:hover .tile-arrow,
+.tile:focus-visible .tile-arrow,
+.more-card:hover .tile-arrow,
+.more-card:focus-visible .tile-arrow {
+  color: var(--tangerine);
+  transform: translateX(.38rem);
+}
+.pill:hover .ar,
+.pill:focus-visible .ar { transform: translateX(.38rem); }
+
+/* Die breite Projektanfrage ist eine flache Rasterzeile, kein Button und keine Kachel.
+   Nur Typografie und Pfeil reagieren; die Fläche selbst bleibt vollkommen ruhig. */
+.project-inquiry { transition: color var(--motion-hover) ease; }
+.project-inquiry .ar { transition: transform var(--motion-hover) var(--motion-ease); }
+.project-inquiry:hover,
+.project-inquiry:focus-visible { color: var(--tangerine); }
+.project-inquiry:hover .ar,
+.project-inquiry:focus-visible .ar { transform: translateX(.38rem); }
+
+/* Einfache Textlinks verwenden überall dieselbe einfahrende Haarlinie. */
+.foot-col a:not(.pill),
+.foot-bar a,
+.project-footer a {
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  text-decoration: none !important;
+  background-image: linear-gradient(var(--tangerine), var(--tangerine));
+  transition: color var(--motion-hover) ease, background-size var(--motion-hover) var(--motion-ease);
+}
+.foot-col a:not(.pill):hover,
+.foot-col a:not(.pill):focus-visible,
+.foot-bar a:hover,
+.foot-bar a:focus-visible,
+.project-footer a:hover,
+.project-footer a:focus-visible {
+  color: var(--tangerine);
+  background-size: 100% 1px;
+}
+.brand { transition: color var(--motion-hover) ease; }
+.brand:hover,
+.brand:focus-visible { color: var(--tangerine); }
+.site-nav nav a:focus-visible { color: var(--tangerine); }
+.menu-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .motion-heading,
+  html:not(.has-js) .motion-heading,
+  html:not(.has-js) .no-js-content h1,
+  .project-lead, .case-copy, .quote p,
+  .svc h3, .svc p { transform: none; animation: none; }
+  html.js-hw .hw-label .hw-final { visibility: visible; }
+  html.js-hw .hw-label .hw-svg { visibility: hidden; }
+  .hw-pen,
+  .hw-outline-pen { animation: none !important; stroke-dashoffset: 0 !important; }
+  .pill, .pill::before,
+  .tile, .more-card, .tile .meta h3, .more-card h3, .tile-arrow,
+  .pill .ar, .project-inquiry, .project-inquiry .ar, .brand,
+  .foot-col a:not(.pill), .foot-bar a, .project-footer a { transition: none; }
+  .pill:hover::before, .pill:focus-visible::before {
+    animation: none;
+    transform: translate3d(0, 0, -.7rem) rotateX(88deg);
+  }
+  .pill.ghost:hover, .pill.ghost:focus-visible {
+    animation: none;
+    color: var(--fold-ink);
+  }
+}

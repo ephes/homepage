@@ -5,12 +5,77 @@ Portfolio-Startseite (Katharina Wersdörfer). Self-contained: Schriften (Saira, 
 Signature) und die Leinentextur sind als Base64 eingebettet — die Datei öffnet ohne Server
 direkt im Browser.
 
+Unter `projekte/` liegen zusätzlich neun verlinkte Projekt-Unterseiten. Sie teilen sich
+`projekt.css` und `projekt.js`; die neun kleinen HTML-Dateien stellen die eigenständigen URLs
+bereit und wählen jeweils nur ihren Datensatz. Das bildet die Trennung von gemeinsamem Aufbau
+und Seiteninstanzen im Design-Prototyp ab, ist aber ausdrücklich kein Ersatz für das später
+serverseitig gerenderte Wagtail-`ProjectPage`-Template.
+
 Die zugehörige Design-Spec liegt unter
 [`../specs/2026-07-17-portfolio-site-design.md`](../specs/2026-07-17-portfolio-site-design.md).
 
 ## Was der Prototyp zeigt
 
 Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
+
+0. **Navigation** — der direkte Kontaktbutton bleibt oben rechts erhalten; unmittelbar
+   daneben sitzt ein dauerhaft eingeklappter, freistehender Burger ohne Buttonfläche. Das
+   28 px breite Zweilinien-Icon liegt in einem 4,6 rem großen Headerfeld. Beim Öffnen
+   laufen beide Linien zur Mitte und drehen sich mit der bereits verwendeten
+   `.45s cubic-bezier(.75, 0, .25, 1)`-Kurve zum Schließen-X; bei
+   `prefers-reduced-motion` wechselt der Zustand ohne Übergang. Das native `<details>` enthält nur die
+   sechs Anker der Startseite einschließlich „Moin“ für den Hero. Die Projektseiten verwenden
+   dieselbe Kombination aus Kontaktbutton und Burger; ihr „Moin“-Anker führt zurück an den
+   Projektkopf, die übrigen springen in die Inhaltsabschnitte. Weil es sich nur um
+   Anker handelt, gibt es bewusst keine dauerhaft sichtbare Navigationsleiste.
+   Das Icon sitzt in einem 4,6 rem breiten Feld, dessen senkrechte Linien über die gesamte
+   Headerhöhe laufen; der größere Abstand zum Kontaktbutton hält beide Aktionen optisch
+   auseinander. Im offenen Zustand wird die untere Feldkante cremefarben und überdeckt die
+   Headerlinie. So verbindet sich das Feld wie ein aktiver Reiter mit der cremefarbenen
+   Menüfläche. Der Header bleibt mit 80 % Cremeanteil leicht transparent. Ein 20-px-Blur
+   mit reduzierter Sättigung beruhigt dunkle Sections und Illustrationen dahinter, ohne die
+   Durchlässigkeit aufzugeben. „Verfügbar für Projekte“ verwendet mit `#4B4F48` weiterhin
+   einen zurückhaltenden Graugrünton statt des volltonigen warmen Schwarz; selbst über dem
+   dunkelstmöglichen Mischgrund erreicht er rund 4,66:1 Kontrast.
+   **Das ausgeklappte Panel ist als Statement angelegt:** Es beginnt direkt unter dem Header,
+   reicht bis an den unteren Viewportrand und belegt auf dem Desktop die rechte Hälfte des
+   Bildschirms; unter 52 rem nimmt es die gesamte Bildschirmbreite ein. Es fährt über
+   `clip-path` und `translateX` in 450 ms seitlich von rechts ein und auf demselben Weg wieder
+   heraus. Eine deckende Cremefläche, ein kräftiger zweistufig nach links fallender
+   Desktopschatten sowie ein Tangerine-Balken links heben es über die gesamte Höhe vom
+   Seiteninhalt ab;
+   dessen Breite folgt mit
+   `clamp(.7rem, 1.2vw, 1.1rem)` exakt dem Innenabstand der Projektkacheln. Eine untere
+   Akzentlinie gibt es nicht. Die Links stehen ohne Zeilentrenner, Kästen oder Listenoptik
+   als gemeinsamer linksbündiger Block zentriert in der Fläche. Vor jedem Link erscheint das
+   schon für die Eyebrows verwendete ✳ in einer etwa doppelt so großen, proportional
+   begrenzten Fassung. Beim Öffnen beginnt der erste Link erst nach 400 ms – wenn das Panel
+   fast vollständig steht – und die weiteren folgen im klar wahrnehmbaren Abstand von je
+   120 ms weich von rechts; `prefers-reduced-motion` entfernt auch diese Bewegung.
+   Solange das Panel offen ist, bleibt die aktuelle Seitenposition gegen Mausrad, Touch,
+   Tastatur und Scrollbarbewegungen gesperrt, während das Panel bei sehr geringer
+   Viewporthöhe intern scrollbar bleibt. Ein Klick schließt das Menü und fährt weich zum
+   jeweiligen lokalen Anker. Auf Desktopgeräten mit echter Maus fährt bereits das Hover
+   über einen lokalen Menüpunkt die Seite dahinter weich zum Ziel; seitenübergreifende Links
+   lösen keine Hover-Navigation aus. Die restliche Seite liegt unter einem Schleier aus
+   **28 % warmem Schwarz** mit einer feinen, per SVG-Turbulenz erzeugten
+   Filmkörnung. Er liegt über der gesamten Hintergrundfläche einschließlich des Headers;
+   nur das aktive Menüfeld und das Panel bleiben darüber scharf. Der Schleier blendet in
+   160 ms schneller ein als das Panel; dieses schiebt sich anschließend lückenlos über die
+   bereits gedämpfte Fläche. Bewusst ohne Blur bleibt die Gestaltung erkennbar, wirkt aber klar zurückgesetzt;
+   ein Klick auf den Schleier schließt das Panel. Eine cremefarbene Überdeckung unter dem
+   Iconfeld unterbricht dort die obere Panel- und Headerlinie vollständig und schließt den
+   Reiter sichtbar an die Menüfläche an.
+
+   **Progressive Enhancement und Tastatur:** Das Menü selbst basiert auf
+   `<details>/<summary>` und bleibt deshalb bei abgeschaltetem JavaScript mit Tab sowie
+   Enter/Leertaste bedienbar; die Links sind echte Anker. Nach einem Sprung bleibt das
+   native Disclosure ohne Skript offen und wird über den Summary-Schalter geschlossen.
+   JavaScript ergänzt
+   nur weiches Scrollen bzw. Desktop-Hover-Navigation, Scroll-Lock, Klick außerhalb,
+   dynamische Beschriftung, `inert` für den abgedeckten Seiteninhalt, Escape zum Schließen
+   und einen zyklischen Fokus innerhalb des offenen Panels. Bei
+   `prefers-reduced-motion` werden Ankersprünge und Menüwechsel nicht animiert.
 
 1. **Hero** — Fullscreen, großes „MOIN" (echter HTML-Text). Beim Bewegen der Maus über den
    Schriftzug wird per **WebGL-Flüssigkeitssimulation** eine bunte Illustrationswelt darunter
@@ -45,8 +110,8 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 2. **Projekte** — 4-Spalten-Grid im Wechselrhythmus (große Kachel span 2), Platzhalter-Kacheln;
    eine CTA-Kachel über die volle Breite schließt das Raster unten ab.
 3. **Leistungen** — 8 Kacheln (Icon + Einwort-Headline + Satz), aus dem CV-Skillboard gebündelt.
-4. **About** — auf dem 4-Spalten-Raster: **Spalte 1 trägt das Porträt, die Spalten 2–4
-   allen Text.** Oben das **Statement** („Ich bin Katharina / und bleibe gern neugierig."
+4. **About** — auf dem 4-Spalten-Raster: **die Spalten 1–3 tragen allen Text, Spalte 4 das
+   Porträt.** Oben das **Statement** („ICH BIN Katharina / UND BLEIBE GERN NEUGIERIG."
    — der Umbruch steht als `<br>` fest im Markup), darunter **drei Akkordeon-Kacheln**
    (Verstehen / Gestalten / Umsetzen), darunter eine Abschlusszeile: links die Verortung
    „Digital Creative · Based in Düsseldorf", rechts **„Mehr im Lebenslauf"** (aus der
@@ -64,40 +129,102 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    0×0, `bottom` = Grundlinie); Größe ebenfalls `--scr-size`, damit alle Vermerke der
    Seite gleich groß sind. Er bleibt dabei innerhalb der Porträtspalte — nachgemessen bei
    1440/900/390 px: 62/38/76 px Luft links, 79/49/82 px rechts.
+   Beim Vermerk „that's me“ wird ausschließlich die Apostroph-Glyphe um rund `0.156em`
+   nach rechts gerückt, damit sie nicht in den hohen Abstrich des zweiten `t` klemmt.
+   Das anschließende „s me“ behält seine originale Position. Animierter Outline- und
+   Maskenpfad werden deckungsgleich verschoben; der statische SVG-Text ohne JavaScript
+   gleicht den Versatz mit drei entsprechenden `tspan`-Elementen wieder aus. Der Versatz
+   wird direkt in die Koordinaten des Apostroph-Teilpfads geschrieben, während der
+   ursprüngliche zusammenhängende Compound-Path erhalten bleibt. Dadurch entstehen weder
+   zusätzliche Konturkappen am `t` noch Maskennähte im `m` oder am Endschwung des `e`.
+   Nur bei diesem Vermerk wird außerdem die generierte 12-Punkt-Kantenhilfslinie
+   ausgeblendet: Sie verdoppelte an den engen Selbstüberschneidungen sichtbar den oberen
+   `t`-Abschluss, den Übergang im `m` und den Endstrich des `e`. Tintenfläche,
+   cremefarbene Außenkontur und beide Schreibmasken bleiben vollständig erhalten.
+   **Größe und Versalien sind dieselben wie bei der Kunden-Headline** (`.clients h2.big`,
+   `clamp(2rem, 5vw, 4rem)`, `line-height: 1`, `text-transform: uppercase`) — About ist damit
+   eine Section-Headline unter Section-Headlines und keine Zwischenüberschrift mehr. Vorher
+   stand sie mit `clamp(1.6rem, 3.6vw, 3.2rem)` bei 51,2 px im gemischten Satz und war die
+   kleinste der Seite. Mit den Versalien kommen die beiden Werte, die daran hängen: der
+   Eyebrow-Ausgleich `--dia` (0.139em wie bei Kunden statt der früheren 0.225em) und der
+   optische Randausgleich `-0.082em`, mit dem Sairas Versalien gegen das ✳ fluchten.
+   **Achtung, Umbruch:** Bei 64 px ist die zweite Zeile 925,7 px breit. Sie passt ab
+   ~1330 px Viewport in die drei Textspalten (bei 1440 px bleiben 38,7 px Luft); darunter
+   bricht die Headline **dreizeilig** um — bei 1280 px stehen 857,3 px zur Verfügung.
+   Das ist kein Fehler (die Kunden-Headline ist ebenfalls dreizeilig), aber eine bewusste
+   Folge: Wer zweizeilig erzwingen will, muss die vw-Stufe senken.
    **Der Name im Statement steht in der Handschrift**, als `<span class="katha">` mitten im
    Satz, in der Akzentfarbe — der einzigen Stelle neben dem ✳, an der sie Text trägt (bei
-   51 px greift die Schwelle für große Schrift, 3:1; Tangerine liegt mit 3,4 darüber).
+   64 px greift die Schwelle für große Schrift, 3:1; Tangerine liegt mit 3,4 darüber).
+   Der Span trägt `text-transform: none` — „KATHARINA" in einer Signaturschrift wäre falsch
+   gesetzt.
    Die Größe `1.75em` ist gemessen, nicht geschätzt: Astagina hat bei *gleicher* Größe eine
-   kleinere x-Höhe als Saira (19,2 gegen 26,1 px bei 51,2 px), aber eine höhere Versalie
-   (36,2 gegen 35,2) — Cap- und x-Höhe fordern also gegensätzliche Werte (0,97 em bzw.
-   1,36 em). Verglichen wurden 1,30/1,50/1,70/1,90× am echten Font: bei 1,75 em trägt der
-   Name wie eine Unterschrift, ab 1,90× wird das K zum Solisten. Weil der Umbruch vor
-   „und" fest im Markup steht, kann die Handschrift breit laufen, ohne den Zeilenfall zu
-   verschieben.
-   Dazu `line-height: 0.63` am Span: `line-height` wird als Zahl vererbt, der Span bekäme
-   sonst 1,1 × 1,75 em und zöge die beiden Headline-Zeilen auseinander. 0,63 × 1,75 ≈ 1,1,
+   kleinere x-Höhe als Saira, aber eine höhere Versalie — Cap- und x-Höhe fordern also
+   gegensätzliche Werte. Verglichen wurden 1,30/1,50/1,70/1,90× am echten Font: bei 1,75 em
+   trägt der Name wie eine Unterschrift, ab 1,90× wird das K zum Solisten. Neben den
+   Versalien misst die Handschrift damit 85,4 px Tinte gegen 45,0 px Versalhöhe (bei 64 px).
+   Weil der Umbruch vor „und" fest im Markup steht, kann sie breit laufen, ohne den
+   Zeilenfall zu verschieben.
+   Dazu `line-height: 0.571` am Span: `line-height` wird als Zahl vererbt, der Span bekäme
+   sonst 1 × 1,75 em und zöge die beiden Headline-Zeilen auseinander. 0,571 × 1,75 ≈ 1,
    also genau die Zeilenhöhe des Absatzes.
-   Dazu ein gemessener Tiefstand `top: 0.15em` (auf die **Span**-Größe bezogen): auf der
-   Grundlinie säße die Handschrift 13,7 px zu hoch, weil Astaginas Oberlänge über Sairas
-   Versalhöhe hinausragt. Bei 0,15 em treffen sich die Tintenmitten auf 0,3 px genau.
-   Der Wert hängt an der Schriftgröße — bei Änderung neu messen, nicht mitskalieren.
-   **Die Eyebrow wandert mit** in Spalte 2 (`margin-inline-start: 25 %` — 25 % der
-   Sektionsbreite ist genau eine Rasterspalte, weil der Innenbereich nach `--pad` in vier
-   gleiche Spalten geteilt ist). Bliebe sie am linken Rand, stünde sie allein über dem
-   Bild, und die zwischen ✳ und Headline ausgemessene Tintenflucht (`-0.082em`) hinge in
-   der Luft. Auf dem Smartphone wird der Versatz zurückgenommen.
-   Spalte 1 trägt über alle Zeilen das Porträt als **Klecks** —
+
+   **Der Name liegt schräg ÜBER der Headline und bleibt optisch von der zweiten Zeile gelöst** — dieselbe
+   Geste wie die Vermerke auf den anderen Sektionsköpfen, nur mitten im Satz. Damit kommt
+   auch deren Technik: **SVG-Text**, weil nur dort die Kontur *glatt und rund* sein kann
+   (`stroke-linejoin: round` + `paint-order: stroke`); ohne freigeschnittene Kontur
+   verklumpten „Katharina" und „UND BLEIBE" ineinander. Die bekannten Fallstricke gelten
+   auch hier: reale SVG-Größe statt 0×0 (Chrome malt es sonst nicht) und `bottom` auf der
+   **Grundlinie**, nicht auf der Unterkante.
+
+   | Wert | | warum |
+   |---|---|---|
+   | `font-size` | `1.3em` | auf die Span-Größe bezogen, also 1,3 × 1,75 em = 145,6 px bei 1440 px. Größer als der Platzhalter, damit die Schrift überhaupt in Zeile 2 reicht |
+   | `bottom` | `0.24em` | gegenüber dem geometrischen Messwert `0.112em` optisch angehoben, damit der Name freier über der Headline sitzt |
+   | `transform` | `rotate(-5deg)` | dieselbe Schräge wie die Headline-Vermerke |
+   | `z-index` | `-1` am Span | legt die Handschrift hinter die übrige Headline; der lokale Stapelkontext am `<h2>` hält sie dabei sicher vor dem Seitenhintergrund |
+
+   **Ausgerichtet wird links** (`left: 0` + `text-anchor: start`), nicht mittig wie die
+   übrigen Vermerke: Der gezeichnete Name ist größer als sein Platzhalter: zentriert lief er
+   nach links ins „N" von „ICH BIN" und machte es unlesbar (nachgemessen). Nach rechts ist
+   Platz — die erste Zeile misst 471 px, die Textspalte 964 px.
+   Zu beachten: `transform-origin: center` bezieht sich auf das 1×1-px-SVG, nicht auf den
+   Text. Bei linksbündigem Text liegt dieser komplett rechts des Drehpunkts, die Rotation
+   hebt ihn deshalb als Ganzes um rund 22 px an — `bottom` gleicht das zunächst geometrisch
+   aus und wurde anschließend für die gewünschte optische Höhe auf `0.24em` angehoben.
+
+   **Der Name steht zweimal im DOM.** Der HTML-Text bleibt als `color: transparent`
+   Platzhalter stehen — er hält die Breite im Satz und ist für Screenreader und Seitensuche
+   der eigentliche Inhalt; gezeichnet wird das SVG darüber. Damit das nicht durchschlägt:
+   `aria-hidden="true"` am SVG (sonst läse der Screenreader den Namen doppelt) und
+   `user-select: none` (sonst stünde beim Kopieren „KatharinaKatharina"; verifiziert — die
+   Auswahl liefert „ICH BIN Katharina UND BLEIBE GERN NEUGIERIG."). Die Seitensuche findet
+   zwei Treffer, beide an derselben Stelle.
+   **Die Eyebrow braucht hier keine Sonderbehandlung mehr.** Solange das Porträt links lag
+   und der Text erst in Spalte 2 begann, musste sie um eine Rasterspalte mitwandern
+   (`margin-inline-start: 25 %`) — sonst hätte sie allein über dem Bild gestanden und die
+   zwischen ✳ und Headline ausgemessene Tintenflucht (`-0.082em`) hinge in der Luft. Jetzt
+   beginnt der Text in Spalte 1 und sie steht auf demselben Anschlag wie in jeder anderen
+   Section; die Regel und ihre mobile Rücknahme sind entfallen.
+   Spalte 4 trägt über alle Zeilen das Porträt als **Klecks** —
    `grid-row: 1 / span 3` mit `align-self: start`, **nicht** `1 / -1`: ohne
    `grid-template-rows` gibt es kein explizites Zeilenraster, `-1` zeigt dann auf Linie 1
-   und der Klecks landet wieder in Zeile 1. Dort bestimmte seine quadratische Höhe
-   (331 px bei 1440 px) die Zeilenhöhe, und unter dem zweizeiligen Statement stünden
-   ~250 px Leere.
+   und der Klecks landet wieder in Zeile 1. Dort bestimmte seine Höhe die Zeilenhöhe, und
+   unter dem zweizeiligen Statement stünden ~250 px Leere.
    Die Maske selbst: ein SVG-`clipPath` mit Hauptform und vier abgelösten Spritzern
    (mehrere Teilpfade in einem `clipPath` ergeben zusammen die Maske).
    `clipPathUnits="objectBoundingBox"`
-   rechnet in Anteilen 0…1, die Form skaliert also mit dem Element; das Feld ist quadratisch,
-   damit die Spritzer ringsum Platz haben. Border und Diagonalkreuz entfallen — eine Border
-   würde von der Maske angeschnitten.
+   rechnet in Anteilen 0…1, die Form skaliert also mit dem Element. Border und Diagonalkreuz
+   entfallen — eine Border würde von der Maske angeschnitten.
+   **Das Feld steht 4:5** (Breite × 1,25), also hochkant: Die Spalte ist unter dem
+   zweizeiligen Statement ohnehin frei, und ein Porträt steht hochkant besser als im
+   Quadrat. Gerendert sind das 294 × 368 px bei 1280, **331 × 414 px bei 1440** und
+   448 × 560 px bei 1920 px Viewport; gestapelt deckelt `max-width: 14rem` auf 224 × 280 px.
+   Für 2× scharfe Bilder auf großen Screens also rund **1200 × 1500 px**.
+   Die Maske wird durch das Seitenverhältnis mitgezogen — sie rechnet ja in Anteilen der
+   Elementbox — die Klecksform steht dadurch länglicher als im Quadrat. Wer sie wieder
+   rundlicher will, ohne das Feld zu ändern, müsste die y-Anteile im Pfad um denselben
+   Faktor stauchen und die Form mittig setzen.
    Die Form **wabert** (SMIL, 16 s): drei Varianten derselben Kurvenfolge — gleiche
    Befehlsstruktur, nur verschobene Punkte — werden ineinander übergeblendet. Die vier
    Spritzer driften eigenständig mit (`animateTransform`, 13/17/21/15 s, damit sie nicht
@@ -108,7 +235,37 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    stoppt sie nicht zuverlässig (nachgemessen).
 5. **Kunden** — dunkle Section mit durchlaufendem Marquee-Band.
 6. **Kontakt** — CTA + ein Button („E-Mail schreiben"); der Lebenslauf-Link steht
-   jetzt in About.
+   jetzt in About. Der Button ist der einzige **Prio-1-Button** der Seite (s. unten).
+
+## Buttons: drei Prioritäten
+
+| Prio | Klasse | Aussehen | wo |
+|---|---|---|---|
+| **1** | `.pill.prio` | Tangerine-Fläche, Creme-Text, 19,2 px/700, mit Pfeil | **nur** „E-Mail schreiben" in Kontakt |
+| 2 | `.pill` | warmes Schwarz, Creme-Text | Header-Kontakt, CTA-Kachel |
+| 3 | `.pill.ghost` | transparent, nur Kontur | „Mehr im Lebenslauf" in About |
+
+**Das Signal von Prio 1 ist die Farbe, nicht die Größe.** Tangerine kommt sonst nirgends als
+Fläche vor — nur im ✳ der Eyebrows und im Namen „Katharina". Der Button ist damit der einzige
+Farbfleck der Seite. Verworfen wurde die naheliegende Alternative, die vorhandene
+schwarze Pille einfach XL zu setzen: Die Navigation trägt dieselbe Pille, die große Fassung
+liest sich deshalb als *derselbe* Button in größer, nicht als andere Stufe (nebeneinander
+verglichen). Ebenfalls verworfen: die Kontakt-Section auf Dunkel mit Limette-Button — Kunden
+davor ist bereits dunkel und der Footer danach auch, drei dunkle Blöcke am Stück ließen die
+Section verschwinden statt hervorstechen.
+
+**Die Mindestgröße ist eine Kontrastfrage, kein Geschmack.** Tangerine trägt keinen Text in
+Normalgröße:
+
+| Text auf Tangerine | Ratio | AA normal (4,5) | AA groß (3,0) |
+|---|---|---|---|
+| Creme | 3,42 | nein | **ja** |
+| Warmes Schwarz | 4,55 | **ja** | **ja** |
+
+Der Button muss deshalb **mindestens 18,66 px fett** bleiben — bei 1.2rem/700 sind es
+19,2 px. Creme ist die Entscheidung (Katharina); warmes Schwarz wäre mit 4,55 zwar auch in
+Normalgröße zulässig, wirkt auf Tangerine aber stumpf. Der Puffer der gewählten Creme bleibt
+mit 3,42 gegen 3,0 knapp, aber ausreichend.
 7. **Footer** — schwarz, mit Sitemap in vier Spalten: Marke, Seitenabschnitte, alle Projekte
    einzeln, Kontakt/Social und Rechtliches. Darunter eine schmale Zeile mit Copyright.
 
@@ -122,7 +279,8 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
 - **Leistungen:** derselbe Reel. `.svc-grid` trägt zusätzlich die Klasse `reel`; die
   Reel-Regeln greifen nur in der Mobile-Query, auf dem Desktop bleibt es ein 4er-Raster.
 - **About:** Der Klecks eröffnet auf dem Smartphone die Section (`order: -1`) statt am Ende
-  unterzugehen.
+  unterzugehen — die gestapelte Folge ist also Eyebrow, Porträt, Statement, Kacheln,
+  Abschlusszeile, unabhängig davon, dass das Porträt auf dem Desktop rechts steht.
 - **Slide-Indicator** unter jedem Reel: eine Spur mit Anfasser für alle, die nicht wischen
   wollen. Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt; ziehbar per
   Pointer-Events, bedienbar per Tastatur (`role="slider"`, Pfeiltasten, Home/End). Er zeigt
@@ -140,25 +298,23 @@ Kontrastmatrix und die verworfenen Kandidaten.
 | Rolle | Token | Wert | Einsatz |
 |---|---|---|---|
 | Grundton | `--creme` | `#F0ECE2` | Fläche der ganzen Seite |
-| Nahschwarz | `--sacramento` | `#162114` | Schrift auf Hell, dunkle Sections, Footer |
-| Akzent | `--tangerine` | `#EB3D00` | trägt auf hell (3,42) wie dunkel (4,12) |
-| Zweitakzent | `--limette` | `#C7F03C` | **nur** auf Dunkel: 12,65 dort, aber 1,12 auf Creme |
-| Mittlere Fläche | `--pine` | `#294122` | Verfügbarkeits-Punkt auf Hell; als Fläche noch **reserviert** |
+| Warmes Schwarz | `--warm-black` | `#171410` | Schrift auf Hell, dunkle Sections, Footer |
+| Akzent | `--tangerine` | `#EB3D00` | trägt auf hell (3,42) wie dunkel (4,55) |
+| Zweitakzent | `--limette` | `#C7F03C` | reserviert, aktuell nicht eingesetzt |
+| Mittlere Fläche | `--pine` | `#294122` | als Fläche noch **reserviert** |
 
 **Eine Quelle statt drei.** Die Tokens standen vorher auf zwei `:root`-Blöcke verteilt,
 plus einen toten `[data-theme="light"]`-Rest des entfernten Dark Mode. Dadurch waren
 `--pill-bg`/`--pill-ink` faktisch tot (eine zweite `.pill`-Regel überschrieb sie) und
 `--smaragd` war definiert, aber nirgends benutzt. Alles liegt jetzt in einem Block.
 
-**Der Akzent wechselt auf dunklem Grund** — `.on-dark { --accent: var(--limette) }`, eine
-Regel für alle dunklen Flächen. Das kehrt eine frühere Entscheidung um (dort hieß es,
-Tangerine bleibe seitenweit derselbe und Grün sei für Sonderfälle reserviert), folgt aber
-der Palettenseite: Tangerine käme auf Sacramento nur auf 4,12, die Limette auf 12,65.
-Der handschriftliche Vermerk auf Dunkel („together") trägt ihn ebenfalls — Limette auf
-Sacramento liegt bei 12,65. Auf Hell bleibt der Vermerk dunkel: Tangerine wäre dort mit
-3,42 zu schwach für eine Schreibschrift.
-Der Verfügbarkeits-Punkt folgt derselben Logik — Pine auf Hell, Limette auf Dunkel; sein
-früheres `#4a9e5c` stand außerhalb der Palette.
+**Der Akzent bleibt auf dunklem Grund Tangerine** — `.on-dark { --accent:
+var(--tangerine) }` gilt einheitlich für alle Flächen. Tangerine kommt auf warmem Schwarz
+auf 4,55:1 und trägt damit die grafischen Eyebrow-Zeichen und die große handschriftliche
+Ergänzung. Auf Hell bleibt der Vermerk dunkel: Tangerine wäre dort mit 3,42 zu schwach für
+eine Schreibschrift.
+Der Verfügbarkeits-Punkt ist unabhängig davon ein Statussignal und bleibt oben wie im
+dunklen Footer Smaragdgrün; auf warmem Schwarz erreicht er 5,04:1.
 
 **Pine ist als Fläche nicht vergeben.** Zwei Versuche sind verworfen (beide Entscheidung
 Katharina):
@@ -168,7 +324,7 @@ Katharina):
 - **About-Section auf Pine** — technisch lief das über die vorhandene `.on-dark`-Mechanik
   mit `--dark-bg: var(--pine)`, die Kontraste trugen alle (Creme 9,50 · Limette 8,52).
   Gegen die Variante sprach die Nachbarschaft: About liegt direkt über der Kunden-Section
-  in Sacramento, und die beiden dunklen Grüntöne stoßen ohne helle Zäsur aneinander — das
+  im damaligen Sacramento, und die beiden dunklen Grüntöne stießen ohne helle Zäsur aneinander — das
   liest sich eher wie ein Fehler in derselben Fläche als wie zwei Ebenen. Dazu verlöre die
   Seite ihren hellen Grundcharakter: zwei von fünf Sections wären dann dunkel.
 
@@ -177,17 +333,271 @@ laut Palettenseite sind **Hover-Zustände** — die gibt es im Prototyp noch nic
 dabei: Tangerine erreicht auf Pine nur 2,78, ein Akzent kann auf dieser Fläche also nicht
 mitkommen.
 
-**Linien und Platzhalter sind Sacramento mit Deckkraft**, keine eigenen Farben — so bleiben
+**Linien und Platzhalter sind warmes Schwarz mit Deckkraft**, keine eigenen Farben — so bleiben
 sie beim Ton, wenn der Grundton wechselt.
 
-**`--muted` ist nachgerechnet:** `#686D62` ist Sacramento zu 38 % mit Creme gemischt und
-damit der hellste Ton dieser Reihe, der auf Creme noch **4,50:1** erreicht. Der frühere
+**`--muted` ist nachgerechnet:** `#686D62` erreicht auf Creme **4,50:1**. Der frühere
 warme Grauton `#7d766a` lag bei 3,81 und riss damit alle Eyebrows, Kachel-Metazeilen und
 Leistungssätze unter AA. `--dark-muted` ist aus demselben Grund von 55 % auf 62 % Deckkraft
 gegangen (5,18 → 6,20).
 
 Bleibt bewusst außerhalb der Palette: die **Platzhalter-Illustration** hinter dem MOIN
 (bunte Blobs im Skript) — sie wird durch Katharinas echtes Bild ersetzt.
+
+## Projekt-Unterseiten
+
+Die neun Kacheln der Startseite führen auf neun eigene URLs unter `projekte/`. Der Aufbau
+orientiert sich strukturell an der Nexis-Health-Referenz, übernimmt aber ausschließlich die
+bereits vorhandene Sprache des Prototyps: Saira, Vier-Spalten-Raster, Eyebrows mit ✳,
+Platzhalterflächen, dunkle Ergebnis-Section, Pill-Buttons und Footer.
+
+Die gemeinsame Reihenfolge lautet: Projekttitel und Metadaten, Titelbild, Case Study mit
+Projekt/Aufgabe/Lösung, flexible Galerie, optionale Ergebnisse, optionales Kundenstatement,
+zwei weitere Projekte und Kontakt-CTA. Der Kontakt-CTA übernimmt dabei unverändert die
+Komponente der Startseite – einschließlich Label, Headlineskalierung, Astagina-Vermerk,
+Abständen und Button. Noch unbekannte Inhalte stehen in eckigen Klammern;
+es wurden keine Kunden, Leistungen, Kennzahlen oder Zitate erfunden. Die inzwischen
+ergänzten Effekte folgen ausschließlich dem unten beschriebenen gemeinsamen Motion-System.
+
+„Weitere Projekte“ wiederholt keine neue Card-Variante, sondern exakt die Konstruktion der
+großen Startseiten-Projektkacheln: zwei Kacheln nebeneinander im Vier-Spalten-Raster, je zwei
+Spalten breit, mit `21:9`-Bildfeld, identischem Innenabstand, Subline-Größe für den Titel und
+Eyebrow-Größe für Bereich/Jahr. Mobil stapeln sie sich wie das bestehende Projektraster. Ein
+kleiner Pfeil rechts gehört wie auf der Startseite zur Titelzeile. Kacheln, Projektanfrage
+und Kontaktbuttons verwenden dieselbe fontunabhängige CSS-Geometrie: eine 1,25-px-Haarlinie
+mit kleiner Pfeilspitze. Damit sind Form, Tangerine-Farbe und kurze Hoverbewegung auf Start-
+und Unterseiten identisch; eine abweichende Unicode-Glyphe kann nicht mehr dazwischenfunken.
+
+Der vertikale Rhythmus von Start- und Projektseiten verwendet drei gemeinsame Tokens:
+`--space-section` für das Section-Padding, `--space-eyebrow-title` für den kleinen optischen
+Abstand zwischen Eyebrow und Headline sowie `--space-title-content` zwischen Headline und
+nachfolgendem Inhalt. Der zuvor nur auf den Unterseiten gesetzte Eyebrow-Abstand von
+`clamp(1.5rem, 3vw, 2.5rem)` entfällt; vor Headlines gilt nun wie auf der Startseite die
+deutlich engere, schriftproportionale Distanz von `.086em`. Eyebrows ohne folgende Headline,
+etwa vor dem Kundenstatement, verwenden weiterhin den größeren Inhaltsabstand.
+
+Die vier zentralen Display-Stufen `--headline-xl`, `--headline-l`, `--headline-m` und
+`--headline-s` halten die Überschriften auf Start- und Projektseiten zusammen. Jede Stufe
+verwendet genau eine durchgängige `clamp()`-Formel mit Grenzen in `rem` und einer fluiden
+Viewport-Komponente; Schriftgrößen werden weder am Mobile- noch am Desktop-Breakpoint
+überschrieben. Das About-Statement verwendet wie die kleinere Markenheadline die M-Stufe;
+die Akkordeon- und Leistungstitel verwenden gemeinsam S.
+
+Für die kleinen Textebenen gibt es zwei gemeinsame fluide Größen: `--type-eyebrow` für alle
+Eyebrows und eyebrowartigen Rasterlabels sowie `--type-subline` für About-Sublines,
+„Digital Creative · Based in Düsseldorf“, normale
+Buttontexte und Leistungs-Sublines. Die Leistungstitel verwenden wie die About-
+Akkordeontitel `--headline-s`. Hero-Subline, Projekt-Lead und der priorisierte
+Tangerine-Kontaktbutton teilen sich die fluide Stufe `--type-lead`; deren Untergrenze von
+`1.2rem` hält die cremefarbene, fette Buttonschrift weiterhin in der erforderlichen
+Großtext-Stufe.
+
+Über Startseite und alle neun Projektseiten bleiben damit **10 eigenständige
+Schriftgrößen-Rollen**:
+
+1. Eyebrow/Rasterlabel (`--type-eyebrow`)
+2. Subline, normale Buttons, UI-Text und normaler Case-Fließtext (`--type-subline`)
+3. Hero-Subline, Projekt-Lead und priorisierter Kontaktbutton (`--type-lead`)
+4. Headline S, Kunden-Marquee und Projektnummer (`--headline-s`)
+5. Headline M und Menüpunkte (`--headline-m`)
+6. Headline L (`--headline-l`)
+7. Headline XL (`--headline-xl`)
+8. handschriftliche Vermerke (`--scr-size`)
+9. Hero-Wort „MOIN“ (Canvas und HTML-Fallback sind dieselbe Rolle)
+10. großer Case-Fließtext und Kundenstatement (`--type-case-large`)
+
+Das ✳ vor den Menüpunkten ist kein eigener Textstil mehr: Es skaliert relativ zum
+Menüpunkt und wird durch die bestehende Headline-S-Stufe gedeckelt. Inhaltlich besteht das
+reguläre Typografiesystem damit aus acht Größen; Astagina-Handschrift und das geometrisch
+eingepasste „MOIN“ bleiben zwei bewusste Signature-Sonderfälle.
+
+Die zusätzlichen `em`-Werte an `sup`, ✳ und den intern verschachtelten
+Handschrift-Ebenen sind relative Skalierungsfaktoren ihrer jeweiligen Eltern und daher keine
+eigenständigen Textstufen. Es gibt in den produktiven Start-/Projektstyles keine
+`font-size` in Pixeln und keine Schriftgrößen-Überschreibung innerhalb einer
+Viewport-Media-Query; alle eigenständigen Stufen sind über `clamp()` mit `rem`-Grenzen fluid.
+Der normale Case-Fließtext verwendet bewusst nicht die Eyebrow-Stufe: Deren
+`0.72rem`–`0.82rem` sind für kurze Labels gedacht und für längere Lesetexte zu klein.
+
+Auch die zentralen Laufweiten sind semantisch vereinheitlicht: `--tracking-display`
+setzt große, eng laufende Headlines und Menüpunkte auf `-0.03em`,
+`--tracking-action` verbindet Namensbranding und Fold-Buttons bei `0.01em`, und
+`--tracking-label` setzt Verfügbarkeitsanzeige, Eyebrows, Case-Labels und vergleichbare
+Versal-Labels auf `0.1em`. Projektmetadaten (`0.04em`), Cursor-Ring (`0.06em`) und reine
+Bildformat-Platzhalter (`0.08em`) bleiben als funktional andere Textarten separat.
+
+## Motion-System
+
+`motion.css` und `motion.js` werden von Startseite und Projektseiten gemeinsam verwendet.
+Headlines bewegen sich beim Eintritt von unten nach oben an ihre Position (`Reveal`).
+Deckkraft und Buchstabenproportionen bleiben dabei unverändert; eine Maske oder Schnittkante
+wird nicht verwendet. So können auch überstehende handschriftliche Vermerke nicht am
+Headline-Rechteck beschnitten werden. Mit JavaScript setzt ein kleines Scroll-Skript dafür
+nur den Eintrittsstatus; die Bewegung selbst bleibt CSS. Es misst die unveränderte Layoutbox über
+`offsetTop`/`offsetHeight` statt das transformierte sichtbare Rechteck. Dadurch kann die
+Reveal-Bewegung am unteren Viewportrand ihre eigene Sichtbarkeit nicht verändern oder bei
+langsamem Scrollen flackern. Dadurch funktioniert der Effekt
+allein auf Projektunterseiten ebenso wie vor einer nachgelagerten Handschriftanimation auf
+der Startseite. Ohne JavaScript übernimmt – sofern der Browser sie unterstützt – eine
+native CSS-View-Timeline: Eine `entry`-Animation führt die Headline von unten an ihre
+Ruheposition, eine getrennte `exit`-Animation bewegt sie oben hinaus und läuft beim
+Zurückscrollen automatisch rückwärts. `html:not(.has-js)` trennt diesen CSS-Weg von der
+zeitbasierten JavaScript-Fassung, sodass beide nie gleichzeitig auf `transform` schreiben.
+Die Grunddarstellung bleibt bewusst fail-open: Fehlt auch View-Timeline-Support, steht die
+Headline sichtbar an ihrer normalen Position; es fehlt nur die Bewegung.
+Headline-Reveals werden zurückgesetzt, sobald die jeweilige Überschrift vollständig aus dem
+Viewport verschwunden ist. Beim erneuten Eintritt laufen sie daher auch nach Vor- oder
+Zurückscrollen wieder. Beim Herunterscrollen kommt die Headline von unten, beim Rückweg von
+oben. Zwölf Pixel Eintritt und 24 Pixel Austrittshysterese halten den Zustand zusätzlich
+stabil, wenn eine Headline genau auf der Viewportkante steht. Die
+Astagina-Schreibanimationen bleiben davon unabhängig einmalig:
+Ein bereits geschriebener Vermerk wird in derselben Seitenansicht nicht erneut geschrieben.
+Gefüllte Buttons verwenden die gemeinsame `Fold`-Bewegung; deren Darstellung sowie Kachel-Hover, Pfeil und
+Link-Haarlinien sind CSS.
+
+Die Fließtexte auf den Projektseiten (`project-lead`, alle Case-Texte und das
+Kundenstatement) sortieren sich über native CSS-View-Timelines ruhig von rechts an ihrer
+Satzkante ein. In den Leistungskacheln bleiben Rasterfläche und Icon fest; nur Titel und
+Subline folgen derselben horizontalen Bewegung innerhalb jeder Kachel leicht zeitversetzt.
+Beide Effekte verändern weder Deckkraft noch Textproportionen, benötigen kein JavaScript und
+fallen in Browsern ohne View-Timeline-Unterstützung auf die vollständig sichtbare statische
+Darstellung zurück. `prefers-reduced-motion` schaltet sie vollständig ab.
+
+Die Case-Labels „Das Projekt“, „Die Aufgabe“ und „Die Lösung“ fluchten auf breiten
+Projektseiten mit der Textkante der Eyebrow „Case Study“, sodass deren Tangerine-Asterix
+optisch links heraushängt. Der zusätzliche Einzug wächst über `clamp()` fluid von `0` auf
+die Breite aus Asterix und Eyebrow-Gap; die Mobile-Position bleibt deshalb ohne zusätzliche
+Viewport-Media-Query unverändert.
+
+Die Projektanzahl an der Startseitenheadline wird als `[9]` in eckigen Klammern und mit
+derselben fluiden `--type-subline`-Stufe wie die Titel der Projektkacheln gesetzt.
+Das Namensbranding steht bewusst ohne Markensymbol, da keine eingetragene Marke bezeichnet
+wird; dies gilt für Header, Footer, Projekt-Template und JavaScript-freie Projekt-Fallbacks.
+
+Die About-Section bleibt mindestens so hoch wie die sichtbare Fläche unter der Navigation
+und unterschreitet dabei nie `50svh`. Die Marken-Section „Mit diesen Marken & Menschen“
+belegt ebenfalls mindestens `50svh`; beide Sections wachsen bei mehr Inhalt weiterhin mit.
+Der untere rechte, freischwebende Spritzer der Porträtmaske liegt gegenüber seiner früheren
+Position um sieben Prozentpunkte weiter rechts und 7,5 Prozentpunkte höher. Damit bleibt er
+auch während seiner Eigenbewegung frei vom Vermerk „that's me“.
+Der handschriftlich gezeichnete Name „Katharina“ im About-Statement sitzt mit
+`bottom: 0.24em` etwas höher als sein transparenter Platzhalter und bleibt dadurch klar oberhalb der
+zweiten Statement-Zeile.
+
+Die sichtbare Kundenfolge im Marquee lautet: ALDI Nord, Kerrygold, L’Oréal, Thomy,
+Maybelline, essie, Weight Watchers, Miele, Yokohama, McCann, Marina Adler, Fabian Heis,
+Villa Kunterbunt e.V., Ökologische Tierzucht gGmbH, django chat, GGS Lennéstraße und
+erneut McCann. Für den nahtlosen Lauf folgt im Markup dieselbe Sequenz ein zweites Mal;
+diese technische Kopie ist mit `aria-hidden` vor assistiven Technologien verborgen.
+
+Die `Write`-Animation der Astagina-Vermerke verwendet dieselbe, im CV-/Coverletter-Projekt
+bewährte Pipeline: `handwriting-glyphs.js` enthält die echten, in Pfade umgewandelten
+Font-Outlines und die handgetracten Mittellinien aus `handwriting-anim`. Die Mittellinien
+dienen nur als Maske; sichtbar werden die Original-Outlines mit derselben cremefarbenen
+0,11-em-Kontur auf hellem Grund, Größe, Drehung und Grundlinienposition wie im gestalteten
+statischen SVG. Tinte und Kontur laufen synchron auf getrennten Masken: Die Tinte behält
+die schmale originale Stiftbreite, damit auch separate Querstriche und Schnörkel geschrieben
+statt flächig aufgedeckt wirken; die breitere Maske deckt ausschließlich die Kontur ab. Runde Maskenkappen
+und eine sehr kurze Opacity-Schwelle verhindern sowohl eckige Abrisse als auch isolierte
+Startpunkte. Fehlen JavaScript oder die generierten Outlines, bleibt das Original-SVG aus
+dem Markup unverändert sichtbar. `prefers-reduced-motion` zeigt ebenfalls sofort die
+unveränderte Endansicht.
+
+Der Schreibstart besitzt nur noch eine Freigabebedingung: Die unveränderte Layoutbox der
+zugehörigen Headline muss vollständig zwischen Sticky Header und unterem Viewportrand
+stehen. Weder das Ende des Headline-Reveals noch eine zuvor geschriebene Handschrift ist
+Voraussetzung. „that's me“ liegt zwar am Porträt, wird aber derselben About-Headline wie
+„Katharina“ zugeordnet.
+
+Alle gleichzeitig freigegebenen Vermerke laufen in eine gemeinsame, nach DOM-Reihenfolge
+sortierte Queue und werden ausschließlich nacheinander geschrieben. Damit bleibt innerhalb
+von About „Katharina“ vor „that's me“; stehen auf einem großen Screen zusätzlich die
+Kunden-Headline oder eine weitere Sektionsheadline vollständig im Viewport, wartet deren
+Vermerk ebenfalls auf den vorherigen. Verlässt eine noch wartende Headline den vollständigen
+Sichtbereich, wird ihr Queue-Eintrag verworfen und erst bei einem späteren vollständigen
+Eintritt erneut freigegeben.
+
+Beim Fold liegt die farbige Vorderfläche als eigene Ebene tatsächlich über dem
+Button-Untergrund. Ihr unterer Rand bleibt angeschlagen, während die Fläche über
+`perspective` und ein positives `rotateX` nach hinten unten kippt; Text und Pfeil liegen unbewegt auf einer
+dritten Ebene. Das vermeidet die frühere, durch die negative Stapelreihenfolge praktisch
+unsichtbare Klappe, bei der nur ein zweidimensionaler Farbwechsel wahrnehmbar war. Der
+Prio-Button öffnet von seiner tangerinefarbenen Vorderfläche auf einen warm-schwarzen
+Untergrund. Sämtliche Flächen bleiben entsprechend dem Flat-System ohne Außen- oder
+Klappenschatten. Am unteren Anschlag federt die Klappe einmal deutlich und ein zweites Mal
+nur minimal zurück, bevor sie waagerecht liegen bleibt. Dadurch liest sich das Ende als
+kurzer mechanischer Aufprall statt als gleichmäßiges Ausblenden. Bei reduzierter Bewegung
+entfällt auch dieser Bounce vollständig.
+
+Beim Ghost-Button „Mehr im Lebenslauf“ bleibt die Schrift schwarz, solange seine
+cremefarbene Vorderfläche sichtbar ist. Erst kurz vor deren unterem Anschlag wechselt sie
+auf Creme über dem ausdrücklich warm-schwarzen Untergrund. So entsteht während des Folds
+kein cremefarbener Text auf cremefarbener Fläche.
+
+Die Projektkacheln behalten ihren Platz im Raster, heben sich beim Hover bzw. Tastaturfokus
+aber als Ganzes leicht mit Schatten und geschlossener Kontur an; Nachbarzellen werden nicht verschoben. Im aktiven
+Zustand liegt die Kachel mit `z-index: 35` über dem seitenweiten Grid (`30`), aber unter dem
+Sticky-Header (`40`), und erhält einen deckenden Cremegrund. Dadurch schiebt sich die
+angehobene Fläche nicht transparent unter ihre obere Begrenzungslinie. Auf der Startseite
+wechseln Titel und der dort bereits gestaltete Pfeil gemeinsam auf Tangerine; nur der Pfeil
+bewegt sich zusätzlich. Die „Weitersehen“-Projektteaser der Unterseiten verwenden nun
+denselben Pfeil und dieselbe Reaktion, damit sie tatsächlich dieselbe Kachelkomponente
+abbilden. Bis der
+Bildeffekt der Nexola-Referenz live verifiziert ist, bleibt das
+Bild selbst unbewegt. Pfeile innerhalb gefüllter Buttons erben dagegen stets die jeweilige
+Textfarbe des Buttons; nur ihre kurze horizontale Bewegung bleibt erhalten. Einfache Footerlinks verwenden genau eine bereits
+tangerinefarbene, von links einfahrende Haarlinie und erzeugen daher keinen Farbblitz.
+`prefers-reduced-motion` zeigt Headlines und Handschrift sofort und entfernt alle
+Bewegungsübergänge.
+
+Die breite Projektanfrage unter dem Kachelraster ist ausdrücklich kein Button und keine
+weitere Projektkachel. Ihre dunkle Rasterfläche bleibt beim Hover vollständig unbewegt;
+nur die Schrift wechselt zu Tangerine und der separat ausgezeichnete Pfeil rückt nach rechts.
+
+`projekt.js` ist nur die clientseitige Templating-Abkürzung des eigenständig öffnenden
+Design-Prototyps; es ist **nicht** die Zielarchitektur. Das Repository besitzt bereits einen
+lokalen Django-/PostgreSQL-/Wagtail-Stack (`just dev`, Django auf Port 8000). Bei der
+Überführung muss Wagtail das gemeinsame Projekt-Template serverseitig rendern: Titel,
+Bereich, Jahr, Kunde, Leistungen und Lead werden feste Felder; Case-Study-Abschnitte,
+Galerie, Ergebnisse und Statement optionale Blöcke. Bis dahin enthalten die neun
+Prototyp-URLs eine statische `<noscript>`-Fassung mit Projekttitel, Hauptnavigation und
+Rückweg zur Projektübersicht. So bleiben zumindest Navigation und Projektzugang ohne
+JavaScript nutzbar; der vollständige Projektinhalt darf vor Veröffentlichung nicht vom
+Browser-JavaScript abhängen.
+
+## Accessibility-Stand
+
+Der statische Audit prüft Startseite und alle neun Projekt-URLs auf Landmarken,
+Überschriftenhierarchie, doppelte IDs, interne Sprungziele, Bildalternativen,
+Tastaturpfade, Fokusdarstellung, Bewegungsreduktion und die verwendeten Farbpaare.
+
+- Ein Skip-Link führt direkt zu `main`. Navigation und About-Akkordeons verwenden native
+  HTML-Elemente. Das offene Menü schließt mit Escape, hält den Tastaturfokus im Panel und
+  nimmt den verdeckten Seiteninhalt per `inert` aus der Fokusreihenfolge. Ohne JavaScript
+  bleibt die native Menübedienung erhalten.
+- Alle Hover-Reaktionen besitzen ein `:focus-visible`-Gegenstück. Die mobilen Reel-Anfasser
+  sind horizontale, beschriftete Slider mit Pfeiltasten sowie Home/End und einer
+  24-px-Trefferfläche.
+- Dekorative Canvas-, Handschrift-, Raster- und Service-Icon-Grafiken sind aus dem
+  Accessibility-Baum genommen. Medienplatzhalter der Projektseiten besitzen dagegen eine
+  Textalternative.
+- Der Kunden-Marquee stoppt bei Hover und Tastaturfokus; bei
+  `prefers-reduced-motion` läuft er gar nicht und wird als statische Liste gesetzt.
+- Warmes Schwarz auf Creme erreicht ca. 15,56:1, warmes Schwarz auf Tangerine ca. 4,55:1.
+  Weiß auf Tangerine erreicht ca. 4,04:1, Creme auf Tangerine ca. 3,42:1. Der große, fette
+  Prio-Button erfüllt damit die 3:1-Anforderung für große Schrift. Beim deutlich kleineren
+  Kontaktbutton im Header ist die ausdrücklich gewünschte weiße Hover-Schrift mit dem
+  bestehenden Tangerine noch keine AA-konforme Normaltext-Kombination; dafür braucht es vor
+  Veröffentlichung entweder einen dunkleren Hoverton oder wieder warmes Schwarz.
+
+Vor einer Veröffentlichung bleiben zwei inhaltliche Blocker: Sechs als Links gestaltete
+Platzhalter tragen noch `href="#"` (Lebenslauf, LinkedIn, Mastodon, Impressum,
+Datenschutz und „Mehr im Lebenslauf“), und `mail@example.com` muss durch die echte Adresse
+ersetzt werden. Ziele werden nicht erfunden; bis echte Werte vorliegen, sind diese Links
+nicht releasefähig. Zusätzlich ist nach der Wagtail-Überführung ein Lauf mit Browser-Audit
+und Screenreader erforderlich. Der aktuelle In-App-Browser war während dieses Audits nicht
+verfügbar; Syntax-, Django- und statische DOM-Prüfungen ersetzen keinen manuellen Test mit
+NVDA/VoiceOver und 200-%-Zoom.
 
 
 ## About-Akkordeon
@@ -204,14 +614,47 @@ machte daraus ein exklusives Akkordeon, bei dem sich beim Öffnen der einen die 
 schließt. Beim Laden ist keine offen. Die ganze Kachel schließt, nicht nur die Kopfzeile —
 außer man hat im Text etwas markiert, dann wollte man lesen und nicht klappen.
 
-**Die Kacheln stehen auf gleicher Höhe** (Rastervorgabe, kein `align-items: start`). Der
-Kopf einer geschlossenen Kachel sitzt dadurch mittig in der vollen Höhe statt oben;
-geöffnete und geschlossene Köpfe fluchten dann nicht, und das ist so gewollt — die
-zentrierten Köpfe sehen besser aus (Entscheidung Katharina).
-Zwei Zwischenstände sind daran verworfen: `justify-content` per `:has()` umschalten, sobald
-eine Kachel offen ist — **diese Eigenschaft springt, sie animiert nicht**, die Köpfe
-kehrten zwar zurück, wanderten aber nicht mehr. Und `align-items: start`, das alle Köpfe
-auf eine Linie brachte, aber eben nicht mehr zentriert.
+**Die Kacheln stehen auf gleicher Höhe** (Rastervorgabe, kein `align-items: start`).
+Daraus folgt der Kerneffekt der Reihe — der Kopf jeder Kachel richtet sich nach ihrem
+**eigenen** Zustand:
+
+| Kachel | Kopf | Fließtext |
+|---|---|---|
+| **zu** | mittig in der vollen Kachelhöhe — wächst die Kachel, weil die Nachbarin geöffnet wurde, wandert er mit nach unten | – |
+| **offen** | auf der Grundhöhe (`min-block-size`), macht dem Text Platz | beginnt an ebendieser Kante |
+
+Weil die Grundhöhe für alle drei dieselbe ist, fluchten Köpfe *und* Textanfänge von selbst,
+sobald mehrere Kacheln offen sind — ohne dass etwas dafür gerechnet werden müsste.
+Ein Zwischenstand, der über `.me-text:has(.me-row[open])` **alle drei zugleich** umschaltete,
+ist genau daran gescheitert: Er stellte zwar dieselbe Flucht her, nahm der Reihe aber die
+Bewegung, um die es geht — der Kopf soll erst dann hochrücken, wenn unter *ihm* der Text
+aufgeht.
+
+**Der Übergang ist animiert — über `flex-grow`.** Der naheliegende Weg, `justify-content`
+umzuschalten, ist daran gescheitert: **diese Eigenschaft springt, sie animiert nicht** — die
+Köpfe standen richtig, kamen aber ohne Bewegung dorthin. `flex-grow` ist dagegen eine Zahl
+und interpoliert. Umgeschaltet wird an zwei Stellen, beide mit derselben Kurve und Dauer wie
+die Kachelhöhe, sodass alles als *eine* Bewegung läuft:
+
+1. **am Kopf selbst** (`1 → 0`) — er schrumpft von der vollen Kachelhöhe auf seine
+   `min-block-size`. Das setzt die Textkante.
+2. **an zwei Flex-Spacern** (`summary::before` / `::after`, ebenfalls `1 → 0`) — sie
+   ersetzen `justify-content: center`. Zwei gleiche Spacer oben und unten zentrieren
+   genauso, aber ihr Wegfall richtet den Inhalt an der Oberkante aus. Das ist der Punkt für
+   die Flucht der Titel: bei *zentriertem* Inhalt hängt die Höhe des `h3` an der Höhe des
+   ganzen Kopfes — eine dreizeilige Subline (bei 1024 px die dritte Kachel) schöbe ihren
+   Titel 10 px über die der Nachbarn. Der `gap` des Kopfes musste dafür weichen, er hätte
+   auch zwischen Spacer und Inhalt gewirkt; der Abstand Titel/Subline sitzt jetzt als
+   Margin an der Subline.
+
+Nachgemessen bei 1024 und 1440 px, je alle zu / eine offen / alle offen: geöffnete Kacheln
+beginnen ihren Text immer auf **145 px**, bei mehreren offenen fluchten die Titel auf
+**0,0 px** — auch bei dreizeiliger Subline. Der Kopf einer geschlossenen Nachbarkachel
+wandert stetig mit (bei 1440 px von 32 px auf 187 px über rund 300 ms), er springt nicht.
+
+Der ganze Übergang ist **reines CSS** — er läuft mit abgeschaltetem JavaScript identisch
+(gegengemessen).
+
 Die Abschlusslinie sitzt am Container statt an den Kacheln — bei gleicher Höhe dasselbe
 Ergebnis, aber unabhängig davon, ob eine Kachel einmal ausschert.
 
@@ -232,7 +675,7 @@ Stellschraube:
 | **640 ms / 105 ms** | **3,5 sichtbar** | die Fuge wird übergeben, bevor sie zu ist: eine durchlaufende Welle |
 
 Als Kurve eine **echte Feder** statt einer Bézier-Näherung: die Sprungantwort eines
-gedämpften Feder-Masse-Systems (Dämpfungsgrad 0,58), über `linear()` als Stützstellen
+gedämpften Feder-Masse-Systems, über `linear()` als Stützstellen
 hinterlegt — anders lässt sich das Ausschwingen in CSS nicht sauber ausdrücken.
 **Dämpfungsgrad 0,86**: praktisch kein Überschwingen (0,5 %) und ein gemächlicher Anlauf —
 90 % des Wegs erst bei 46 % der Zeit. Straffere Federn wirkten schnappend (0,58 kam auf
@@ -333,19 +776,18 @@ Headline**, von Tinte zu Tinte gemessen (nicht an den Kästen). Zwei Anlässe da
   hat keine mehr — Überstand 0,5 px.
 - **Größe:** Der em-proportionale Grundabstand geht nicht auf, wenn nur *eine* Seite der
   Lücke mitskaliert. Die Eyebrow steht in allen Sections fix auf `0.75rem`, die Headlines
-  aber auf 51 bis 128 px. Je kleiner die Headline, desto knapper fällt der Abstand aus —
+  aber auf 64 bis 128 px. Je kleiner die Headline, desto knapper fällt der Abstand aus —
   gemessen von Tinte zu Tinte, vor dem Ausgleich:
 
   | Section | Headline | ohne `--dia` | `--dia` | jetzt |
   |---|---|---|---|---|
   | Projekte, Leistungen | 128 px | 28,8 px | — | 28,8 px |
   | Kontakt | 96 px | 25,3 px | — | 25,3 px |
-  | Kunden | 64 px | 19,9 px | `0.139em` | 28,8 px |
-  | About | 51 px | 12,9 px | `0.225em` | 28,8 px |
+  | Kunden, About | 64 px | 19,9 px | `0.139em` | 28,8 px |
 
   **Offen:** Kontakt liegt mit 25,3 px noch 3,5 px unter den übrigen.
-  Bei About kommt ein zweiter Effekt dazu: der Ausgleich rückt auch den Aufstrich des
-  handschriftlichen K von der Eyebrow ab, unter der er sonst fast hängt.
+  About teilt die Zeile jetzt mit Kunden — beide stehen auf 64 px in Versalien und brauchen
+  denselben Ausgleich. Die früheren 0.225em galten der 51-px-Fassung im gemischten Satz.
 
 Der Wert ist **textabhängig und größenabhängig** — bei geänderter Headline neu messen.
 
@@ -405,9 +847,11 @@ optisch zusammen:
   | `30` | **die beiden äußeren Padding-Linien** |
   | `40` / `60` | Header / Leinentextur |
 
-  **Ausnahme für die Seitenberandung:** Die beiden Außenlinien begrenzen die Seite und dürfen
-  von nichts überlaufen werden — auch nicht von einem Slider, der bis an den Rand scrollt.
-  Sie liegen deshalb als einzige über dem Inhalt. Damit das in *einer* Struktur möglich ist,
+  **Ausnahme für die Seitenberandung:** Die beiden Außenlinien begrenzen die Seite und liegen
+  deshalb im Ruhezustand über dem Inhalt — auch über einem Slider, der bis an den Rand scrollt.
+  Nur eine aktiv angehobene Projektkachel darf sie kurzfristig überdecken; sonst würde die
+  Kachel trotz Lift weiterhin unter dem Grid erscheinen. Damit die Linien in *einer*
+  Struktur bleiben können,
   trägt `.pagegrid` **bewusst kein `z-index`**: sonst machte es einen Stacking-Kontext auf und
   alle Linien lägen zwangsläufig auf derselben Ebene. So wählt jede Linienart ihre eigene.
 
@@ -440,7 +884,7 @@ optisch zusammen:
 - **Bündig vs. eingerückt:** Die 4-spaltigen Raster (Kacheln, Leistungen, About-Porträt)
   liegen bündig — ihre Außenkanten fallen mit den Padding-Linien zusammen, ihre Zelllinien
   mit den gestrichelten Spaltenlinien (per Playwright nachgemessen: 57,59 px / 1382,41 px
-  bei 1440 px Viewport, Porträt-Kante exakt auf 1051,20 px = 75-%-Linie). Textblöcke rücken
+  bei 1440 px Viewport, linke Porträt-Kante exakt auf 1051,20 px = 75-%-Linie). Textblöcke rücken
   dagegen um `--hero-inset` ein — derselbe Gap, mit dem das MOIN in seiner Zelle sitzt.
 
 ## Sprache, Dokumentkopf und Silbentrennung
@@ -470,6 +914,13 @@ reißen dort einzelne lange Wörter ganze Zeilen auf.
 **Displayzeilen trennen nicht** (`hyphens: manual` auf Headlines, Wortmarke, Kopfzeilen,
 Kachel- und Leistungstiteln): ein Bindestrich in einer 128-px-Headline ist ein Bruch im
 Bild, kein Lesehilfsmittel.
+Die kurzen Sublines in den Leistungskacheln sind eine eigene Ausnahme: Sie verwenden
+`text-wrap: pretty` als Fallback, bevorzugt `text-wrap: balance`, und `hyphens: none`.
+Damit werden zwei vorhandene Zeilen möglichst gleichmäßig verteilt statt automatisch
+getrennt; auf schmalen Screens darf der Text ohne Quetschen auf weitere Zeilen umbrechen.
+Vor Gedankenstrichen steht dort ein geschütztes Leerzeichen (`&nbsp;`): Das Balancing darf
+weiterhin frei umbrechen, kann den Gedankenstrich aber nie allein an den Anfang der
+nächsten Zeile stellen. Hinter dem Gedankenstrich bleibt der normale Umbruch erlaubt.
 
 ## Technische Notizen (wichtig für die Weiterarbeit)
 

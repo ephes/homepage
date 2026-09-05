@@ -7,7 +7,7 @@
      auch ohne JavaScript nach deutschen Regeln arbeitet. -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>document.documentElement.lang = "de";</script>
+<script>document.documentElement.lang = "de";document.documentElement.classList.add("has-js");</script>
 <title>Portfolio Startseite — Fluid-Hero integriert</title>
 <style>
 /* ===== Sections (Wireframe) ===== */
@@ -34,7 +34,7 @@
      Enhancement — Browser ohne Unterstützung brechen wie bisher um. */
   h1, h2, h3, h4,
   .sec-title, .big, .statement, .brand, .avail, .foot-h,
-  .meta h3, .svc h3, .tile.cta strong { text-wrap: balance; }
+  .meta h3, .svc h3, .project-inquiry strong { text-wrap: balance; }
   p, li, .meta .row2 { text-wrap: pretty; }
 
   /* ── Silbentrennung ──────────────────────────────────────────────────────
@@ -57,7 +57,7 @@
   h1, h2, h3, h4,
   .sec-title, .big, .statement, .me-row h3, .me-claim,
   .brand, .marquee, .meta h3, .svc h3,
-  .sec-label, .avail, .foot-h, .count, .pill, .tile.cta strong
+  .sec-label, .avail, .foot-h, .count, .pill, .project-inquiry strong
   { -webkit-hyphens: manual; hyphens: manual; }
 
   /* Full-bleed: Sektionen laufen über die gesamte Breite, nur ein Innenabstand am Rand.
@@ -79,9 +79,8 @@
     border-bottom: 1px solid var(--rule);
   }
   .site-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.8rem; }
-  .brand { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.02em; }
-  .brand sup { font-weight: 400; font-size: 0.6em; }
-  .avail { display: flex; align-items: center; gap: 0.45rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .brand { font-weight: 700; font-size: var(--type-subline); letter-spacing: var(--tracking-action); }
+  .avail { display: flex; align-items: center; gap: 0.45rem; font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); }
   .avail::before { content: ""; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; background: var(--smaragd); }
   .pill {
     display: inline-block;
@@ -89,17 +88,47 @@
     color: var(--bg);
     border-radius: 100px;
     padding: 0.5rem 1.2rem;
-    font-size: 0.82rem;
+    font-size: var(--type-subline);
     font-weight: 600;
+    letter-spacing: var(--tracking-action);
     text-decoration: none;
   }
   .pill.ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+  /* ── Prio 1 ───────────────────────────────────────────────────────────────
+     Dritte Stufe über den bestehenden zwei: `.pill` (warmes Schwarz — Navigation,
+     CTA-Kachel) ist
+     Prio 2, `.pill.ghost` Prio 3. Prio 1 gibt es genau EINMAL auf der Seite, für den
+     E-Mail-Button in Kontakt.
+     Das Signal ist die FARBE, nicht die Größe: Tangerine kommt sonst nirgends als Fläche
+     vor — nur im ✳ der Eyebrows und im Namen „Katharina". Der Button ist damit der einzige
+     Farbfleck der Seite und zieht das Auge, ohne dass es dafür eine neue Form bräuchte.
+     Eine bloß größere schwarze Pille war die naheliegende Alternative und ist verworfen:
+     Die Navigation trägt dieselbe Pille, die XL-Fassung liest sich deshalb als derselbe Button
+     in größer, nicht als andere Stufe (nebeneinander verglichen).
+     ACHTUNG, Kontrast — hier hängt die Mindestgröße dran: Tangerine trägt KEINEN Text in
+     Normalgröße. Creme darauf liegt bei 3,42 und braucht deshalb große, fette Schrift;
+     warmes Schwarz liegt bei 4,55 und wäre auch normalgroß zulässig, wirkt hier aber stumpf.
+     Creme bleibt die Entscheidung (Katharina); der Button MUSS deshalb mindestens 18,66px
+     fett bleiben (hier 1.2rem/700 = 19,2px). */
+  .pill.prio {
+    background: var(--tangerine);
+    color: var(--creme);
+    font-size: var(--type-lead); /* mindestens 1.2rem — s. Kontrastnotiz oben */
+    font-weight: 700;
+    letter-spacing: var(--tracking-action);
+    padding: 1.05rem 2.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  /* Derselbe Pfeil wie in den Projektkacheln — dort markiert er „hier geht es weiter". */
+  .pill.prio .ar { font-weight: 400; }
 
   /* ── Sektionsrahmen ───────────────────────────────────────────── */
-  section.block { border-top: 1px solid var(--rule); padding-block: clamp(3rem, 7vw, 6rem); }
+  section.block { border-top: 1px solid var(--rule); padding-block: var(--space-section); }
   /* align-items:center statt baseline — das Blümchen hat keine Grundlinie, an der es
      sich sinnvoll ausrichten ließe; es soll mittig zur Versalhöhe stehen. */
-  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-block-end: 0; }
+  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); margin-block-end: 0; }
   /* Auftaktzeichen: das ✳ aus dem Kunden-Marquee, in der Akzentfarbe. Als ::before am
      Container, damit im Markup nichts Dekoratives steht. `line-height:0` nimmt dem Glyph
      seinen Zeilenkasten, sonst schöbe er die Zeile auseinander. */
@@ -159,11 +188,11 @@
     transform: rotate(-5deg);
     transform-origin: center;
   }
-  /* Auf dunklem Grund trägt der handschriftliche Vermerk den Zweitakzent statt der
-     Creme — dieselbe Rolle wie das ✳ der Eyebrow darüber. Limette auf Sacramento
-     liegt bei 12,65, die Handschrift bleibt also gut lesbar. Die Kontur bleibt der
+  /* Auf dunklem Grund trägt der handschriftliche Vermerk Tangerine statt der
+     Creme — dieselbe Rolle wie das ✳ der Eyebrow darüber. Tangerine auf warmem Schwarz
+     liegt bei 4,55 und trägt die große Schrift. Die Kontur bleibt der
      Untergrund, damit sie sich weiter sauber aus der Headline schneidet. */
-  .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--limette); stroke: var(--dark-bg); }
+  .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--tangerine); stroke: var(--dark-bg); }
 
   /* ── Hero: fullscreen, „MOIN" edge-to-edge ────────────────────── */
   /* Hero trägt KEIN Inline-Padding — MOIN läuft bis an die Screenkante.
@@ -178,21 +207,19 @@
     padding-inline: 0;
   }
   .hero .top { margin-block-end: auto; padding-block-start: clamp(1.5rem, 4vw, 3rem); }
-  .hero .top .script { font-size: clamp(1.6rem, 3vw, 2.4rem); color: var(--muted); display: inline-block; transform: rotate(-3deg); }
   /* Reine vw-Größe füllt bei konstanter Buchstabenzahl jede Breite gleich aus.
      Ink-Korrektur: Saira-Seitenränder von M/N ≈ 0.06em → per negativem Rand an die
      Kante ziehen; der rechte (ink-freie) Überstand wird von overflow-x:hidden gekappt.
      font-size + margins per Playwright gemessen. */
   h1.moin {
     margin: 0 0 0 -0.058em;
-    font-size: 39.6vw;
+    font-size: clamp(7.5rem, 39.6vw, 38rem);
     font-weight: 800;
     line-height: 0.76;
     letter-spacing: 0;
     text-transform: uppercase;
     white-space: nowrap;
   }
-  .hero .sub { font-size: clamp(1.15rem, 2vw, 1.6rem); font-weight: 500; line-height: 1.25; margin: 0; }
 
   /* ── Projekt-Grid (Variante B), full-bleed ────────────────────── */
   .proj-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block-end: clamp(2rem, 3.2vw, 3rem); }
@@ -207,8 +234,8 @@
      DIESE MARKEN" ragen die Umlautpunkte 12,5px über die Versalhöhe (gemessen), sonst
      rückte die Eyebrow dort optisch zu nah heran. Wert ist textabhängig — bei geänderter
      Headline neu prüfen. */
-  h2.sec-title { margin: calc(0.086em + var(--dia, 0em)) 0 0 -0.082em; font-size: clamp(2.8rem, 9vw, 8rem); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
-  .proj-head .count { font-size: clamp(1.2rem, 2vw, 1.8rem); font-weight: 400; color: var(--muted); }
+  h2.sec-title { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-xl); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
+  .proj-head .count { font-size: var(--type-subline); font-weight: 400; color: var(--muted); }
 
   .tilegrid {
     display: grid;
@@ -249,7 +276,7 @@
     display: grid;
     place-items: center;
     color: var(--ph-ink);
-    font-size: 0.75rem;
+    font-size: var(--type-eyebrow);
     font-weight: 600;
     letter-spacing: 0.08em;
     position: relative;
@@ -266,16 +293,16 @@
 
   .meta { display: flex; flex-direction: column; gap: 0.15rem; margin-top: auto; }
   .meta .row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
-  .meta h3 { font-size: clamp(0.92rem, 1.4vw, 1.15rem); font-weight: 600; margin: 0; line-height: 1.2; }
-  .meta .row2 { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.04em; }
+  .meta h3 { font-size: var(--type-subline); font-weight: 600; margin: 0; line-height: 1.2; }
+  .meta .row2 { font-size: var(--type-eyebrow); color: var(--muted); letter-spacing: 0.04em; }
 
   /* Dieselbe Fläche wie die dunklen Sections, nicht Pine: die CTA-Kachel soll als
      zweite dunkle Ebene der Seite lesen, nicht als eigene Farbe. An --dark-bg/--dark-ink
-     gehängt statt direkt an --sacramento, damit sie dem dunklen Grund folgt, falls der
+     gehängt statt direkt an --warm-black, damit sie dem dunklen Grund folgt, falls der
      einmal wechselt. */
-  .tile.cta { background: var(--dark-bg); color: var(--dark-ink); justify-content: center; gap: 0.4rem; }
-  .tile.cta .k { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
-  .tile.cta strong { font-size: 1.15rem; font-weight: 600; line-height: 1.2; }
+  .project-inquiry { background: var(--dark-bg); color: var(--dark-ink); justify-content: center; gap: 0.4rem; }
+  .project-inquiry .k { font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; opacity: 0.6; }
+  .project-inquiry strong { display: inline-flex; align-items: center; gap: 0.45rem; font-size: var(--type-subline); font-weight: 600; line-height: 1.2; }
 
   /* ── Leistungen / Skills (Haarlinien-Raster, 4 Spalten) ───────── */
   .svc-grid {
@@ -302,54 +329,120 @@
   }
   .svc .ico { inline-size: 1.9rem; block-size: 1.9rem; color: var(--ink); }
   .svc .ico svg { width: 100%; height: 100%; display: block; }
-  .svc h3 { margin: 0.3rem 0 0; font-size: clamp(1.25rem, 2vw, 1.7rem); font-weight: 600; line-height: 1.05; }
-  .svc p { margin: 0; font-size: 0.85rem; line-height: 1.35; color: var(--muted); max-width: 30ch; }
+  .svc h3 { margin: 0.3rem 0 0; font-size: var(--headline-s); font-weight: 600; line-height: 1.05; }
+  .svc p {
+    margin: 0;
+    max-width: 30ch;
+    color: var(--muted);
+    font-size: var(--type-subline);
+    line-height: 1.35;
+    text-wrap: pretty;  /* Fallback: keine verwaiste, sehr kurze Schlusszeile */
+    text-wrap: balance; /* bevorzugt: die kurzen Sublines gleichmäßig verteilen */
+    -webkit-hyphens: none;
+    hyphens: none;
+  }
 
   /* ── About ────────────────────────────────────────────────────── */
   .about { display: grid; align-items: start; }
-  /* Abstand zur Eyebrow wie in allen anderen Sections: derselbe Grundwert 0.086em plus
-     der ausgemessene Ausgleich. Er ist hier am größten, weil diese Headline mit 51px die
-     kleinste der Seite ist — die Eyebrow steht überall fix auf 0.75rem, der proportionale
-     Grundabstand fällt also entsprechend knapp aus. Ohne den Ausgleich blieben 12,9px
-     Tinten-Abstand gegen 28,8px bei den großen Headlines; 0.086em + 0.225em = 15,9px
-     schließen die Lücke genau (nachgemessen).
-     Nebeneffekt, der hier zählt: der Aufstrich des handschriftlichen K rückt damit von
-     der Eyebrow ab, unter der er sonst fast hängt. */
-  .about .statement { margin: calc(0.086em + var(--dia, 0em)) 0 0; --dia: 0.225em;
-    font-size: clamp(1.6rem, 3.6vw, 3.2rem); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+  /* Größe, Versalien und Zeilenhöhe sind dieselben wie bei der Kunden-Headline
+     (`.clients h2.big`) — About ist damit eine Section-Headline unter Section-Headlines und
+     keine Zwischenüberschrift mehr. Mit ihnen kommen die beiden Werte, die an Versalien
+     hängen: der Eyebrow-Ausgleich `--dia` (0.139em statt der 0.225em, die diese Headline
+     nur brauchte, solange sie die kleinste der Seite war) und der optische Randausgleich
+     -0.082em, mit dem Sairas Versalien gegen das ✳ der Eyebrow fluchten. */
+  .about .statement { position: relative; z-index: 0;
+    margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; --dia: 0.139em;
+    font-size: var(--headline-m); font-weight: 600; line-height: 1;
+    text-transform: uppercase; text-wrap: balance; }
   /* Der Name in der Handschrift, mitten im Satz — in der Akzentfarbe, der einzigen Stelle
-     neben dem ✳, an der sie Text trägt. Bei 51px greift die Schwelle für große Schrift
+     neben dem ✳, an der sie Text trägt. Bei 64px greift die Schwelle für große Schrift
      (3:1), Tangerine liegt mit 3,4 darüber.
-     Zur Größe: Astagina hat bei GLEICHER Größe eine kleinere x-Höhe als Saira (19,2 gegen
-     26,1 px bei 51,2 px), aber eine höhere Versalie (36,2 gegen 35,2) — Cap- und x-Höhe
-     fordern also gegensätzliche Werte (0,97em bzw. 1,36em). Verglichen wurden 1,30/1,50/
-     1,70/1,90× am echten Font; bei 1.75em trägt der Name wie eine Unterschrift, ab 1,90×
-     wird das K zum Solisten. Weil der Umbruch vor „und" fest im Markup steht (<br>), kann
-     die Handschrift breiter laufen, ohne den Zeilenfall zu verschieben.
-     `line-height: 0.63` hält den Zeilenkasten: line-height wird als Zahl vererbt, der Span
-     bekäme sonst 1.1 × 1.75em und zöge die beiden Headline-Zeilen auseinander.
-     0.63 × 1.75 ≈ 1.1, also genau die Zeilenhöhe des Absatzes. */
+     Zur Größe: Astagina hat bei GLEICHER Größe eine kleinere x-Höhe als Saira, aber eine
+     höhere Versalie — Cap- und x-Höhe fordern also gegensätzliche Werte. Verglichen wurden
+     1,30/1,50/1,70/1,90× am echten Font; bei 1.75em trägt der Name wie eine Unterschrift,
+     ab 1,90× wird das K zum Solisten. Der Wert steht auch neben den Versalien: die
+     Handschrift misst 85,4px Tinte gegen 45,0px Versalhöhe (nachgemessen bei 64px).
+     Weil der Umbruch vor „und" fest im Markup steht (<br>), kann die Handschrift breiter
+     laufen, ohne den Zeilenfall zu verschieben.
+     `line-height: 0.571` hält den Zeilenkasten: line-height wird als Zahl vererbt, der Span
+     bekäme sonst 1 × 1.75em und zöge die beiden Headline-Zeilen auseinander.
+     0.571 × 1.75 ≈ 1, also genau die Zeilenhöhe des Absatzes. Bei geänderter Zeilenhöhe
+     der Headline mitziehen. */
   .about .statement .katha {
     font-family: "Astagina", cursive;
     font-weight: 400;
     font-style: normal;
     font-size: 1.75em;
-    line-height: 0.63;
+    /* Die Versalien der Headline dürfen die Handschrift NICHT erfassen — „KATHARINA" in
+       einer Signaturschrift wäre schlicht falsch gesetzt. */
+    text-transform: none;
+    line-height: 0.571;
     /* Tiefer gesetzt, damit die Handschrift MITTIG zur Zeile sitzt statt auf deren
        Grundlinie. Auf der Grundlinie stünde sie zwangsläufig zu hoch: Astagina bringt bei
        dieser Größe 38,2 em-Anteile Oberlänge mit, Sairas Versalhöhe misst nur 35,2 px —
        die Tinte der Handschrift läge also weit über der Mitte der Zeile.
        `position: relative` statt `vertical-align`, weil der Versatz das Layout nicht
        anfassen und den Zeilenkasten nicht aufziehen soll.
-       0.15em ist nachgemessen: die Tintenmitte der Handschrift trifft damit die Tintenmitte
-       von „Ich bin" auf 0,3px genau (ohne Versatz läge sie 13,7px zu hoch, bei 0,18em
-       2,4px zu tief). Der Wert hängt an der Schriftgröße — bei geänderter Größe neu
-       messen, nicht mitskalieren lassen.
+       Der Grundwert wurde per Pixelanalyse der Tinte bei 4-facher Auflösung bestimmt; die
+       gezeichnete SVG-Fassung sitzt für die gewünschte Überlagerung zusätzlich leicht höher.
+       Der Wert hängt an Schriftgröße UND Versalien — bei einer Änderung neu messen, nicht
+       mitskalieren lassen. (Er lag bei 0.15em, solange die Headline 51,2px groß war und im
+       gemischten Satz stand; dort war der Bezug die Tintenmitte von „Ich bin".)
        Der Versatz bezieht sich auf die SPAN-Größe, nicht auf die des Absatzes. */
     position: relative;
-    top: 0.15em;
+    /* Die Handschrift liegt HINTER der zweiten Headline-Zeile: negativer z-index setzt den
+       Span vor den Seitenhintergrund, aber hinter den Fließinhalt des Stapelkontexts.
+       (Mit `z-index: 1` läge sie davor und schnitte in die Versalien — beide Varianten
+       verglichen, s. README.)
+       Der h2 bildet dafür bewusst den lokalen Stapelkontext: So bleibt der Name sicher über
+       dem Seitenhintergrund, aber hinter dem übrigen Text dieser Headline. */
+    z-index: -1;
     letter-spacing: 0;
-    color: var(--accent);
+    /* Der HTML-Text ist nur noch Platzhalter: Er hält die Breite im Satz und bleibt für
+       Screenreader und Seitensuche stehen. Sichtbar ist das SVG darüber. */
+    color: transparent;
+  }
+  /* Der gezeichnete Name. Gleiche Technik wie die Vermerke auf den Sektions-Headlines und
+     auf dem Porträt: SVG-Text, weil nur dort die Kontur BEIDES kann — glatt und rund
+     (`stroke-linejoin: round` + `paint-order: stroke`). Hier ist sie kein Schmuck, sondern
+     Voraussetzung: Die Handschrift ragt in die zweite Zeile, und ohne freigeschnittene
+     Kontur verklumpten „Katharina" und „UND BLEIBE" ineinander.
+     Dieselben zwei Fallstricke wie dort: Das SVG braucht eine reale Größe — ein 0×0-SVG
+     malt Chrome trotz `overflow: visible` nicht —, und `bottom` liegt bei SVG-Text auf der
+     GRUNDLINIE, nicht auf der Unterkante.
+     Ausgerichtet wird LINKS (`left: 0` + `text-anchor: start`), nicht mittig wie die
+     übrigen Vermerke. Der Grund: Der gezeichnete Name ist größer als sein Platzhalter und
+     ragt über ihn hinaus — zentriert liefe er nach links ins „N" von „ICH BIN" und machte
+     es unlesbar (nachgemessen). Nach rechts ist dagegen Platz: die erste Zeile ist nur
+     471 px breit, die Textspalte 964 px. */
+  .about .statement .katha .scr {
+    position: absolute;
+    left: 0;
+    bottom: 0.24em;              /* frei über der unteren Statement-Zeile */
+    /* Der Name steht zweimal im DOM — einmal als Platzhalter, einmal gezeichnet. Für
+       Screenreader erledigt das `aria-hidden` am SVG; beim KOPIEREN bliebe sonst
+       „KatharinaKatharina" stehen, deshalb hier zusätzlich `user-select: none`.
+       (Die Seitensuche findet weiterhin zwei Treffer, beide an derselben Stelle.) */
+    -webkit-user-select: none; user-select: none;
+    font-size: 1.3em;            /* auf die SPAN-Größe bezogen, also 1.3 × 1.75em */
+    inline-size: 1px; block-size: 1px;
+    overflow: visible;
+  }
+  .about .statement .katha .scr text {
+    font-family: "Astagina", cursive;
+    font-size: 1em;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    text-anchor: start;
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 0.11em;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    paint-order: stroke;
+    transform: rotate(-5deg);    /* dieselbe Schräge wie die Vermerke auf den Headlines */
+    transform-origin: center;
   }
   /* ── About-Akkordeon als Kachelreihe ─────────────────────────────────────
      Drei Kacheln nebeneinander, je eine Rasterspalte breit. Begrenzt wird die Reihe
@@ -357,11 +450,15 @@
      gestrichelte Spaltenlinien ohnehin genau dort liegen. Eine zweite, durchgezogene
      Linie daneben wäre eine Verdoppelung. */
   /* Die Kacheln werden auf GLEICHE Höhe gezogen (Vorgabe des Rasters, kein
-     `align-items: start`). Das ist Absicht: Der Kopf einer geschlossenen Kachel steht
-     dadurch mittig in der vollen Kachelhöhe statt oben — geöffnete und geschlossene
-     Köpfe fluchten dann zwar nicht, aber genau das ist gewollt.
-     (Ein Zwischenstand mit `align-items: start` brachte alle Köpfe auf eine Linie;
-     verworfen, weil die zentrierten Köpfe besser aussehen.)
+     `align-items: start`). Daraus folgen die zwei Zustände der Reihe:
+     GESCHLOSSEN — der Kopf steht mittig in der vollen Kachelhöhe. Wächst die Kachel, weil
+                die Nachbarin geöffnet wurde, wandert er mit nach unten. Das ist der
+                Kerneffekt der Reihe.
+     OFFEN — der Kopf rückt auf die Grundhöhe (`min-block-size`) und macht dem Text Platz.
+                Weil diese Höhe für alle drei dieselbe ist, fluchten die Köpfe und die
+                Fließtexte, sobald mehrere offen sind — ohne dass etwas dafür gerechnet
+                werden müsste.
+     Der Übergang ist animiert, s. beim Kopf.
      Die Abschlusslinie sitzt am Container, nicht an den Kacheln — bei gleicher Höhe
      dasselbe Ergebnis, aber unabhängig davon, ob eine Kachel einmal ausschert. */
   .about > .me-text {
@@ -373,17 +470,16 @@
     min-width: 0;
     display: flex; flex-direction: column;
   }
-  /* `flex: 1 1 auto`: Der Kopf nimmt den Platz ein, der neben dem Text übrig bleibt,
-     und zentriert Titel und Subline darin. Bei der geöffneten Kachel bleibt er deshalb
-     auf der Grundhöhe und der Text schließt direkt an; die geschlossenen werden vom
-     Raster auf dieselbe Höhe gezogen, dort wächst der Kopf mit und hält seinen Inhalt
-     mittig in der Kachel. */
+  /* `flex: 1 1 auto`: Solange die Kachel zu ist, nimmt der Kopf ihre volle Höhe ein und
+     hält seinen Inhalt mittig darin — er wandert also mit, wenn das Raster die Kachel
+     wegen einer geöffneten Nachbarin streckt. Beim Öffnen fällt das Wachsen weg (s. unten)
+     und der Kopf steht auf seiner Grundhöhe; die `min-block-size` ist damit zugleich die
+     Kante, an der der Fließtext beginnt — bei allen Kacheln dieselbe. */
   .about .me-row summary {
     flex: 1 1 auto;
     min-block-size: clamp(9rem, 15vh, 12rem);
     display: flex; flex-direction: column;
-    align-items: flex-start; justify-content: center;
-    gap: 0.55rem;
+    align-items: flex-start; justify-content: flex-start;
     padding: clamp(1.1rem, 1.8vw, 1.8rem);
     /* Rechts Platz für das Zeichen in der Ecke, damit lange Titel nicht darunter laufen. */
     padding-inline-end: calc(clamp(1.1rem, 1.8vw, 1.8rem) + 1.6rem);
@@ -391,16 +487,48 @@
     list-style: none;                 /* Standard-Dreieck weg … */
   }
   .about .me-row summary::-webkit-details-marker { display: none; }  /* … auch in WebKit */
+  /* Sobald eine Kachel offen ist, hört IHR Kopf auf, sich in der Kachelhöhe zu zentrieren.
+     Geschlossene Nachbarn bleiben mittig; sind mehrere Kacheln offen, fluchten deren Köpfe
+     und Textanfänge über die gemeinsame Grundhöhe. Umgeschaltet wird `flex-grow`, NICHT
+     `justify-content`: Letzteres hat keine
+     interpolierbaren Werte und springt (verworfener Zwischenstand, s. README) — der Kopf
+     stünde zwar richtig, käme aber ohne Bewegung dorthin. `flex-grow` ist eine Zahl und
+     animiert; der Kopf wandert in derselben Zeit und mit derselben Kurve wie die Kachelhöhe,
+     die beiden Bewegungen laufen also als eine. */
+  /* Zentriert wird über zwei FLEX-SPACER statt über `justify-content: center`. Der Grund
+     ist die Flucht der Titel: Bei zentriertem Inhalt hängt die Höhe des h3 an der Höhe des
+     GESAMTEN Kopfes — eine dreizeilige Subline (bei 1024px die dritte Kachel) schöbe ihren
+     Titel 10px über die der Nachbarn. Mit Spacern beginnt der Inhalt oben an der Innenkante,
+     die Titel fluchten also unabhängig davon, wie viele Zeilen die Subline füllt.
+     Zwei gleiche Spacer oben und unten ergeben dieselbe Zentrierung wie vorher.
+     Der `gap` musste dafür weichen — er hätte auch zwischen Spacer und Inhalt gewirkt;
+     der Abstand Titel/Subline sitzt jetzt als Margin an der Subline. */
+  .about .me-row summary::before,
+  .about .me-row summary::after { content: ""; flex: 1 1 0; }
+  .about .me-row summary { transition: flex-grow .5s cubic-bezier(.16, 1, .3, 1); }
+  .about .me-row summary::before,
+  .about .me-row summary::after { transition: flex-grow .5s cubic-bezier(.16, 1, .3, 1); }
+  /* Der Umschalter hängt an der EIGENEN Kachel (`[open]`), nicht am Container. Ein
+     Zwischenstand mit `.me-text:has(.me-row[open])` schaltete alle drei zugleich um und
+     nahm damit den Kernbeweis der Reihe: Der Kopf soll erst dann nach oben wandern, wenn
+     unter IHM der Text aufgeht. Bei geschlossener Nachbarkachel bleibt er mittig stehen —
+     die Bewegung gehört zum Öffnen und zu nichts sonst. Sind am Ende alle drei offen,
+     stehen alle Köpfe auf der Grundhöhe und fluchten von selbst. */
+  .about .me-row[open] summary,
+  .about .me-row[open] summary::before,
+  .about .me-row[open] summary::after { flex-grow: 0; }
+
   .about .me-row summary:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
   .about .me-row h3 {
     margin: 0;
-    font-size: clamp(1.35rem, 2.2vw, 1.9rem); font-weight: 600; line-height: 1.05;
+    font-size: var(--headline-s); font-weight: 600; line-height: 1.05;
   }
   /* NICHT `.lead` nennen: die Klasse gibt es schon im Projektraster, wo sie mit
      `display: contents` die Wrapper-Ebene auflöst — der Span hätte dadurch Breite 0
      und wäre gar kein Flex-Element mehr (nachgemessen). */
   .about .me-row .me-lead {
-    font-size: 0.95rem; line-height: 1.35; color: var(--muted);
+    margin-block-start: 0.55rem;   /* ersetzt den früheren `gap` am Kopf, s. dort */
+    font-size: var(--type-subline); line-height: 1.35; color: var(--muted);
     max-width: 22ch;
   }
   /* Das Zeichen ist ein Kreuz aus zwei Haarlinien — dieselbe Sprache wie das Raster.
@@ -417,8 +545,8 @@
   .about .me-row .mark::before,
   .about .me-row .mark::after {
     content: ""; position: absolute; inset-block-start: 50%; inset-inline: 0;
-    /* 1,25px statt 1px: gemessen am Schaft der „→" in den Projektkacheln (16px Saira,
-       Medianstärke 1,25 CSS-px). So haben Plus/Minus und Pfeile dasselbe Gewicht. */
+    /* 1,25px statt 1px: dieselbe Schaftstärke wie beim gemeinsamen CSS-Pfeil der
+       Projektkacheln. So haben Plus/Minus und Pfeile dasselbe Gewicht. */
     block-size: 1.25px; background: var(--ink);
     transition: transform .45s cubic-bezier(.75, 0, .25, 1);
   }
@@ -430,7 +558,7 @@
     cursor: pointer;
     margin: 0;
     padding: 0 clamp(1.1rem, 1.8vw, 1.8rem) clamp(1.2rem, 2.4vw, 2rem);
-    font-size: 0.92rem; line-height: 1.72; color: var(--ink);
+    font-size: var(--type-subline); line-height: 1.72; color: var(--ink);
   }
   /* Auf- und Zuklappen animiert die HÖHE. Das ist der Kern: weil die Kachel stetig
      wächst, wandert der senkrecht zentrierte Kopf ganz von selbst mit — kontinuierlich
@@ -504,10 +632,12 @@
   /* Porträt als Klecks statt als Rechteck. Der clipPath vereint Hauptform und vier
      abgelöste Spritzer — mehrere Teilpfade in einem clipPath ergeben zusammen die Maske.
      `clipPathUnits="objectBoundingBox"` rechnet in Anteilen 0…1, die Form skaliert also
-     mit dem Element. Quadratisch, damit die Spritzer ringsum Platz haben.
+     mit dem Element — beim Seitenverhältnis 4:5 wird sie entsprechend in die Höhe gezogen.
+     Genau darum geht es: das Feld nutzt die Spalte besser aus, weil unter dem Statement
+     ohnehin Platz frei ist, und ein Porträt steht hochkant besser als im Quadrat.
      Border und Diagonalkreuz entfallen: eine Border würde von der Maske angeschnitten. */
   .about .portrait .frame {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 5;
     border: none;
     clip-path: url(#klecks);
   }
@@ -560,8 +690,9 @@
   .on-dark { color: var(--dark-ink); position: relative; }
   .on-dark::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--dark-bg); }
   .on-dark .avail { color: var(--dark-muted); }
-  /* Auf Dunkel wäre Pine kaum zu sehen — dort trägt die Limette den Punkt. */
-  .on-dark .avail::before { background: var(--limette); }
+  /* Der Statuspunkt bleibt in jeder Umgebung Smaragdgrün; auf warmem Schwarz erreicht
+     er 5,04:1 und braucht deshalb keinen eigenen Dunkelmodus. */
+  .on-dark .avail::before { background: var(--smaragd); }
   .clients { border-top: none; padding-inline: 0; }
   .clients .sec-label, .clients h2.big, .clients .cl-note { padding-inline: clamp(1.25rem, 4vw, 4rem); }
   .clients .sec-label { color: var(--dark-muted); }
@@ -572,7 +703,7 @@
      Headline hier aber auf 64px statt 128px. Gemessen blieben so nur 19,9px Tinten-
      Abstand gegen 28,8px bei den großen Headlines; 0.139em (= 8,9px bei 64px) schließt
      die Differenz. Der Wert ist textabhängig — bei geänderter Headline neu messen. */
-  .clients h2.big { --dia: 0.139em; margin: calc(0.086em + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: clamp(2rem, 5vw, 4rem); font-weight: 600; line-height: 1; text-transform: uppercase; }
+  .clients h2.big { --dia: 0.139em; margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: var(--headline-m); font-weight: 600; line-height: 1; text-transform: uppercase; }
 
   .marquee {
     border-block: 1px solid var(--dark-rule);
@@ -585,15 +716,17 @@
     inline-size: max-content;
     animation: marquee 42s linear infinite;
   }
-  .marquee:hover .marquee-track { animation-play-state: paused; }
+  .marquee:hover .marquee-track,
+  .marquee:focus .marquee-track { animation-play-state: paused; }
+  .marquee:focus-visible { outline: 2px solid var(--dark-ink); outline-offset: -3px; }
   .marquee-track .item {
     display: inline-flex;
     align-items: center;
     gap: clamp(1.5rem, 3vw, 3rem);
     padding-inline: clamp(0.75rem, 1.5vw, 1.5rem);
-    font-size: clamp(1.6rem, 3.6vw, 3.2rem);
+    font-size: var(--headline-s);
     font-weight: 600;
-    letter-spacing: 0.01em;
+    letter-spacing: var(--tracking-action);
     white-space: nowrap;
     color: var(--dark-ink);
   }
@@ -619,10 +752,10 @@
   /* Bei den zweizeiligen Headlines sitzt der Vermerk mittig auf dem ZEILENENDE statt
      mittig im Wort — er ragt damit zur Hälfte über die kürzere letzte Zeile hinaus. */
   h2.big .lastline .scr { left: 100%; }
-  .contact h2.big { margin: calc(0.086em + var(--dia, 0em)) 0 0 -0.082em; font-size: clamp(2.6rem, 7vw, 6rem); font-weight: 600; line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
+  .contact h2.big { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-l); font-weight: 600; line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
   .contact .buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
   footer.site { border-top: 1px solid var(--rule); }
-  .foot-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-block: 1.1rem; font-size: 0.78rem; color: var(--muted); }
+  .foot-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-block: 1.1rem; font-size: var(--type-eyebrow); color: var(--muted); }
   .foot-bar nav { display: flex; gap: 1.25rem; }
   .foot-bar a { color: inherit; text-decoration: none; }
   .foot-bar a:focus-visible, .pill:focus-visible, .tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
@@ -646,28 +779,27 @@
      Dark Mode); alle Tokens stehen jetzt hier. */
   :root{
     --creme:#F0ECE2;      /* Grundton der ganzen Seite */
-    --sacramento:#162114; /* Nahschwarz: Schrift auf Hell, dunkle Flächen, Footer */
-    --tangerine:#EB3D00;  /* Akzent — trägt auf hell (3,42) wie dunkel (4,12) */
-    --limette:#C7F03C;    /* Zweitakzent, NUR auf Dunkel: 12,65 dort, aber 1,12 auf Creme */
+    --warm-black:#171410; /* ursprüngliches warmes Schwarz: Schrift, dunkle Flächen, Footer */
+    --tangerine:#EB3D00;  /* Akzent — trägt auf hell (3,42) wie dunkel (4,55) */
+    --limette:#C7F03C;    /* reservierter Zweitakzent; aktuell nicht eingesetzt */
     --pine:#294122;       /* mittlere Fläche; Creme darauf 9,50 — derzeit unbenutzt */
-    --smaragd:#1C995C;    /* Verfügbarkeits-Punkt; Creme 3,09 · Sacramento 4,57 */
+    --smaragd:#1C995C;    /* Verfügbarkeits-Punkt; Creme 3,09 · warmes Schwarz 5,04 */
 
     --bg:var(--creme);
-    --ink:var(--sacramento);
-    /* Sacramento zu 38 % mit Creme gemischt — der hellste Ton dieser Reihe, der auf
-       Creme noch 4,5:1 erreicht. Der frühere warme Grauton #7d766a lag bei 3,81 und
+    --ink:var(--warm-black);
+    /* Der gedämpfte Textton erreicht auf Creme 4,5:1. Der frühere warme Grauton #7d766a lag bei 3,81 und
        riss damit alle Eyebrows, Kachel-Metazeilen und Leistungssätze unter AA. */
     --muted:#686D62;
-    /* Linien und Platzhalter sind Sacramento mit Deckkraft, nicht eigene Farben —
+    /* Linien und Platzhalter sind warmes Schwarz mit Deckkraft, nicht eigene Farben —
        so bleiben sie beim Ton, wenn der Grundton wechselt. */
-    --rule:rgba(22,33,20,0.2);
-    --rule-soft:rgba(22,33,20,0.09);
-    --rule-strong:var(--sacramento); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante */
-    --ph:rgba(22,33,20,0.06);
-    --ph-ink:rgba(22,33,20,0.45);
+    --rule:rgba(23,20,16,0.2);
+    --rule-soft:rgba(23,20,16,0.09);
+    --rule-strong:var(--warm-black); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante */
+    --ph:rgba(23,20,16,0.06);
+    --ph-ink:rgba(23,20,16,0.45);
     --accent:var(--tangerine);
 
-    --dark-bg:var(--sacramento);
+    --dark-bg:var(--warm-black);
     --dark-ink:var(--creme);
     --dark-rule:rgba(240,236,226,0.18);
     --dark-muted:rgba(240,236,226,0.62);
@@ -681,29 +813,199 @@
        `sticky` IM FLUSS — seine Höhe kommt also zur Stage hinzu. Ohne Abzug ist die
        erste Bildschirmseite immer genau um ihn zu hoch (gemessen: 62,3px auf jeder
        Größe), und die Subline wird unten angeschnitten. */
-    --header-h:0px;
+    --header-h:4.6rem;
     /* Untergrenze der Hero-Höhe. Darunter würde das MOIN, dessen Größe an der BREITE
        hängt, in die Subline laufen. Über dieser Grenze ist der Hero exakt ein
        Bildschirm — inklusive Navigation. */
     --hero-floor:33rem;
+    /* Durchgängig fluide Typostufen; keine Schriftgröße wird in Media Queries ersetzt. */
+    --headline-xl: clamp(2.8rem, 8vw, 12rem);
+    --headline-l: clamp(2.6rem, 6vw, 9rem);
+    --headline-m: clamp(2rem, 4vw, 7rem);
+    --headline-s: clamp(1.35rem, 1.9vw, 3rem);
+    --type-eyebrow: clamp(.72rem, calc(.69rem + .12vw), .82rem);
+    --type-subline: clamp(.95rem, calc(.9rem + .2vw), 1.1rem);
+    /* Gemeinsame hervorgehobene Lesestufe: Hero-Subline, Projekt-Lead und Prio-CTA.
+       1.2rem Untergrenze hält Creme auf Tangerine bei 700 sicher in der Großtext-Stufe. */
+    --type-lead: clamp(1.2rem, calc(1.1rem + .3vw), 1.5rem);
+    /* Drei gemeinsame vertikale Rhythmusstufen für Start- und Projektseiten. */
+    --space-section: clamp(3rem, 7vw, 6rem);
+    --space-eyebrow-title: .086em;
+    --space-title-content: clamp(2.5rem, 5vw, 4rem);
+    /* Drei semantische Laufweiten statt einzelner Werte pro Komponente. */
+    --tracking-display: -.03em;
+    --tracking-action: .01em;
+    --tracking-label: .1em;
     /* Größe des handschriftlichen Vermerks: 0,70 x der Sektionstitel-Skala
        clamp(2.8rem, 9vw, 8rem). Absolut gesetzt, damit er über allen Headlines gleich
        groß ist — auch über den kleineren zweizeiligen. */
-    --scr-size: clamp(1.96rem, 6.3vw, 5.6rem);
+    --scr-size: clamp(1.96rem, 5.6vw, 8.4rem);
   }
-  /* Auf dunklem Grund übernimmt die Limette den Akzent: Tangerine käme dort auf 4,12,
-     die Limette auf 12,65. Eine Regel, alle dunklen Flächen — Kunden und Footer. */
-  .on-dark{ --accent:var(--limette); }
+  /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent; 4,55:1 gegen das
+     warme Schwarz trägt Eyebrow-Zeichen und große Schrift. */
+  .on-dark{ --accent:var(--tangerine); }
   /* Bewusst hell-only: cremefarbener Grund, warmes Schwarz für alle Schriften (helle Start-Section). */
   :root{ color-scheme: light; }
   *{box-sizing:border-box;} html,body{margin:0;}
   body{overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:"Saira",system-ui,sans-serif;}
+  body::before {
+    content: ""; position: fixed; z-index: 30;
+    inset-block: var(--header-h) 0; inset-inline: 0;
+    background-color: rgba(23, 20, 16, .28);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-blend-mode: soft-light;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .16s ease-out, visibility 0s linear .16s;
+  }
+  body:has(.site-nav[open])::before {
+    opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
+  }
   .pad{padding-inline:var(--pad);}
-  header.site{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.8rem var(--pad);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:color-mix(in srgb,var(--bg) 55%,transparent);border-bottom:1px solid var(--rule-strong);}
-  .brand{font-weight:700;font-size:0.95rem;} .brand sup{font-weight:400;font-size:0.6em;}
-  .avail{display:flex;align-items:center;gap:0.45rem;font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+  header.site{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.8rem var(--pad);backdrop-filter:blur(20px) saturate(.7);-webkit-backdrop-filter:blur(20px) saturate(.7);background:color-mix(in srgb,var(--creme) 80%,transparent);border-bottom:1px solid var(--rule-strong);}
+  header.site::after {
+    content: ""; position: absolute; z-index: 1; inset: 0;
+    background-color: rgba(23, 20, 16, .28);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+    background-repeat: repeat; background-blend-mode: soft-light;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .16s ease-out, visibility 0s linear .16s;
+  }
+  header.site:has(.site-nav[open])::after {
+    opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
+  }
+  .brand{font-weight:700;font-size:var(--type-subline);}
+  .avail{display:flex;align-items:center;gap:0.45rem;font-size:var(--type-eyebrow);font-weight:600;letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--muted);}
+  header.site > .avail { color: #4B4F48; }
   .avail::before{content:"";inline-size:0.5rem;block-size:0.5rem;border-radius:50%;background:var(--smaragd);}
-  .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:0.82rem;font-weight:600;text-decoration:none;}
+  .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:var(--type-subline);font-weight:600;text-decoration:none;}
+  /* Kontakt bleibt der direkte Hauptweg; das eingeklappte Ankermenü sitzt als zweite
+     Aktion daneben. Native details/summary hält es ohne Menü-Framework bedienbar. */
+  .header-actions { display: flex; align-items: center; gap: clamp(1rem, 2vw, 2rem); }
+  .site-nav { position: relative; z-index: 2; margin: 0; }
+  .site-nav summary { list-style: none; cursor: pointer; }
+  .site-nav summary::-webkit-details-marker { display: none; }
+  .menu-toggle {
+    inline-size: 4.6rem; block-size: 4.6rem; margin-block: -.8rem; padding: 0;
+    display: grid; place-items: center;
+    background: transparent; color: var(--ink); border: 0; border-radius: 0;
+    border-inline: 1px solid var(--rule-strong);
+    border-block-end: 1px solid transparent;
+  }
+  /* Offen überdeckt die cremefarbene Unterkante die Headerlinie: Iconfeld und Panel
+     lesen sich dadurch als ein zusammenhängender Reiter. */
+  .site-nav[open] .menu-toggle {
+    position: relative; z-index: 1;
+    background: var(--creme);
+    border-block-end-color: var(--creme);
+  }
+  .site-nav[open] .menu-toggle::after {
+    content: ""; position: absolute; z-index: 2;
+    inset-inline: 0; inset-block-end: -2px; block-size: 3px;
+    background: var(--creme);
+  }
+  body:has(.site-nav[open]) { overscroll-behavior: none; }
+  section[id] { scroll-margin-block-start: var(--header-h); }
+  .menu-icon { position: relative; display: block; inline-size: 1.75rem; block-size: .75rem; }
+  .menu-icon::before, .menu-icon::after {
+    content: ""; position: absolute; inset-inline-start: 0;
+    inline-size: 1.75rem; block-size: 2px; background: currentColor; transform-origin: center;
+    transition: inset-block-start .45s cubic-bezier(.75, 0, .25, 1),
+                transform .45s cubic-bezier(.75, 0, .25, 1);
+  }
+  .menu-icon::before { inset-block-start: 0; }
+  .menu-icon::after { inset-block-start: calc(100% - 2px); }
+  .site-nav[open] .menu-icon::before { inset-block-start: calc(50% - 1px); transform: rotate(45deg); }
+  .site-nav[open] .menu-icon::after { inset-block-start: calc(50% - 1px); transform: rotate(-45deg); }
+  /* Der Browser hält den Details-Inhalt beim Schließen bis zum Ende der Transition
+     sichtbar. Dadurch läuft nicht nur das Öffnen, sondern auch der Rückweg sauber. */
+  .site-nav::details-content { transition: content-visibility .45s allow-discrete; }
+  .site-nav nav {
+    position: absolute;
+    inset-block-start: calc(100% + .8rem);
+    inset-inline-end: calc(0px - var(--pad));
+    inline-size: 50vw;
+    block-size: calc(100vh - var(--header-h, 4.6rem) + 1px);
+    block-size: calc(100dvh - var(--header-h, 4.6rem) + 1px);
+    border-block-start: 1px solid var(--ink);
+    border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
+    background: var(--creme);
+    padding: clamp(2rem, 6vw, 6rem);
+    display: grid;
+    grid-auto-rows: min-content;
+    align-content: center;
+    justify-content: center;
+    justify-items: start;
+    gap: clamp(.7rem, 1.5vh, 1.35rem);
+    overflow-y: auto;
+    box-shadow:
+      -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
+      -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transform: translateX(2.5rem);
+    clip-path: inset(0 0 0 100%);
+    transform-origin: top right;
+    transition: opacity .28s ease,
+                transform .45s cubic-bezier(.75, 0, .25, 1),
+                clip-path .45s cubic-bezier(.75, 0, .25, 1),
+                visibility 0s linear .45s;
+  }
+  .site-nav[open] nav {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transform: translateX(0); clip-path: inset(0);
+    transition-delay: 0s;
+  }
+  @starting-style {
+    .site-nav[open] nav { opacity: 0; transform: translateX(2.5rem); clip-path: inset(0 0 0 100%); }
+  }
+  .site-nav nav a {
+    display: flex; align-items: center;
+    color: var(--ink); text-decoration: none;
+    font-size: var(--headline-m); font-weight: 600;
+    line-height: .95; letter-spacing: var(--tracking-display);
+    opacity: 0;
+    transform: translateX(2.5rem);
+    transition: opacity .4s ease,
+                transform .65s cubic-bezier(.16, 1, .3, 1);
+  }
+  .site-nav[open] nav a {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .site-nav[open] nav a:nth-child(1) { transition-delay: .4s; }
+  .site-nav[open] nav a:nth-child(2) { transition-delay: .52s; }
+  .site-nav[open] nav a:nth-child(3) { transition-delay: .64s; }
+  .site-nav[open] nav a:nth-child(4) { transition-delay: .76s; }
+  .site-nav[open] nav a:nth-child(5) { transition-delay: .88s; }
+  .site-nav[open] nav a:nth-child(6) { transition-delay: 1s; }
+  .site-nav nav a::before {
+    content: "✳"; flex: none;
+    margin-inline-end: clamp(.7rem, 1.2vw, 1rem);
+    color: var(--tangerine);
+    /* Dekoratives Zeichen: relativ zum Menütext, gedeckelt durch die bestehende S-Stufe. */
+    font-size: min(.7em, var(--headline-s));
+    line-height: 1; letter-spacing: 0;
+  }
+  @starting-style {
+    .site-nav[open] nav a { opacity: 0; transform: translateX(2.5rem); }
+  }
+  .site-nav nav a:hover { color: var(--tangerine); }
+  .site-nav summary:focus-visible, .site-nav nav a:focus-visible {
+    outline: 2px solid var(--ink); outline-offset: 2px;
+  }
+  @media (max-width: 52rem) {
+    header.site > .avail { display: none; }
+    .header-actions { gap: .75rem; }
+    .site-nav nav {
+      inline-size: 100vw;
+      padding: clamp(2rem, 9vw, 4rem) var(--pad);
+      box-shadow: 0 1.25rem 2.5rem rgba(23, 20, 16, .22);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .menu-icon::before, .menu-icon::after, .site-nav nav, .site-nav nav a,
+    .site-nav::details-content, body::before, header.site::after { transition: none; }
+  }
   /* KEIN isolation:isolate — die Stage darf keinen eigenen Stacking-Kontext aufmachen,
      sonst käme der Hero-Canvas nicht unter das seitenweite Liniengerüst (s. u.). */
   /* Genau EIN Bildschirm, Navigation eingerechnet. `clamp` erledigt beide Grenzen ohne
@@ -755,7 +1057,7 @@
   .sub::before{content:"";position:absolute;inset:0;z-index:-2;
     background:color-mix(in srgb,var(--bg) 55%,transparent);
     backdrop-filter:blur(12px) saturate(1.08);-webkit-backdrop-filter:blur(12px) saturate(1.08);}
-  .sub p{margin:0;font-size:clamp(1.1rem,1.95vw,1.55rem);font-weight:300;line-height:1.25;color:var(--ink);}
+  .sub p{margin:0;font-size:var(--type-lead);font-weight:300;line-height:1.25;color:var(--ink);}
   .sub p + p{margin-block-start:0.7em;}
   .sub strong{font-weight:700;}
   /* Zu wenig Platz → Milchglas-Fläche legt sich ÜBER MOIN (nicht darunter), volle Contentbreite. */
@@ -772,7 +1074,7 @@
     left:calc(var(--pad) + 3*(100% - 2*var(--pad))/4 + var(--hero-inset));
     right:calc(var(--pad) + var(--hero-inset));
     bottom:calc(75% + var(--hero-inset));
-    margin:0;font-size:0.95rem;line-height:1.35;color:var(--ink);text-wrap:pretty;}
+    margin:0;font-size:var(--type-subline);line-height:1.35;color:var(--ink);text-wrap:pretty;}
   .hero-note strong{font-weight:700;}
   /* ── Scroll-Hinweis ──────────────────────────────────────────────────────
      Eine Haarlinie mit einem wandernden Segment — dieselbe Liniensprache wie das
@@ -820,11 +1122,11 @@
      Leserichtung, jede Drehung würde die Wörter kippen. */
   .cursor-ring{position:absolute;inset:0;}
   .cursor-ring text{fill:currentColor;font-family:"Saira",system-ui,sans-serif;
-    font-size:16px;font-weight:400;letter-spacing:0.06em;}
+    font-size:var(--type-subline);font-weight:400;letter-spacing:0.06em;}
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .fallback{position:absolute;inset:0;z-index:1;display:none;place-items:end start;padding:0 var(--pad) clamp(2rem,5vw,4rem);}
-  .fallback h1{margin:0;font-size:calc((100vw - 2*var(--pad))/2.5168);font-weight:800;line-height:0.82;text-transform:uppercase;color:var(--ink);}
+  .fallback h1{margin:0;font-size:clamp(7.5rem,calc((100vw - 2*var(--pad))/2.5168),38rem);font-weight:800;line-height:0.82;text-transform:uppercase;color:var(--ink);}
   .no-webgl #fluid{display:none;} .no-webgl .fallback{display:grid;}
 
   /* ══ EIN Gridlinien-Gerüst für die ganze Seite ═════════════════════════════
@@ -908,24 +1210,19 @@
   section.block > .sec-label,
   section.block > .proj-head,
   section.block > .stack { padding-inline: var(--hero-inset); }
-  /* About: Text und Eyebrow stehen in den Spalten 2–4, links liegt das Porträt. Die
-     Eyebrow muss mitwandern, sonst stünde sie allein über dem Bild — und die zwischen ✳
-     und Headline ausgemessene Tintenflucht (-0.082em) hinge in der Luft.
-     25 % der Sektionsbreite ist genau eine Rasterspalte, weil der Innenbereich der
-     Section (nach `--pad`) in vier gleiche Spalten geteilt ist. */
-  section.block#about > .sec-label { margin-inline-start: 25%; }
-
-  /* About im 4-Spalten-System: Text über drei Spalten (eingerückt), Porträt füllt die
-     vierte Spalte bündig zwischen 75-%-Linie und rechter Padding-Linie — wie eine Kachel. */
   /* About auf dem 4-Spalten-Raster, in zwei Bahnen:
-     Spalte 1 über alle Zeilen: der Klecks, oben hängend.
-     Spalten 2–4 tragen ALLEN Text:
+     Spalten 1–3 tragen ALLEN Text:
      Zeile 1  Statement.
      Zeile 2  die drei Absätze als drei Rasterspalten darunter — ein Absatz je Spalte,
               wie ein Magazinsatz. Das ist der eigentliche Effekt: Fließtext, der als
               EINE Spalte unter der Headline weiterläuft, bleibt Fließtext.
      Zeile 3  Abschlusszeile: Verortung links, Lebenslauf rechts.
-     Alle drei Zeilen beginnen damit auf derselben Kante (Spaltenlinie 1 + --hero-inset).
+     Spalte 4 über alle Zeilen: der Klecks, oben hängend — bündig zwischen 75-%-Linie und
+              rechter Padding-Linie, wie eine Kachel.
+     Alle drei Textzeilen beginnen damit auf der linken Padding-Linie + --hero-inset, also
+     auf demselben Anschlag wie die Eyebrow darüber und wie jede andere Section der Seite;
+     die Eyebrow braucht hier deshalb KEINE eigene Einrückung (sie hatte eine, solange das
+     Porträt links lag und der Text erst in Spalte 2 begann).
      Die Spaltenkanten fallen dabei mit den Linien des Seitengrids zusammen.
      Spalten-gap bleibt 0 (sonst lägen die Textkanten nicht auf den Linien), der
      Zeilenabstand kommt aus row-gap. */
@@ -936,7 +1233,7 @@
        gleich weit auf. */
     gap: clamp(1.75rem, 3vw, 2.5rem) 0;
   }
-  .about > .statement { grid-row: 1; grid-column: 2 / -1; padding-inline: var(--hero-inset);
+  .about > .statement { grid-row: 1; grid-column: 1 / 4; padding-inline: var(--hero-inset);
     margin-block-end: clamp(0.75rem, 1.5vw, 1.5rem); }
   /* Der Klecks läuft über ALLE Zeilen und hängt oben (`align-self: start`). Läge er nur
      in Zeile 1, bestimmte seine quadratische Höhe (331px bei 1440px) die Zeilenhöhe —
@@ -945,8 +1242,8 @@
      `span 3` statt `1 / -1`: ohne `grid-template-rows` gibt es kein explizites
      Zeilenraster, und `-1` zeigt dann auf Linie 1 — der Klecks landete damit wieder
      in Zeile 1 (nachgemessen). */
-  .about > .portrait  { grid-row: 1 / span 3; grid-column: 1 / 2; align-self: start; }
-  .about > .me-text   { grid-row: 2; grid-column: 2 / -1; }
+  .about > .portrait  { grid-row: 1 / span 3; grid-column: 4 / -1; align-self: start; }
+  .about > .me-text   { grid-row: 2; grid-column: 1 / 4; }
   /* Nebeneinander wird es unter 52rem zu eng — dort stapeln die Kacheln. */
   @media (max-width: 52rem) { .about > .me-text { grid-template-columns: 1fr; } }
   /* Abschlusszeile: Verortung links, Lebenslauf rechts, beide auf dem Textanschlag
@@ -954,15 +1251,17 @@
      OHNE eigene Trennlinie: die Unterkante der Kachelreihe darüber trennt bereits.
      Ein zweiter Strich wenige Zentimeter darunter wäre ein Doppelstrich; der Abstand
      allein setzt die Zeile ab. */
-  .about > .me-bar    { grid-row: 3; grid-column: 2 / -1;
+  .about > .me-bar    { grid-row: 3; grid-column: 1 / 4;
     display: flex; align-items: center; justify-content: space-between;
     flex-wrap: wrap; gap: 1rem 2rem;
     padding-inline: var(--hero-inset);
     padding-block-start: clamp(1.5rem, 2.5vw, 2rem); }
-  .about .me-claim { margin: 0; font-size: 1.05rem; font-weight: 500; }
+  .about .me-claim { margin: 0; font-size: var(--type-subline); font-weight: 500; }
 
+  /* Gestapelt bleibt die Reihenfolge aus dem Entwurf: Eyebrow (steht als Geschwister vor
+     `.about`), dann der Klecks, dann Headline, Kacheln, Abschlusszeile. Das Porträt eröffnet
+     die Section also weiterhin — anders als auf dem Desktop, wo es rechts steht. */
   @media (max-width: 52rem) {
-    section.block#about > .sec-label { margin-inline-start: 0; }
     .about { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 3rem); }
     .about > .statement, .about > .portrait,
     .about > .me-bar, .about > .me-text { grid-row: auto; grid-column: auto; align-self: auto; }
@@ -982,19 +1281,25 @@
   section.block.clients { padding-inline: 0; }
   section.block.clients > .sec-label,
   section.block.clients > h2.big { padding-inline: calc(var(--pad) + var(--hero-inset)); }
-  /* Die CTA-Kachel schließt das Raster ab: volle Breite statt einer offenen Restreihe
-     (9 Projekte = exakt 3 Reihen, die CTA ist die 10. Kachel und beginnt immer eine neue). */
-  .tile.cta {
+  /* Der Projektanfrage-Link schließt das Raster als ruhige, volle Textzeile ab. Er ist
+     ausdrücklich keine zehnte Kachel und übernimmt deshalb keinen Kachel-Hover. */
+  .project-inquiry {
     grid-column: 1 / -1;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    min-width: 0;
+    text-decoration: none;
+    padding-inline: clamp(0.7rem, 1.2vw, 1.1rem);
     padding-block: clamp(1rem, 2vw, 1.6rem);
   }
   /* muss NACH der Desktop-Regel stehen (gleiche Spezifität) */
   @media (max-width: 52rem) {
-    .tile.cta { flex-direction: column; align-items: flex-start; }
+    .project-inquiry { flex-direction: column; align-items: flex-start; }
   }
   /* Das Liniengerüst behält auf allen Breiten VIER gleich breite Spalten — die Raster
      darüber dürfen ruhig auf zwei Spalten fallen, das Grundraster bleibt dasselbe. */
@@ -1026,10 +1331,18 @@
      (das risse Statement, Spalten und Abschlusszeile auseinander) steht der ganze Block
      mittig in der Section. */
   section.block#about {
-    min-height: calc(100svh - var(--header-h));
+    min-height: max(50svh, calc(100svh - var(--header-h)));
     display: flex;
     flex-direction: column;
     justify-content: center;
+  }
+
+  /* ── Marken: auch auf hohen Screens kein schmales Laufband ────────────────
+     Der Inhalt darf die Section weiterhin natürlich vergrößern; 50svh sind nur
+     die Untergrenze. Anders als bei About wird keine zusätzliche vertikale
+     Verteilung erzwungen, damit Headline und Marquee ihre Abstände behalten. */
+  section.block#kunden {
+    min-height: 50svh;
   }
 
   .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
@@ -1054,13 +1367,13 @@
   .foot-col h2 { margin-block: 0 0.6rem; }
   .foot-col .brand + p { margin-block-start: 1.1rem; }
   .foot-col .avail { margin-block-start: 1.4rem; }
-  .foot-col p { font-size: 0.88rem; line-height: 1.45; color: var(--dark-muted); max-width: 28ch; }
+  .foot-col p { font-size: var(--type-subline); line-height: 1.45; color: var(--dark-muted); max-width: 28ch; }
   .foot-h {
-    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase;
     color: var(--dark-muted); margin-block: 0 0.7rem;
   }
   .foot-col ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-  .foot-col a { color: inherit; text-decoration: none; font-size: 0.92rem; }
+  .foot-col a { color: inherit; text-decoration: none; font-size: var(--type-subline); }
   .foot-col a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
   .foot-col nav + nav { margin-block-start: 2rem; }
   .foot-bar { border-top: 1px solid var(--dark-rule); color: var(--dark-muted); }
@@ -1076,7 +1389,7 @@
     position: absolute;
     inset-block-start: 50%;
     transform: translateY(-50%);
-    block-size: 1.25rem;             /* Trefferfläche, deutlich größer als die Linie */
+    block-size: 1.5rem;              /* 24-px-Mindesttrefferfläche, Linie bleibt 3 px */
     inline-size: var(--thumb-size, 30%);
     inset-inline-start: var(--thumb-pos, 0%);
     display: grid; align-items: center;
@@ -1130,17 +1443,34 @@
   }
 
 </style>
+<link rel="stylesheet" href="motion.css">
+<script src="handwriting-glyphs.js" defer></script>
+<script src="motion.js" defer></script>
+<a class="skip-link" href="#main-content">Zum Hauptinhalt</a>
 <header class="site" lang="de">
-  <span class="brand">Katharina Wersdörfer<sup>®</sup></span>
+  <span class="brand">Katharina Wersdörfer</span>
   <span class="avail">Verfügbar für Projekte</span>
-  <a class="pill" href="#">Kontakt</a>
+  <div class="header-actions">
+    <a class="pill" href="#kontakt"><span class="pill-label">Kontakt</span></a>
+    <details class="site-nav">
+      <summary class="menu-toggle" aria-label="Menü"><span class="menu-icon" aria-hidden="true"></span></summary>
+      <nav aria-label="Seitennavigation">
+        <a href="#stage">Moin</a>
+        <a href="#projekte">Projekte</a>
+        <a href="#leistungen">Leistungen</a>
+        <a href="#about">Über mich</a>
+        <a href="#kunden">Kunden</a>
+        <a href="#kontakt">Kontakt</a>
+      </nav>
+    </details>
+  </div>
 </header>
-<main lang="de">
+<main id="main-content" lang="de">
 
   <section class="stage" id="stage">
     <h1 class="sr-only">Moin</h1> <!-- echtes Text-Äquivalent für Screenreader/SEO -->
     <canvas id="fluid" aria-hidden="true"></canvas>
-    <div class="fallback"><h1>Moin</h1></div>
+    <div class="fallback" aria-hidden="true"><h1>Moin</h1></div>
     <div class="grid" aria-hidden="true">
       <div class="under"></div>
       <div class="rows"><b></b><b></b></div>
@@ -1159,30 +1489,30 @@
     <div class="proj-head">
       <!-- Der handschriftliche Vermerk ist aus der Eyebrow gelöst und hängt jetzt in der
            Headline. Er liegt IM h2-Wrapper, damit er sich auf dessen Kante bezieht. -->
-      <h2 class="sec-title"><svg class="scr"><text>recent work</text></svg>Projekte</h2>
-      <span class="count">(9)</span>
+      <h2 class="sec-title motion-heading"><svg class="scr" aria-hidden="true" focusable="false"><text>recent work</text></svg>Projekte</h2>
+      <span class="count">[9]</span>
     </div>
     <div class="tilegrid">
       <!-- Auf dem Smartphone: erste Kachel als Hero, der Rest als Reel darunter.
            Auf dem Desktop lösen sich .lead und .reel per display:contents auf, damit
            alle Kacheln wieder direkte Grid-Elemente im Wechselrhythmus sind. -->
       <div class="lead">
-      <a class="tile" href="#"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Studio-Website Relaunch</h3><span>→</span></div><div class="row2">Web · 2026</div></div></a>
+      <a class="tile" href="projekte/studio-website-relaunch.html"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Studio-Website Relaunch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2026</div></div></a>
       </div>
       <div class="reel">
-      <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Buchgestaltung</h3><span>→</span></div><div class="row2">Print · 2025</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Plakatserie</h3><span>→</span></div><div class="row2">Print · 2025</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Illustrationsserie</h3><span>→</span></div><div class="row2">Illustration · 2025</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Magazin-Layout</h3><span>→</span></div><div class="row2">Print · 2024</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Onlineshop Redesign</h3><span>→</span></div><div class="row2">Digital · 2024</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Markenauftritt Praxis</h3><span>→</span></div><div class="row2">Web · 2024</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Kinderbuch</h3><span>→</span></div><div class="row2">Illustration · 2023</div></div></a>
-      <a class="tile" href="#"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Geschäftsausstattung</h3><span>→</span></div><div class="row2">Print · 2023</div></div></a>
+      <a class="tile" href="projekte/buchgestaltung.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Buchgestaltung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></a>
+      <a class="tile" href="projekte/plakatserie.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Plakatserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></a>
+      <a class="tile" href="projekte/illustrationsserie.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Illustrationsserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2025</div></div></a>
+      <a class="tile" href="projekte/magazin-layout.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Magazin-Layout</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2024</div></div></a>
+      <a class="tile" href="projekte/onlineshop-redesign.html"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Onlineshop Redesign</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Digital · 2024</div></div></a>
+      <a class="tile" href="projekte/markenauftritt-praxis.html"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Markenauftritt Praxis</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2024</div></div></a>
+      <a class="tile" href="projekte/kinderbuch.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Kinderbuch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2023</div></div></a>
+      <a class="tile" href="projekte/geschaeftsausstattung.html"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Geschäftsausstattung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2023</div></div></a>
       </div>
       <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
-        tabindex="0" aria-label="Durch die Projekte blättern"
+        tabindex="0" aria-label="Durch die Projekte blättern" aria-orientation="horizontal"
         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
-      <a class="tile cta" href="#kontakt"><span class="k">Kontakt</span><strong>Projekt anfragen →</strong></a>
+      <a class="project-inquiry" href="#kontakt"><span class="k">Kontakt</span><strong>Projekt anfragen <span class="ar" aria-hidden="true">→</span></strong></a>
     </div>
     </section>
 
@@ -1190,56 +1520,56 @@
   <section class="block pad" id="leistungen">
     <div class="sec-label"><span>Was ich anbiete</span></div>
     <div class="proj-head">
-      <h2 class="sec-title"><svg class="scr"><text>let's talk about</text></svg>Leistungen</h2>
+      <h2 class="sec-title motion-heading"><svg class="scr" aria-hidden="true" focusable="false"><text>let's talk about</text></svg>Leistungen</h2>
     </div>
     <!-- Auf dem Desktop ein 4er-Raster, auf dem Smartphone derselbe Reel wie bei den
          Projekten (die Klasse `reel` greift nur in der Mobile-Regel). -->
     <div class="svc-grid reel">
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18M6 21h12"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18M6 21h12"/></svg></span>
         <h3>Webdesign</h3>
-        <p>Von der Idee bis zur fertigen Website — Layout, UX/UI und Umsetzung.</p>
+        <p>Von der Idee bis zur fertigen Website&nbsp;— Layout, UX/UI und Umsetzung.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>
         <h3>Product&nbsp;Design</h3>
-        <p>UX/UI für Apps &amp; digitale Produkte — im Team, mit dem Designpart bei mir.</p>
+        <p>UX/UI für Apps &amp; digitale Produkte&nbsp;— im Team, mit dem Designpart bei mir.</p>
       </div>
       <div class="svc">
         <!-- Versalie auf Grundlinie = Typografie/Satz. Die vorherige Federspitze zerfiel
              bei dieser Größe in unlesbare Fragmente. -->
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 17l6-12 6 12M8.4 12.6h7.2M3.5 21h17"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 17l6-12 6 12M8.4 12.6h7.2M3.5 21h17"/></svg></span>
         <h3>Grafikdesign</h3>
         <p>Editorial, Layout und Typografie mit Blick fürs Detail.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3z"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3z"/></svg></span>
         <h3>Branding</h3>
         <p>Logo, Marke und Designsysteme, die Wiedererkennung schaffen.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 4l5 5L9 20l-5 1 1-5L15 4z"/><path d="M13 6l5 5"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 4l5 5L9 20l-5 1 1-5L15 4z"/><path d="M13 6l5 5"/></svg></span>
         <h3>Illustration</h3>
-        <p>Handgemachte Bildwelten — mein Schwerpunkt und meine Leidenschaft.</p>
+        <p>Handgemachte Bildwelten&nbsp;— mein Schwerpunkt und meine Leidenschaft.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></span>
         <h3>Verpackung</h3>
         <p>Packaging, das im Regal auffällt und die Marke trägt.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10v4l4 .5 8 4.5V5L7 9.5 3 10z"/><path d="M18 9a4 4 0 010 6M8 15v4h2"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10v4l4 .5 8 4.5V5L7 9.5 3 10z"/><path d="M18 9a4 4 0 010 6M8 15v4h2"/></svg></span>
         <h3>Campaigning</h3>
         <p>Kampagnenideen und visuelle Leitkonzepte über alle Kanäle.</p>
       </div>
       <div class="svc">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/></svg></span>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/></svg></span>
         <h3>KI-Workflows</h3>
-        <p>KI als Sparringspartner im Prozess — von Konzept bis Bildwelt.</p>
+        <p>KI als Sparringspartner im Prozess&nbsp;— von Konzept bis Bildwelt.</p>
       </div>
     </div>
     <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
-      tabindex="0" aria-label="Durch die Leistungen blättern"
+      tabindex="0" aria-label="Durch die Leistungen blättern" aria-orientation="horizontal"
       aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
     </section>
 
@@ -1249,10 +1579,14 @@
     <div class="about">
       <!-- Der erste Absatz setzt den Satz der Headline fort („… rein. In neue Themen, in
            Marken …"), deshalb steht er ohne eigenen Auftakt direkt daneben. -->
-      <h2 class="statement">Ich bin <span class="katha">Katharina</span><br>und bleibe gern neugierig.</h2>
+      <!-- Der Name steht ZWEIMAL: der HTML-Text hält den Platz im Satz und bleibt für
+           Screenreader und Seitensuche der eigentliche Inhalt (er ist nur transparent);
+           gezeichnet wird das SVG darüber, weil nur dort die Kontur glatt UND rund sein
+           kann. Das SVG ist deshalb `aria-hidden`. -->
+      <h2 class="statement motion-heading">Ich bin <span class="katha">Katharina<svg class="scr" aria-hidden="true"><text>Katharina</text></svg></span><br>und bleibe gern neugierig.</h2>
       <!-- Der handschriftliche Vermerk liegt auf der Unterkante des Porträtfeldes,
            dieselbe Geste wie die Vermerke auf den Sektions-Headlines. -->
-      <div class="portrait"><div class="frame"><span>Porträt</span></div><svg class="scr"><text>that's me</text></svg></div>
+      <div class="portrait"><div class="frame"><span>Porträt</span></div><svg class="scr" aria-hidden="true" focusable="false"><text><tspan>that</tspan><tspan dx=".156em">'</tspan><tspan dx="-.156em">s me</tspan></text></svg></div>
       <!-- Akkordeon statt drei Spalten. `<details>` statt eigener Klapp-Logik: Der
            Fließtext bleibt im Dokument, ist per Tastatur erreichbar und wird von der
            Seitensuche des Browsers gefunden — das ist bei About wichtiger als anderswo,
@@ -1292,7 +1626,7 @@
            rechts an derselben Kante wie der Textanschlag. -->
       <div class="me-bar">
         <p class="me-claim">Digital Creative · Based in Düsseldorf</p>
-        <a class="pill ghost" href="#">Mehr im Lebenslauf</a>
+        <a class="pill ghost" href="#"><span class="pill-label">Mehr im Lebenslauf</span></a>
       </div>
     </div>
     </section>
@@ -1300,12 +1634,12 @@
   <!-- 05 · Kunden -->
   <section class="block pad clients on-dark" id="kunden">
     <div class="sec-label"><span>Über die Jahre</span></div>
-    <h2 class="big">Mit diesen Marken<br><span class="lastline">&amp; Menschen<svg class="scr"><text>together</text></svg></span></h2>
-    <div class="marquee">
+    <h2 class="big motion-heading">Mit diesen Marken<br><span class="lastline">&amp; Menschen<svg class="scr" aria-hidden="true" focusable="false"><text>together</text></svg></span></h2>
+    <div class="marquee" tabindex="0" role="region" aria-label="Automatisch laufende Kundenliste; bei Fokus pausiert">
       <div class="marquee-track" aria-label="Auswahl an Kunden">
         <!-- Liste doppelt für den nahtlosen Loop -->
-        <span class="item">ALDI Nord</span><span class="item">Kerrygold</span><span class="item">L'Oréal</span><span class="item">Thomy</span><span class="item">Maybelline</span><span class="item">essie</span><span class="item">Miele</span><span class="item">Yokohama</span><span class="item">Atelier Ruth</span><span class="item">Café Nord</span><span class="item">Praxis Dr. Vogt</span><span class="item">Freiraum e.V.</span>
-        <span class="item" aria-hidden="true">ALDI Nord</span><span class="item" aria-hidden="true">Kerrygold</span><span class="item" aria-hidden="true">L'Oréal</span><span class="item" aria-hidden="true">Thomy</span><span class="item" aria-hidden="true">Maybelline</span><span class="item" aria-hidden="true">essie</span><span class="item" aria-hidden="true">Miele</span><span class="item" aria-hidden="true">Yokohama</span><span class="item" aria-hidden="true">Atelier Ruth</span><span class="item" aria-hidden="true">Café Nord</span><span class="item" aria-hidden="true">Praxis Dr. Vogt</span><span class="item" aria-hidden="true">Freiraum e.V.</span>
+        <span class="item">ALDI Nord</span><span class="item">Kerrygold</span><span class="item">L'Oréal</span><span class="item">Thomy</span><span class="item">Maybelline</span><span class="item">essie</span><span class="item">Weight Watchers</span><span class="item">Miele</span><span class="item">Yokohama</span><span class="item">McCann</span><span class="item">Marina Adler</span><span class="item">Fabian Heis</span><span class="item">Villa Kunterbunt e.V.</span><span class="item">Ökologische Tierzucht gGmbH</span><span class="item">django chat</span><span class="item">GGS Lennéstraße</span><span class="item">McCann</span>
+        <span class="item" aria-hidden="true">ALDI Nord</span><span class="item" aria-hidden="true">Kerrygold</span><span class="item" aria-hidden="true">L'Oréal</span><span class="item" aria-hidden="true">Thomy</span><span class="item" aria-hidden="true">Maybelline</span><span class="item" aria-hidden="true">essie</span><span class="item" aria-hidden="true">Weight Watchers</span><span class="item" aria-hidden="true">Miele</span><span class="item" aria-hidden="true">Yokohama</span><span class="item" aria-hidden="true">McCann</span><span class="item" aria-hidden="true">Marina Adler</span><span class="item" aria-hidden="true">Fabian Heis</span><span class="item" aria-hidden="true">Villa Kunterbunt e.V.</span><span class="item" aria-hidden="true">Ökologische Tierzucht gGmbH</span><span class="item" aria-hidden="true">django chat</span><span class="item" aria-hidden="true">GGS Lennéstraße</span><span class="item" aria-hidden="true">McCann</span>
       </div>
     </div>
     </section>
@@ -1314,9 +1648,9 @@
   <section class="block pad contact" id="kontakt">
     <div class="sec-label"><span>Auf ein Wort</span></div>
     <div class="stack">
-      <h2 class="big">Ein Projekt im Kopf?<br><span class="lastline">Schreib mir.<svg class="scr"><text>tell me more</text></svg></span></h2>
+      <h2 class="big motion-heading">Ein Projekt im Kopf?<br><span class="lastline">Schreib mir.<svg class="scr" aria-hidden="true" focusable="false"><text>tell me more</text></svg></span></h2>
       <div class="buttons">
-        <a class="pill" href="#">E-Mail schreiben</a>
+        <a class="pill prio" href="mailto:mail@example.com"><span class="pill-label">E-Mail schreiben <span class="ar" aria-hidden="true">→</span></span></a>
       </div>
     </div>
     </section>
@@ -1326,13 +1660,14 @@
 <footer class="site on-dark" lang="de">
   <div class="foot-cols pad">
     <div class="foot-col">
-      <span class="brand">Katharina Wersdörfer<sup>®</sup></span>
+      <span class="brand">Katharina Wersdörfer</span>
       <p>Web &amp; Digital Design, Illustration und Print — aus Düsseldorf.</p>
       <span class="avail">Verfügbar für Projekte</span>
     </div>
     <nav class="foot-col" aria-labelledby="ft-seite">
       <h2 class="foot-h" id="ft-seite">Seite</h2>
       <ul>
+        <li><a href="#stage">Moin</a></li>
         <li><a href="#projekte">Projekte</a></li>
         <li><a href="#leistungen">Leistungen</a></li>
         <li><a href="#about">Über mich</a></li>
@@ -1343,15 +1678,15 @@
     <nav class="foot-col" aria-labelledby="ft-projekte">
       <h2 class="foot-h" id="ft-projekte">Projekte</h2>
       <ul>
-        <li><a href="#">Studio-Website Relaunch</a></li>
-        <li><a href="#">Buchgestaltung</a></li>
-        <li><a href="#">Plakatserie</a></li>
-        <li><a href="#">Illustrationsserie</a></li>
-        <li><a href="#">Magazin-Layout</a></li>
-        <li><a href="#">Onlineshop Redesign</a></li>
-        <li><a href="#">Markenauftritt Praxis</a></li>
-        <li><a href="#">Kinderbuch</a></li>
-        <li><a href="#">Geschäftsausstattung</a></li>
+        <li><a href="projekte/studio-website-relaunch.html">Studio-Website Relaunch</a></li>
+        <li><a href="projekte/buchgestaltung.html">Buchgestaltung</a></li>
+        <li><a href="projekte/plakatserie.html">Plakatserie</a></li>
+        <li><a href="projekte/illustrationsserie.html">Illustrationsserie</a></li>
+        <li><a href="projekte/magazin-layout.html">Magazin-Layout</a></li>
+        <li><a href="projekte/onlineshop-redesign.html">Onlineshop Redesign</a></li>
+        <li><a href="projekte/markenauftritt-praxis.html">Markenauftritt Praxis</a></li>
+        <li><a href="projekte/kinderbuch.html">Kinderbuch</a></li>
+        <li><a href="projekte/geschaeftsausstattung.html">Geschäftsausstattung</a></li>
       </ul>
     </nav>
     <div class="foot-col">
@@ -1427,9 +1762,9 @@
         keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
         values="0 0; 0.022 0.014; -0.016 -0.018; 0 0"/>
     </path>
-    <path d="M0.6740 0.9650C0.6740 0.9506 0.6856 0.9390 0.7000 0.9390
-             C0.7144 0.9390 0.7260 0.9506 0.7260 0.9650C0.7260 0.9794 0.7144 0.9910 0.7000 0.9910
-             C0.6856 0.9910 0.6740 0.9794 0.6740 0.9650ZZ">
+    <path d="M0.7440 0.8900C0.7440 0.8756 0.7556 0.8640 0.7700 0.8640
+             C0.7844 0.8640 0.7960 0.8756 0.7960 0.8900C0.7960 0.9044 0.7844 0.9160 0.7700 0.9160
+             C0.7556 0.9160 0.7440 0.9044 0.7440 0.8900ZZ">
       <animateTransform attributeName="transform" type="translate"
         dur="15s" repeatCount="indefinite" calcMode="spline"
         keyTimes="0;0.33;0.66;1"
@@ -1603,7 +1938,7 @@
     return { fs: fs, x: penX, y: penY };
   }
   function drawMoin(ctx, g, mode){
-    var ink = col('--ink', '#162114');
+    var ink = col('--ink', '#171410');
     ctx.font = '800 ' + g.fs + 'px Saira';
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     if (mode === 'solid') { ctx.fillStyle = ink; ctx.fillText('MOIN', g.x, g.y); return; }
@@ -1810,6 +2145,100 @@
 </script>
 <script>
 "use strict";
+// Navigation und Scroll-Lock arbeiten zusammen: normale Scrollversuche bleiben bei
+// offenem Panel gesperrt, nur der bewusst ausgelöste Ankerflug darf die Seite bewegen.
+(function () {
+  var menu = document.querySelector('.site-nav');
+  if (!menu) return;
+  var lockedY = null;
+  var anchorFlight = false;
+  var flightTimer = 0;
+  var desktopHover = matchMedia('(min-width: 52.001rem) and (hover: hover) and (pointer: fine)');
+  var motionReduce = matchMedia('(prefers-reduced-motion: reduce)');
+  var toggle = menu.querySelector('summary');
+  var menuLinks = [].slice.call(menu.querySelectorAll('nav a'));
+  var inertTargets = [].slice.call(document.querySelectorAll(
+    'main, body > footer, header.site > .brand, header.site > .avail, header.site > .header-actions > .pill'
+  ));
+
+  function localTarget(link) {
+    var url = new URL(link.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash) return null;
+    return document.getElementById(decodeURIComponent(url.hash.slice(1)));
+  }
+  function flyTo(link, keepOpen) {
+    var target = localTarget(link);
+    if (!target) return false;
+    clearTimeout(flightTimer);
+    anchorFlight = true;
+    if (!keepOpen) {
+      lockedY = null;
+      menu.removeAttribute('open');
+      history.pushState(null, '', link.hash);
+    }
+    requestAnimationFrame(function () {
+      target.scrollIntoView({ behavior: motionReduce.matches ? 'auto' : 'smooth', block: 'start' });
+    });
+    flightTimer = setTimeout(function () {
+      anchorFlight = false;
+      if (menu.open) lockedY = window.scrollY;
+    }, 850);
+    return true;
+  }
+
+  menu.addEventListener('toggle', function () {
+    lockedY = menu.open ? window.scrollY : null;
+    toggle.setAttribute('aria-label', menu.open ? 'Menü schließen' : 'Menü');
+    inertTargets.forEach(function (node) { node.inert = menu.open; });
+    if (!menu.open) anchorFlight = false;
+  });
+  menuLinks.forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      if (flyTo(link, false)) event.preventDefault();
+      else menu.removeAttribute('open');
+    });
+    link.addEventListener('pointerenter', function () {
+      if (desktopHover.matches) flyTo(link, true);
+    });
+  });
+  function insidePanel(target) {
+    return target instanceof Element && !!target.closest('.site-nav nav');
+  }
+  function stopOutsidePanel(event) {
+    if (lockedY !== null && !insidePanel(event.target)) event.preventDefault();
+  }
+  addEventListener('wheel', stopOutsidePanel, { passive: false });
+  addEventListener('touchmove', stopOutsidePanel, { passive: false });
+  addEventListener('scroll', function () {
+    if (lockedY !== null && !anchorFlight && window.scrollY !== lockedY) window.scrollTo(0, lockedY);
+  }, { passive: true });
+  document.addEventListener('keydown', function (event) {
+    if (!menu.open) return;
+    if (event.key === 'Escape') {
+      menu.removeAttribute('open');
+      toggle.focus();
+      event.preventDefault();
+      return;
+    }
+    if (event.key === 'Tab') {
+      var stops = [toggle].concat(menuLinks);
+      var first = stops[0], last = stops[stops.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        last.focus(); event.preventDefault();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        first.focus(); event.preventDefault();
+      }
+      return;
+    }
+    if (lockedY === null || insidePanel(event.target)) return;
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
+      event.preventDefault();
+    }
+  });
+  document.addEventListener('click', function (event) {
+    if (menu.open && !menu.contains(event.target)) menu.removeAttribute('open');
+  });
+})();
 // Höhe der Navigation als CSS-Variable. Eigener Block, damit er auch ohne WebGL läuft.
 // ResizeObserver statt Media Query: der Header wächst je nach Inhalt und Textgröße
 // (auf schmalen Breiten bricht die Wortmarke um) — die Hero-Höhe folgt dem fluide.

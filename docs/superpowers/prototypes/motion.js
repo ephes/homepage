@@ -3,8 +3,54 @@
   "use strict";
 
   var root = document.documentElement;
+  root.classList.add("has-js");
   var reduce = matchMedia("(prefers-reduced-motion: reduce)");
   var glyphs = {};
+
+  /* Der feste Top-Anker liegt außerhalb des normalen Dokumentflusses. Seine Kontur
+     übernimmt deshalb die Farbe der Fläche, die optisch unter seiner Mitte liegt.
+     So kann die linke Kante exakt auf der Rasterlinie liegen, ohne dass `difference`
+     zwei deckungsgleiche Linien gegenseitig auslöscht. */
+  var topAnchors = [].slice.call(document.querySelectorAll(".to-top"));
+  if (topAnchors.length) {
+    var topAnchorFrame = 0;
+    function syncTopAnchorContrast() {
+      topAnchorFrame = 0;
+      topAnchors.forEach(function (anchor) {
+        var rect = anchor.getBoundingClientRect();
+        var under = document.elementsFromPoint(
+          Math.min(innerWidth - 1, rect.left + 2),
+          Math.min(innerHeight - 1, rect.top + rect.height / 2)
+        );
+        var dark = under.some(function (node) {
+          return node !== anchor && !anchor.contains(node) && !!node.closest(".on-dark");
+        });
+        anchor.classList.toggle("is-on-dark", dark);
+      });
+    }
+    function requestTopAnchorContrast() {
+      if (!topAnchorFrame) topAnchorFrame = requestAnimationFrame(syncTopAnchorContrast);
+    }
+    addEventListener("scroll", requestTopAnchorContrast, { passive: true });
+    addEventListener("resize", requestTopAnchorContrast, { passive: true });
+    requestTopAnchorContrast();
+  }
+
+  /* Organische SVG-Masken bewegen sich ohne Skript. JavaScript greift nur ein,
+     wenn das Betriebssystem reduzierte Bewegung verlangt. */
+  var organicShapes = [].slice.call(document.querySelectorAll("svg.organic-shape"));
+  function syncOrganicMotion() {
+    organicShapes.forEach(function (shape) {
+      if (typeof shape.pauseAnimations !== "function") return;
+      if (reduce.matches) shape.pauseAnimations();
+      else shape.unpauseAnimations();
+    });
+  }
+  if (organicShapes.length) {
+    syncOrganicMotion();
+    if (reduce.addEventListener) reduce.addEventListener("change", syncOrganicMotion);
+    else reduce.addListener(syncOrganicMotion);
+  }
 
   /* Die unveränderte Dokumentposition bleibt unabhängig von Reveal-Transforms. */
   function documentTop(node) {
@@ -31,7 +77,13 @@
       headings.forEach(function (heading) {
         var top = documentTop(heading);
         var bottom = top + heading.offsetHeight;
-        var entered = bottom >= viewTop + ENTER && top <= viewBottom - ENTER;
+        /* Die kompaktere About-Headline wäre beim gemeinsamen 12-px-Trigger fast schon
+           animiert, bevor sie bewusst wahrgenommen wird. Ihr Einsatz wandert deshalb
+           fluid etwas tiefer in den Viewport; alle anderen Headlines bleiben gleich. */
+        var enterInset = heading.closest("#about")
+          ? Math.min(120, Math.max(64, window.innerHeight * .1))
+          : ENTER;
+        var entered = bottom >= viewTop + enterInset && top <= viewBottom - enterInset;
         if (entered) {
           if (!heading.classList.contains("is-visible")) {
             heading.style.setProperty(
@@ -57,8 +109,8 @@
   startHeadlineReveal();
 
   /* Die Leistungsinhalte laufen zeitbasiert, damit ein schneller Scrollsprung ihre
-     Bewegung nicht vorspult. Beim Herunterscrollen gibt die normale Leistungen-Headline
-     den Einsatz; die Astagina-Handschrift gehört ausdrücklich nicht zu diesem Gate. */
+     Bewegung nicht vorspult. Beim Herunterscrollen startet die normale Leistungen-Headline
+     dieselbe Welle; die Astagina-Handschrift gehört ausdrücklich nicht zu diesem Gate. */
   function startServiceMotion() {
     var cards = [].slice.call(document.querySelectorAll(".svc"));
     if (!cards.length || reduce.matches || !("IntersectionObserver" in window)) return;
@@ -149,7 +201,12 @@
         if (event.animationName !== "headline-reveal") return;
         headlineReady = false;
         clearTimeout(headlineTimer);
-        if (direction > 0) armNearbyCards();
+        if (direction > 0) {
+          armNearbyCards();
+          /* Die hohen Rasterzellen tragen ihren Inhalt mittig. Ein Start erst am Ende
+             der Headline wirkte deshalb trotz 0-ms-Gap räumlich verspätet. */
+          releasePending();
+        }
       });
       heading.addEventListener("animationend", function (event) {
         if (event.animationName === "headline-reveal") releaseShortlyAfterHeadline();
@@ -195,6 +252,7 @@
     if (!rows.length || reduce.matches || !("IntersectionObserver" in window)) return;
 
     var heading = document.querySelector("#about .motion-heading");
+    var rowGrid = document.querySelector("#about .me-text");
     var headlineReady = !heading;
     var headlineTimer = 0;
     var fallbackTimer = 0;
@@ -238,6 +296,7 @@
       row.classList.remove("is-about-entering");
       row.classList.add("is-about-leaving");
       states.set(row, "outside");
+      if (rowGrid) rowGrid.classList.remove("is-about-stretching");
     }
 
     function releasePending() {
@@ -268,6 +327,7 @@
         clearTimeout(headlineTimer);
         if (direction > 0) {
           armNearbyRows();
+          if (rowGrid) rowGrid.classList.add("is-about-stretching");
           /* Die Textwelle setzt schon in der ruhigen Endphase der Headline ein. Dadurch
              liest sich die parallel mögliche Handschrift nicht als zusätzliche Pause. */
           headlineTimer = setTimeout(releasePending, 720);
@@ -523,4 +583,25 @@
   }
 
   if (window.PORTFOLIO_HANDWRITING) start();
+})();
+
+/* Der sichtbare Top-Anker bleibt ein echter Hash-Link und funktioniert deshalb auch ohne
+   JavaScript. Mit JavaScript bekommt er eine verlässliche Scroll-up-Bewegung, unabhängig
+   davon, wie der jeweilige Browser native Fragmentnavigation animiert. */
+(function () {
+  "use strict";
+
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  document.addEventListener("click", function (event) {
+    var link = event.target.closest && event.target.closest(".to-top");
+    if (!link || event.defaultPrevented || event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    var url = new URL(link.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname) return;
+
+    event.preventDefault();
+    if (location.hash !== url.hash) history.pushState(null, "", url.hash);
+    window.scrollTo({ top: 0, behavior: reduce.matches ? "auto" : "smooth" });
+  });
 })();

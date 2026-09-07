@@ -17,6 +17,24 @@ const index = projects.findIndex((project) => project.slug === slug);
 const project = projects[index] || projects[0];
 const moreProjects = [projects[(index + 1) % projects.length], projects[(index + 2) % projects.length]];
 
+/* Später kommen beide Listen aus wiederholbaren Wagtail-Blöcken. Das Hero-Bild bleibt
+   ein eigenes Pflichtfeld; die Galerie verlangt mindestens zwei Einträge, hat aber keine
+   feste Obergrenze. `shape` steuert nur den vorhandenen Rasterplatz, nicht den Inhalt. */
+const galleryItems = project.gallery || [
+  { shape: "wide landscape", ratio: "3:2", label: "breites Projektbild" },
+  { shape: "landscape", ratio: "3:2", label: "Projektbild im Querformat" },
+  { shape: "portrait", ratio: "4:5", label: "Projektbild im Hochformat" },
+];
+
+/* Auch „Was bleibt“ ist eine beliebig lange, optionale Liste. Die sichtbaren Nummern
+   werden aus der Reihenfolge erzeugt und sind keine vier fest angelegten Felder. */
+const resultItems = project.results ?? [
+  "[Ergebnis oder Kennzahl]",
+  "[Ergebnis oder Kennzahl]",
+  "[Ergebnis oder Kennzahl]",
+  "[Ergebnis oder Kennzahl]",
+];
+
 document.title = `${project.title} — Katharina Wersdörfer`;
 document.body.innerHTML = `
   <a class="skip-link" href="#main-content">Zum Hauptinhalt</a>
@@ -24,20 +42,34 @@ document.body.innerHTML = `
     <a class="brand" href="../portfolio-startseite.html">Katharina Wersdörfer</a>
     <span class="avail">Verfügbar für Projekte</span>
     <div class="header-actions">
-      <a class="pill" href="#kontakt"><span class="pill-label">Kontakt</span></a>
+      <a class="pill" href="mailto:katharina@wersdoerfer.de"><span class="pill-label">Kontakt</span></a>
       <details class="site-nav">
         <summary class="menu-toggle" aria-label="Menü"><span class="menu-icon" aria-hidden="true"></span></summary>
         <nav aria-label="Seitennavigation">
           <a href="#projektstart">Moin</a>
-          <a href="../portfolio-startseite.html#projekte">Projekte</a>
+          <details class="project-menu">
+            <summary><a class="project-overview" href="../portfolio-startseite.html#projekte">Projekte</a></summary>
+            <div class="project-menu-links">
+              ${projects.map((item) => `<a href="${item.slug}.html">${item.title}</a>`).join("")}
+            </div>
+          </details>
           <a href="#case-study">Case Study</a>
           <a href="#galerie">Galerie</a>
-          <a href="#ergebnisse">Ergebnisse</a>
+          ${resultItems.length ? '<a href="#ergebnisse">Ergebnisse</a>' : ""}
           <a href="#kontakt">Kontakt</a>
+          <div class="menu-socials" aria-label="Direkte Kontaktwege">
+            <a href="mailto:katharina@wersdoerfer.de" aria-label="E-Mail schreiben"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m4 7 8 6 8-6"/></svg></a>
+            <a class="linkedin-link" href="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.25" cy="4.75" r="1.85"/><path d="M4.4 9h3.7v11H4.4z"/><path d="M10.35 20V9h3.7v1.55a4.3 4.3 0 0 1 3.45-1.8c2.55 0 4.1 1.75 4.1 5V20h-3.7v-5.7c0-1.4-.55-2.15-1.65-2.15-1.4 0-2.2.95-2.2 2.75V20z"/></svg></a>
+            <a href="https://github.com/federfuxx" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.2-4-2-5-2.5M14.5 21v-3.1c0-.9.3-1.6.8-2.1 2.7-.3 5.5-1.3 5.5-6a4.7 4.7 0 0 0-1.3-3.3 4.4 4.4 0 0 0-.1-3.3s-1-.3-3.5 1.3a12 12 0 0 0-6.4 0C7 2.9 6 3.2 6 3.2a4.4 4.4 0 0 0-.1 3.3 4.7 4.7 0 0 0-1.3 3.3c0 4.7 2.8 5.7 5.5 6 .5.5.8 1.1.8 2.1V21"/></svg></a>
+            <a href="https://fedi.wersdoerfer.de/@katharina" rel="me" aria-label="Mastodon"><svg class="phosphor-icon" viewBox="0 0 256 256" aria-hidden="true"><path d="M184 34H72a38 38 0 0 0-38 38v120a38 38 0 0 0 38 38h88a6 6 0 0 0 0-12H72a26 26 0 0 1-26-26v-10h138a38 38 0 0 0 38-38V72a38 38 0 0 0-38-38Zm26 110a26 26 0 0 1-26 26H46V72a26 26 0 0 1 26-26h112a26 26 0 0 1 26 26Zm-28-40v32a6 6 0 0 1-12 0v-32a18 18 0 0 0-36 0v32a6 6 0 0 1-12 0v-32a18 18 0 0 0-36 0v32a6 6 0 0 1-12 0v-32a30 30 0 0 1 54-18 30 30 0 0 1 54 18Z"/></svg></a>
+          </div>
         </nav>
       </details>
     </div>
   </header>
+  <div class="availability-strip" aria-label="Projektstatus">
+    <span class="avail">Verfügbar für Projekte</span>
+  </div>
   <main id="main-content">
     <article>
       <header class="project-hero" id="projektstart">
@@ -73,21 +105,19 @@ document.body.innerHTML = `
       </section>
 
       <section class="gallery" id="galerie" aria-label="Projektgalerie">
-        <div class="media-placeholder landscape wide" role="img" aria-label="Platzhalter für ein breites Projektbild">Projektbild · 3:2</div>
-        <div class="media-placeholder landscape" role="img" aria-label="Platzhalter für ein Projektbild im Querformat">Projektbild · 3:2</div>
-        <div class="media-placeholder portrait" role="img" aria-label="Platzhalter für ein Projektbild im Hochformat">Projektbild · 4:5</div>
+        ${galleryItems.map((item) => `
+          <div class="media-placeholder ${item.shape}" role="img" aria-label="Platzhalter für ${item.label}">Projektbild · ${item.ratio}</div>`).join("")}
       </section>
 
-      <section class="block results" id="ergebnisse">
-        <p class="eyebrow">Ergebnisse</p>
-        <h2 class="block-title motion-heading">Was bleibt.</h2>
-        <div class="result-grid">
-          <div class="result"><strong>01</strong><span>[Ergebnis oder Kennzahl]</span></div>
-          <div class="result"><strong>02</strong><span>[Ergebnis oder Kennzahl]</span></div>
-          <div class="result"><strong>03</strong><span>[Ergebnis oder Kennzahl]</span></div>
-          <div class="result"><strong>04</strong><span>[Ergebnis oder Kennzahl]</span></div>
-        </div>
-      </section>
+      ${resultItems.length ? `
+        <section class="block results on-dark" id="ergebnisse">
+          <p class="eyebrow">Ergebnisse</p>
+          <h2 class="block-title motion-heading">Was bleibt.</h2>
+          <div class="result-grid">
+            ${resultItems.map((item, itemIndex) => `
+              <div class="result"><strong>${String(itemIndex + 1).padStart(2, "0")}</strong><span>${item}</span></div>`).join("")}
+          </div>
+        </section>` : ""}
 
       <section class="block">
         <p class="eyebrow">Rückmeldung</p>
@@ -119,109 +149,54 @@ document.body.innerHTML = `
         <div class="stack">
           <h2 class="big motion-heading">Ein Projekt im Kopf?<br><span class="lastline">Schreib mir.<svg class="scr" aria-hidden="true"><text>tell me more</text></svg></span></h2>
           <div class="buttons">
-            <a class="pill prio" href="mailto:mail@example.com"><span class="pill-label">E-Mail schreiben <span class="ar" aria-hidden="true">→</span></span></a>
+            <a class="pill prio" href="mailto:katharina@wersdoerfer.de"><span class="pill-label">E-Mail schreiben <span class="ar" aria-hidden="true">→</span></span></a>
           </div>
         </div>
       </section>
     </article>
   </main>
-  <footer class="project-footer">
-    <div class="footer-grid">
-      <p>Web &amp; Digital Design, Illustration und Print — aus Düsseldorf.</p>
-      <nav aria-label="Fußnavigation"><a href="../portfolio-startseite.html">Startseite</a><a href="../portfolio-startseite.html#projekte">Alle Projekte</a></nav>
+  <footer class="site on-dark" lang="de">
+    <div class="foot-cols pad">
+      <div class="foot-col foot-profile">
+        <span class="brand">Katharina Wersdörfer</span>
+        <p>Web &amp; Digital Design, Illustration und Print — aus Düsseldorf.</p>
+        <span class="avail">Verfügbar für Projekte</span>
+      </div>
+      <div class="foot-col foot-directory">
+        <nav aria-labelledby="ft-seite">
+          <h2 class="foot-h" id="ft-seite">Seite</h2>
+          <ul>
+            <li><a href="../portfolio-startseite.html#stage">Moin</a></li>
+            <li><a href="../portfolio-startseite.html#projekte">Projekte</a></li>
+            <li><a href="../portfolio-startseite.html#leistungen">Leistungen</a></li>
+            <li><a href="../portfolio-startseite.html#about">Über mich</a></li>
+            <li><a href="../portfolio-startseite.html#kunden">Kunden</a></li>
+            <li><a href="#kontakt">Kontakt</a></li>
+          </ul>
+        </nav>
+        <nav aria-labelledby="ft-recht">
+          <h2 class="foot-h" id="ft-recht">Rechtliches</h2>
+          <ul>
+            <li><a href="../impressum.html">Impressum</a></li>
+            <li><a href="../datenschutz.html">Datenschutz</a></li>
+          </ul>
+        </nav>
+      </div>
+      <nav class="foot-col foot-projects" aria-labelledby="ft-projekte">
+        <h2 class="foot-h" id="ft-projekte">Projekte</h2>
+        <ul>
+          ${projects.map((item) => `<li><a href="${item.slug}.html">${item.title}</a></li>`).join("")}
+        </ul>
+      </nav>
     </div>
-  </footer>`;
-
-// Das offene Panel sperrt normale Seitenbewegungen. Nur Klicks und – auf Geräten mit
-// echtem Hover – das bewusste Überfahren lokaler Anker dürfen den Hintergrund bewegen.
-(() => {
-  const menu = document.querySelector(".site-nav");
-  if (!menu) return;
-  let lockedY = null;
-  let anchorFlight = false;
-  let flightTimer = 0;
-  const desktopHover = matchMedia("(min-width: 52.001rem) and (hover: hover) and (pointer: fine)");
-  const motionReduce = matchMedia("(prefers-reduced-motion: reduce)");
-  const toggle = menu.querySelector("summary");
-  const menuLinks = [...menu.querySelectorAll("nav a")];
-  const inertTargets = [...document.querySelectorAll(
-    "main, body > footer, .site-header > .brand, .site-header > .avail, .site-header > .header-actions > .pill"
-  )];
-
-  const localTarget = (link) => {
-    const url = new URL(link.href, location.href);
-    if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash) return null;
-    return document.getElementById(decodeURIComponent(url.hash.slice(1)));
-  };
-  const flyTo = (link, keepOpen) => {
-    const target = localTarget(link);
-    if (!target) return false;
-    clearTimeout(flightTimer);
-    anchorFlight = true;
-    if (!keepOpen) {
-      lockedY = null;
-      menu.removeAttribute("open");
-      history.pushState(null, "", link.hash);
-    }
-    requestAnimationFrame(() => target.scrollIntoView({ behavior: motionReduce.matches ? "auto" : "smooth", block: "start" }));
-    flightTimer = window.setTimeout(() => {
-      anchorFlight = false;
-      if (menu.open) lockedY = window.scrollY;
-    }, 850);
-    return true;
-  };
-
-  menu.addEventListener("toggle", () => {
-    lockedY = menu.open ? window.scrollY : null;
-    toggle.setAttribute("aria-label", menu.open ? "Menü schließen" : "Menü");
-    inertTargets.forEach((node) => { node.inert = menu.open; });
-    if (!menu.open) anchorFlight = false;
-  });
-  menuLinks.forEach((link) => {
-    link.addEventListener("click", (event) => {
-      if (flyTo(link, false)) event.preventDefault();
-      else menu.removeAttribute("open");
-    });
-    link.addEventListener("pointerenter", () => {
-      if (desktopHover.matches) flyTo(link, true);
-    });
-  });
-  const insidePanel = (target) => target instanceof Element && !!target.closest(".site-nav nav");
-  const stopOutsidePanel = (event) => {
-    if (lockedY !== null && !insidePanel(event.target)) event.preventDefault();
-  };
-  addEventListener("wheel", stopOutsidePanel, { passive: false });
-  addEventListener("touchmove", stopOutsidePanel, { passive: false });
-  addEventListener("scroll", () => {
-    if (lockedY !== null && !anchorFlight && window.scrollY !== lockedY) window.scrollTo(0, lockedY);
-  }, { passive: true });
-  document.addEventListener("keydown", (event) => {
-    if (!menu.open) return;
-    if (event.key === "Escape") {
-      menu.removeAttribute("open");
-      toggle.focus();
-      event.preventDefault();
-      return;
-    }
-    if (event.key === "Tab") {
-      const stops = [toggle, ...menuLinks];
-      const first = stops[0];
-      const last = stops[stops.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        last.focus();
-        event.preventDefault();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        first.focus();
-        event.preventDefault();
-      }
-      return;
-    }
-    if (lockedY === null || insidePanel(event.target)) return;
-    if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) {
-      event.preventDefault();
-    }
-  });
-  document.addEventListener("click", (event) => {
-    if (menu.open && !menu.contains(event.target)) menu.removeAttribute("open");
-  });
-})();
+    <div class="foot-bar pad">
+      <span>© 2026 Katharina Wersdörfer</span>
+      <span>Designed in Düsseldorf</span>
+      <a class="to-top" href="#projektstart" aria-label="Zurück nach oben"><span class="tile-arrow" aria-hidden="true">→</span></a>
+    </div>
+  </footer>
+  <div class="pagegrid" aria-hidden="true">
+    <div class="pads"></div>
+    <div class="cols"><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="linen" aria-hidden="true"></div>`;

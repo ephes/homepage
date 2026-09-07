@@ -5,6 +5,18 @@
   --motion-fold-ease: cubic-bezier(.65, 0, .2, 1);
   --motion-enter: 760ms;
   --motion-hover: 320ms;
+  --menu-panel-block-space: clamp(2rem, 6vh, 6rem);
+}
+
+/* Gemeinsame CV-Leinentextur über Start- und Projektseiten. */
+.linen {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  pointer-events: none;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsBAMAAAAfmfjxAAAAFVBMVEX////ExMS/v7/8/PyLi4ufn5+6uro3PuJqAAAAB3RSTlMARTAACxAlpkPg9gAAAWVJREFUeF7t1EENgEAABLF9wB8LBGXn3wQ+Jq2I7orYF7E3YnfEnoidCGtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZK8Ba1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1EqxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1kr4gcY9P+FkIkE1AAAAABJRU5ErkJggg==');
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
 }
 .skip-link {
   position: fixed;
@@ -18,6 +30,175 @@
   transform: translateY(calc(-100% - 1rem));
 }
 .skip-link:focus { transform: translateY(0); }
+
+/* Das Panel bleibt auf die verfügbare Viewporthöhe begrenzt. `safe center` zentriert
+   nur, solange Inhalt samt beider Innenabstände hineinpasst; andernfalls beginnt das
+   Raster oben und der Panelbereich selbst wird vollständig scrollbar. */
+.site-nav nav {
+  position: fixed;
+  inset-block-start: var(--header-h, 4.6rem);
+  inset-inline-end: 0;
+  align-content: safe center;
+  padding-block: var(--menu-panel-block-space);
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: var(--menu-panel-block-space);
+}
+
+/* Projektindex innerhalb des bestehenden Menüs. Native details/summary statt Hover:
+   dieselbe Bedienung auf Desktop, Touch und Tastatur, ohne zweite seitliche Ebene. */
+.site-nav nav > .project-menu {
+  /* Sichtbarer linker Glyphenrand: Saira gibt dem großen P mehr Vorraum als der
+     kleinen 0. Der fluide Ausgleich folgt exakt den beiden vorhandenen Typostufen. */
+  --project-number-optical-offset:
+    calc(.0823 * var(--headline-m) - .0691 * var(--type-subline));
+  inline-size: 100%;
+  margin: 0;
+  font-size: var(--headline-m);
+  opacity: 0;
+  transform: translateX(2.5rem);
+  transition: opacity .4s ease,
+              transform .65s cubic-bezier(.16, 1, .3, 1);
+}
+.site-nav[open] nav > .project-menu {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: .52s;
+}
+.project-menu > summary {
+  display: flex;
+  align-items: center;
+  inline-size: 100%;
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: .95;
+  letter-spacing: var(--tracking-display);
+  cursor: pointer;
+}
+.project-menu > summary::before {
+  content: "✳";
+  flex: none;
+  margin-inline-end: clamp(.7rem, 1.2vw, 1rem);
+  color: var(--tangerine);
+  font-size: min(.7em, var(--headline-s));
+  line-height: 1;
+  letter-spacing: 0;
+}
+.project-menu > summary::after {
+  content: "+";
+  margin-inline-start: auto;
+  padding-inline-start: 1rem;
+  color: var(--tangerine);
+  font-size: .78em;
+  font-weight: 500;
+  line-height: 1;
+}
+.project-menu[open] > summary::after { content: "−"; }
+.site-nav nav .project-menu > summary > .project-overview {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  opacity: 1;
+  transform: none;
+  transition: color var(--motion-hover) var(--motion-ease);
+}
+.site-nav nav .project-menu > summary > .project-overview::before { content: none; }
+.site-nav nav .project-menu > summary > .project-overview:hover,
+.site-nav nav .project-menu > summary > .project-overview:focus-visible { color: var(--tangerine); }
+.project-menu::details-content {
+  display: block;
+  max-block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition: max-block-size .65s var(--motion-ease),
+              opacity .35s ease,
+              content-visibility .65s allow-discrete;
+}
+.project-menu[open]::details-content {
+  max-block-size: 40rem;
+  opacity: 1;
+}
+.project-menu-links {
+  display: grid;
+  grid-template-columns: max-content repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(5, auto);
+  grid-auto-flow: column;
+  gap: 1rem clamp(.7rem, 1.2vw, 1rem);
+  padding: 1rem 0 1.15rem;
+  counter-reset: project-menu-item;
+}
+/* Unsichtbare Kopie desselben Asterisk: Ihre echte Glyphenbreite bildet zusammen mit
+   demselben Spaltenabstand den exakten P-Anschlag – ohne angenäherte Einrückungswerte. */
+.project-menu-links::before {
+  content: "✳";
+  grid-column: 1;
+  grid-row: 1 / 6;
+  visibility: hidden;
+  font-size: min(.7em, var(--headline-s));
+  line-height: 1;
+  letter-spacing: 0;
+}
+.site-nav nav .project-menu-links a {
+  display: flex;
+  align-items: baseline;
+  gap: calc(.4em + var(--project-number-optical-offset));
+  min-inline-size: 0;
+  color: var(--ink);
+  font-size: var(--type-subline);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-action);
+  opacity: 1;
+  transform: none;
+  transition: color var(--motion-hover) var(--motion-ease);
+}
+.site-nav[open] nav .project-menu-links a { transition-delay: 0s; }
+.site-nav nav .project-menu-links a::before {
+  content: counter(project-menu-item, decimal-leading-zero);
+  counter-increment: project-menu-item;
+  margin: 0;
+  color: var(--tangerine);
+  font-size: inherit;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-action);
+  transform: translateX(var(--project-number-optical-offset));
+}
+.site-nav nav .project-menu-links a:hover,
+.site-nav nav .project-menu-links a:focus-visible { color: var(--tangerine); }
+
+@media (max-width: 52rem) {
+  .project-menu-links {
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-rows: repeat(9, auto);
+  }
+  .project-menu-links::before {
+    grid-row: 1 / 10;
+  }
+  .site-nav nav > .project-menu { inline-size: 100%; }
+}
+
+/* Tablet hochkant: vom ersten inneren Rasterteiler bis zum rechten Viewportrand.
+   Das sind exakt drei der vier optischen Inhaltsspalten zuzüglich des rechten Randes. */
+@media (min-width: 36.001rem) and (max-width: 90rem) {
+  .site-nav nav {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+    inline-size: calc(75vw - .5 * var(--pad));
+    box-shadow:
+      -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
+      -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav nav > .project-menu,
+  .project-menu::details-content,
+  .site-nav nav .project-menu-links a { transition: none; }
+}
 
 /* JavaScript setzt ausschließlich den Eintrittsstatus; Form, Timing und Bewegung bleiben
    CSS. Die Grunddarstellung bleibt absichtlich sichtbar (fail-open): Bleibt ein Observer-
@@ -121,7 +302,16 @@ html.service-motion-ready .svc.is-service-leaving > p {
 /* Die drei About-Akkordeons übernehmen dieselbe ruhige Textwelle. Bewusst bewegt werden
    nur Titel und Subline: Raster, Summary-Fläche und das Plus/Minus bleiben vollständig
    stehen und behalten damit ihre Bedien- und Öffnungsbewegung unverändert. */
-.me-text { --about-travel: clamp(2rem, 3vw, 3.75rem); }
+.me-text {
+  --about-travel: clamp(2rem, 3vw, 3.75rem);
+  overflow: clip;
+}
+/* Die gemeinsame Unterkante schafft zuerst Platz für die nach unten versetzten Texte.
+   Nach 720 ms ist der volle Weg erreicht; anschließend zieht sie sich über die komplette
+   Textstaffelung wieder auf ihre reguläre Position zurück. */
+html.about-motion-ready .me-text.is-about-stretching {
+  animation: about-grid-stretch 2430ms cubic-bezier(.25, .1, .25, 1) both;
+}
 html.about-motion-ready .me-row > summary > h3,
 html.about-motion-ready .me-row > summary > .me-lead {
   transform: translate3d(0, var(--about-enter-y, var(--about-travel)), 0);
@@ -155,6 +345,41 @@ html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
 @keyframes about-copy-exit {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(0, var(--about-exit-y, calc(-1 * var(--about-travel))), 0); }
+}
+@keyframes about-grid-stretch {
+  from { padding-block-end: 0; }
+  29.63% { padding-block-end: var(--about-travel); }
+  /* 720 ms bis zum Texteinsatz + 2 × 110 ms Reihenstaffel + 140 ms Subline-Versatz. */
+  44.44% { padding-block-end: var(--about-travel); }
+  to { padding-block-end: 0; }
+}
+
+/* Einspaltig besitzt jede About-Kachel eine eigene Unterkante. Deshalb streckt hier
+   nicht der gemeinsame Container, sondern jede Zeile synchron zu ihrer Textwelle.
+   `both` hält während der Staffelverzögerung bereits den nötigen Raum frei; die Subline
+   kann dadurch zu keinem Zeitpunkt über die nächste Trennlinie zeichnen. */
+@media (max-width: 52rem) {
+  html.about-motion-ready .me-text.is-about-stretching { animation: none; }
+  html.about-motion-ready .me-row {
+    padding-block-end: var(--about-travel);
+    overflow: clip;
+  }
+  html.about-motion-ready .me-row.is-about-entering {
+    animation: about-mobile-row-enter 1350ms cubic-bezier(.25, .1, .25, 1) both;
+    animation-delay: calc(var(--about-row-delay, 0ms) + 140ms);
+  }
+  html.about-motion-ready .me-row.is-about-leaving {
+    animation: about-mobile-row-leave 1050ms cubic-bezier(.25, .1, .25, 1) both;
+    animation-delay: var(--about-leave-delay, 0ms);
+  }
+}
+@keyframes about-mobile-row-enter {
+  from { padding-block-end: var(--about-travel); }
+  to { padding-block-end: 0; }
+}
+@keyframes about-mobile-row-leave {
+  from { padding-block-end: 0; }
+  to { padding-block-end: var(--about-travel); }
 }
 
 /* Die sichtbare Tinte bleibt echter Astagina-Text. Die handgetracten Mittellinien in
@@ -335,13 +560,15 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .pill > .pill-label { position: relative; z-index: 2; }
 .pill > .pill-label { display: inline-flex; align-items: center; gap: inherit; }
 
-/* Das Rasterfeld selbst bleibt unverändert. Nur sein Inhalt sinkt per `translateZ()`
-   perspektivisch nach innen; Kontur und innerer Schatten sitzen fest auf der vorhandenen
-   Gridkante. Der Bildausschnitt bekommt bis zur Nexola-Prüfung keinen separaten Effekt. */
+/* Gemeinsame Projektkarten-Komponente für Startseite und Unterseiten: Ihr bestehender
+   Cremegrund deckt das durchlaufende Seitenraster ab. Das Rasterfeld selbst bleibt
+   unverändert; nur sein Inhalt sinkt per `translateZ()` perspektivisch nach innen.
+   Kontur und innerer Schatten sitzen fest auf der vorhandenen Gridkante. */
 .tile:not(.cta),
 .more-card {
   position: relative;
   z-index: 0;
+  background: var(--bg);
   transition: box-shadow var(--motion-hover) var(--motion-ease), background-color var(--motion-hover) ease;
 }
 .tile-depth {
@@ -482,7 +709,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 
 /* Einfache Textlinks verwenden überall dieselbe einfahrende Haarlinie. */
 .foot-col a:not(.pill),
-.foot-bar a,
+.foot-bar a:not(.to-top),
 .project-footer a {
   background-position: left bottom;
   background-repeat: no-repeat;
@@ -493,8 +720,8 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 }
 .foot-col a:not(.pill):hover,
 .foot-col a:not(.pill):focus-visible,
-.foot-bar a:hover,
-.foot-bar a:focus-visible,
+.foot-bar a:not(.to-top):hover,
+.foot-bar a:not(.to-top):focus-visible,
 .project-footer a:hover,
 .project-footer a:focus-visible {
   color: var(--tangerine);
@@ -506,6 +733,185 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .site-nav nav a:focus-visible { color: var(--tangerine); }
 .menu-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
 
+/* Direkte Kontaktwege sind bewusst keine weiteren großen Menüpunkte. Die feine
+   horizontale Iconleiste trennt Navigation und Handlung, bleibt aber vollständig
+   per Tastatur und mit zugänglichen Linknamen bedienbar. */
+.menu-socials {
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  gap: clamp(.35rem, 1.2vw, .7rem);
+  position: relative;
+  margin-block-start: clamp(.6rem, 1.8vh, 1.15rem);
+  padding-block: clamp(1.1rem, 2.5vh, 1.5rem) clamp(.65rem, 1.5vh, 1rem);
+}
+.menu-socials::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 50%;
+  inline-size: calc(50vw - 2 * clamp(2rem, 6vw, 6rem));
+  border-block-start: 1px solid var(--rule-strong, var(--ink));
+  transform: translateX(-50%);
+}
+.site-nav nav .menu-socials a {
+  flex: 0 0 auto;
+  inline-size: clamp(2rem, 12vw, 2.75rem);
+  block-size: clamp(2rem, 12vw, 2.75rem);
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0;
+  line-height: 1;
+}
+.site-nav nav .menu-socials a::before { content: none; }
+.site-nav nav .menu-socials svg {
+  inline-size: clamp(1.25rem, 7vw, 1.75rem);
+  block-size: clamp(1.25rem, 7vw, 1.75rem);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.site-nav nav .menu-socials svg.phosphor-icon {
+  fill: currentColor;
+  stroke: none;
+}
+@media (max-width: 52rem) {
+  .menu-socials::before { inline-size: calc(100vw - 2 * var(--pad)); }
+}
+@media (min-width: 52.001rem) and (max-width: 90rem) {
+  .menu-socials::before {
+    inline-size: calc(75vw - .5 * var(--pad) - 2 * clamp(2rem, 6vw, 6rem));
+  }
+}
+
+/* Semantisch Teil der unteren Footerleiste, visuell das nach unten gespiegelte
+   Gegenstück zum Menüfeld: im Desktop-Seitenrand, mobil im sicheren Inhaltsbereich. */
+.to-top {
+  position: fixed;
+  z-index: 35;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  /* Die eigene linke Kante liegt exakt ÜBER dem innen gemalten rechten Rasterstrich.
+     Ohne den zusätzlichen Pixel stünden beide 1-px-Flächen direkt nebeneinander. */
+  inline-size: calc(var(--pad) + 1px);
+  block-size: 3.5rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-block-start: 1px solid currentColor;
+  border-inline-start: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: var(--warm-black, #171410);
+  mix-blend-mode: normal;
+  text-decoration: none;
+}
+.to-top.is-on-dark { color: var(--creme, #f0ece2); }
+/* Progressive Fallback: Ohne Skript bleibt der Pfeil auch über unbekannten Flächen
+   kontrastfähig. Im regulären Betrieb vermeidet die explizite Farbklasse das Auslöschen
+   der deckungsgleichen linken Raster- und Ankerkante. */
+html:not(.has-js) .to-top {
+  color: #fff;
+  mix-blend-mode: difference;
+}
+.to-top .tile-arrow { color: inherit; transform: rotate(-90deg); }
+.foot-bar .to-top { color: var(--warm-black, #171410); }
+.foot-bar .to-top.is-on-dark { color: var(--creme, #f0ece2); }
+.foot-bar .to-top:hover,
+.foot-bar .to-top:focus-visible {
+  background: transparent;
+}
+.foot-bar .to-top:hover .tile-arrow,
+.foot-bar .to-top:focus-visible .tile-arrow {
+  color: inherit;
+  transform: translateY(-.22rem) rotate(-90deg);
+}
+.to-top:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+
+/* Eine feste gemeinsame Höhe hält Footerlinie und obere Ankerkante auf ganzen
+   Gerätepixeln; die frühere fluide Bruchposition ließ die vertikale Linie grau wirken. */
+.foot-bar { min-block-size: 3.5rem; padding-block: 0; }
+
+/* Ohne die ehemalige Kontaktspalte bilden Seite + Rechtliches eine kompakte
+   Verzeichnisspalte. Die Projektliste nutzt auf Desktop die beiden verbleibenden
+   Spalten in Leserichtung erst nach unten und dann nach rechts. */
+.foot-projects { grid-column: span 2; }
+.foot-projects ul {
+  display: grid;
+  grid-template-rows: repeat(5, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 52rem) {
+  /* Profil über die volle Breite; darunter balancieren die gebündelten Seiten- und
+     Rechtslinks die neun Projektlinks in der zweiten Spalte aus. */
+  .foot-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem 0;
+  }
+  .foot-profile { grid-column: 1 / -1; }
+  .foot-projects { grid-column: auto; }
+  .foot-projects ul { display: flex; }
+
+  .foot-bar {
+    min-block-size: 3.5rem;
+    padding-block: 0;
+    padding-inline-end: calc(var(--pad) + 3.5rem + .75rem);
+    flex-wrap: nowrap;
+  }
+  .foot-bar > span { white-space: nowrap; }
+  .foot-bar > span:nth-child(2) { margin-inline-start: auto; }
+  .to-top {
+    inset-inline-end: calc(var(--pad) + env(safe-area-inset-right));
+    inset-block-end: env(safe-area-inset-bottom);
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    border: 0;
+    border-block-start: 1px solid currentColor;
+    border-inline-start: 1px solid currentColor;
+    border-inline-end: 1px solid currentColor;
+    background: var(--creme, #f0ece2);
+  }
+  .foot-bar .to-top { color: var(--warm-black, #171410); }
+  .to-top.is-on-dark,
+  .foot-bar .to-top.is-on-dark {
+    background: var(--warm-black, #171410);
+    color: var(--creme, #f0ece2);
+  }
+  html:not(.has-js) .to-top,
+  html:not(.has-js) .foot-bar .to-top {
+    background: var(--creme, #f0ece2);
+    color: var(--warm-black, #171410);
+    mix-blend-mode: normal;
+  }
+}
+
+/* Die Abschlusszeile skaliert auf schmalen Telefonen etwas nach, damit Ortsangabe und
+   Copyright weiterhin links neben dem unveränderten quadratischen Anker Platz finden. */
+@media (max-width: 28.125rem) {
+  .foot-bar { gap: .35rem; font-size: clamp(.45rem, 2.2vw, var(--type-eyebrow)); }
+}
+
+/* Ohne die lange E-Mail-Adresse können die beiden ausgeglichenen Verzeichnisspalten
+   bis 320px nebeneinander bleiben. Erst darunter wird der Footer einspaltig. */
+@media (max-width: 19.9375rem) {
+  .foot-cols { grid-template-columns: minmax(0, 1fr); }
+  .foot-profile { grid-column: auto; }
+}
+
+/* Unter 288px reicht selbst die kleinste gemeinsame Textstufe nicht mehr für beide
+   Abschlussangaben neben dem quadratischen Anker. Die Ortsangabe bleibt als wichtigere
+   gestalterische Signatur stehen; das Copyright bleibt im Dokument erst darüber sichtbar. */
+@media (max-width: 18rem) {
+  .foot-bar > span:first-child { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .motion-heading,
@@ -513,7 +919,8 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   html:not(.has-js) .no-js-content h1,
   .project-lead, .case-copy, .quote p,
   .svc > .ico, .svc > h3, .svc > p,
-  .me-row > summary > h3, .me-row > summary > .me-lead {
+  .me-row > summary > h3, .me-row > summary > .me-lead,
+  .me-text {
     transform: none;
     animation: none;
   }
@@ -524,7 +931,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   .pill, .pill::before,
   .tile, .more-card, .tile-depth, .tile .meta h3, .more-card h3, .tile-arrow,
   .pill .ar, .project-inquiry, .project-inquiry::before, .project-inquiry .ar, .brand,
-  .foot-col a:not(.pill), .foot-bar a, .project-footer a { transition: none; }
+  .foot-col a:not(.pill), .foot-bar a, .project-footer a, .to-top { transition: none; }
   .pill:hover::before, .pill:focus-visible::before {
     animation: none;
     transform: translate3d(0, 0, -.7rem) rotateX(88deg);

@@ -14,6 +14,9 @@ serverseitig gerenderte Wagtail-`ProjectPage`-Template.
 Die zugehörige Design-Spec liegt unter
 [`../specs/2026-07-17-portfolio-site-design.md`](../specs/2026-07-17-portfolio-site-design.md).
 
+Der konkrete Übergabestand mit offenen Punkten für den nächsten Arbeitstermin steht in
+[`MEMORY.md`](MEMORY.md). Das Menü ist in diesem Stand ausdrücklich noch nicht abgeschlossen.
+
 ## Was der Prototyp zeigt
 
 Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):

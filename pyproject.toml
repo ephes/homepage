@@ -74,6 +74,7 @@ omit = ["apps/*/tests/*", "apps/*/migrations/*"]
 command_line = "-m pytest"
 
 [tool.pytest.ini_options]
+testpaths = ["homepage"]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 filterwarnings = [
     # "ignore::django.utils.deprecation.RemovedInDjango60Warning",

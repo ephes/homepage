@@ -39,6 +39,7 @@ The test configuration is defined in ``pyproject.toml``:
 .. code-block:: toml
 
     [tool.pytest.ini_options]
+    testpaths = ["homepage"]
     DJANGO_SETTINGS_MODULE = "config.settings.test"
     addopts = [
         "-ra",
@@ -48,6 +49,8 @@ The test configuration is defined in ``pyproject.toml``:
 
 Key settings:
 
+* ``testpaths``: Limits default discovery to application tests, excluding local backup and media trees
+  (add any new test roots outside ``homepage`` to this list)
 * ``DJANGO_SETTINGS_MODULE``: Uses the test-specific Django settings
 * ``--reuse-db``: Reuses the test database between runs for faster testing
 * ``--no-migrations``: Skips migrations during test runs for speed

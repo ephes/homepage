@@ -71,6 +71,86 @@ Testing
 * ``just test`` - Run test suite
 * ``just coverage`` - Run tests with coverage report
 
+Updating Dependencies
+~~~~~~~~~~~~~~~~~~~~~
+
+The committed ``uv.lock`` pins the complete environment, including exact Git
+commits for django-cast, django-indieweb, and the Cast themes. django-cast tracks
+``develop``, so an update can include unreleased changes even when its package
+version is unchanged. Review upstream release notes as well as the commit change.
+
+Refresh all dependencies within the constraints in ``pyproject.toml``::
+
+    uv lock --upgrade
+    uv sync --locked
+
+To update only django-cast and any dependencies required by its new constraints::
+
+    uv lock --upgrade-package django-cast
+    uv sync --locked
+
+Run isolated application tests and migration checks without a local database::
+
+    (
+        export DATABASE_URL=sqlite:///:memory:
+        export LEGACY_DATABASE_URL=sqlite:///:memory:
+        export DJANGO_SETTINGS_MODULE=config.settings.test
+        uv run --locked pytest --create-db
+        uv run --locked python manage.py check
+        uv run --locked python manage.py makemigrations --check --dry-run
+        uv run --locked python manage.py migrate --noinput
+    )
+
+Pytest's ``testpaths`` limits default discovery to ``homepage`` so ``just test``
+and direct pytest runs avoid local backup/media directories. Also inspect the
+migration plan with the production settings and database before deployment;
+SQLite checks do not substitute for PostgreSQL validation. Deploy with the
+committed lock, apply migrations, and collect static files through the deployment
+workflow.
+
+2026-09-08 dependency refresh
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* django-cast: 0.2.64 at ``90790d9e`` to unreleased 0.2.65 at ``b36ddd4b``
+  on ``develop``. The latest published PyPI release at upgrade time is 0.2.64.
+* Django: 6.1 to 6.1.1; Wagtail remains 8.0.
+* django-indieweb: 0.6.1 to 0.6.2. Both Cast theme Git pins remain unchanged.
+* django-debug-toolbar: 7.0.0 to 8.0.0; Gunicorn: 26.0.0 to 26.2.0.
+* Refreshed the remaining compatible runtime and development dependencies.
+
+The Cast update includes permission, feed-isolation, comment, and editor
+rich-text fixes. Legacy audio/video collection endpoints no longer accept
+uploads; clients should use the editor media endpoints. Editor rich-text writes
+are normalized against configured Wagtail features. See the
+`upstream 0.2.65 notes <https://github.com/ephes/django-cast/blob/b36ddd4b3b3e31b73dd822b749304957c4b3ffe0/docs/releases/0.2.65.rst>`_
+for integration changes.
+
+The application, configuration, scripts, and utilities contain no references to
+the removed legacy media collection upload paths. A pre-deploy scan of the
+available production Traefik access log (27,632,499 entries) found no POSTs to
+``/api/audios/`` or ``/api/videos/``. This covers observed usage, not unknown
+clients outside the available log history.
+
+Validated with Python 3.14.7: 102 application tests and 4 subtests passed,
+the full migration graph applied to an empty in-memory SQLite database, and
+``makemigrations --check --dry-run`` found no changes. These checks used
+``config.settings.test`` with both ``DATABASE_URL`` and
+``LEGACY_DATABASE_URL`` set to ``sqlite:///:memory:``. System checks reported the
+test settings' missing Vite manifests; the run also emitted dependency
+deprecation warnings. The local settings check, including debug-toolbar 8.0,
+reported no issues.
+
+Before deployment, the new frozen production dependencies were installed into
+an isolated environment on the production host with Python 3.14.7, including
+the pillow-heif wheel. Against the production PostgreSQL database, that
+environment's ``migrate --plan`` reported no planned operations and its
+production settings check reported no issues. Neither Cast nor IndieWeb adds
+migration changes between the old and new pins. A fresh custom-format database
+dump and copies of the previous dependency files were saved on the host before
+deployment; rollback can redeploy the preceding commit and lock without schema
+rollback for this refresh. PostgreSQL reported an existing collation-version
+mismatch during backup, which needs separate maintenance.
+
 Code Quality
 ~~~~~~~~~~~~
 

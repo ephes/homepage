@@ -1,0 +1,98 @@
+/* Nur die Komposition der 501-Seite. Shell, Typografie, Raster und Footer bleiben
+   gemeinsame Bestandteile des Portfolio-Prototyps. */
+.error-page main {
+  min-block-size: calc(100vh - var(--header-h) - var(--availability-strip-offset));
+  min-block-size: calc(100svh - var(--header-h) - var(--availability-strip-offset));
+}
+
+/* Every Layout: Cover zentriert die einzige Hauptkomposition intrinsisch im
+   100-svh-Inhaltsbereich; Center und Stack begrenzen Breite und Rhythmus. */
+.error-cover {
+  min-block-size: calc(100vh - var(--header-h) - var(--availability-strip-offset));
+  min-block-size: calc(100svh - var(--header-h) - var(--availability-strip-offset));
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1rem, 3vh, 2rem) var(--pad);
+  padding-block: clamp(1rem, 3svh, 2rem);
+}
+
+.error-composition {
+  --space: clamp(1rem, 2.5vw, 1.75rem);
+  inline-size: 100%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.error-composition > * {
+  margin-block: 0;
+}
+
+.error-composition > * + * {
+  margin-block-start: var(--space);
+}
+
+.error-code {
+  color: var(--muted);
+  font-size: var(--type-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.error-code + .error-heading {
+  margin-block-start: clamp(.4rem, 1vw, .75rem);
+}
+
+.error-heading {
+  max-inline-size: 10ch;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: var(--headline-l);
+  font-weight: 600;
+  line-height: .9;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.error-copy {
+  max-inline-size: 38ch;
+  font-size: var(--type-lead);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.error-projects {
+  inline-size: 100%;
+  text-align: start;
+}
+
+/* Ohne JavaScript bleibt dieselbe lesbare Endentscheidung erhalten. Mit Enhancement
+   übernimmt die gemeinsame Projektteaser-Komponente exakt die Unterseitenmessung. */
+html:not(.has-js) .error-projects .more-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.error-projects-title {
+  position: absolute;
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+html:not(.has-js) .error-projects .more-card {
+  grid-column: auto;
+}
+
+.error-projects .tile-depth {
+  block-size: 100%;
+}
+
+.error-home-link {
+  align-self: center;
+}

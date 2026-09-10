@@ -1,0 +1,5 @@
+{% load wagtailimages_tags %}
+<figure class="project-image{% if modifier %} {{ modifier }}{% endif %}{% if value.orientation %} {{ value.orientation }}{% endif %}{% if value.is_large %} wide{% endif %}">
+  {% srcset_image value.image width-{1920,480,960,1440} sizes=image_sizes|default:"(min-width: 94.5rem) 90rem, calc(100vw - 2 * clamp(1rem, 4vw, 2.25rem))" alt=value.image.contextual_alt_text loading="lazy" %}
+  {% if value.caption %}<figcaption>{{ value.caption }}</figcaption>{% endif %}
+</figure>

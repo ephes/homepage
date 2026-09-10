@@ -1,0 +1,29 @@
+{% extends "portfolio/base.html" %}
+{% load wagtailcore_tags %}
+
+{% block title %}501 — {{ error_settings.headline }} — Katharina Wersdörfer{% endblock %}
+{% block meta_description %}{{ error_settings.sentence }}{% endblock %}
+{% block meta_robots %}<meta name="robots" content="noindex,follow">{% endblock %}
+{% block body_attributes %} class="error-page"{% endblock %}
+
+{% block content %}
+  <section class="error-cover" aria-labelledby="error-heading" aria-describedby="error-copy">
+    <div class="error-composition stack">
+      <p class="error-code">Fehler 501</p>
+      <h1 class="error-heading" id="error-heading">{{ error_settings.headline }}</h1>
+      <p class="error-copy" id="error-copy">{{ error_settings.sentence }}</p>
+      {% if featured_projects %}
+        <section class="grid project-grid error-projects" aria-labelledby="error-projects-title">
+          <h2 class="error-projects-title" id="error-projects-title">Projekte zum Weitersehen</h2>
+          {% for project in featured_projects %}
+            {% include "portfolio/components/related_project_card.html" with project=project request=request image_sizes="(min-width: 42rem) calc(50vw - 2.25rem), calc(100vw - 2rem)" only %}
+          {% endfor %}
+        </section>
+      {% endif %}
+      {% if portfolio_index %}
+        {% pageurl portfolio_index as portfolio_home_url %}
+      {% endif %}
+      <a class="error-home-link" href="{{ portfolio_home_url|default:'/' }}">Zur Startseite</a>
+    </div>
+  </section>
+{% endblock %}

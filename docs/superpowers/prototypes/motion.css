@@ -103,6 +103,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 /* Auf Telefonen sitzt die separate Verfügbarkeitszeile zwischen festem Header und Main.
    Sie übernimmt deshalb den Flussausgleich; ein zusätzlicher Main-Abstand wäre doppelt. */
 @media (max-width: 36rem) {
+  :root { --availability-strip-offset: calc(1.8rem + 1px); }
   body > .availability-strip,
   body > noscript > .availability-strip { margin-block-start: var(--header-h, 4.6rem); }
   body:has(> .availability-strip) > main,
@@ -237,8 +238,8 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   transition: color var(--motion-hover) var(--motion-ease);
 }
 .site-nav nav .project-menu > summary > .project-overview::before { content: none; }
-.site-nav nav .project-menu > summary > .project-overview:hover,
-.site-nav nav .project-menu > summary > .project-overview:focus-visible { color: var(--tangerine); }
+.site-nav nav .project-menu > summary:hover > .project-overview,
+.site-nav nav .project-menu > summary:focus-visible > .project-overview { color: var(--tangerine); }
 .project-menu::details-content {
   display: block;
   max-block-size: 0;
@@ -298,16 +299,21 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   letter-spacing: var(--tracking-action);
   transform: translateX(var(--project-number-optical-offset));
 }
+.site-nav nav .project-menu-links .project-overview-link::before {
+  content: "00";
+  counter-increment: none;
+  visibility: hidden;
+}
 .site-nav nav .project-menu-links a:hover,
 .site-nav nav .project-menu-links a:focus-visible { color: var(--tangerine); }
 
 @media (max-width: 52rem) {
   .project-menu-links {
     grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: repeat(9, auto);
+    grid-template-rows: repeat(10, auto);
   }
   .project-menu-links::before {
-    grid-row: 1 / 10;
+    grid-row: 1 / 11;
   }
   .site-nav nav .menu-primary > .project-menu { inline-size: 100%; }
 }
@@ -575,6 +581,7 @@ html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
 /* Während und nach dem Schreiben bleibt dieselbe normalisierte Ebene sichtbar. Ein
    Rückwechsel auf das anders verankerte Original würde die Notiz seitlich springen lassen. */
 html.js-hw .hw-label .hw-final { visibility: hidden; }
+html.js-hw .hw-label.hw-fallback .hw-final { visibility: visible; }
 html.js-hw .hw-ink-group,
 html.js-hw .hw-outline-group { visibility: hidden; }
 html.js-hw .hw-svg.hw-go .hw-ink-group,
@@ -1229,7 +1236,8 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   .pill, .pill::before,
   .tile, .more-card, .tile-depth, .tile .meta h3, .more-card h3, .tile-arrow,
   .pill .ar, .project-inquiry, .project-inquiry::before, .project-inquiry .ar, .brand,
-  .foot-col a:not(.pill), .foot-bar a, .project-footer a, .to-top { transition: none; }
+  .foot-col a:not(.pill), .foot-bar a, .project-footer a, .to-top,
+  .scrollcue, .cursor { transition: none; }
   .pill:hover::before, .pill:focus-visible::before {
     animation: none;
     transform: translate3d(0, 0, -.7rem) rotateX(88deg);

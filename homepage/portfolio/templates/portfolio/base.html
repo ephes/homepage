@@ -1,0 +1,21 @@
+{% load static %}
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{% block meta_description %}Portfolio von Katharina Wersdörfer{% endblock %}">
+    {% block meta_robots %}{% endblock %}
+    <title>{% block title %}{{ page.title }}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'portfolio/portfolio.css' %}">
+    {% block extra_styles %}{% endblock %}
+  </head>
+  <body{% block body_attributes %}{% endblock %}>
+    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+    {% include "portfolio/components/site_header.html" %}
+    <main id="main-content" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+    {% include "portfolio/components/site_footer.html" %}
+  </body>
+</html>

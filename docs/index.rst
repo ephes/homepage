@@ -15,6 +15,7 @@ Contents:
    development
    backup_restore
    media_utils
+   portfolio_wagtail
    deploy
    tests
 

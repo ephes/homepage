@@ -1,0 +1,24 @@
+{% load wagtailcore_tags %}
+<header class="site-header box">
+  <div class="center cluster site-header__inner">
+    {% if portfolio_index %}
+      {% pageurl portfolio_index as portfolio_home_url %}
+      <a class="site-header__brand" href="{{ portfolio_home_url }}">{{ portfolio_index.title }}</a>
+      <details class="site-menu">
+        <summary>Menü</summary>
+        <nav aria-label="Hauptnavigation">
+          <ul class="stack site-menu__links">
+            <li><a href="{{ portfolio_home_url }}#projekte">Projekte</a></li>
+            <li><a href="{{ portfolio_home_url }}#ueber-mich">Über mich</a></li>
+            <li><a href="{{ portfolio_home_url }}#kontakt">Kontakt</a></li>
+            {% for project in portfolio_projects %}
+              <li><a href="{% pageurl project %}">{{ project.title }}</a></li>
+            {% endfor %}
+          </ul>
+        </nav>
+      </details>
+    {% else %}
+      <span class="site-header__brand">Katharina Wersdörfer</span>
+    {% endif %}
+  </div>
+</header>

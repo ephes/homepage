@@ -1,5 +1,7 @@
 document.documentElement.classList.add("has-js");
 
+try {
+
 const projects = [
   { slug: "studio-website-relaunch", title: "Studio-Website Relaunch", field: "Web", year: "2026" },
   { slug: "buchgestaltung", title: "Buchgestaltung", field: "Print", year: "2025" },
@@ -78,9 +80,10 @@ document.body.innerHTML = `
           <div class="menu-primary">
           <a href="#projektstart">Moin</a>
           <details class="project-menu">
-            <summary><a class="project-overview" href="../portfolio-startseite.html#projekte">Projekte</a></summary>
+            <summary><span class="project-overview">Projekte</span></summary>
             <div class="project-menu-links">
               ${projects.map((item) => `<a href="${item.slug}.html">${item.title}</a>`).join("")}
+              <a class="project-overview-link" href="../portfolio-startseite.html#projekte">Alle Projekte</a>
             </div>
           </details>
           <a href="#case-study">Case Study</a>
@@ -88,7 +91,7 @@ document.body.innerHTML = `
           ${resultItems.length ? '<a href="#ergebnisse">Ergebnisse</a>' : ""}
           <a href="#kontakt">Kontakt</a>
           </div>
-          <div class="menu-socials" aria-label="Direkte Kontaktwege">
+          <div class="menu-socials" role="group" aria-label="Direkte Kontaktwege">
             <div class="menu-social-links">
             <a class="mail-link" href="mailto:katharina@wersdoerfer.de" aria-label="E-Mail schreiben"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m4 7 8 6 8-6"/></svg></a>
             <a class="linkedin-link" href="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.25" cy="4.75" r="1.85"/><path d="M4.4 9h3.7v11H4.4z"/><path d="M10.35 20V9h3.7v1.55a4.3 4.3 0 0 1 3.45-1.8c2.55 0 4.1 1.75 4.1 5V20h-3.7v-5.7c0-1.4-.55-2.15-1.65-2.15-1.4 0-2.2.95-2.2 2.75V20z"/></svg></a>
@@ -100,7 +103,7 @@ document.body.innerHTML = `
       </details>
     </div>
   </header>
-  <div class="availability-strip" aria-label="Projektstatus">
+  <div class="availability-strip">
     <span class="avail">Verfügbar für Projekte</span>
   </div>
   <main id="main-content">
@@ -164,16 +167,7 @@ document.body.innerHTML = `
         <p class="eyebrow">Weitere Projekte</p>
         <h2 class="block-title motion-heading">Weitersehen.</h2>
         <div class="more-grid">
-          ${moreProjects.map((item) => `
-            <a class="more-card" href="${item.slug}.html">
-              <div class="tile-depth">
-                <div class="frame"><span>21:9</span></div>
-                <div class="meta">
-                  <div class="row1"><h3>${item.title}</h3><span class="tile-arrow" aria-hidden="true">→</span></div>
-                  <div class="row2">${item.field} · ${item.year}</div>
-                </div>
-              </div>
-            </a>`).join("")}
+          ${window.PortfolioProjectTeasers.render(moreProjects)}
         </div>
       </section>
 
@@ -207,7 +201,7 @@ document.body.innerHTML = `
           </ul>
       </nav>
       <nav class="foot-col foot-projects" aria-labelledby="ft-projekte">
-        <h2 class="foot-h" id="ft-projekte">Projekte</h2>
+        <h2 class="foot-h" id="ft-projekte"><a href="../portfolio-startseite.html#projekte">Projekte</a></h2>
         <ul>
           ${projects.map((item) => `<li><a href="${item.slug}.html">${item.title}</a></li>`).join("")}
         </ul>
@@ -239,7 +233,6 @@ document.body.innerHTML = `
    Stapelklassen keine Mess-/Layout-Oszillation auslösen. Ohne JavaScript bleibt jeweils die
    sinnvolle zweispaltige CSS-Ausgangsform erhalten. */
 const resultGrid = document.querySelector(".result-grid");
-const moreGrid = document.querySelector(".more-grid");
 const mobileProjectGrids = matchMedia("(max-width: 52rem)");
 let projectGridFrame = 0;
 
@@ -264,32 +257,9 @@ function syncResultGridLayout() {
   resultGrid.classList.toggle("result-grid-stacked", needsStack);
 }
 
-function syncMoreGridLayout() {
-  if (!moreGrid) return;
-  moreGrid.classList.remove("more-grid-stacked");
-  if (!mobileProjectGrids.matches) return;
-
-  const needsStack = [...moreGrid.querySelectorAll(".row1")].some((row) => {
-    const title = row.querySelector("h3");
-    const arrow = row.querySelector(".tile-arrow");
-    if (!title || !arrow) return false;
-    const rowRect = row.getBoundingClientRect();
-    const titleRect = title.getBoundingClientRect();
-    const arrowRect = arrow.getBoundingClientRect();
-    const rowStyle = getComputedStyle(row);
-    const minimumGap = parseFloat(rowStyle.columnGap || rowStyle.gap) || 0;
-    const epsilon = 0.5;
-    return row.scrollWidth > row.clientWidth + epsilon
-      || arrowRect.right > rowRect.right + epsilon
-      || titleRect.right + minimumGap > arrowRect.left + epsilon;
-  });
-
-  moreGrid.classList.toggle("more-grid-stacked", needsStack);
-}
-
 function syncProjectGridLayouts() {
   syncResultGridLayout();
-  syncMoreGridLayout();
+  window.PortfolioProjectTeasers.sync();
 }
 
 function requestProjectGridLayouts() {
@@ -303,4 +273,10 @@ mobileProjectGrids.addEventListener?.("change", requestProjectGridLayouts);
 if (document.fonts) {
   document.fonts.ready.then(requestProjectGridLayouts);
   document.fonts.addEventListener?.("loadingdone", requestProjectGridLayouts);
+}
+} catch (error) {
+  console.error("Projekt-Prototyp konnte nicht erweitert werden.", error);
+} finally {
+  clearTimeout(window.portfolioProjectFallbackTimer);
+  document.documentElement.classList.remove("project-pending");
 }

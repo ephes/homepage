@@ -1,0 +1,4 @@
+<div class="grid project-image-pair{% if modifier %} {{ modifier }}{% endif %}">
+  {% include "portfolio/blocks/captioned_image.html" with value=value.left image_sizes="(min-width: 94.5rem) 45rem, (min-width: 42rem) 45vw, calc(100vw - 2rem)" only %}
+  {% include "portfolio/blocks/captioned_image.html" with value=value.right image_sizes="(min-width: 94.5rem) 45rem, (min-width: 42rem) 45vw, calc(100vw - 2rem)" only %}
+</div>

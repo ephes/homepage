@@ -1,4 +1,3 @@
-@import url("../fonts.css");
 
 :root {
   --creme: #F0ECE2;
@@ -22,6 +21,7 @@
   --inset: 1rem;
   --hero-inset: clamp(.5rem, 1.2vw, 1.25rem);
   --header-h: calc(4.6rem + 1px);
+  --availability-strip-offset: 0rem;
   --headline-xl: clamp(1.2rem, min(max(8vw, min(3.5rem, 14.25vw)), calc(16.375vw - .425rem)), 12rem);
   --headline-l: clamp(1.1rem, min(max(6vw, min(3rem, 13.125vw)), calc(15vw - .375rem)), 9rem);
   --headline-m: clamp(1rem, min(max(4vw, min(2.5rem, 10.625vw)), calc(11.25vw - .125rem)), 7rem);
@@ -41,6 +41,10 @@
   --tracking-action: .01em;
   --tracking-label: .1em;
   color-scheme: light;
+}
+
+html.project-pending body {
+  visibility: hidden;
 }
 
 * { box-sizing: border-box; }
@@ -604,6 +608,7 @@ footer.site { border-top: 0; background: transparent; color: var(--dark-ink); }
 }
 .foot-col ul { display: flex; flex-direction: column; gap: .35rem; padding: 0; list-style: none; }
 .foot-col a { color: inherit; font-size: var(--type-subline); text-decoration: none; }
+.foot-h > a { font: inherit; letter-spacing: inherit; }
 .foot-col a[href^="mailto:"] { overflow-wrap: anywhere; }
 footer.site a:focus-visible { outline-color: var(--dark-ink); }
 

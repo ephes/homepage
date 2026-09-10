@@ -79,8 +79,10 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    Enter/Leertaste bedienbar; die Links sind echte Anker. Nach einem Sprung bleibt das
    native Disclosure ohne Skript offen und wird über den Summary-Schalter geschlossen.
    „Projekte“ ist innerhalb dieses Panels auf Desktop wie Mobile ein eigenes natives
-   Disclosure: Das Wort selbst führt zur Projektübersicht, während das größere Tangerine-Plus
-   die neun automatisch mit `01` bis `09` nummerierten Projektlinks ein- und ausklappt.
+   Disclosure: Wort und Tangerine-Plus schalten gemeinsam die neun automatisch mit `01`
+   bis `09` nummerierten Projektlinks ein und aus. Der zusätzliche, unnummerierte Link
+   „Alle Projekte“ am Listenende führt zur Projektübersicht, ohne interaktive Elemente
+   ungültig im `<summary>` zu verschachteln.
    Desktop läuft die Reihenfolge spaltenweise (`01–05` links, `06–09` rechts); mobil
    bleibt sie als eine fortlaufende Spalte erhalten.
    Die zentrale Rasterspalte behält beim Öffnen des Projektindex die intrinsische Breite
@@ -720,6 +722,9 @@ native CSS-View-Timeline: Eine `entry`-Animation führt die Headline von unten a
 Ruheposition, eine getrennte `exit`-Animation bewegt sie oben hinaus und läuft beim
 Zurückscrollen automatisch rückwärts. `html:not(.has-js)` trennt diesen CSS-Weg von der
 zeitbasierten JavaScript-Fassung, sodass beide nie gleichzeitig auf `transform` schreiben.
+Die Start- und 501-Seite setzen die reine Fähigkeitsklasse bereits im Dokumentkopf, damit
+das zugängliche No-JS-Layout bei aktiviertem JavaScript nicht für einen ersten Frame
+aufblitzt; die eigentlichen Inhalte und Links bleiben davon unabhängig servergerendert.
 Die Grunddarstellung bleibt bewusst fail-open: Fehlt auch View-Timeline-Support, steht die
 Headline sichtbar an ihrer normalen Position; es fehlt nur die Bewegung.
 Headline-Reveals werden zurückgesetzt, sobald die jeweilige Überschrift vollständig aus dem
@@ -824,6 +829,50 @@ Startpunkte. Fehlen JavaScript oder die generierten Outlines, bleibt das Origina
 dem Markup unverändert sichtbar. `prefers-reduced-motion` zeigt ebenfalls sofort die
 unveränderte Endansicht.
 
+Die großen Pfaddaten liegen seit dem Performance-Pass vom 10. September 2026 außerhalb
+des initialen Ladepfads. `motion.js` lädt `handwriting-glyphs.js` genau einmal, sobald ein
+vorhandenes `svg.scr` bis auf 100 px an den Viewport herankommt. Projektseiten verwenden
+denselben Loader, erhalten aber nur `handwriting-contact.js` mit „tell me more“.
+Nach erfolgreichem Laden meldet
+`portfolio:handwriting-ready` die Daten an den idempotenten Handschrift-Start. Ohne
+IntersectionObserver wird direkt geladen; bei Ladefehlern bleiben die ursprünglichen
+SVG-Texte sichtbar. Bei reduzierter Bewegung wird das Bundle gar nicht angefordert.
+Die Font-Stylesheets stehen auf Projekt- und Rechtsseiten ausdrücklich vor `projekt.css`;
+ein verschachtelter CSS-`@import` ist nicht mehr nötig.
+
+Im anschließenden Handschrift-Refactor vom 10. September 2026 werden identische Geometrien
+innerhalb jedes SVGs über `<defs>`/`<use>` geteilt: Tinte und Außenkontur nutzen denselben
+Compound-Path, beide Schreibmasken dieselben Strichgeometrien. Alle Koordinaten,
+Schreibmasken und Zeitabläufe bleiben erhalten. Das volle Bundle sinkt von
+2,346,337 auf 1,535,008 Rohbytes; das Projekt-Subset benötigt 244,651 Rohbytes.
+Die [Rebuild-/Prüfanleitung samt Produktions-Brotli-Vertrag](../../../quality/portfolio/HANDWRITING.md)
+enthält die Byte-, DOM- und CPU-Abwägungen sowie die notwendige spätere Wagtail-Anbindung.
+
+Die WebGL-Schleife des Heros pausiert vollständig, wenn der Hero außerhalb des Viewports
+liegt oder das Dokument verborgen ist. Bei Rückkehr setzt sie mit derselben Simulation
+und einem frischen Zeitstempel fort. Reduzierte Bewegung zeigt einen stabilen Zustand
+ohne fortlaufende Simulation; ein Resize zeichnet die unveränderte Komposition einmal
+neu. Scrollhinweis und eigener Cursor besitzen in diesem Modus auch keine Opacity-Transition.
+
+Die lokale Nachmessung dieses Pakets bestand alle `quality/portfolio`-Funktions- und
+Accessibility-Gates inklusive reduzierter Bewegung. JS-aktive Desktop-Screenshots bei
+1280 × 900 px waren nach geladenen Effekten für Hero, Leistungen und Buchprojekt
+pixelidentisch. WebGL-Draw-Aufrufe lagen sichtbar bei 624 pro 400 ms und bei verborgenem
+Dokument, außerhalb des Viewports sowie unter reduzierter Bewegung jeweils bei null;
+die Wiederaufnahme wurde geprüft.
+
+Die initialen Browser-Ressourcen sanken von 2.57 MiB auf 341.5 KiB (5 → 4 Requests),
+Lighthouse meldete 2,805 → 517 KiB (11 → 10 Requests) und 60 → 0 ms Blocking Time.
+Lighthouse 13.4.1 / Chromium 153, mobil simuliert, meldete zuvor 84/100/92/90 und danach
+83/100/92/90 für Performance/Accessibility/Best Practices/SEO; LCP lag bei 3.5 → 3.6 s
+und CLS blieb 0.034. Damit ist das Performance-Ziel 90 noch offen: Der Prototyp liefert
+weiterhin 274 KB Base64-Fonts als renderblockierendes `fonts.css`. Byte-identische
+WOFF2-Dateien und ein gezielter Saira-Preload sind der nächste Schritt für die
+Wagtail-Asset-Pipeline; diese Umstellung ist hier bewusst noch nicht umgesetzt.
+Der gemessene Quellumfang dieses Pakets stieg um 82 Zeilen, 3,308 Rohbytes und
+666 gzip-Bytes. Laufzeit-/Transfergewinn bedeutet in diesem Fall weniger anfänglich
+ausgeführten bzw. geladenen Code, nicht eine kleinere Gesamtmenge aller Quelldateien.
+
 Der Schreibstart besitzt nur noch eine Freigabebedingung: Die unveränderte Layoutbox der
 zugehörigen Headline muss vollständig zwischen Sticky Header und unterem Viewportrand
 stehen. Weder das Ende des Headline-Reveals noch eine zuvor geschriebene Handschrift ist
@@ -894,10 +943,23 @@ lokalen Django-/PostgreSQL-/Wagtail-Stack (`just dev`, Django auf Port 8000). Be
 Überführung muss Wagtail das gemeinsame Projekt-Template serverseitig rendern: Titel,
 Bereich, Jahr, Kunde, Leistungen und Lead werden feste Felder; Case-Study-Abschnitte,
 Galerie, Ergebnisse und Statement optionale Blöcke. Bis dahin enthalten die neun
-Prototyp-URLs eine statische `<noscript>`-Fassung mit Projekttitel, Hauptnavigation und
-Rückweg zur Projektübersicht. So bleiben zumindest Navigation und Projektzugang ohne
-JavaScript nutzbar; der vollständige Projektinhalt darf vor Veröffentlichung nicht vom
-Browser-JavaScript abhängen.
+Prototyp-URLs eine vollständige statische Body-Fassung mit Projekttitel, Hauptnavigation
+und Rückweg zur Projektübersicht. Ohne JavaScript ist sie sofort sichtbar. Bei aktivem
+JavaScript verhindert eine frühe `project-pending`-Klasse, dass Platzhalter vor dem
+clientseitigen Prototyp-Template kurz aufblitzen; `projekt.js` entfernt sie nach Erfolg
+oder Fehler. Schlägt die gemeinsame Teaserdatei oder `projekt.js` selbst fehl, wird die
+statische Fassung wieder sichtbar. Ein Zwei-Sekunden-Timer begrenzt die leere Wartephase
+zusätzlich bei sehr langsamer Antwort oder einem Script-Parsefehler und zeigt dann die
+Fallback-Seite, auch wenn der Request erst später endet. Der vollständige Projektinhalt darf vor Veröffentlichung
+nicht vom Browser-JavaScript abhängen.
+
+Diese statischen Shell-Kopien sind ausschließlich eingefrorene, direkt aufrufbare
+Referenzartefakte und keine wiederverwendbare Produktionsarchitektur. Neue Seiten oder
+inhaltliche Varianten dürfen daraus nicht durch weitere Kopien entstehen. In Wagtail sind
+Header, Footer, Navigation und Projektkacheln gemeinsame serverseitige Partials; diese sind
+für die Übertragung die kanonische Quelle. Abweichungen der alten `<noscript>`-Stubs werden
+nicht in Wagtail übernommen, sondern dort aus den gemeinsamen Partials vollständig
+serverseitig gerendert.
 
 Die Projektgalerie ordnet beliebig viele Wagtail-Bildblöcke in geschlossenen, flexiblen
 Zeilen an. Auf Desktop und Tablet wachsen 3:2-Querformate und 4:5-Hochformate proportional
@@ -922,7 +984,7 @@ Tastaturpfade, Fokusdarstellung, Bewegungsreduktion und die verwendeten Farbpaar
   nimmt den verdeckten Seiteninhalt per `inert` aus der Fokusreihenfolge. Ohne JavaScript
   bleibt die native Menübedienung erhalten.
 - Alle Hover-Reaktionen besitzen ein `:focus-visible`-Gegenstück. Die mobilen Reel-Anfasser
-  sind horizontale, beschriftete Slider mit Pfeiltasten sowie Home/End und einer
+  sind horizontale, beschriftete Scrollbars mit Pfeiltasten sowie Home/End und einer
   24-px-Trefferfläche.
 - Dekorative Canvas-, Handschrift-, Raster- und Service-Icon-Grafiken sind aus dem
   Accessibility-Baum genommen. Medienplatzhalter der Projektseiten besitzen dagegen eine

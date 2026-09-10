@@ -7,6 +7,87 @@
   var reduce = matchMedia("(prefers-reduced-motion: reduce)");
   var glyphs = {};
 
+  /* Der geschlossene Linkblock ist je nach Seitentyp unterschiedlich lang. Seine echte
+     Höhe bestimmt die zwei gleich großen Spacer bis zur 75-%-Linie; beim Öffnen des
+     Projektindex bleiben diese Basis-Spacer stehen, sodass dessen Zusatzinhalt die Linie
+     nach unten schiebt. Bei offenem Index wird dessen Summary statt des gesamten Details
+     vermessen. So bleibt die geschlossene Basishöhe auch bei einem Viewportwechsel korrekt.
+
+     Die zentrale Auto-Spalte behält zugleich immer die intrinsische Breite dieser
+     geschlossenen Hauptnavigation. Der sichtbare Projektindex darf deshalb nur vertikal
+     wachsen und seine Zeilen innerhalb dieser Breite umbrechen. Native details-Inhalte
+     würden sonst beim Öffnen den Track verbreitern und am Ende ihrer diskreten
+     content-visibility-Schließtransition wieder freigeben. Eine unsichtbare, nur während
+     der synchronen Messung angehängte geschlossene Kopie liefert die Basisbreite, ohne den
+     echten Disclosure-Zustand oder die Fokus-/Scrollposition anzutasten. */
+  var menuGeometryFrame = 0;
+  function closedPrimaryGeometry(primary) {
+    var shell = document.createElement("details");
+    var measuringNav = document.createElement("nav");
+    var measuringPrimary = primary.cloneNode(true);
+    var measuringDisclosure = measuringPrimary.querySelector(":scope > .project-menu");
+
+    /* Die Messkopie darf keine dokumentweiten `:has(.site-nav[open])`-Zustände wie
+       Scroll-Lock, Scrim oder ausgeblendeten Top-Anker auslösen. */
+    shell.className = "site-nav is-measuring";
+    shell.open = true;
+    shell.inert = true;
+    shell.setAttribute("aria-hidden", "true");
+    shell.style.cssText = "position:fixed;inset:auto;inset-inline-start:-10000px;inset-block-start:0;visibility:hidden";
+    measuringNav.style.cssText = [
+      "position:fixed",
+      "inset:auto",
+      "inset-inline-start:-10000px",
+      "inset-block-start:0",
+      "inline-size:max-content",
+      "block-size:auto",
+      "display:block",
+      "padding:0",
+      "border:0",
+      "overflow:visible",
+      "scrollbar-gutter:auto",
+      "transform:none",
+      "clip-path:none",
+      "visibility:hidden"
+    ].join(";");
+    if (measuringDisclosure) measuringDisclosure.open = false;
+    measuringNav.appendChild(measuringPrimary);
+    shell.appendChild(measuringNav);
+    document.body.appendChild(shell);
+    var rect = measuringPrimary.getBoundingClientRect();
+    var geometry = { width: rect.width, height: rect.height };
+    shell.remove();
+    return geometry;
+  }
+  function syncMenuGeometry() {
+    menuGeometryFrame = 0;
+    [].slice.call(document.querySelectorAll(".site-nav nav")).forEach(function (nav) {
+      var primary = nav.querySelector(".menu-primary");
+      if (!primary) return;
+      /* Das echte Primary liegt beim Initiallauf in einem geschlossenen details und hat
+         deshalb keine messbare Box. Die gerenderte Kopie liefert beide Achsen in einem
+         Layoutdurchlauf, unabhängig vom sichtbaren Disclosure-Zustand. */
+      var geometry = closedPrimaryGeometry(primary);
+      if (geometry.height > 0) {
+        nav.style.setProperty("--menu-primary-measured-size", geometry.height + "px");
+      }
+      if (geometry.width > 0) {
+        nav.style.setProperty("--menu-primary-measured-inline-size", geometry.width + "px");
+      }
+    });
+  }
+  function requestMenuGeometry() {
+    if (!menuGeometryFrame) menuGeometryFrame = requestAnimationFrame(syncMenuGeometry);
+  }
+  syncMenuGeometry();
+  addEventListener("resize", requestMenuGeometry, { passive: true });
+  if (document.fonts) {
+    document.fonts.ready.then(requestMenuGeometry);
+    if (document.fonts.addEventListener) {
+      document.fonts.addEventListener("loadingdone", requestMenuGeometry);
+    }
+  }
+
   /* Der feste Top-Anker liegt außerhalb des normalen Dokumentflusses. Seine Kontur
      übernimmt deshalb die Farbe der Fläche, die optisch unter seiner Mitte liegt.
      So kann die linke Kante exakt auf der Rasterlinie liegen, ohne dass `difference`
@@ -357,10 +438,16 @@
           return;
         }
 
-        var leavesAtTop = direction > 0 && rect.top < 0;
         var leavesAtBottom = direction < 0 && rect.bottom > innerHeight;
-        if (state === "visible" && entry.intersectionRatio <= .75 &&
-            (leavesAtTop || leavesAtBottom)) {
+        /* Beim Hinunterscrollen bleibt der abgeschlossene Eintrittszustand bestehen.
+           Ein `leave()` oberhalb des Viewports würde mobil das für die Textreise
+           reservierte Padding wieder von 0 auf --about-travel animieren: drei bereits
+           unter dem festen Header verborgene Zeilen vergrößerten das Dokument dadurch
+           zusammen um 96 px, worauf Scroll Anchoring scrollY bildweise nachführte.
+           Erst wenn die Zeile beim Hinaufscrollen UNTER dem Viewport austritt, wird sie
+           für den nächsten Eintritt zurückgesetzt; dort kann ihre Höhenänderung den
+           aktuellen Bildausschnitt nicht verschieben. */
+        if (state === "visible" && entry.intersectionRatio <= .75 && leavesAtBottom) {
           leave(row, direction);
         }
       });

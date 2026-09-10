@@ -49,7 +49,7 @@ html { overflow-x: clip; scroll-behavior: smooth; }
 body {
   position: relative;
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--bg);
   color: var(--ink);
   font-family: "Saira", system-ui, sans-serif;
@@ -110,7 +110,7 @@ body::before {
   pointer-events: none;
   transition: opacity .16s ease-out, visibility 0s linear .16s;
 }
-body:has(.site-nav[open])::before {
+body:has(.site-nav[open]:not(.is-measuring))::before {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -121,8 +121,6 @@ h1, h2, h3, .eyebrow, .brand, .avail, .pill, dt { -webkit-hyphens: manual; hyphe
 p { text-wrap: pretty; }
 
 .site-header {
-  position: sticky;
-  inset-block-start: 0;
   z-index: 20;
   min-block-size: 3.9rem;
   display: flex;
@@ -213,7 +211,7 @@ p { text-wrap: pretty; }
   block-size: 3px;
   background: var(--creme);
 }
-body:has(.site-nav[open]) { overscroll-behavior: none; }
+body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .project-hero[id], section[id] { scroll-margin-block-start: var(--header-h); }
 .menu-icon { position: relative; display: block; inline-size: 1.75rem; block-size: .75rem; }
 .menu-icon::before, .menu-icon::after {
@@ -228,20 +226,8 @@ body:has(.site-nav[open]) { overscroll-behavior: none; }
 .site-nav[open] .menu-icon::after { inset-block-start: calc(50% - 1px); transform: rotate(-45deg); }
 .site-nav::details-content { transition: content-visibility .45s allow-discrete; }
 .site-nav nav {
-  position: absolute;
-  inset-block-start: calc(100% + .8rem);
-  inset-inline-end: calc(0px - var(--pad));
-  inline-size: 50vw;
-  block-size: calc(100vh - var(--header-h) + 1px);
-  block-size: calc(100dvh - var(--header-h) + 1px);
   display: grid;
   grid-auto-rows: min-content;
-  align-content: center;
-  justify-content: center;
-  justify-items: start;
-  gap: clamp(.7rem, 1.5vh, 1.35rem);
-  overflow-y: auto;
-  padding: clamp(2rem, 6vw, 6rem);
   border-block-start: 1px solid var(--ink);
   border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
   background: var(--creme);
@@ -293,8 +279,8 @@ body:has(.site-nav[open]) { overscroll-behavior: none; }
 .site-nav[open] nav a:nth-child(4) { transition-delay: .76s; }
 .site-nav[open] nav a:nth-child(5) { transition-delay: .88s; }
 .site-nav[open] nav a:nth-child(6) { transition-delay: 1s; }
-.site-nav nav a::before {
-  content: "✳";
+.site-nav nav .menu-primary > a::before {
+  content: "";
   flex: none;
   margin-inline-end: clamp(.7rem, 1.2vw, 1rem);
   color: var(--tangerine);
@@ -321,7 +307,7 @@ body:has(.site-nav[open]) { overscroll-behavior: none; }
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
-.eyebrow::before { content: "✳"; color: var(--tangerine); font-size: 1.15em; line-height: 0; }
+.eyebrow::before { content: ""; color: var(--tangerine); font-size: 1.15em; line-height: 0; }
 .project-hero > .eyebrow,
 .block > .eyebrow:has(+ .block-title) { margin-block-end: 0; }
 .project-hero h1 {
@@ -436,7 +422,7 @@ body:has(.site-nav[open]) { overscroll-behavior: none; }
 .results .eyebrow, .results .result-copy { color: var(--dark-muted); }
 .results .eyebrow::before { color: var(--tangerine); }
 .result-grid { border-block: 1px solid rgba(240, 236, 226, .18); }
-.result { min-block-size: 11rem; padding: clamp(1.2rem, 2.5vw, 2rem) var(--inset); border-inline-end: 1px solid rgba(240, 236, 226, .18); }
+.result { min-inline-size: 0; min-block-size: 11rem; padding: clamp(1.2rem, 2.5vw, 2rem) var(--inset); border-inline-end: 1px solid rgba(240, 236, 226, .18); }
 .result:last-child { border-inline-end: 0; }
 .result strong { display: block; font-size: var(--headline-m); font-weight: 600; line-height: 1; }
 .result span { display: block; margin-block-start: .7rem; color: var(--dark-muted); font-size: var(--type-subline); }
@@ -480,9 +466,30 @@ body:has(.site-nav[open]) { overscroll-behavior: none; }
 }
 .more-card .frame::after { transform: scaleX(-1); }
 .more-card .frame span { position: relative; background: var(--bg); padding: .1rem .45rem; }
+.more-card .frame > img,
+.more-card .frame > picture {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.more-card .frame > img,
+.more-card .frame > picture > img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
 .more-card .meta { display: flex; flex-direction: column; gap: .15rem; margin-block-start: auto; }
-.more-card .row1 { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.more-card .row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .more-card h3 { margin: 0; font-size: var(--type-subline); font-weight: 600; line-height: 1.2; }
+.more-card .tile-arrow {
+  /* Die gezeichnete Pfeilmitte sitzt in der Mitte der ersten Titelzeile. Eine
+     Baseline-Ausrichtung ist hier unzuverlässig, weil der Pfeil selbst font-size: 0
+     hat und sein Inline-Block dadurch unter die Textzeile rutscht. */
+  align-self: flex-start;
+  block-size: calc(var(--type-subline) * 1.2);
+}
 .more-card .row2 { color: var(--muted); font-size: var(--type-eyebrow); letter-spacing: .04em; }
 
 .contact {
@@ -502,7 +509,7 @@ body:has(.site-nav[open]) { overscroll-behavior: none; }
   text-transform: uppercase;
 }
 .contact .sec-label::before {
-  content: "✳";
+  content: "";
   color: var(--tangerine);
   font-size: 1.15em;
   line-height: 0;
@@ -598,19 +605,6 @@ footer.site { border-top: 0; background: transparent; color: var(--dark-ink); }
 .foot-col ul { display: flex; flex-direction: column; gap: .35rem; padding: 0; list-style: none; }
 .foot-col a { color: inherit; font-size: var(--type-subline); text-decoration: none; }
 .foot-col a[href^="mailto:"] { overflow-wrap: anywhere; }
-.foot-col nav + nav { margin-block-start: 2rem; }
-.foot-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: .75rem;
-  padding-block: 1.1rem;
-  padding-inline: calc(var(--pad) + var(--hero-inset));
-  border-top: 1px solid var(--dark-rule);
-  color: var(--dark-muted);
-  font-size: var(--type-eyebrow);
-}
 footer.site a:focus-visible { outline-color: var(--dark-ink); }
 
 :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
@@ -622,27 +616,42 @@ footer.site a:focus-visible { outline-color: var(--dark-ink); }
 
 @media (max-width: 52rem) {
   .header-actions { gap: clamp(.25rem, calc(-1.25rem + 10vw), .75rem); }
-  .site-nav nav {
-    position: fixed;
-    inset-block-start: var(--header-h);
-    inset-inline: 0;
-    inline-size: 100vw;
-    block-size: calc(100dvh - var(--header-h));
-    padding: clamp(2rem, 9vw, 4rem) var(--pad);
-    box-shadow: 0 1.25rem 2.5rem rgba(23, 20, 16, .22);
+  .intro-grid, .case-row { grid-template-columns: 1fr; }
+  /* Ergebnisse bilden mobil ein kompaktes 2×n-Raster. Nur ein tatsächlicher
+     Inhaltsüberlauf setzt per projekt.js die einspaltige Stapelklasse. */
+  .result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .intro-grid, .case-row, .result-grid, .more-grid { grid-template-columns: 1fr; }
+  .result-grid.result-grid-stacked { grid-template-columns: 1fr; }
+  .result-grid.result-grid-stacked .result span { overflow-wrap: anywhere; }
+  .result-grid .result { border-block-end: 1px solid rgba(240, 236, 226, .18); }
+  .result-grid .result:nth-child(even),
+  .result-grid .result:last-child:nth-child(odd),
+  .result-grid.result-grid-stacked .result { border-inline-end: 0; }
+  .result-grid .result:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .result-grid .result:last-child,
+  .result-grid:not(.result-grid-stacked) .result:nth-last-child(2):nth-child(odd) {
+    border-block-end: 0;
+  }
+  .results .block-title,
+  .more-projects .block-title { font-size: var(--headline-l); }
+  /* Die beiden Folgeprojekte bleiben auch im Mobile-Layout nebeneinander und belegen
+     weiterhin je zwei Grundrasterspalten. Nur wenn die konkret gerenderte Titel-/Pfeilzeile
+     einer dieser beiden Karten nicht hineinpasst, ergänzt projekt.js die Stapelklasse. */
+  .more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .more-grid.more-grid-stacked { grid-template-columns: 1fr; }
   .project-lead, .project-meta, .case-label, .case-copy, .more-card { grid-column: auto; }
   .project-meta { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); margin-block-start: 2.5rem; }
   .case-copy { margin-block-start: 1rem; }
-  .gallery .portrait { flex: 0 0 calc(50% - .5px); }
+  /* Ein Hochformat ohne unmittelbaren Partner schließt die Zeile vollbreit. Nur vom
+     Template paarweise markierte Hochformate teilen sich eine Zeile; bei ungerader
+     Anzahl bleibt das letzte daher ebenfalls lückenlos vollbreit. */
+  .gallery .portrait { flex: 0 0 100%; }
+  .gallery .portrait.portrait-paired { flex: 0 0 calc(50% - .5px); }
   .gallery .landscape,
   .gallery .wide,
   .gallery .portrait.wide { flex: 0 0 100%; }
-  .result { border-inline-end: 0; border-block-end: 1px solid rgba(240, 236, 226, .18); }
-  .result:last-child { border-block-end: 0; }
   .more-card { border-inline-end: 1px solid var(--rule); }
-  .foot-cols { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 2.5rem 0; }
 }
 
 @media (max-width: 36rem) {

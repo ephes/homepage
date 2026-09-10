@@ -20,7 +20,7 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    overflow-x: hidden;
+    overflow-x: clip;
     background: var(--bg);
     color: var(--ink);
     font-family: "Saira", system-ui, sans-serif;
@@ -71,8 +71,6 @@
 
   /* ── Header ───────────────────────────────────────────────────── */
   header.site {
-    position: sticky;
-    top: 0;
     z-index: 10;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -130,10 +128,9 @@
   /* align-items:center statt baseline — das Blümchen hat keine Grundlinie, an der es
      sich sinnvoll ausrichten ließe; es soll mittig zur Versalhöhe stehen. */
   .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); margin-block-end: 0; }
-  /* Auftaktzeichen: das ✳ aus dem Kunden-Marquee, in der Akzentfarbe. Als ::before am
-     Container, damit im Markup nichts Dekoratives steht. `line-height:0` nimmt dem Glyph
-     seinen Zeilenkasten, sonst schöbe er die Zeile auseinander. */
-  .sec-label::before { content: "✳"; color: var(--accent); font-size: 1.15em; line-height: 0; letter-spacing: 0; }
+  /* Auftaktzeichen: dieselbe maskierte Asterisk-Geometrie wie im Kunden-Marquee, in der
+     Akzentfarbe. Als leere ::before-Box bleibt im Markup nichts Dekoratives stehen. */
+  .sec-label::before { content: ""; color: var(--accent); font-size: 1.15em; line-height: 0; letter-spacing: 0; }
 
   /* ── Handschriftlicher Vermerk in der Headline ────────────────────────────
      Reihenfolge: Eyebrow, Headline, Vermerk — der Vermerk liegt AUF der Headline, quer
@@ -210,7 +207,7 @@
   .hero .top { margin-block-end: auto; padding-block-start: clamp(1.5rem, 4vw, 3rem); }
   /* Reine vw-Größe füllt bei konstanter Buchstabenzahl jede Breite gleich aus.
      Ink-Korrektur: Saira-Seitenränder von M/N ≈ 0.06em → per negativem Rand an die
-     Kante ziehen; der rechte (ink-freie) Überstand wird von overflow-x:hidden gekappt.
+     Kante ziehen; der rechte (ink-freie) Überstand wird von overflow-x:clip gekappt.
      font-size + margins per Playwright gemessen. */
   h1.moin {
     margin: 0 0 0 -0.058em;
@@ -713,6 +710,7 @@
     -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
             mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
   }
+  .marquee-secondary { display: none; }
   .marquee-track {
     display: flex;
     inline-size: max-content;
@@ -732,14 +730,46 @@
     white-space: nowrap;
     color: var(--dark-ink);
   }
-  .marquee-track .item::after { content: "✳"; font-size: 0.5em; opacity: 0.45; }
+  .marquee-track .item::after { content: ""; font-size: 0.5em; opacity: 0.45; }
   @keyframes marquee {
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }   /* Track enthält die Liste doppelt */
   }
   @media (prefers-reduced-motion: reduce) {
     .marquee-track { animation: none; flex-wrap: wrap; inline-size: auto; padding-inline: clamp(1.25rem, 4vw, 4rem); gap: 0; }
+    .marquee-track .item[aria-hidden="true"] { display: none; }
     .marquee { -webkit-mask-image: none; mask-image: none; }
+  }
+
+  /* Nur echtes Telefon-Hochformat: zwei ruhigere, gegenläufige Bänder füllen die bewusst
+     größere Kundenfläche. Der Cut endet vor der 36-rem-Tabletgrenze; größere Geräte und
+     jede Landscape-Ansicht behalten exakt das bisherige Einzelband. */
+  @media (max-width: 35rem) and (orientation: portrait) {
+    .clients {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .clients .marquee-track { animation-duration: 96s; }
+    .clients .marquee-track .item { padding-block: clamp(.65rem, 2svh, 1rem); }
+    .clients .marquee-secondary {
+      display: block;
+      border-block-start: 0;
+    }
+    .clients .marquee-secondary .marquee-track { animation-direction: reverse; }
+    .clients .marquee-primary:focus .marquee-track,
+    .clients .marquee-primary:focus + .marquee-secondary .marquee-track {
+      animation-play-state: paused;
+    }
+  }
+  @media (max-width: 35rem) and (orientation: portrait) and (prefers-reduced-motion: reduce) {
+    /* Eine statische Kundenliste genügt; die identische zweite Sichtkopie wäre redundant. */
+    .clients .marquee-secondary { display: none; }
+    .clients .marquee-primary .marquee-track .item {
+      padding: .3rem .45rem;
+      font-size: var(--type-subline);
+      white-space: normal;
+    }
   }
 
   /* ── Contact / Footer ─────────────────────────────────────────── */
@@ -774,7 +804,6 @@
   }
   .contact .pill.prio .ar { inline-size: clamp(1rem, 6vw, 1.5rem); }
   footer.site { border-top: 1px solid var(--rule); }
-  .foot-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-block: 1.1rem; font-size: var(--type-eyebrow); color: var(--muted); }
   .foot-bar nav { display: flex; gap: 1.25rem; }
   .foot-bar a { color: inherit; text-decoration: none; }
   .foot-bar a:focus-visible, .pill:focus-visible, .tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
@@ -823,13 +852,11 @@
 
     --pad:clamp(1.25rem,4vw,4rem);
     --hero-inset:1rem; /* einheitlicher Gap Wort<->Gridzelle; wird per JS in px gesetzt (Canvas+DOM synchron) */
-    /* Vom Skript dokument-absolut gesetzt (s. updateGridVars): Lücke der 1/4-Linie um die
-       Subline-Zelle. Ohne JS bleibt die Linie unsichtbar statt falsch zu sitzen. */
+    /* Vom Skript relativ zum .pagegrid-Ursprung gesetzt (s. updateGridVars): Lücke der
+       1/4-Linie um die Subline-Zelle. Ohne JS bleibt die Linie unsichtbar statt falsch. */
     --gap-start:0px; --gap-end:0px;
-    /* Höhe des Headers, per ResizeObserver gesetzt (s. Skript). Der Header steht als
-       `sticky` IM FLUSS — seine Höhe kommt also zur Stage hinzu. Ohne Abzug ist die
-       erste Bildschirmseite immer genau um ihn zu hoch (gemessen: 62,3px auf jeder
-       Größe), und die Subline wird unten angeschnitten. */
+    /* Sichere Grundhöhe des viewportfesten Headers; der ResizeObserver präzisiert sie.
+       Main und Hero rechnen dieselbe Höhe ein, damit nichts unter dem Header beginnt. */
     --header-h:4.6rem;
     --availability-strip-h:0rem;
     /* Untergrenze der Hero-Höhe. Darunter würde das MOIN, dessen Größe an der BREITE
@@ -873,7 +900,7 @@
   /* Bewusst hell-only: cremefarbener Grund, warmes Schwarz für alle Schriften (helle Start-Section). */
   :root{ color-scheme: light; }
   *{box-sizing:border-box;} html,body{margin:0;} html{overflow-x:clip;}
-  body{overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:"Saira",system-ui,sans-serif;}
+  body{overflow-x:clip;background:var(--bg);color:var(--ink);font-family:"Saira",system-ui,sans-serif;}
   body::before {
     content: ""; position: fixed; z-index: 30;
     inset-block: var(--header-h) 0; inset-inline: 0;
@@ -884,11 +911,11 @@
     opacity: 0; visibility: hidden; pointer-events: none;
     transition: opacity .16s ease-out, visibility 0s linear .16s;
   }
-  body:has(.site-nav[open])::before {
+  body:has(.site-nav[open]:not(.is-measuring))::before {
     opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
   }
   .pad{padding-inline:var(--pad);}
-  header.site{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(.25rem,calc(-2rem + 15vw),1rem);padding-block:.8rem;padding-inline:clamp(.5rem,calc(-1.75rem + 15vw),var(--pad));backdrop-filter:blur(20px) saturate(.7);-webkit-backdrop-filter:blur(20px) saturate(.7);background:color-mix(in srgb,var(--creme) 80%,transparent);border-bottom:1px solid var(--rule-strong);}
+  header.site{z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(.25rem,calc(-2rem + 15vw),1rem);padding-block:.8rem;padding-inline:clamp(.5rem,calc(-1.75rem + 15vw),var(--pad));backdrop-filter:blur(20px) saturate(.7);-webkit-backdrop-filter:blur(20px) saturate(.7);background:color-mix(in srgb,var(--creme) 80%,transparent);border-bottom:1px solid var(--rule-strong);}
   header.site::after {
     content: ""; position: absolute; z-index: 1; inset: 0;
     background-color: rgba(23, 20, 16, .28);
@@ -934,7 +961,7 @@
     inset-inline: 0; inset-block-end: -2px; block-size: 3px;
     background: var(--creme);
   }
-  body:has(.site-nav[open]) { overscroll-behavior: none; }
+  body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   section[id] { scroll-margin-block-start: var(--header-h); }
   .menu-icon { position: relative; display: block; inline-size: 1.75rem; block-size: .75rem; }
   .menu-icon::before, .menu-icon::after {
@@ -951,23 +978,11 @@
      sichtbar. Dadurch läuft nicht nur das Öffnen, sondern auch der Rückweg sauber. */
   .site-nav::details-content { transition: content-visibility .45s allow-discrete; }
   .site-nav nav {
-    position: absolute;
-    inset-block-start: calc(100% + .8rem);
-    inset-inline-end: calc(0px - var(--pad));
-    inline-size: 50vw;
-    block-size: calc(100vh - var(--header-h, 4.6rem) + 1px);
-    block-size: calc(100dvh - var(--header-h, 4.6rem) + 1px);
     border-block-start: 1px solid var(--ink);
     border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
     background: var(--creme);
-    padding: clamp(2rem, 6vw, 6rem);
     display: grid;
     grid-auto-rows: min-content;
-    align-content: center;
-    justify-content: center;
-    justify-items: start;
-    gap: clamp(.7rem, 1.5vh, 1.35rem);
-    overflow-y: auto;
     box-shadow:
       -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
       -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
@@ -1008,8 +1023,8 @@
   .site-nav[open] nav a:nth-child(4) { transition-delay: .76s; }
   .site-nav[open] nav a:nth-child(5) { transition-delay: .88s; }
   .site-nav[open] nav a:nth-child(6) { transition-delay: 1s; }
-  .site-nav nav a::before {
-    content: "✳"; flex: none;
+  .site-nav nav .menu-primary > a::before {
+    content: ""; flex: none;
     margin-inline-end: clamp(.7rem, 1.2vw, 1rem);
     color: var(--tangerine);
     /* Dekoratives Zeichen: relativ zum Menütext, gedeckelt durch die bestehende S-Stufe. */
@@ -1025,15 +1040,6 @@
   }
   @media (max-width: 52rem) {
     .header-actions { gap: clamp(.25rem, calc(-1.25rem + 10vw), .75rem); }
-    .site-nav nav {
-      position: fixed;
-      inset-block-start: var(--header-h);
-      inset-inline: 0;
-      inline-size: 100vw;
-      block-size: calc(100dvh - var(--header-h));
-      padding: clamp(2rem, 9vw, 4rem) var(--pad);
-      box-shadow: 0 1.25rem 2.5rem rgba(23, 20, 16, .22);
-    }
   }
   @media (max-width: 36rem) {
     :root { --availability-strip-h: 1.8rem; }
@@ -1060,7 +1066,21 @@
      niedrigen oder schmalen Viewports darf der Hero mit seinem Inhalt weiterwachsen. */
   .stage{position:relative;
     min-height:max(var(--hero-floor), calc(100svh - var(--header-h)));
-    overflow:hidden;}
+    overflow:hidden;
+    /* Vertikales Wischen gehört dem nativen Seitenscroll. Erst eine im Skript klar
+       horizontal erkannte Touch-Geste steuert den Fluid-Reveal. */
+    touch-action:pan-y;}
+  /* Alte WebKit-Stände verwerfen eine Deklaration mit unbekanntem `pinch-zoom` komplett.
+     Deshalb bleibt `pan-y` die sichere Basis und Zoom wird nur bei echter Unterstützung
+     ergänzt. */
+  @supports (touch-action:pan-y pinch-zoom){
+    .stage{touch-action:pan-y pinch-zoom;}
+  }
+  /* Mit dem iOS-tauglichen, nicht-passiven Touch-Event-Pfad darf WebKit alle nativen
+     Scroll-/Zoomgesten zunächst erwägen. Nur die klar horizontale Bewegung wird dann per
+     preventDefault übernommen; so kann auch eine uneindeutige Diagonale vertikal scrollen. */
+  .stage.uses-touch-events{touch-action:auto;}
+  .no-webgl .stage{touch-action:auto;}
   /* Der Canvas ist eine Hintergrundfläche und liegt deshalb UNTER dem Liniengerüst (-1)
      und unter den dunklen Sektionsflächen (-2). */
   #fluid{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:-3;}
@@ -1123,7 +1143,7 @@
       flex:none;
       margin-inline:var(--pad);
       margin-block-start:auto;
-      margin-block-end:calc(2.75rem + var(--availability-strip-h));
+      margin-block-end:env(safe-area-inset-bottom, 0px);
     }
     .grid .under,
     .grid .rows>b:nth-child(2){display:none;}
@@ -1136,6 +1156,28 @@
       border-block-start:1px solid var(--rule);
       pointer-events:none;
     }
+  }
+  /* Im Telefon-Hochformat endet die Stage am jeweils aktuellen visuellen Viewport:
+     `svh` bleibt der sichere Fallback, `dvh` folgt in aktuellen iOS-Browsern den ein-
+     und ausfahrenden Browserleisten. Das Statusband wird bereits von der Stage-Höhe
+     abgezogen und darf deshalb nicht ein zweites Mal unter dem LIDI reserviert werden. */
+  @media (max-width:36rem) and (orientation:portrait){
+    .stage{
+      min-height:max(var(--hero-floor),calc(100vh - var(--header-h) - var(--availability-strip-h)));
+      min-height:max(var(--hero-floor),calc(100svh - var(--header-h) - var(--availability-strip-h)));
+      min-height:max(var(--hero-floor),calc(100dvh - var(--header-h) - var(--availability-strip-h)));
+      /* Unter 400 px folgt auch der Schutzraum vor dem breiten MOIN wieder seiner
+         tatsächlich breitenabhängigen Zeichnung. So gleicht die Anchor-Reserve bei
+         320 px nicht durch unnötigen Leerraum oberhalb des LIDI aus. */
+      padding-block-start:max(12rem,60vw);
+    }
+  }
+  /* Bei exakt 320 px addieren WebKits etwas größere Saira-Zeilenboxen sonst rund
+     14 px zur intrinsischen Höhe. Die bereits für Leads verwendete 1.2-Zeilenhöhe
+     hält auch dort LIDI und MOIN getrennt und bewahrt die normale innere Polsterung. */
+  @media (max-width:20rem) and (orientation:portrait){
+    .sub p{line-height:1.2;}
+    .sub p + p{margin-block-start:.5em;}
   }
   /* Kurztext in der äußersten rechten Gridzelle oben: unten in der Zelle ausgerichtet,
      mit --hero-inset Abstand zur 25-%-Linie — demselben Gap, mit dem MOIN in seiner Zelle
@@ -1308,7 +1350,7 @@
   .pagegrid .cols > i:nth-child(1), .pagegrid .cols > i:nth-child(4) { background-image: none; }
   /* Die 1/4-Linie hat im Hero eine Lücke: sie setzt an der Oberkante der Subline-
      Doppelzelle aus und läuft unter deren Unterkante weiter. Beide Grenzen misst das
-     Skript dokument-absolut (--gap-start / --gap-end). */
+     Skript relativ zum gemeinsamen .pagegrid-Ursprung (--gap-start / --gap-end). */
   .pagegrid .vsplit, .pagegrid .vsplit2 {
     left: calc(var(--pad) + (100% - 2*var(--pad))/4);
     width: 1px;
@@ -1483,7 +1525,7 @@
   }
   /* ── Leistungen: mindestens ein sichtbarer Bildschirm ────────────────────
      Dieselbe Rechnung wie beim Hero: `100svh` MINUS Navigation. Der Header ist
-     `sticky` und liegt beim Scrollen über der Section — ohne den Abzug verdeckte
+     viewportfest und liegt beim Scrollen über der Section — ohne den Abzug verdeckte
      er ihre oberen ~62px. So füllt sie genau die sichtbare Fläche darunter.
      `min-height`, nicht `height`: wächst der Inhalt (mehr Kacheln, größere Schrift),
      wächst die Section mit.
@@ -1516,8 +1558,10 @@
   section.block#kunden {
     min-height: min(50svh, 72vw);
   }
+  @media (max-width: 35rem) and (orientation: portrait) {
+    section.block#kunden { min-height: 66svh; }
+  }
 
-  .foot-bar { padding-inline: calc(var(--pad) + var(--hero-inset)); }
 
   /* ══ Schwarzer Footer mit Sitemap ══════════════════════════════════════════
      Vier Spalten auf demselben Raster wie die Seite: der Container liegt bündig
@@ -1529,10 +1573,8 @@
     padding-block: clamp(2.5rem, 6vw, 4.5rem);
     align-items: start;
   }
-  /* Blocklayout statt Flex mit gap: sonst bekämen nur die Überschriften, die direkte
-     Kinder der Spalte sind (Seite, Projekte), den Spalten-gap zusätzlich zur Margin —
-     die in <nav> verschachtelten (Kontakt, Rechtliches) aber nicht. Alle Abstände
-     kommen jetzt aus je einer Margin-Regel. */
+  /* Gemeinsame Innenabstände für alle vier eigenständigen Footerbereiche; dadurch bleibt
+     auch die rechte Außenkante auf Desktop und Mobile symmetrisch zur linken. */
   .foot-col { padding-inline: var(--hero-inset); min-width: 0; }
   .foot-col p, .foot-col ul { margin: 0; }
   /* etwas mehr Luft als zwischen den Listenpunkten (0.35rem), aber keine Leerzeile */
@@ -1550,8 +1592,6 @@
      an einer beliebigen Stelle umbrechen, statt die gesamte Seite breiter zu drücken. */
   .foot-col a[href^="mailto:"] { overflow-wrap: anywhere; }
   .foot-col a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
-  .foot-col nav + nav { margin-block-start: 2rem; }
-  .foot-bar { border-top: 1px solid var(--dark-rule); color: var(--dark-muted); }
   .on-dark a:focus-visible { outline: 2px solid var(--dark-ink); outline-offset: 2px; }
 
   /* ══ Reel + Slide-Indicator (Every Layout: Reel) ═══════════════════════════
@@ -1657,30 +1697,34 @@
     <details class="site-nav">
       <summary class="menu-toggle" aria-label="Menü"><span class="menu-icon" aria-hidden="true"></span></summary>
       <nav aria-label="Seitennavigation">
-        <a href="#stage">Moin</a>
-        <details class="project-menu">
-          <summary><a class="project-overview" href="#projekte">Projekte</a></summary>
-          <div class="project-menu-links">
-            <a href="projekte/studio-website-relaunch.html">Studio-Website Relaunch</a>
-            <a href="projekte/buchgestaltung.html">Buchgestaltung</a>
-            <a href="projekte/plakatserie.html">Plakatserie</a>
-            <a href="projekte/illustrationsserie.html">Illustrationsserie</a>
-            <a href="projekte/magazin-layout.html">Magazin-Layout</a>
-            <a href="projekte/onlineshop-redesign.html">Onlineshop Redesign</a>
-            <a href="projekte/markenauftritt-praxis.html">Markenauftritt Praxis</a>
-            <a href="projekte/kinderbuch.html">Kinderbuch</a>
-            <a href="projekte/geschaeftsausstattung.html">Geschäftsausstattung</a>
-          </div>
-        </details>
-        <a href="#leistungen">Leistungen</a>
-        <a href="#about">Über mich</a>
-        <a href="#kunden">Kunden</a>
-        <a href="#kontakt">Kontakt</a>
+        <div class="menu-primary">
+          <a href="#stage">Moin</a>
+          <details class="project-menu">
+            <summary><a class="project-overview" href="#projekte">Projekte</a></summary>
+            <div class="project-menu-links">
+              <a href="projekte/studio-website-relaunch.html">Studio-Website Relaunch</a>
+              <a href="projekte/buchgestaltung.html">Buchgestaltung</a>
+              <a href="projekte/plakatserie.html">Plakatserie</a>
+              <a href="projekte/illustrationsserie.html">Illustrationsserie</a>
+              <a href="projekte/magazin-layout.html">Magazin-Layout</a>
+              <a href="projekte/onlineshop-redesign.html">Onlineshop Redesign</a>
+              <a href="projekte/markenauftritt-praxis.html">Markenauftritt Praxis</a>
+              <a href="projekte/kinderbuch.html">Kinderbuch</a>
+              <a href="projekte/geschaeftsausstattung.html">Geschäftsausstattung</a>
+            </div>
+          </details>
+          <a href="#leistungen">Leistungen</a>
+          <a href="#about">Über mich</a>
+          <a href="#kunden">Kunden</a>
+          <a href="#kontakt">Kontakt</a>
+        </div>
         <div class="menu-socials" aria-label="Direkte Kontaktwege">
-          <a href="mailto:katharina@wersdoerfer.de" aria-label="E-Mail schreiben"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m4 7 8 6 8-6"/></svg></a>
-          <a class="linkedin-link" href="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.25" cy="4.75" r="1.85"/><path d="M4.4 9h3.7v11H4.4z"/><path d="M10.35 20V9h3.7v1.55a4.3 4.3 0 0 1 3.45-1.8c2.55 0 4.1 1.75 4.1 5V20h-3.7v-5.7c0-1.4-.55-2.15-1.65-2.15-1.4 0-2.2.95-2.2 2.75V20z"/></svg></a>
-          <a href="https://github.com/federfuxx" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.2-4-2-5-2.5M14.5 21v-3.1c0-.9.3-1.6.8-2.1 2.7-.3 5.5-1.3 5.5-6a4.7 4.7 0 0 0-1.3-3.3 4.4 4.4 0 0 0-.1-3.3s-1-.3-3.5 1.3a12 12 0 0 0-6.4 0C7 2.9 6 3.2 6 3.2a4.4 4.4 0 0 0-.1 3.3 4.7 4.7 0 0 0-1.3 3.3c0 4.7 2.8 5.7 5.5 6 .5.5.8 1.1.8 2.1V21"/></svg></a>
-          <a href="https://fedi.wersdoerfer.de/@katharina" rel="me" aria-label="Mastodon"><svg class="phosphor-icon" viewBox="0 0 256 256" aria-hidden="true"><path d="M184 34H72a38 38 0 0 0-38 38v120a38 38 0 0 0 38 38h88a6 6 0 0 0 0-12H72a26 26 0 0 1-26-26v-10h138a38 38 0 0 0 38-38V72a38 38 0 0 0-38-38Zm26 110a26 26 0 0 1-26 26H46V72a26 26 0 0 1 26-26h112a26 26 0 0 1 26 26Zm-28-40v32a6 6 0 0 1-12 0v-32a18 18 0 0 0-36 0v32a6 6 0 0 1-12 0v-32a18 18 0 0 0-36 0v32a6 6 0 0 1-12 0v-32a30 30 0 0 1 54-18 30 30 0 0 1 54 18Z"/></svg></a>
+          <div class="menu-social-links">
+            <a class="mail-link" href="mailto:katharina@wersdoerfer.de" aria-label="E-Mail schreiben"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m4 7 8 6 8-6"/></svg></a>
+            <a class="linkedin-link" href="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.25" cy="4.75" r="1.85"/><path d="M4.4 9h3.7v11H4.4z"/><path d="M10.35 20V9h3.7v1.55a4.3 4.3 0 0 1 3.45-1.8c2.55 0 4.1 1.75 4.1 5V20h-3.7v-5.7c0-1.4-.55-2.15-1.65-2.15-1.4 0-2.2.95-2.2 2.75V20z"/></svg></a>
+            <a href="https://github.com/federfuxx" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.2-4-2-5-2.5M14.5 21v-3.1c0-.9.3-1.6.8-2.1 2.7-.3 5.5-1.3 5.5-6a4.7 4.7 0 0 0-1.3-3.3 4.4 4.4 0 0 0-.1-3.3s-1-.3-3.5 1.3a12 12 0 0 0-6.4 0C7 2.9 6 3.2 6 3.2a4.4 4.4 0 0 0-.1 3.3 4.7 4.7 0 0 0-1.3 3.3c0 4.7 2.8 5.7 5.5 6 .5.5.8 1.1.8 2.1V21"/></svg></a>
+            <a href="https://fedi.wersdoerfer.de/@katharina" rel="me" aria-label="Mastodon"><svg class="phosphor-icon" viewBox="0 0 256 256" aria-hidden="true"><path d="M184 34H72a38 38 0 0 0-38 38v120a38 38 0 0 0 38 38h88a6 6 0 0 0 0-12H72a26 26 0 0 1-26-26v-10h138a38 38 0 0 0 38-38V72a38 38 0 0 0-38-38Zm26 110a26 26 0 0 1-26 26H46V72a26 26 0 0 1 26-26h112a26 26 0 0 1 26 26Zm-28-40v32a6 6 0 0 1-12 0v-32a18 18 0 0 0-36 0v32a6 6 0 0 1-12 0v-32a18 18 0 0 0-36 0v32a6 6 0 0 1-12 0v-32a30 30 0 0 1 54-18 30 30 0 0 1 54 18Z"/></svg></a>
+          </div>
         </div>
       </nav>
     </details>
@@ -1859,11 +1903,19 @@
   <section class="block pad clients on-dark" id="kunden">
     <div class="sec-label"><span>Über die Jahre</span></div>
     <h2 class="big motion-heading">Mit diesen Marken<br><span class="lastline">&amp; Menschen<svg class="scr" aria-hidden="true" focusable="false"><text>together</text></svg></span></h2>
-    <div class="marquee" tabindex="0" role="region" aria-label="Automatisch laufende Kundenliste; bei Fokus pausiert">
+    <div class="marquee marquee-primary" tabindex="0" role="region" aria-label="Automatisch laufende Kundenliste; bei Fokus pausiert">
       <div class="marquee-track" aria-label="Auswahl an Kunden">
         <!-- Liste doppelt für den nahtlosen Loop -->
         <span class="item">ALDI Nord</span><span class="item">Kerrygold</span><span class="item">L'Oréal</span><span class="item">Thomy</span><span class="item">Maybelline</span><span class="item">essie</span><span class="item">Weight Watchers</span><span class="item">Miele</span><span class="item">Yokohama</span><span class="item">McCann</span><span class="item">Marina Adler</span><span class="item">Fabian Heis</span><span class="item">Villa Kunterbunt e.V.</span><span class="item">Ökologische Tierzucht gGmbH</span><span class="item">django chat</span><span class="item">GGS Lennéstraße</span><span class="item">McCann</span>
         <span class="item" aria-hidden="true">ALDI Nord</span><span class="item" aria-hidden="true">Kerrygold</span><span class="item" aria-hidden="true">L'Oréal</span><span class="item" aria-hidden="true">Thomy</span><span class="item" aria-hidden="true">Maybelline</span><span class="item" aria-hidden="true">essie</span><span class="item" aria-hidden="true">Weight Watchers</span><span class="item" aria-hidden="true">Miele</span><span class="item" aria-hidden="true">Yokohama</span><span class="item" aria-hidden="true">McCann</span><span class="item" aria-hidden="true">Marina Adler</span><span class="item" aria-hidden="true">Fabian Heis</span><span class="item" aria-hidden="true">Villa Kunterbunt e.V.</span><span class="item" aria-hidden="true">Ökologische Tierzucht gGmbH</span><span class="item" aria-hidden="true">django chat</span><span class="item" aria-hidden="true">GGS Lennéstraße</span><span class="item" aria-hidden="true">McCann</span>
+      </div>
+    </div>
+    <!-- Im mobilen Hochformat nutzt eine gegenläufige, rein dekorative Kopie die größere
+         Sectionhöhe. Sie ist samt technischer Loop-Kopie vor Screenreadern verborgen. -->
+    <div class="marquee marquee-secondary" aria-hidden="true">
+      <div class="marquee-track">
+        <span class="item">ALDI Nord</span><span class="item">Kerrygold</span><span class="item">L'Oréal</span><span class="item">Thomy</span><span class="item">Maybelline</span><span class="item">essie</span><span class="item">Weight Watchers</span><span class="item">Miele</span><span class="item">Yokohama</span><span class="item">McCann</span><span class="item">Marina Adler</span><span class="item">Fabian Heis</span><span class="item">Villa Kunterbunt e.V.</span><span class="item">Ökologische Tierzucht gGmbH</span><span class="item">django chat</span><span class="item">GGS Lennéstraße</span><span class="item">McCann</span>
+        <span class="item">ALDI Nord</span><span class="item">Kerrygold</span><span class="item">L'Oréal</span><span class="item">Thomy</span><span class="item">Maybelline</span><span class="item">essie</span><span class="item">Weight Watchers</span><span class="item">Miele</span><span class="item">Yokohama</span><span class="item">McCann</span><span class="item">Marina Adler</span><span class="item">Fabian Heis</span><span class="item">Villa Kunterbunt e.V.</span><span class="item">Ökologische Tierzucht gGmbH</span><span class="item">django chat</span><span class="item">GGS Lennéstraße</span><span class="item">McCann</span>
       </div>
     </div>
     </section>
@@ -1888,8 +1940,7 @@
       <p>Web &amp; Digital Design, Illustration und Print — aus Düsseldorf.</p>
       <span class="avail">Verfügbar für Projekte</span>
     </div>
-    <div class="foot-col foot-directory">
-      <nav aria-labelledby="ft-seite">
+    <nav class="foot-col foot-pages" aria-labelledby="ft-seite">
         <h2 class="foot-h" id="ft-seite">Seite</h2>
         <ul>
           <li><a href="#stage">Moin</a></li>
@@ -1899,15 +1950,7 @@
           <li><a href="#kunden">Kunden</a></li>
           <li><a href="#kontakt">Kontakt</a></li>
         </ul>
-      </nav>
-      <nav aria-labelledby="ft-recht">
-        <h2 class="foot-h" id="ft-recht">Rechtliches</h2>
-        <ul>
-          <li><a href="impressum.html">Impressum</a></li>
-          <li><a href="datenschutz.html">Datenschutz</a></li>
-        </ul>
-      </nav>
-    </div>
+    </nav>
     <nav class="foot-col foot-projects" aria-labelledby="ft-projekte">
       <h2 class="foot-h" id="ft-projekte">Projekte</h2>
       <ul>
@@ -1920,6 +1963,13 @@
         <li><a href="projekte/markenauftritt-praxis.html">Markenauftritt Praxis</a></li>
         <li><a href="projekte/kinderbuch.html">Kinderbuch</a></li>
         <li><a href="projekte/geschaeftsausstattung.html">Geschäftsausstattung</a></li>
+      </ul>
+    </nav>
+    <nav class="foot-col foot-legal" aria-labelledby="ft-recht">
+      <h2 class="foot-h" id="ft-recht">Rechtliches</h2>
+      <ul>
+        <li><a href="impressum.html">Impressum</a></li>
+        <li><a href="datenschutz.html">Datenschutz</a></li>
       </ul>
     </nav>
   </div>
@@ -2212,6 +2262,10 @@
     HERO_INSET = Math.max(8, Math.min(0.012*stage.clientWidth, 20));
     document.documentElement.style.setProperty('--hero-inset', HERO_INSET+'px');
     buildTextures(); updateGridVars(); }
+  function pageGridDocumentTop(){
+    var pg = document.querySelector('.pagegrid');
+    return pg ? pg.getBoundingClientRect().top + window.scrollY : 0;
+  }
   // Unterkante der Subline-Zelle messen → Position von Unter-Linie + fortgesetzter 1/4-Linie.
   function updateGridVars(){
     var r = document.documentElement.style;
@@ -2231,11 +2285,13 @@
       var sb = s.getBoundingClientRect();
       var relBottom = sb.bottom - st.top;          // stage-relativ, für die Hero-Unterlinie
       var docTop = st.top + window.scrollY;        // Stage-Oberkante dokument-absolut
+      var gridTop = pageGridDocumentTop();         // Ursprung des absoluten Linien-Layers
       r.setProperty('--sub-bottom', relBottom + 'px');
       // Grenzen der Lücke, die die durchgehende 1/4-Linie um die Subline-Zelle macht.
-      // Dokument-absolut, weil das Liniengerüst über der ganzen Seite liegt, nicht im Hero.
-      r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight) + 'px');
-      r.setProperty('--gap-end',   (docTop + relBottom) + 'px');
+      // Beide Werte gehören zur lokalen y-Achse des Linien-Layers. Das ist auch dann
+      // korrekt, wenn dessen absoluter Body-Ursprung nicht bei Dokument-y=0 liegt.
+      r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight - gridTop) + 'px');
+      r.setProperty('--gap-end',   (docTop + relBottom - gridTop) + 'px');
     }
     buildLineGradients();
   }
@@ -2244,12 +2300,17 @@
   // gebaut — beliebig viele dunkle Sections, eine Stelle.
   function buildLineGradients(){
     var pg = document.querySelector('.pagegrid'); if (!pg) return;
+    // Alle Stopps müssen relativ zum Linien-Layer sein. Auf Telefonen kann der Abstand
+    // vor der Verfügbarkeitszeile den Body (und damit .pagegrid) per Margin-Collapse um
+    // die Headerhöhe verschieben; Dokumentkoordinaten wechselten dort entsprechend zu spät.
+    var gridTop = pageGridDocumentTop();
     var bands = [].map.call(document.querySelectorAll('.on-dark'), function(el){
       var r = el.getBoundingClientRect();
-      return [r.top + window.scrollY, r.bottom + window.scrollY];
+      return [r.top + window.scrollY - gridTop, r.bottom + window.scrollY - gridTop];
     }).sort(function(a,b){ return a[0]-b[0]; });
 
-    // offset = Abstand der Elementoberkante vom Dokumentanfang (nur .vsplit2 sitzt tiefer).
+    // offset = lokaler Abstand der jeweiligen Linienoberkante vom .pagegrid-Ursprung;
+    // nur .vsplit2 beginnt nicht bei 0.
     function grad(onLight, onDark, offset){
       var stops = [], y = 0;
       bands.forEach(function(b){
@@ -2303,21 +2364,176 @@
     draw(dye.write); dye.swap();
   }
 
-  // ---- Pointer ----
-  var pointer={x:0,y:0,px:0,py:0,down:false,moved:false};
-  var touched=false, queue=[];
-  function toUV(e){ var r=canvas.getBoundingClientRect(); var p=e.touches?e.touches[0]:e; return {x:(p.clientX-r.left)/r.width, y:1.0-(p.clientY-r.top)/r.height}; }
-  function onMove(e){ var u=toUV(e); if(!touched){touched=true;pointer.x=u.x;pointer.y=u.y;}
-    pointer.px=pointer.x; pointer.py=pointer.y; pointer.x=u.x; pointer.y=u.y; pointer.moved=true; }
-  stage.addEventListener('pointermove',onMove,{passive:true});
-  stage.addEventListener('touchmove',onMove,{passive:true});
+  // ---- Pointer + scrollfreundliche Touch-Gestenerkennung ----
+  var pointer={x:0,y:0,px:0,py:0,down:false,moved:false,force:1};
+  var mouseSeeded=false, queue=[];
+  var TOUCH_INTENT_DISTANCE=6, TOUCH_HORIZONTAL_RATIO=1.2;
+  var touchGesture=null;
+  var touchIdleDevice=navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches;
+  var IDLE_INITIAL_DELAY=700, IDLE_RESUME_DELAY=3200, IDLE_FORCE_SCALE=0.28;
+  var idleResumeAt=performance.now()+IDLE_INITIAL_DELAY;
+  var idleVisible=true, idleWasRunning=false, idleAccumulator=0, idleT=0;
+  var idlePhase=[Math.random()*6.283,Math.random()*6.283,Math.random()*6.283,
+    Math.random()*6.283,Math.random()*6.283];
+  var idleSpeed=0.88+Math.random()*0.24;
+  var idleMenu=document.querySelector('.site-nav');
 
-  var idleT=0;
+  function postponeIdle(delay){
+    idleResumeAt=performance.now()+(delay==null?IDLE_RESUME_DELAY:delay);
+    idleWasRunning=false; idleAccumulator=0;
+  }
+  function updateIdleVisibility(){
+    var r=stage.getBoundingClientRect();
+    idleVisible=r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth;
+  }
+  updateIdleVisibility();
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entries){
+      var wasVisible=idleVisible;
+      idleVisible=!!(entries[0]&&entries[0].isIntersecting);
+      if(!idleVisible)idleWasRunning=false;
+      else if(!wasVisible)postponeIdle(IDLE_INITIAL_DELAY);
+    }).observe(stage);
+  }else{
+    addEventListener('scroll',updateIdleVisibility,{passive:true});
+  }
+  document.addEventListener('visibilitychange',function(){
+    idleWasRunning=false; idleAccumulator=0;
+    if(!document.hidden)postponeIdle(IDLE_INITIAL_DELAY);
+  });
+  if(idleMenu)idleMenu.addEventListener('toggle',function(){
+    postponeIdle(idleMenu.open?IDLE_RESUME_DELAY:IDLE_INITIAL_DELAY);
+  });
+
+  function toUV(clientX,clientY){ var r=canvas.getBoundingClientRect();
+    return {x:(clientX-r.left)/r.width,y:1.0-(clientY-r.top)/r.height}; }
+  function seedPointer(clientX,clientY){ var u=toUV(clientX,clientY);
+    pointer.x=pointer.px=u.x; pointer.y=pointer.py=u.y; pointer.moved=false; }
+  function movePointer(clientX,clientY){ var u=toUV(clientX,clientY);
+    postponeIdle(); pointer.force=1;
+    pointer.px=pointer.x; pointer.py=pointer.y; pointer.x=u.x; pointer.y=u.y; pointer.moved=true; }
+  function moveMousePointer(clientX,clientY){
+    if(!mouseSeeded){mouseSeeded=true;postponeIdle();pointer.force=1;seedPointer(clientX,clientY);return;}
+    movePointer(clientX,clientY);
+  }
+  function beginTouch(id,clientX,clientY){
+    mouseSeeded=false; postponeIdle(); pointer.force=1; seedPointer(clientX,clientY);
+    touchGesture={id:id,startX:clientX,startY:clientY,intent:'pending'};
+  }
+  function moveTouch(id,clientX,clientY){
+    if(!touchGesture||touchGesture.id!==id||touchGesture.intent==='scroll') return false;
+    if(touchGesture.intent==='pending'){
+      var dx=clientX-touchGesture.startX,dy=clientY-touchGesture.startY;
+      if(dx*dx+dy*dy<TOUCH_INTENT_DISTANCE*TOUCH_INTENT_DISTANCE) return false;
+      // Im Zweifel scrollen: Nur eine deutlich horizontalere Bewegung darf revealen.
+      touchGesture.intent=Math.abs(dx)>Math.abs(dy)*TOUCH_HORIZONTAL_RATIO?'horizontal':'scroll';
+      if(touchGesture.intent!=='horizontal') return false;
+    }
+    movePointer(clientX,clientY); return true;
+  }
+
+  // Maus und Stift behalten die direkte Desktopsteuerung. Touch wird hier bewusst
+  // ignoriert, sobald echte Touch Events verfügbar sind, damit Safari nicht denselben
+  // Kontakt als Pointer- und Touch-Stream doppelt in die Simulation einspeist.
+  if('PointerEvent' in window){
+    stage.addEventListener('pointermove',function(e){
+      if(e.pointerType==='touch') return;
+      moveMousePointer(e.clientX,e.clientY);
+    },{passive:true});
+  }
+
+  var useTouchEvents=('ontouchstart' in window||navigator.maxTouchPoints>0)&&typeof TouchEvent!=='undefined';
+  if(useTouchEvents){
+    stage.classList.add('uses-touch-events');
+    function findTouch(list,id){
+      for(var i=0;i<list.length;i++)if(list[i].identifier===id)return list[i];
+      return null;
+    }
+    // Der Listener existiert vor Gestenbeginn und touchmove ist nicht passiv. So kann iOS
+    // nach der frühen horizontalen Klassifikation noch rechtzeitig vom Scrollen absehen.
+    addEventListener('touchstart',function(e){
+      mouseSeeded=false;
+      if(e.touches.length===1&&stage.contains(e.target)){
+        var t=e.touches[0];beginTouch(t.identifier,t.clientX,t.clientY);
+      }else if(touchGesture){
+        postponeIdle();
+        touchGesture.intent='scroll'; // Mehrfinger- und außerhalb begonnene Gesten nie revealen.
+      }
+    },{passive:true,capture:true});
+    stage.addEventListener('touchmove',function(e){
+      if(e.touches.length!==1||!touchGesture){
+        if(touchGesture)touchGesture.intent='scroll';
+        return;
+      }
+      var t=findTouch(e.touches,touchGesture.id);
+      if(t&&moveTouch(t.identifier,t.clientX,t.clientY)&&e.cancelable)e.preventDefault();
+    },{passive:false});
+    function finishTouch(e){
+      if(!touchGesture)return;
+      if(!findTouch(e.touches,touchGesture.id)){touchGesture=null;postponeIdle();}
+      else if(e.touches.length!==1)touchGesture.intent='scroll';
+    }
+    addEventListener('touchend',finishTouch,{passive:true,capture:true});
+    addEventListener('touchcancel',finishTouch,{passive:true,capture:true});
+  }else if('PointerEvent' in window){
+    // Touch-Fallback für Pointer-Event-Browser, die keine Touch Events bereitstellen.
+    var touchContacts={},touchContactCount=0;
+    // Kontakte global mitzählen: Auch ein zweiter Finger außerhalb des Heros muss eine
+    // bereits horizontale Reveal-Geste beenden, damit native Zoomgesten Vorrang behalten.
+    addEventListener('pointerdown',function(e){
+      if(e.pointerType!=='touch') return;
+      mouseSeeded=false;
+      if(!touchContacts[e.pointerId]){touchContacts[e.pointerId]=true;touchContactCount++;}
+      if(touchContactCount===1&&stage.contains(e.target)) beginTouch(e.pointerId,e.clientX,e.clientY);
+      else if(touchGesture){postponeIdle();touchGesture.intent='scroll';} // Nie per Mehrfinger-Geste revealen.
+    },{passive:true,capture:true});
+    stage.addEventListener('pointermove',function(e){
+      if(e.pointerType!=='touch')return;
+      if(touchContactCount!==1||!moveTouch(e.pointerId,e.clientX,e.clientY)) return;
+      // touch-action:pan-y trifft die Browserentscheidung; preventDefault ist erst nach
+      // eindeutig horizontalem Intent ein zusätzlicher Schutz für Implementierungen,
+      // die trotz der CSS-Deklaration noch eine Standardaktion vorsehen.
+      if(e.cancelable) e.preventDefault();
+      if(stage.setPointerCapture&&!stage.hasPointerCapture(e.pointerId)){
+        try{stage.setPointerCapture(e.pointerId);}catch(ignore){}
+      }
+    },{passive:false});
+    function finishPointerTouch(e){
+      if(e.pointerType!=='touch') return;
+      if(touchContacts[e.pointerId]){delete touchContacts[e.pointerId];touchContactCount--;}
+      if(touchGesture&&touchGesture.id===e.pointerId){touchGesture=null;postponeIdle();}
+      if(touchContactCount===0){touchContacts={};touchGesture=null;}
+    }
+    addEventListener('pointerup',finishPointerTouch,{passive:true,capture:true});
+    addEventListener('pointercancel',finishPointerTouch,{passive:true,capture:true});
+  }
+
+  function idlePoint(){
+    var t=idleT*idleSpeed;
+    return {
+      x:0.5+0.14*Math.sin(t*0.24+idlePhase[0])+0.055*Math.sin(t*0.53+idlePhase[1])+0.025*Math.sin(t*0.91+idlePhase[2]),
+      y:0.52+0.095*Math.sin(t*0.19+idlePhase[3])+0.04*Math.cos(t*0.47+idlePhase[4])
+    };
+  }
+  function updateTouchIdle(dt,now){
+    var allowed=touchIdleDevice&&!reduce&&!document.hidden&&idleVisible&&!touchGesture&&
+      (!idleMenu||!idleMenu.open)&&now>=idleResumeAt;
+    if(!allowed){idleWasRunning=false;idleAccumulator=0;return;}
+    idleT+=dt; idleAccumulator+=dt;
+    var p=idlePoint();
+    if(!idleWasRunning){
+      pointer.x=pointer.px=p.x;pointer.y=pointer.py=p.y;pointer.moved=false;
+      idleWasRunning=true;idleAccumulator=0;return;
+    }
+    // 30 Hz reichen für die langsame Einladung und halbieren ihre Splat-Last auf Mobile.
+    if(idleAccumulator<1/30)return;
+    idleAccumulator-=1/30;pointer.px=pointer.x;pointer.py=pointer.y;
+    pointer.x=p.x;pointer.y=p.y;pointer.force=IDLE_FORCE_SCALE;pointer.moved=true;
+  }
+
   function step(dt){
-    // Idle-Einladung
-    if(!touched && !reduce){ idleT+=dt; var ix=0.5+0.3*Math.cos(idleT*0.6)+0.05*Math.cos(idleT*2.1); var iy=0.55+0.16*Math.sin(idleT*0.9);
-      pointer.px=pointer.x; pointer.py=pointer.y; pointer.x=ix; pointer.y=iy; pointer.moved=true; }
-    if(pointer.moved){ var dx=(pointer.x-pointer.px)*SPLAT_FORCE, dy=(pointer.y-pointer.py)*SPLAT_FORCE;
+    updateTouchIdle(dt,performance.now());
+    if(pointer.moved){ var dx=(pointer.x-pointer.px)*SPLAT_FORCE*pointer.force, dy=(pointer.y-pointer.py)*SPLAT_FORCE*pointer.force;
       if(Math.abs(dx)>0.0001||Math.abs(dy)>0.0001) splat(pointer.x,pointer.y,dx,dy); pointer.moved=false; }
 
     // 1) Advektion Geschwindigkeit
@@ -2442,11 +2658,35 @@
   function insidePanel(target) {
     return target instanceof Element && !!target.closest('.site-nav nav');
   }
+  var panelTouchY = null;
+  addEventListener('touchstart', function (event) {
+    panelTouchY = lockedY !== null && event.touches.length === 1 && insidePanel(event.target)
+      ? event.touches[0].clientY
+      : null;
+  }, { passive: true });
   function stopOutsidePanel(event) {
-    if (lockedY !== null && !insidePanel(event.target)) event.preventDefault();
+    if (lockedY === null) return;
+    if (!insidePanel(event.target)) {
+      if (event.type === 'touchmove' && event.touches.length !== 1) return;
+      event.preventDefault();
+      return;
+    }
+    if (event.type !== 'touchmove') return;
+    // iOS darf eine Bewegung an der oberen/unteren Panelkante nicht an den
+    // Root-Scroller weiterreichen. Innerhalb des Panels bleibt natives Scrollen erhalten.
+    if (event.touches.length !== 1 || panelTouchY === null) return;
+    var panel = event.target.closest('.site-nav nav');
+    var nextY = event.touches[0].clientY;
+    var deltaY = nextY - panelTouchY;
+    panelTouchY = nextY;
+    var atTop = panel.scrollTop <= 0.5;
+    var atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 0.5;
+    if ((deltaY > 0 && atTop) || (deltaY < 0 && atBottom)) event.preventDefault();
   }
   addEventListener('wheel', stopOutsidePanel, { passive: false });
   addEventListener('touchmove', stopOutsidePanel, { passive: false });
+  addEventListener('touchend', function () { panelTouchY = null; }, { passive: true });
+  addEventListener('touchcancel', function () { panelTouchY = null; }, { passive: true });
   addEventListener('scroll', function () {
     if (lockedY !== null && !anchorFlight && window.scrollY !== lockedY) window.scrollTo(0, lockedY);
   }, { passive: true });

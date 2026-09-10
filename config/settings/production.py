@@ -14,6 +14,8 @@ from tempfile import SpooledTemporaryFile
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
+from config.staticfiles import production_staticfiles_storage
+
 from .base import *  # noqa
 
 # SECRET CONFIGURATION
@@ -73,7 +75,7 @@ INSTALLED_APPS += [
 # ------------------------
 # STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-STORAGES["staticfiles"]["BACKEND"] = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = production_staticfiles_storage(STORAGES)
 
 
 # EMAIL

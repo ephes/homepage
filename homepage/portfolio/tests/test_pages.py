@@ -1,8 +1,11 @@
 import base64
+import json
 import re
 from datetime import date
+from pathlib import Path
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
@@ -139,6 +142,58 @@ def test_index_is_fully_rendered_without_javascript(client):
     assert "katharina@example.com" in content
     assert "Zum Inhalt springen" in content
     assert '<nav aria-label="Hauptnavigation">' in content
+
+
+def test_hash_links_only_target_elements_rendered_by_the_index(client):
+    index = make_portfolio_tree()
+    add_project(index)
+
+    index_content = client.get(index.url).content.decode()
+    rendered_ids = set(re.findall(r'\bid="([^"]+)"', index_content))
+    section_fragments = set(re.findall(r'href="[^"]*#([^"]+)"', index_content))
+
+    assert section_fragments == {"main-content", "projekte", "ueber-mich", "kontakt"}
+    assert section_fragments <= rendered_ids
+
+
+def test_wagtail_core_browser_contract_matches_rendered_pages(client):
+    index = make_portfolio_tree()
+    project = add_project(index)
+    add_project(index, title="Zweites Projekt")
+
+    pages = {
+        "homepage": client.get(index.url),
+        "error": client.get("/portfolio/501/"),
+        "project": client.get(project.url),
+    }
+    expected_statuses = {"homepage": 200, "error": 501, "project": 200}
+    contract_path = Path(__file__).parents[3] / "quality" / "portfolio" / "contracts.json"
+    contract_data = json.loads(contract_path.read_text())
+    locators = contract_data["locators"]
+    contracts = contract_data["profiles"]["wagtail"]
+
+    assert pages.keys() == contracts.keys()
+    for page_name, response in pages.items():
+        assert response.status_code == expected_statuses[page_name]
+        document = BeautifulSoup(response.content, "html.parser")
+        contract = contracts[page_name]
+        locator_keys = [
+            *(requirement["locator"] for requirement in contract["essentials"]),
+            *contract["keyboardTargets"],
+        ]
+        for locator_key in locator_keys:
+            selector = locators[locator_key]
+            assert document.select_one(selector) is not None, f"{page_name}: {locator_key} ({selector})"
+
+        menu_contract = contract["menu"]
+        menu_selector = locators[menu_contract["root"]]
+        menu = document.select_one(menu_selector)
+        assert menu is not None, f"{page_name}: menu ({menu_selector})"
+        for role, locator_key in menu_contract.items():
+            if role == "root":
+                continue
+            selector = locators[locator_key]
+            assert menu.select_one(selector) is not None, f"{page_name}: menu {role} ({selector})"
 
 
 def test_project_is_served_through_the_existing_wagtail_mount(client):

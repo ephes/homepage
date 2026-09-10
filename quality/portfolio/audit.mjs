@@ -3,72 +3,17 @@ import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
+import { contractProfiles, selector } from "./contracts.mjs";
 import { artifactsDir, formatBytes, markdownTable, packageDir, repoRoot, target } from "./support.mjs";
 
 const failOnFindings = process.argv.includes("--fail-on-findings");
 const sourceDir = path.resolve(process.env.PORTFOLIO_SOURCE_DIR || path.join(repoRoot, "docs/superpowers/prototypes"));
-const homepageEssentials = [
-  ["main", "main#main-content"],
-  ["projects", "#projekte"],
-  ["services", "#leistungen"],
-  ["about", "#about"],
-  ["clients", "#kunden"],
-  ["contact", "#kontakt"],
-  ["project link", "a.tile[href]"],
-  ["email link", "a[href^='mailto:']"],
-  ["legal link", "a[href='impressum.html']"],
-];
-const homepageKeyboardTargets = [
-  "a.skip-link",
-  "a.tile[href]",
-  "#kontakt a[href^='mailto:']",
-  "footer a[href='impressum.html']",
-  "footer a[href='datenschutz.html']",
-];
-const additionalPages = [
-  {
-    name: "501",
-    path: "501.html",
-    essentials: [
-      ["main", "main#main-content"],
-      ["heading", "h1#error-heading"],
-      ["project recommendations", ".error-projects"],
-      ["project link", ".error-projects a.more-card[href]"],
-      ["home link", "a.error-home-link[href]"],
-      ["legal link", "footer a[href='impressum.html']"],
-    ],
-    keyboardTargets: [
-      "a.skip-link",
-      ".error-projects a.more-card[href]",
-      "a.error-home-link[href]",
-      "footer a[href='impressum.html']",
-      "footer a[href='datenschutz.html']",
-    ],
-  },
-  {
-    name: "project",
-    path: "projekte/buchgestaltung.html",
-    essentials: [
-      ["main", "main#main-content"],
-      ["heading", "h1"],
-      ["case study", "#case-study"],
-      ["contact", "#kontakt"],
-      ["email link", "#kontakt a[href^='mailto:']"],
-      ["legal link", "footer a[href='../impressum.html']"],
-    ],
-    keyboardTargets: [
-      "a.skip-link",
-      "a.brand[href]",
-      "#kontakt a[href^='mailto:']",
-      "footer a[href='../impressum.html']",
-      "footer a[href='../datenschutz.html']",
-    ],
-  },
-];
 
 const result = {
   generatedAt: new Date().toISOString(),
   target: null,
+  targetProfile: null,
+  pages: {},
   browser: null,
   checks: [],
   axe: {},
@@ -80,22 +25,23 @@ function check(name, pass, detail) {
   result.checks.push({ name, pass: Boolean(pass), detail });
 }
 
-async function visibleEssentials(page, label, essentials = homepageEssentials) {
+async function visibleEssentials(page, label, essentials) {
   const missing = [];
-  for (const [name, selector] of essentials) {
-    const locator = page.locator(selector).first();
-    if ((await locator.count()) === 0 || !(await locator.isVisible())) missing.push(name);
+  for (const requirement of essentials) {
+    const locator = page.locator(selector(requirement.locator)).first();
+    if ((await locator.count()) === 0 || !(await locator.isVisible())) missing.push(requirement.name);
   }
   check(`${label}: essential content visible`, missing.length === 0, missing.length ? `missing: ${missing.join(", ")}` : `${essentials.length} landmarks/links`);
 }
 
-async function keyboardTargets(page, selectors = homepageKeyboardTargets) {
-  return page.evaluate((targets) => {
-    return targets.map((selector) => {
-      const element = document.querySelector(selector);
-      return { selector, href: element?.getAttribute("href") || null };
+async function keyboardTargets(page, locatorKeys) {
+  const targets = locatorKeys.map((locator) => ({ locator, selector: selector(locator) }));
+  return page.evaluate((resolvedTargets) => {
+    return resolvedTargets.map((target) => {
+      const element = document.querySelector(target.selector);
+      return { ...target, href: element?.getAttribute("href") || null };
     });
-  }, selectors);
+  }, targets);
 }
 
 async function auditKeyboard(page, label, selectors) {
@@ -114,7 +60,7 @@ async function auditKeyboard(page, label, selectors) {
       await page.keyboard.press("Tab");
     }
     const activeMatches = await page.evaluate((selector) => document.activeElement?.matches(selector) || false, target.selector);
-    if (!activeMatches) missed.push(target.selector);
+    if (!activeMatches) missed.push(target.locator);
   }
   await page.evaluate(() => document.body.removeAttribute("tabindex"));
   check(`${label}: keyboard reachability`, missed.length === 0, missed.length ? `not reached by Tab: ${missed.join(", ")}` : `${targets.length} representative links reached by native Tab navigation`);
@@ -129,50 +75,96 @@ async function axe(page, label, includeSelector = null) {
   check(`axe: ${label}`, findings.violations.length === 0, `${findings.violations.length} violations, ${serious.length} serious/critical`);
 }
 
-async function loadPage(context, url) {
+async function loadPage(context, pageTarget) {
   const page = await context.newPage();
-  const response = await page.goto(url, { waitUntil: "networkidle" });
-  if (!response?.ok()) throw new Error(`Page load failed: ${response?.status()}`);
+  const response = await page.goto(pageTarget.url, { waitUntil: "networkidle" });
+  const actualStatus = response?.status();
+  if (actualStatus !== pageTarget.expectedStatus) {
+    throw new Error(
+      `Page load failed at ${pageTarget.url}: expected HTTP ${pageTarget.expectedStatus}, received ${actualStatus ?? "no response"}`,
+    );
+  }
   return page;
 }
 
-async function auditContext(browser, url, options, label, contract = {}) {
-  const {
-    essentials = homepageEssentials,
-    keyboardTargets: keyboardSelectors = homepageKeyboardTargets,
-    runAxe = true,
-  } = contract;
+async function auditContext(browser, pageTarget, options, label, contract, { runAxe = true } = {}) {
   console.log(`Auditing ${label}…`);
   const context = await browser.newContext(options);
-  const page = await loadPage(context, url);
+  const page = await loadPage(context, pageTarget);
   console.log(`  ${label}: loaded`);
-  await visibleEssentials(page, label, essentials);
-  await auditKeyboard(page, label, keyboardSelectors);
+  await visibleEssentials(page, label, contract.essentials);
+  await auditKeyboard(page, label, contract.keyboardTargets);
   console.log(`  ${label}: keyboard checked`);
   if (runAxe) {
     await axe(page, `${label}, menu closed`);
     console.log(`  ${label}: closed-menu axe checked`);
   }
 
-  const menu = page.locator("details.site-nav");
-  await menu.locator(":scope > summary").focus();
+  const menu = page.locator(selector(contract.menu.root)).first();
+  if ((await menu.count()) === 0) {
+    check(`${label}: native menu opens`, false, "site menu missing");
+    if (runAxe) check(`axe: ${label}, menu open`, false, "not run: site menu missing");
+    if (contract.menu.projectOverviewLink) {
+      check(`${label}: project overview remains reachable`, false, "site menu missing");
+    }
+    await context.close();
+    console.log(`Audited ${label}; site menu missing.`);
+    return;
+  }
+  const menuSummary = menu.locator(selector(contract.menu.summary)).first();
+  if ((await menuSummary.count()) === 0) {
+    check(`${label}: native menu opens`, false, "site menu summary missing");
+    if (runAxe) check(`axe: ${label}, menu open`, false, "not run: site menu summary missing");
+    if (contract.menu.projectOverviewLink) {
+      check(`${label}: project overview remains reachable`, false, "site menu summary missing");
+    }
+    await context.close();
+    console.log(`Audited ${label}; site menu summary missing.`);
+    return;
+  }
+  await menuSummary.focus();
   await page.keyboard.press("Enter");
   await page.waitForTimeout(700);
   const open = await menu.evaluate((element) => element.open);
-  const navVisible = await menu.locator("nav").isVisible();
-  const firstNavLink = menu.locator("nav a").first();
+  const navVisible = await menu.locator(selector(contract.menu.navigation)).first().isVisible();
+  const firstNavLink = menu.locator(selector(contract.menu.firstLink)).first();
   const firstLinkVisible = await firstNavLink.isVisible();
   check(`${label}: native menu opens`, open && navVisible && firstLinkVisible, `open=${open}; nav visible=${navVisible}; first link visible=${firstLinkVisible}`);
   console.log(`  ${label}: menu opened`);
   if (runAxe) {
-    await axe(page, `${label}, menu open`, ".site-nav");
+    await axe(page, `${label}, menu open`, selector(contract.menu.root));
     console.log(`  ${label}: open-menu axe checked`);
   }
-  const projectMenu = menu.locator(".project-menu");
-  await projectMenu.locator(":scope > summary").focus();
+  if (!contract.menu.projectMenu) {
+    await context.close();
+    console.log(`Audited ${label}.`);
+    return;
+  }
+
+  const projectMenu = menu.locator(selector(contract.menu.projectMenu)).first();
+  if ((await projectMenu.count()) === 0) {
+    check(`${label}: project overview remains reachable`, false, "project menu missing");
+    await context.close();
+    console.log(`Audited ${label}; project menu missing.`);
+    return;
+  }
+  const projectMenuSummary = projectMenu.locator(selector(contract.menu.projectMenuSummary)).first();
+  if ((await projectMenuSummary.count()) === 0) {
+    check(`${label}: project overview remains reachable`, false, "project menu summary missing");
+    await context.close();
+    console.log(`Audited ${label}; project menu summary missing.`);
+    return;
+  }
+  await projectMenuSummary.focus();
   await page.keyboard.press("Enter");
   await page.waitForTimeout(700);
-  const overviewLink = projectMenu.locator("a.project-overview-link");
+  const overviewLink = projectMenu.locator(selector(contract.menu.projectOverviewLink)).first();
+  if ((await overviewLink.count()) === 0) {
+    check(`${label}: project overview remains reachable`, false, "project overview link missing");
+    await context.close();
+    console.log(`Audited ${label}; project overview link missing.`);
+    return;
+  }
   const overviewHref = await overviewLink.getAttribute("href");
   check(
     `${label}: project overview remains reachable`,
@@ -183,12 +175,12 @@ async function auditContext(browser, url, options, label, contract = {}) {
   console.log(`Audited ${label}.`);
 }
 
-async function auditReflow(browser, url, label, javaScriptEnabled, essentials = homepageEssentials) {
+async function auditReflow(browser, pageTarget, label, javaScriptEnabled, contract) {
   console.log(`Auditing ${label}…`);
   const context = await browser.newContext({ javaScriptEnabled, viewport: { width: 320, height: 800 } });
   try {
-    const page = await loadPage(context, url);
-    await visibleEssentials(page, label, essentials);
+    const page = await loadPage(context, pageTarget);
+    await visibleEssentials(page, label, contract.essentials);
     const reflow = await page.evaluate(() => {
       const viewport = document.documentElement.clientWidth;
       const outsideViewport = [...document.querySelectorAll("body *")].filter((element) => {
@@ -277,34 +269,61 @@ async function sourceMetrics(files) {
 }
 
 const server = await target();
-result.target = server.url;
 let browser;
 try {
+  const pageContracts = contractProfiles[server.profile];
+  if (!pageContracts) throw new Error(`No page contracts configured for target profile '${server.profile}'`);
+  const missingTargets = Object.keys(pageContracts).filter((pageName) => !server.pages[pageName]);
+  const missingContracts = Object.keys(server.pages).filter((pageName) => !pageContracts[pageName]);
+  if (missingTargets.length || missingContracts.length) {
+    throw new Error(
+      `Target/profile page mismatch: missing targets [${missingTargets.join(", ")}], missing contracts [${missingContracts.join(", ")}]`,
+    );
+  }
+  const homepageContract = pageContracts.homepage;
+  const additionalPages = Object.entries(pageContracts).filter(([name]) => name !== "homepage");
+  result.target = server.pages.homepage.url;
+  result.targetProfile = server.profile;
+  result.pages = server.pages;
+
   browser = await chromium.launch({ headless: true });
   result.browser = await browser.version();
 
-  await auditContext(browser, server.url, { javaScriptEnabled: true, viewport: { width: 1280, height: 900 } }, "homepage, JS on");
-  await auditContext(browser, server.url, { javaScriptEnabled: false, viewport: { width: 1280, height: 900 } }, "homepage, JS off", { runAxe: false });
+  await auditContext(
+    browser,
+    server.pages.homepage,
+    { javaScriptEnabled: true, viewport: { width: 1280, height: 900 } },
+    "homepage, JS on",
+    homepageContract,
+  );
+  await auditContext(
+    browser,
+    server.pages.homepage,
+    { javaScriptEnabled: false, viewport: { width: 1280, height: 900 } },
+    "homepage, JS off",
+    homepageContract,
+    { runAxe: false },
+  );
 
   result.reflow = {
     homepage: {
-      jsOn: await auditReflow(browser, server.url, "homepage, JS on at 320px", true),
-      jsOff: await auditReflow(browser, server.url, "homepage, JS off at 320px", false),
+      jsOn: await auditReflow(browser, server.pages.homepage, "homepage, JS on at 320px", true, homepageContract),
+      jsOff: await auditReflow(browser, server.pages.homepage, "homepage, JS off at 320px", false, homepageContract),
     },
   };
 
-  for (const contract of additionalPages) {
-    const url = new URL(contract.path, server.url).href;
-    await auditContext(browser, url, { javaScriptEnabled: true, viewport: { width: 1280, height: 900 } }, `${contract.name}, JS on`, contract);
-    await auditContext(browser, url, { javaScriptEnabled: false, viewport: { width: 1280, height: 900 } }, `${contract.name}, JS off`, { ...contract, runAxe: false });
+  for (const [pageName, contract] of additionalPages) {
+    const pageTarget = server.pages[pageName];
+    await auditContext(browser, pageTarget, { javaScriptEnabled: true, viewport: { width: 1280, height: 900 } }, `${contract.name}, JS on`, contract);
+    await auditContext(browser, pageTarget, { javaScriptEnabled: false, viewport: { width: 1280, height: 900 } }, `${contract.name}, JS off`, contract, { runAxe: false });
     result.reflow[contract.name] = {
-      jsOn: await auditReflow(browser, url, `${contract.name}, JS on at 320px`, true, contract.essentials),
-      jsOff: await auditReflow(browser, url, `${contract.name}, JS off at 320px`, false, contract.essentials),
+      jsOn: await auditReflow(browser, pageTarget, `${contract.name}, JS on at 320px`, true, contract),
+      jsOff: await auditReflow(browser, pageTarget, `${contract.name}, JS off at 320px`, false, contract),
     };
   }
 
   const reduced = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 900 } });
-  const reducedPage = await loadPage(reduced, server.url);
+  const reducedPage = await loadPage(reduced, server.pages.homepage);
   const motion = await reducedPage.evaluate(() => {
     const active = [...document.querySelectorAll("body *")].filter((element) => {
       const style = getComputedStyle(element);
@@ -324,18 +343,18 @@ try {
   await reduced.close();
 
   const forced = await browser.newContext({ forcedColors: "active", viewport: { width: 1280, height: 900 } });
-  const forcedPage = await loadPage(forced, server.url);
-  await visibleEssentials(forcedPage, "homepage, forced colors");
+  const forcedPage = await loadPage(forced, server.pages.homepage);
+  await visibleEssentials(forcedPage, "homepage, forced colors", homepageContract.essentials);
   await forced.close();
-  for (const contract of additionalPages) {
+  for (const [pageName, contract] of additionalPages) {
     const forcedContext = await browser.newContext({ forcedColors: "active", viewport: { width: 1280, height: 900 } });
-    const forcedPage = await loadPage(forcedContext, new URL(contract.path, server.url).href);
+    const forcedPage = await loadPage(forcedContext, server.pages[pageName]);
     await visibleEssentials(forcedPage, `${contract.name}, forced colors`, contract.essentials);
     await forcedContext.close();
   }
 
   const weightContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const weightPage = await loadPage(weightContext, server.url);
+  const weightPage = await loadPage(weightContext, server.pages.homepage);
   result.pageWeight = await weightPage.evaluate(() => {
     const resources = performance.getEntriesByType("resource");
     const total = (key) => resources.reduce((sum, entry) => sum + (entry[key] || 0), 0);
@@ -358,7 +377,7 @@ try {
 await fs.mkdir(artifactsDir, { recursive: true });
 await fs.writeFile(path.join(artifactsDir, "audit.json"), `${JSON.stringify(result, null, 2)}\n`);
 const failures = result.checks.filter((item) => !item.pass);
-const markdown = `# Portfolio quality baseline\n\nGenerated: ${result.generatedAt}  \nTarget: \`${result.target}\`  \nBrowser: ${result.browser}\n\n${markdownTable(result.checks)}\n\n## Weight and code size\n\n- Browser resources: ${result.pageWeight.requests} requests, ${formatBytes(result.pageWeight.transferBytes)} transferred, ${formatBytes(result.pageWeight.decodedBytes)} decoded.\n- Prototype source: ${result.source.files} files, ${result.source.lines.toLocaleString("en-US")} lines, ${formatBytes(result.source.bytes)} raw, ${formatBytes(result.source.gzipBytes)} gzip.\n\nMachine-readable details, including axe nodes and overflow offenders, are in \`audit.json\`.\n`;
+const markdown = `# Portfolio quality baseline\n\nGenerated: ${result.generatedAt}  \nTarget profile: \`${result.targetProfile}\`  \nTarget: \`${result.target}\`  \nBrowser: ${result.browser}\n\n${markdownTable(result.checks)}\n\n## Weight and code size\n\n- Browser resources: ${result.pageWeight.requests} requests, ${formatBytes(result.pageWeight.transferBytes)} transferred, ${formatBytes(result.pageWeight.decodedBytes)} decoded.\n- Prototype source: ${result.source.files} files, ${result.source.lines.toLocaleString("en-US")} lines, ${formatBytes(result.source.bytes)} raw, ${formatBytes(result.source.gzipBytes)} gzip.\n\nMachine-readable details, including target-page statuses, axe nodes and overflow offenders, are in \`audit.json\`.\n`;
 await fs.writeFile(path.join(artifactsDir, "audit.md"), markdown);
 console.log(markdown);
 console.log(`Reports: ${path.relative(packageDir, path.join(artifactsDir, "audit.json"))}, ${path.relative(packageDir, path.join(artifactsDir, "audit.md"))}`);

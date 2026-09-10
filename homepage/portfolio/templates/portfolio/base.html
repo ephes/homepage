@@ -9,6 +9,7 @@
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'portfolio/portfolio.css' %}">
     {% block extra_styles %}{% endblock %}
+    {% block extra_head %}{% endblock %}
   </head>
   <body{% block body_attributes %}{% endblock %}>
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -17,5 +18,6 @@
       {% block content %}{% endblock %}
     </main>
     {% include "portfolio/components/site_footer.html" %}
+    {% block extra_scripts %}{% endblock %}
   </body>
 </html>

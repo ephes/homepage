@@ -1,0 +1,36 @@
+{% load wagtailcore_tags %}
+<footer class="site-footer box">
+  <div class="center grid site-footer__grid">
+    <section class="stack" aria-labelledby="footer-brand">
+      <h2 id="footer-brand">{% if portfolio_index %}{{ portfolio_index.title }}{% else %}Katharina Wersdörfer{% endif %}</h2>
+      <p>Digital Creative · <span lang="en">Based in Düsseldorf</span></p>
+    </section>
+    {% if portfolio_index %}
+      {% pageurl portfolio_index as portfolio_home_url %}
+      <nav class="stack" aria-labelledby="footer-sections">
+        <h2 id="footer-sections">Seitenabschnitte</h2>
+        <ul class="stack">
+          <li><a href="{{ portfolio_home_url }}#projekte">Projekte</a></li>
+          <li><a href="{{ portfolio_home_url }}#ueber-mich">Über mich</a></li>
+          <li><a href="{{ portfolio_home_url }}#kontakt">Kontakt</a></li>
+        </ul>
+      </nav>
+    {% endif %}
+    <nav class="stack" aria-labelledby="footer-projects">
+      <h2 id="footer-projects">Projekte</h2>
+      <ul class="stack">
+        {% for project in portfolio_projects %}
+          <li><a href="{% pageurl project %}">{{ project.title }}</a></li>
+        {% empty %}
+          <li>Noch keine veröffentlichten Projekte</li>
+        {% endfor %}
+      </ul>
+    </nav>
+    {% if portfolio_index.contact_email %}
+      <section class="stack" aria-labelledby="footer-contact">
+        <h2 id="footer-contact">Kontakt</h2>
+        <a href="mailto:{{ portfolio_index.contact_email }}">{{ portfolio_index.contact_email }}</a>
+      </section>
+    {% endif %}
+  </div>
+</footer>

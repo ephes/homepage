@@ -1,0 +1,13 @@
+{% load wagtailcore_tags wagtailimages_tags %}
+<article class="project-card stack">
+  {% if project.teaser_image %}
+    <div class="frame project-card__image">
+      {% srcset_image project.teaser_image fill-{1200x675,400x225,800x450} sizes="(min-width: 94.5rem) 21.5rem, (min-width: 81rem) 25vw, (min-width: 61.5rem) 33vw, (min-width: 41rem) 50vw, 100vw" alt=project.teaser_image_alt loading="lazy" %}
+    </div>
+  {% endif %}
+  <div class="stack project-card__copy">
+    <h3><a href="{% pageurl project %}">{{ project.title }}</a></h3>
+    <p>{{ project.get_category_display }} · {{ project.year }}</p>
+    <p>{{ project.teaser_text }}</p>
+  </div>
+</article>

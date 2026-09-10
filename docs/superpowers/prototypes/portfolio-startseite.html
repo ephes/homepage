@@ -808,14 +808,6 @@
   .foot-bar a { color: inherit; text-decoration: none; }
   .foot-bar a:focus-visible, .pill:focus-visible, .tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-  @media (max-width: 52rem) {
-    .tilegrid { grid-template-columns: repeat(2, 1fr); }
-    .svc-grid { grid-template-columns: repeat(2, 1fr); }
-    .logo-grid { grid-template-columns: repeat(2, 1fr); }
-    .about { grid-template-columns: 1fr; }
-    .about .portrait { max-width: 14rem; }
-  }
-
 /* ===== Fluid-Hero (überschreibt geteilte Selektoren, erzwingt hell) ===== */
 
   /* ══ Farbpalette ══════════════════════════════════════════════════════════
@@ -1588,6 +1580,7 @@
   }
   .foot-col ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
   .foot-col a { color: inherit; text-decoration: none; font-size: var(--type-subline); }
+  .foot-h > a { font: inherit; letter-spacing: inherit; }
   /* Die Adresse ist auf Extrembreiten länger als eine halbe Footer-Spalte. Sie darf dort
      an einer beliebigen Stelle umbrechen, statt die gesamte Seite breiter zu drücken. */
   .foot-col a[href^="mailto:"] { overflow-wrap: anywhere; }
@@ -1645,6 +1638,24 @@
       grid-auto-columns: var(--reel-item-width);
     }
     .reel::-webkit-scrollbar { display: none; }
+    /* Ohne JavaScript gibt es keinen zuverlässigen Overflow-Test und damit auch
+       keinen bedienbaren eigenen Indicator. Dann zeigen wir alle Inhalte intrinsisch
+       untereinander; mit JavaScript bleibt das freigegebene Reel-Layout unverändert. */
+    html:not(.has-js) .tilegrid > .reel {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: none;
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      overflow: visible;
+    }
+    html:not(.has-js) .svc-grid.reel {
+      grid-template-columns: 1fr;
+      grid-template-rows: none;
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      overflow: visible;
+    }
     /* Im horizontalen Zustand belegt jede Kachel mindestens zweieinhalb der vier optischen
        Rasterspalten (= 62,5%). So steht eine vollständige Kachel mit einem klaren Anschnitt
        der nächsten im View. Auf sehr schmalen Screens darf sie zugunsten langer Titel bis
@@ -1686,7 +1697,6 @@
 
 </style>
 <link rel="stylesheet" href="motion.css">
-<script src="handwriting-glyphs.js" defer></script>
 <script src="motion.js" defer></script>
 <a class="skip-link" href="#main-content">Zum Hauptinhalt</a>
 <header class="site" lang="de">
@@ -1700,7 +1710,7 @@
         <div class="menu-primary">
           <a href="#stage">Moin</a>
           <details class="project-menu">
-            <summary><a class="project-overview" href="#projekte">Projekte</a></summary>
+            <summary><span class="project-overview">Projekte</span></summary>
             <div class="project-menu-links">
               <a href="projekte/studio-website-relaunch.html">Studio-Website Relaunch</a>
               <a href="projekte/buchgestaltung.html">Buchgestaltung</a>
@@ -1711,6 +1721,7 @@
               <a href="projekte/markenauftritt-praxis.html">Markenauftritt Praxis</a>
               <a href="projekte/kinderbuch.html">Kinderbuch</a>
               <a href="projekte/geschaeftsausstattung.html">Geschäftsausstattung</a>
+              <a class="project-overview-link" href="#projekte">Alle Projekte</a>
             </div>
           </details>
           <a href="#leistungen">Leistungen</a>
@@ -1718,7 +1729,7 @@
           <a href="#kunden">Kunden</a>
           <a href="#kontakt">Kontakt</a>
         </div>
-        <div class="menu-socials" aria-label="Direkte Kontaktwege">
+        <div class="menu-socials" role="group" aria-label="Direkte Kontaktwege">
           <div class="menu-social-links">
             <a class="mail-link" href="mailto:katharina@wersdoerfer.de" aria-label="E-Mail schreiben"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m4 7 8 6 8-6"/></svg></a>
             <a class="linkedin-link" href="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.25" cy="4.75" r="1.85"/><path d="M4.4 9h3.7v11H4.4z"/><path d="M10.35 20V9h3.7v1.55a4.3 4.3 0 0 1 3.45-1.8c2.55 0 4.1 1.75 4.1 5V20h-3.7v-5.7c0-1.4-.55-2.15-1.65-2.15-1.4 0-2.2.95-2.2 2.75V20z"/></svg></a>
@@ -1730,7 +1741,7 @@
     </details>
   </div>
 </header>
-<div class="availability-strip" aria-label="Projektstatus">
+<div class="availability-strip">
   <span class="avail">Verfügbar für Projekte</span>
 </div>
 <main id="main-content" lang="de">
@@ -1757,7 +1768,7 @@
     <div class="proj-head">
       <!-- Der handschriftliche Vermerk ist aus der Eyebrow gelöst und hängt jetzt in der
            Headline. Er liegt IM h2-Wrapper, damit er sich auf dessen Kante bezieht. -->
-      <h2 class="sec-title motion-heading"><svg class="scr" aria-hidden="true" focusable="false"><text>recent work</text></svg>Projekte</h2>
+      <h2 class="sec-title motion-heading" id="projects-title"><svg class="scr" aria-hidden="true" focusable="false"><text>recent work</text></svg>Projekte</h2>
       <span class="count">[9]</span>
     </div>
     <div class="tilegrid">
@@ -1767,7 +1778,7 @@
       <div class="lead">
       <a class="tile" href="projekte/studio-website-relaunch.html"><div class="tile-depth"><div class="frame"><span>21:9</span></div><div class="meta"><div class="row1"><h3>Studio-Website Relaunch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Web · 2026</div></div></div></a>
       </div>
-      <div class="reel">
+      <div class="reel" id="project-reel" tabindex="-1" role="group" aria-labelledby="projects-title">
       <a class="tile" href="projekte/buchgestaltung.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Buchgestaltung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></div></a>
       <a class="tile" href="projekte/plakatserie.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Plakatserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2025</div></div></div></a>
       <a class="tile" href="projekte/illustrationsserie.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Illustrationsserie</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2025</div></div></div></a>
@@ -1777,8 +1788,8 @@
       <a class="tile" href="projekte/kinderbuch.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Kinderbuch</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Illustration · 2023</div></div></div></a>
       <a class="tile" href="projekte/geschaeftsausstattung.html"><div class="tile-depth"><div class="frame"><span>3:2</span></div><div class="meta"><div class="row1"><h3>Geschäftsausstattung</h3><span class="tile-arrow" aria-hidden="true">→</span></div><div class="row2">Print · 2023</div></div></div></a>
       </div>
-      <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
-        tabindex="0" aria-label="Durch die Projekte blättern" aria-orientation="horizontal"
+      <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="scrollbar"
+        tabindex="0" aria-label="Durch die Projekte blättern" aria-controls="project-reel" aria-orientation="horizontal"
         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
       <a class="project-inquiry" href="mailto:katharina@wersdoerfer.de"><span class="k">Kontakt</span><strong>Projekt anfragen <span class="ar" aria-hidden="true">→</span></strong></a>
     </div>
@@ -1788,11 +1799,11 @@
   <section class="block pad" id="leistungen">
     <div class="sec-label"><span>Was ich anbiete</span></div>
     <div class="proj-head">
-      <h2 class="sec-title motion-heading"><svg class="scr" aria-hidden="true" focusable="false"><text>let's talk about</text></svg>Leistungen</h2>
+      <h2 class="sec-title motion-heading" id="services-title"><svg class="scr" aria-hidden="true" focusable="false"><text>let's talk about</text></svg>Leistungen</h2>
     </div>
     <!-- Auf dem Desktop ein 4er-Raster, auf dem Smartphone derselbe Reel wie bei den
          Projekten (die Klasse `reel` greift nur in der Mobile-Regel). -->
-    <div class="svc-grid reel">
+    <div class="svc-grid reel" id="service-reel" tabindex="-1" role="group" aria-labelledby="services-title">
       <div class="svc">
         <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18M6 21h12"/></svg></span>
         <h3>Webdesign</h3>
@@ -1836,8 +1847,8 @@
         <p>KI als Sparringspartner im Prozess&nbsp;— von Konzept bis Bildwelt.</p>
       </div>
     </div>
-    <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="slider"
-      tabindex="0" aria-label="Durch die Leistungen blättern" aria-orientation="horizontal"
+    <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="scrollbar"
+      tabindex="0" aria-label="Durch die Leistungen blättern" aria-controls="service-reel" aria-orientation="horizontal"
       aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
     </section>
 
@@ -1904,7 +1915,7 @@
     <div class="sec-label"><span>Über die Jahre</span></div>
     <h2 class="big motion-heading">Mit diesen Marken<br><span class="lastline">&amp; Menschen<svg class="scr" aria-hidden="true" focusable="false"><text>together</text></svg></span></h2>
     <div class="marquee marquee-primary" tabindex="0" role="region" aria-label="Automatisch laufende Kundenliste; bei Fokus pausiert">
-      <div class="marquee-track" aria-label="Auswahl an Kunden">
+      <div class="marquee-track">
         <!-- Liste doppelt für den nahtlosen Loop -->
         <span class="item">ALDI Nord</span><span class="item">Kerrygold</span><span class="item">L'Oréal</span><span class="item">Thomy</span><span class="item">Maybelline</span><span class="item">essie</span><span class="item">Weight Watchers</span><span class="item">Miele</span><span class="item">Yokohama</span><span class="item">McCann</span><span class="item">Marina Adler</span><span class="item">Fabian Heis</span><span class="item">Villa Kunterbunt e.V.</span><span class="item">Ökologische Tierzucht gGmbH</span><span class="item">django chat</span><span class="item">GGS Lennéstraße</span><span class="item">McCann</span>
         <span class="item" aria-hidden="true">ALDI Nord</span><span class="item" aria-hidden="true">Kerrygold</span><span class="item" aria-hidden="true">L'Oréal</span><span class="item" aria-hidden="true">Thomy</span><span class="item" aria-hidden="true">Maybelline</span><span class="item" aria-hidden="true">essie</span><span class="item" aria-hidden="true">Weight Watchers</span><span class="item" aria-hidden="true">Miele</span><span class="item" aria-hidden="true">Yokohama</span><span class="item" aria-hidden="true">McCann</span><span class="item" aria-hidden="true">Marina Adler</span><span class="item" aria-hidden="true">Fabian Heis</span><span class="item" aria-hidden="true">Villa Kunterbunt e.V.</span><span class="item" aria-hidden="true">Ökologische Tierzucht gGmbH</span><span class="item" aria-hidden="true">django chat</span><span class="item" aria-hidden="true">GGS Lennéstraße</span><span class="item" aria-hidden="true">McCann</span>
@@ -1952,7 +1963,7 @@
         </ul>
     </nav>
     <nav class="foot-col foot-projects" aria-labelledby="ft-projekte">
-      <h2 class="foot-h" id="ft-projekte">Projekte</h2>
+      <h2 class="foot-h" id="ft-projekte"><a href="#projekte">Projekte</a></h2>
       <ul>
         <li><a href="projekte/studio-website-relaunch.html">Studio-Website Relaunch</a></li>
         <li><a href="projekte/buchgestaltung.html">Buchgestaltung</a></li>
@@ -2091,7 +2102,8 @@
   var HALF = halfFloat ? halfFloat.HALF_FLOAT_OES : null;
   if (!HALF) { document.documentElement.classList.add('no-webgl'); return; }
 
-  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+  var reduce = motionPreference.matches;
   var HERO_INSET = 16; // Screen-px, in resize() aus Viewport berechnet + als CSS-Var gesetzt
 
   // ---- Konfiguration (Original-nahe Werte aus dem noth.in-Bundle) ----
@@ -2385,6 +2397,7 @@
   function updateIdleVisibility(){
     var r=stage.getBoundingClientRect();
     idleVisible=r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth;
+    syncSimulation();
   }
   updateIdleVisibility();
   if('IntersectionObserver' in window){
@@ -2393,6 +2406,7 @@
       idleVisible=!!(entries[0]&&entries[0].isIntersecting);
       if(!idleVisible)idleWasRunning=false;
       else if(!wasVisible)postponeIdle(IDLE_INITIAL_DELAY);
+      syncSimulation();
     }).observe(stage);
   }else{
     addEventListener('scroll',updateIdleVisibility,{passive:true});
@@ -2400,6 +2414,7 @@
   document.addEventListener('visibilitychange',function(){
     idleWasRunning=false; idleAccumulator=0;
     if(!document.hidden)postponeIdle(IDLE_INITIAL_DELAY);
+    syncSimulation();
   });
   if(idleMenu)idleMenu.addEventListener('toggle',function(){
     postponeIdle(idleMenu.open?IDLE_RESUME_DELAY:IDLE_INITIAL_DELAY);
@@ -2576,7 +2591,11 @@
     gl.uniform1i(P.advect.uni.uSource,1); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,dye.read.tex);
     draw(dye.write); dye.swap();
 
-    // 6) Anzeige: base/reveal per Dye mischen
+    render();
+  }
+
+  function render(){
+    // Anzeige: base/reveal per Dye mischen (auch ohne laufende Simulation).
     gl.viewport(0,0,canvas.width,canvas.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER,null);
     gl.useProgram(P.disp); bindQuad(P.disp);
@@ -2588,10 +2607,35 @@
     draw(null);
   }
 
-  var last=0;
-  function frame(t){ var dt=Math.min(0.016,(t-last)/1000)||0.016; last=t; step(dt); requestAnimationFrame(frame); }
-
-  function start(){ resize(); addEventListener('resize',resize,{passive:true}); requestAnimationFrame(function(t){last=t;requestAnimationFrame(frame);}); }
+  var last=0, simulationFrame=0, simulationReady=false;
+  function frame(t){
+    simulationFrame=0;
+    if(!simulationReady||reduce||document.hidden||!idleVisible)return;
+    var dt=Math.min(0.016,(t-last)/1000)||0.016;
+    last=t; step(dt); simulationFrame=requestAnimationFrame(frame);
+  }
+  function syncSimulation(){
+    if(!simulationReady)return;
+    if(reduce||document.hidden||!idleVisible){
+      if(simulationFrame)cancelAnimationFrame(simulationFrame);
+      simulationFrame=0; pointer.moved=false; mouseSeeded=false;
+      return;
+    }
+    if(!simulationFrame){last=performance.now();simulationFrame=requestAnimationFrame(frame);}
+  }
+  function resizeSimulation(){resize();render();syncSimulation();}
+  function syncMotionPreference(){
+    reduce=motionPreference.matches;
+    idleWasRunning=false; idleAccumulator=0; pointer.moved=false;
+    syncSimulation();
+  }
+  if(motionPreference.addEventListener)motionPreference.addEventListener('change',syncMotionPreference);
+  else motionPreference.addListener(syncMotionPreference);
+  function start(){
+    resize(); simulationReady=true; render();
+    addEventListener('resize',resizeSimulation,{passive:true});
+    syncSimulation();
+  }
   if(document.fonts && document.fonts.ready){ document.fonts.load('800 40px Saira').then(function(){ document.fonts.ready.then(start); }); }
   else start();
 })();
@@ -2755,7 +2799,9 @@
     // Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt.
     function sync() {
       var max = reel.scrollWidth - reel.clientWidth;
-      bar.classList.toggle('is-scrollable', max > 1);
+      var isScrollable = max > 1;
+      bar.classList.toggle('is-scrollable', isScrollable);
+      reel.tabIndex = isScrollable ? 0 : -1;
       if (max <= 1) return;
       var frac = reel.clientWidth / reel.scrollWidth;
       var pos = reel.scrollLeft / max;
@@ -2785,7 +2831,7 @@
       thumb.addEventListener(t, function () { dragging = false; });
     });
 
-    // Tastatur: der Anfasser ist fokussierbar (role="slider").
+    // Tastatur: der Anfasser bildet den horizontalen Scrollstand semantisch ab.
     thumb.addEventListener('keydown', function (e) {
       var step = reel.clientWidth * 0.6;
       if (e.key === 'ArrowRight') { reel.scrollLeft += step; e.preventDefault(); }

@@ -37,7 +37,10 @@
 .legal-copy a { text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .legal-copy ul { padding-inline-start: 1.2em; }
 .legal-note { color: var(--muted); }
-.imprint-page main { min-block-size: 100svh; }
+.imprint-page main {
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+}
 
 /* Impressum: dieselbe organische 4:5-Klecksform wie beim About-Porträt, hier über
    die beiden rechten Rasterspalten vergrößert. Die linke Hälfte behält exakt die

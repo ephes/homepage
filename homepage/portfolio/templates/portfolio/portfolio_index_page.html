@@ -1,0 +1,36 @@
+{% extends "portfolio/base.html" %}
+{% load wagtailcore_tags %}
+
+{% block meta_description %}{{ page.hero_intro|default:page.hero_heading|striptags }}{% endblock %}
+
+{% block content %}
+  <div class="center stack page-flow">
+    <section class="cover portfolio-hero" aria-labelledby="portfolio-title">
+      <div class="stack">
+        <h1 id="portfolio-title">{{ page.hero_heading }}</h1>
+        {% if page.hero_intro %}<p>{{ page.hero_intro }}</p>{% endif %}
+      </div>
+    </section>
+
+    <section id="projekte" class="stack" aria-labelledby="projects-title">
+      <h2 id="projects-title">Projekte</h2>
+      <div class="grid project-grid">
+        {% for project in portfolio_projects %}
+          {% include "portfolio/components/project_card.html" with project=project request=request only %}
+        {% empty %}
+          <p>Noch keine veröffentlichten Projekte.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="ueber-mich" class="stack readable" aria-labelledby="about-title">
+      <h2 id="about-title">{{ page.about_heading }}</h2>
+      {{ page.about_text|richtext }}
+    </section>
+
+    <section id="kontakt" class="stack contact" aria-labelledby="contact-title">
+      <h2 id="contact-title">{{ page.contact_heading }}</h2>
+      <a href="mailto:{{ page.contact_email }}">{{ page.contact_email }}</a>
+    </section>
+  </div>
+{% endblock %}

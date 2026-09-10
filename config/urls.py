@@ -54,6 +54,8 @@ urlpatterns = [
     path("", include("homepage.fedi.urls", namespace="fedi")),
     # Resume
     path("resume/", include("django_resume.urls", namespace="resume")),
+    # Explicit portfolio utility routes; Wagtail's page tree remains under /blogs/.
+    path("portfolio/", include("homepage.portfolio.urls", namespace="portfolio")),
     # Wagtail
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),

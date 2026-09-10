@@ -1,0 +1,27 @@
+{
+  "name": "homepage-portfolio-quality",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "audit": "node audit.mjs",
+    "audit:ci": "node audit.mjs --fail-on-findings",
+    "lighthouse": "node lighthouse.mjs",
+    "lighthouse:ci": "node lighthouse.mjs --fail-on-findings",
+    "handwriting:build": "node build-handwriting.mjs",
+    "handwriting:check": "node build-handwriting.mjs --check",
+    "handwriting:behavior": "node handwriting-behavior.mjs",
+    "handwriting:visual": "node handwriting.mjs",
+    "handwriting:size": "node handwriting-size.mjs",
+    "baseline": "npm run audit && npm run lighthouse"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "chrome-launcher": "1.2.1",
+    "lighthouse": "13.4.1",
+    "playwright": "1.63.0"
+  }
+}

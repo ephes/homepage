@@ -1,0 +1,11 @@
+<section class="stack project-results">
+  <h2>Ergebnisse</h2>
+  <dl class="grid">
+    {% for item in value.items %}
+      <div class="stack">
+        <dt>{{ item.label }}</dt>
+        <dd>{{ item.value }}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+</section>

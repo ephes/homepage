@@ -1,0 +1,6 @@
+{% load wagtailcore_tags %}
+<div class="grid project-gallery">
+  {% for image in value.images %}
+    {% include_block image with image_sizes="(min-width: 94.5rem) 21.5rem, (min-width: 81rem) 25vw, (min-width: 61.5rem) 33vw, (min-width: 41rem) 50vw, 100vw" only %}
+  {% endfor %}
+</div>

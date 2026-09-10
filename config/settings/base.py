@@ -87,6 +87,7 @@ LOCAL_APPS = [
     "homepage.users.apps.UsersConfig",
     "homepage.fedi.apps.FediConfig",
     "homepage.core.apps.CoreConfig",
+    "homepage.portfolio.apps.PortfolioConfig",
     "homepage.micropub",
     # Your stuff: custom apps go here
 ]

@@ -1,0 +1,9 @@
+{% load wagtailcore_tags %}
+<div class="case-row">
+  <h2 class="case-label">Die Aufgabe</h2>
+  <div class="case-copy rich-text">{{ value.challenge|richtext }}</div>
+</div>
+<div class="case-row">
+  <h2 class="case-label">Die Lösung</h2>
+  <div class="case-copy rich-text">{{ value.solution|richtext }}</div>
+</div>

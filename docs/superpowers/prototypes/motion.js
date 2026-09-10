@@ -6,6 +6,8 @@
   root.classList.add("has-js");
   var reduce = matchMedia("(prefers-reduced-motion: reduce)");
   var glyphs = {};
+  var handwritingScript = document.currentScript;
+  var handwritingSource = handwritingScript && handwritingScript.src;
 
   /* Der geschlossene Linkblock ist je nach Seitentyp unterschiedlich lang. Seine echte
      Höhe bestimmt die zwei gleich großen Spacer bis zur 75-%-Linie; beim Öffnen des
@@ -462,6 +464,14 @@
      nicht erneut gerenderter SVG-Text. Ohne diese Daten bleibt das Original unangetastet. */
   if (window.PORTFOLIO_HANDWRITING) glyphs = window.PORTFOLIO_HANDWRITING;
 
+  function handwritingGeometry(svg, element) {
+    if (!element) return null;
+    var reference = element.getAttribute("href");
+    if (!reference) return element;
+    if (reference.charAt(0) !== "#") return null;
+    return svg.getElementById(reference.slice(1));
+  }
+
   /* Astaginas Apostroph folgt im Rohfont unmittelbar auf den weit ausladenden zweiten
      t-Strich. Nur diese eine Glyphe bekommt etwas Luft; das anschließende „s me“ bleibt
      exakt an seiner originalen Position. Outline und Maskenpfad werden gemeinsam
@@ -482,7 +492,11 @@
         });
     }
 
-    svg.querySelectorAll(".hw-outline, .hw-ink, .hw-ink-edge").forEach(function (path) {
+    var shifted = new Set();
+    svg.querySelectorAll(".hw-outline, .hw-ink, .hw-ink-edge").forEach(function (element) {
+      var path = handwritingGeometry(svg, element);
+      if (!path || shifted.has(path)) return;
+      shifted.add(path);
       var parts = (path.getAttribute("d") || "").match(/M\s[^M]+/g);
       if (!parts || parts.length <= outlineIndex) return;
       parts[outlineIndex] = shiftPathX(parts[outlineIndex]);
@@ -490,8 +504,12 @@
     });
 
     svg.querySelectorAll("mask").forEach(function (mask) {
-      var pen = mask.querySelectorAll("path")[penIndex];
-      if (pen) pen.setAttribute("d", shiftPathX(pen.getAttribute("d")));
+      var element = mask.querySelectorAll(".hw-pen, .hw-outline-pen")[penIndex];
+      var pen = element && handwritingGeometry(svg, element);
+      if (pen && !shifted.has(pen)) {
+        shifted.add(pen);
+        pen.setAttribute("d", shiftPathX(pen.getAttribute("d")));
+      }
     });
   }
 
@@ -525,15 +543,28 @@
       root.classList.remove("js-hw");
       return;
     }
-    svgs.forEach(function (svg, index) {
-      svg._hwIndex = index;
-      var outlinePens = svg.querySelectorAll(".hw-outline-pen");
-      svg.querySelectorAll(".hw-pen").forEach(function (pen, penIndex) {
-        var length = pen.getTotalLength();
-        pen.style.setProperty("--L", length);
-        if (outlinePens[penIndex]) outlinePens[penIndex].style.setProperty("--L", length);
+    svgs = svgs.filter(function (svg) {
+      var pens = [].slice.call(svg.querySelectorAll(".hw-pen"));
+      var outlinePens = [].slice.call(svg.querySelectorAll(".hw-outline-pen"));
+      var geometries = pens.map(function (pen, penIndex) {
+        return [handwritingGeometry(svg, pen), handwritingGeometry(svg, outlinePens[penIndex])];
       });
+      var valid = pens.length === outlinePens.length && geometries.every(function (pair) {
+        return pair[0] && pair[1];
+      });
+      if (!valid) {
+        var label = svg.closest(".hw-label");
+        if (label) label.classList.add("hw-fallback");
+        return false;
+      }
+      pens.forEach(function (pen, penIndex) {
+        var length = geometries[penIndex][0].getTotalLength();
+        pen.style.setProperty("--L", length);
+        outlinePens[penIndex].style.setProperty("--L", length);
+      });
+      return true;
     });
+    svgs.forEach(function (svg, index) { svg._hwIndex = index; });
 
     if (reduce.matches) {
       root.classList.remove("js-hw");
@@ -656,8 +687,11 @@
     requestHeadingScan();
   }
 
+  var handwritingStarted = false;
   function start() {
-    if (reduce.matches) return;
+    if (reduce.matches || handwritingStarted || !window.PORTFOLIO_HANDWRITING) return;
+    handwritingStarted = true;
+    glyphs = window.PORTFOLIO_HANDWRITING;
     var ready = document.fonts && document.fonts.load
       ? document.fonts.load('400 40px "Astagina"')
       : Promise.resolve();
@@ -666,10 +700,61 @@
       if (!svgs.length) return;
       root.classList.add("js-hw");
       writeHandwriting(svgs);
+    }).catch(function () {
+      root.classList.remove("js-hw");
     });
   }
 
+  window.addEventListener("portfolio:handwriting-ready", start);
   if (window.PORTFOLIO_HANDWRITING) start();
+  else if (handwritingSource) {
+    /* Nur die optionale Schreibanimation braucht die großen Pfaddaten. Die vorhandenen
+       SVG-Texte bleiben bis zum erfolgreichen Laden sichtbar, auch bei Netzfehlern. */
+    var handwritingRequested = false;
+    var handwritingObserver;
+    function loadHandwriting() {
+      if (reduce.matches || handwritingRequested) return;
+      handwritingRequested = true;
+      if (handwritingObserver) handwritingObserver.disconnect();
+      var script = document.createElement("script");
+      var phrases = [].map.call(document.querySelectorAll("svg.scr > text"), function (text) {
+        return text.textContent.trim();
+      });
+      var contactOnly = phrases.length && phrases.every(function (phrase) { return phrase === "tell me more"; });
+      var configuredSource = handwritingScript.getAttribute(contactOnly
+        ? "data-handwriting-contact-src" : "data-handwriting-src");
+      script.src = configuredSource || new URL(contactOnly
+        ? "handwriting-contact.js" : "handwriting-glyphs.js", handwritingSource).href;
+      script.async = true;
+      script.onload = function () {
+        window.dispatchEvent(new Event("portfolio:handwriting-ready"));
+      };
+      script.onerror = function () { root.classList.remove("js-hw"); };
+      document.head.appendChild(script);
+    }
+    function observeHandwriting() {
+      if (reduce.matches || handwritingRequested || handwritingObserver) return;
+      var targets = document.querySelectorAll("svg.scr");
+      if (!targets.length) return;
+      if (!("IntersectionObserver" in window)) { loadHandwriting(); return; }
+      handwritingObserver = new IntersectionObserver(function (entries) {
+        if (entries.some(function (entry) { return entry.isIntersecting; })) loadHandwriting();
+      }, { rootMargin: "100px" });
+      targets.forEach(function (target) { handwritingObserver.observe(target); });
+    }
+    function syncHandwritingPreference() {
+      if (reduce.matches) return;
+      if (window.PORTFOLIO_HANDWRITING) start();
+      else {
+        if (handwritingObserver) handwritingObserver.disconnect();
+        handwritingObserver = null;
+        observeHandwriting();
+      }
+    }
+    if (reduce.addEventListener) reduce.addEventListener("change", syncHandwritingPreference);
+    else reduce.addListener(syncHandwritingPreference);
+    observeHandwriting();
+  }
 })();
 
 /* Der sichtbare Top-Anker bleibt ein echter Hash-Link und funktioniert deshalb auch ohne

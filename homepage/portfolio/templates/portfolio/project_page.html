@@ -1,0 +1,47 @@
+{% extends "portfolio/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block meta_description %}{{ page.teaser_text|striptags }}{% endblock %}
+
+{% block content %}
+  {% pageurl portfolio_index as portfolio_home_url %}
+  <article class="center stack page-flow">
+    <header class="stack project-hero">
+      <p><a href="{{ portfolio_home_url }}#projekte">Zurück zu den Projekten</a></p>
+      <h1>{{ page.title }}</h1>
+      <p>{{ page.teaser_text }}</p>
+      <dl class="cluster project-meta">
+        <div><dt>Kategorie</dt><dd>{{ page.get_category_display }}</dd></div>
+        <div><dt>Jahr</dt><dd>{{ page.year }}</dd></div>
+        {% if page.client %}<div><dt>Kunde</dt><dd>{{ page.client }}</dd></div>{% endif %}
+        <div><dt>Leistungen</dt><dd>{{ page.get_service_names|join:", " }}</dd></div>
+      </dl>
+      {% if page.live_url %}<p><a href="{{ page.live_url }}">Website ansehen</a></p>{% endif %}
+    </header>
+
+    {% if page.hero_image %}
+      <div class="frame project-hero__image">
+        {% srcset_image page.hero_image fill-{1920x1080,640x360,1280x720} sizes="(min-width: 94.5rem) 90rem, calc(100vw - 2 * clamp(1rem, 4vw, 2.25rem))" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
+      </div>
+    {% endif %}
+
+    {% if page.content %}
+      <section id="case-study" class="stack project-content" aria-label="Case Study">
+        {% for block in page.content %}
+          {% include_block block %}
+        {% endfor %}
+      </section>
+    {% endif %}
+
+    {% if other_projects %}
+      <aside class="stack" aria-labelledby="other-projects-title">
+        <h2 id="other-projects-title">Weitere Projekte</h2>
+        <div class="grid project-grid">
+          {% for project in other_projects %}
+            {% include "portfolio/components/related_project_card.html" with project=project request=request only %}
+          {% endfor %}
+        </div>
+      </aside>
+    {% endif %}
+  </article>
+{% endblock %}

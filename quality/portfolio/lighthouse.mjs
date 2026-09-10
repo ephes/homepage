@@ -15,7 +15,7 @@ try {
     chromePath: chromium.executablePath(),
     chromeFlags: ["--headless", "--no-sandbox", "--disable-dev-shm-usage"],
   });
-  report = await lighthouse(server.url, {
+  report = await lighthouse(server.pages.homepage.url, {
     port: chrome.port,
     output: ["json", "html"],
     logLevel: "error",

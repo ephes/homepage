@@ -1,7 +1,7 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
@@ -23,6 +23,22 @@ def validate_max_three_words(value):
 
     if len(value.split()) > 3:
         raise ValidationError("Die Überschrift darf höchstens drei Wörter enthalten.")
+
+
+def validate_internal_path_or_http_url(value):
+    """Accept a root-relative path or a complete HTTP(S) URL."""
+
+    if (
+        value.startswith("/")
+        and not value.startswith("//")
+        and "\\" not in value
+        and not any(ord(character) < 32 for character in value)
+    ):
+        return
+    try:
+        URLValidator(schemes=["http", "https"])(value)
+    except ValidationError as error:
+        raise ValidationError("Bitte einen mit / beginnenden Pfad oder eine vollständige HTTP(S)-URL eingeben.") from error
 
 
 class ErrorPageSettings(BaseSiteSetting):
@@ -51,6 +67,104 @@ class ErrorPageSettings(BaseSiteSetting):
 
     class Meta:
         verbose_name = "501-Seite"
+
+
+class PortfolioSiteSettings(BaseSiteSetting):
+    """Shared, per-site content for the portfolio shell.
+
+    The approved prototype repeats these values across the header, navigation,
+    footer and utility pages. Keeping the editorial contract here lets the later
+    visual-parity templates consume one source without coupling shell content to
+    a particular landing-page revision.
+    """
+
+    brand_name = models.CharField("Name", max_length=120, default="Katharina Wersdörfer")
+    availability_text = models.CharField(
+        "Verfügbarkeitstext",
+        max_length=120,
+        default="Verfügbar für Projekte",
+    )
+    show_availability = models.BooleanField("Verfügbarkeit anzeigen", default=True)
+    profile_text = models.CharField(
+        "Kurzprofil",
+        max_length=240,
+        default="Web & Digital Design, Illustration und Print — aus Düsseldorf.",
+    )
+    contact_email = models.EmailField(
+        "Kontaktadresse",
+        default="katharina@wersdoerfer.de",
+        help_text=(
+            "Vor der sichtbaren Shell-Umstellung bleibt die Kontaktadresse auf der "
+            "Portfolio-Startseite für das Frontend maßgeblich."
+        ),
+    )
+    linkedin_url = models.URLField(
+        "LinkedIn",
+        blank=True,
+        default="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2",
+    )
+    github_url = models.URLField(
+        "GitHub",
+        blank=True,
+        default="https://github.com/federfuxx",
+    )
+    mastodon_url = models.URLField(
+        "Mastodon",
+        blank=True,
+        default="https://fedi.wersdoerfer.de/@katharina",
+    )
+    imprint_url = models.CharField(
+        "Impressum",
+        max_length=255,
+        default="/impressum/",
+        help_text="Mit / beginnender interner Pfad oder vollständige HTTP(S)-URL.",
+        validators=[validate_internal_path_or_http_url],
+    )
+    privacy_url = models.CharField(
+        "Datenschutz",
+        max_length=255,
+        default="/datenschutz/",
+        help_text="Mit / beginnender interner Pfad oder vollständige HTTP(S)-URL.",
+        validators=[validate_internal_path_or_http_url],
+    )
+    copyright_text = models.CharField(
+        "Copyright",
+        max_length=160,
+        default="© 2026 Katharina Wersdörfer",
+    )
+    location_text = models.CharField(
+        "Ortszeile",
+        max_length=160,
+        default="Designed in Düsseldorf",
+    )
+
+    panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel("brand_name"),
+                FieldPanel("availability_text"),
+                FieldPanel("show_availability"),
+                FieldPanel("profile_text"),
+                FieldPanel("contact_email"),
+            ],
+            heading="Profil und Kontakt (noch nicht im Frontend)",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("linkedin_url"), FieldPanel("github_url"), FieldPanel("mastodon_url")],
+            heading="Soziale Profile (noch nicht im Frontend)",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("imprint_url"), FieldPanel("privacy_url")],
+            heading="Rechtliches (noch nicht im Frontend)",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("copyright_text"), FieldPanel("location_text")],
+            heading="Footerleiste (noch nicht im Frontend)",
+        ),
+    ]
+
+    class Meta:
+        verbose_name = "Portfolio-Site"
 
 
 class PortfolioContextMixin:

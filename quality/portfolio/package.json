@@ -8,7 +8,7 @@
   },
   "scripts": {
     "audit": "node audit.mjs",
-    "audit:ci": "node audit.mjs --fail-on-findings",
+    "audit:ci": "node --test contracts.test.mjs && node audit.mjs --fail-on-findings",
     "lighthouse": "node lighthouse.mjs",
     "lighthouse:ci": "node lighthouse.mjs --fail-on-findings",
     "handwriting:build": "node build-handwriting.mjs",

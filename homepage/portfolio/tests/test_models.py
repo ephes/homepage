@@ -11,7 +11,7 @@ from wagtail.fields import StreamField
 from wagtail.images import get_image_model
 from wagtail.models import Collection, Locale, Page, PageViewRestriction, Site
 
-from homepage.portfolio.models import PortfolioIndexPage, ProjectPage, ProjectService
+from homepage.portfolio.models import PortfolioIndexPage, PortfolioSiteSettings, ProjectPage, ProjectService
 
 pytestmark = pytest.mark.django_db
 
@@ -158,6 +158,61 @@ def test_wagtail_editor_uses_structured_fields_and_hides_legacy_fields():
     }
     assert ProjectPage._meta.get_field("services").editable is False
     assert ProjectPage._meta.get_field("body").editable is False
+
+
+def test_portfolio_shell_settings_keep_shared_content_per_site():
+    index = make_portfolio_tree()
+    site = Site.objects.get(hostname="testserver")
+    settings = PortfolioSiteSettings.for_site(site)
+
+    assert index.get_site() == site
+    assert settings.pk is not None
+    assert settings.brand_name == "Katharina Wersdörfer"
+    assert settings.availability_text == "Verfügbar für Projekte"
+    assert settings.show_availability is True
+    assert settings.profile_text == "Web & Digital Design, Illustration und Print — aus Düsseldorf."
+    assert settings.contact_email == "katharina@wersdoerfer.de"
+    assert settings.linkedin_url.startswith("https://www.linkedin.com/")
+    assert settings.github_url == "https://github.com/federfuxx"
+    assert settings.mastodon_url == "https://fedi.wersdoerfer.de/@katharina"
+    assert settings.imprint_url == "/impressum/"
+    assert settings.privacy_url == "/datenschutz/"
+    assert settings.copyright_text == "© 2026 Katharina Wersdörfer"
+    assert settings.location_text == "Designed in Düsseldorf"
+
+    settings.brand_name = "Eigenständige Portfolio-Site"
+    settings.save()
+
+    assert PortfolioSiteSettings.for_site(site).brand_name == "Eigenständige Portfolio-Site"
+
+    second_site = Site.objects.create(
+        hostname="secondary.test",
+        port=443,
+        root_page=site.root_page,
+        site_name="Zweite Site",
+    )
+    second_settings = PortfolioSiteSettings.for_site(second_site)
+
+    assert second_settings.pk != settings.pk
+    assert second_settings.brand_name == "Katharina Wersdörfer"
+
+
+@pytest.mark.parametrize("value", ["/impressum/", "/recht/impressum/?lang=de", "https://example.com/legal"])
+def test_portfolio_legal_destinations_accept_root_paths_and_http_urls(value):
+    field = PortfolioSiteSettings._meta.get_field("imprint_url")
+
+    assert field.clean(value, None) == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["impressum", "../impressum/", "//example.com/legal", r"/\example.com", "javascript:alert(1)"],
+)
+def test_portfolio_legal_destinations_reject_unsafe_or_depth_relative_values(value):
+    field = PortfolioSiteSettings._meta.get_field("imprint_url")
+
+    with pytest.raises(ValidationError):
+        field.clean(value, None)
 
 
 def test_unsaved_project_preview_reads_in_memory_service_items():

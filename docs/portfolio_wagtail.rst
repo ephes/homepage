@@ -4,6 +4,17 @@ Portfolio in Wagtail
 Data contract
 -------------
 
+Shared shell content is stored per Wagtail site in ``PortfolioSiteSettings``:
+brand, availability, profile copy, contact address, social destinations, legal
+destinations and footer-line copy. The model intentionally exists before the
+visual shell migration, but the current structural templates do not consume it
+yet. This keeps the preparatory migration visually neutral and prevents the later
+header, menu, footer and utility pages from creating another set of hard-coded
+copies. Until the shell is switched over, ``PortfolioIndexPage.contact_email``
+remains the public source and must not be removed. Legal destinations accept only
+root-relative paths beginning with ``/`` or complete HTTP(S) URLs, so editors cannot
+introduce page-depth-dependent or script-scheme links before the shell consumes them.
+
 ``PortfolioIndexPage`` is the only parent for ``ProjectPage`` records. Public
 project navigation filters to live, public ``ProjectPage`` descendants in Wagtail
 tree order. On a project page, ``get_other_projects()`` returns the next two
@@ -116,6 +127,35 @@ an unsaved default instance until an editor deliberately saves its settings in W
 Shared navigation and home links use Wagtail's request-aware ``pageurl`` tag.
 They therefore resolve against the selected request site, including HTTPS sites on
 non-default ports, rather than relying on the first site associated with a page.
+
+Navigation anchor contract
+--------------------------
+
+The current structural navigation may link only to sections that the Wagtail index
+actually renders: ``projekte``, ``ueber-mich`` and ``kontakt``. The approved prototype
+also defines ``stage``, ``leistungen``, ``about`` and ``kunden``. Those destinations
+will be introduced with their corresponding editable landing-page sections during
+the visible parity phase; shell links must not be enabled earlier because they would
+create broken navigation. A render test keeps every current hash destination tied to
+an existing index ``id``.
+
+Asset pipeline and static delivery
+----------------------------------
+
+The base template exposes empty ``extra_styles``, ``extra_head`` and
+``extra_scripts`` blocks for the future manifest-resolved asset pipeline. Page
+stylesheets belong in ``extra_styles`` so their order remains directly after the
+shared stylesheet. ``extra_head`` is reserved for non-stylesheet head metadata,
+preloads and any tiny capability script that must run before paint;
+``extra_scripts`` holds deferred enhancement scripts at the end of ``body``. The
+empty blocks add no request and change no current rendering. Page templates must
+use Django's ``static`` tag for every local asset; relative runtime fallbacks are
+not valid after hashed ``collectstatic`` output.
+
+Production installs WhiteNoise with its Brotli extra. The portfolio test suite runs
+an isolated ``collectstatic`` pass and verifies that the manifest-hashed fixture is
+emitted as byte-equivalent gzip and Brotli sidecars, so compression support cannot
+silently disappear from a deployment environment.
 
 CSS cascade contract
 --------------------

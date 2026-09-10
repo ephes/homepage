@@ -5,10 +5,15 @@
   if (!grid) return;
 
   const gradient = (light, dark) => {
+    /* Die Gradient-Koordinaten gehören zum Linien-Layer, nicht zum Dokument. Auf
+       Telefonen kann der obere Abstand der Verfügbarkeitszeile durch Margin-Collapse
+       den Body und damit `.pagegrid` nach unten versetzen. Dokumentkoordinaten würden
+       den Hell-/Dunkelwechsel dann exakt um diese Headerhöhe zu spät zeichnen. */
+    const gridTop = grid.getBoundingClientRect().top + window.scrollY;
     const bands = [...document.querySelectorAll(".on-dark")]
       .map((element) => {
         const rect = element.getBoundingClientRect();
-        return [rect.top + window.scrollY, rect.bottom + window.scrollY];
+        return [rect.top + window.scrollY - gridTop, rect.bottom + window.scrollY - gridTop];
       })
       .sort((a, b) => a[0] - b[0]);
     const stops = [];
@@ -86,11 +91,37 @@
     });
   });
   const insidePanel = (target) => target instanceof Element && !!target.closest(".site-nav nav");
+  let panelTouchY = null;
+  addEventListener("touchstart", (event) => {
+    panelTouchY = lockedY !== null && event.touches.length === 1 && insidePanel(event.target)
+      ? event.touches[0].clientY
+      : null;
+  }, { passive: true });
   const stopOutsidePanel = (event) => {
-    if (lockedY !== null && !insidePanel(event.target)) event.preventDefault();
+    if (lockedY === null) return;
+    if (!insidePanel(event.target)) {
+      if (event.type === "touchmove" && event.touches.length !== 1) return;
+      event.preventDefault();
+      return;
+    }
+    if (event.type !== "touchmove") return;
+    /* iOS reicht eine Touchbewegung am Anfang/Ende eines inneren Scrollcontainers sonst
+       an den Root-Scroller weiter. Genau dieses Rubberbanding ließ unter dem opaken Panel
+       kurz Seiteninhalt aufblitzen. Innerhalb des scrollbaren Bereichs bleibt natives
+       Menüscrollen erhalten; Mehrfinger-Zoom wird nicht angefasst. */
+    if (event.touches.length !== 1 || panelTouchY === null) return;
+    const panel = event.target.closest(".site-nav nav");
+    const nextY = event.touches[0].clientY;
+    const deltaY = nextY - panelTouchY;
+    panelTouchY = nextY;
+    const atTop = panel.scrollTop <= 0.5;
+    const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 0.5;
+    if ((deltaY > 0 && atTop) || (deltaY < 0 && atBottom)) event.preventDefault();
   };
   addEventListener("wheel", stopOutsidePanel, { passive: false });
   addEventListener("touchmove", stopOutsidePanel, { passive: false });
+  addEventListener("touchend", () => { panelTouchY = null; }, { passive: true });
+  addEventListener("touchcancel", () => { panelTouchY = null; }, { passive: true });
   addEventListener("scroll", () => {
     if (lockedY !== null && !anchorFlight && window.scrollY !== lockedY) window.scrollTo(0, lockedY);
   }, { passive: true });

@@ -40,7 +40,8 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    Durchlässigkeit aufzugeben. „Verfügbar für Projekte“ verwendet mit `#4B4F48` weiterhin
    einen zurückhaltenden Graugrünton statt des volltonigen warmen Schwarz; selbst über dem
    dunkelstmöglichen Mischgrund erreicht er rund 4,66:1 Kontrast.
-   **Das ausgeklappte Panel ist als Statement angelegt:** Es beginnt direkt unter dem Header,
+   **Das ausgeklappte Panel ist als Statement angelegt:** Der Header ist fest am Viewport
+   verankert; das Panel beginnt direkt darunter,
    reicht bis an den unteren Viewportrand und belegt auf dem Desktop die rechte Hälfte des
    Bildschirms. Zwischen 36 und 90 rem – von Tablet hochkant bis zu schmaleren Desktop- und
    Tablet-Landscape-Breiten – beginnt es am ersten inneren Rasterteiler und nutzt damit drei
@@ -82,6 +83,23 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    die neun automatisch mit `01` bis `09` nummerierten Projektlinks ein- und ausklappt.
    Desktop läuft die Reihenfolge spaltenweise (`01–05` links, `06–09` rechts); mobil
    bleibt sie als eine fortlaufende Spalte erhalten.
+   Die zentrale Rasterspalte behält beim Öffnen des Projektindex die intrinsische Breite
+   der geschlossenen Hauptnavigation. Wenn JavaScript aktiv ist, ermittelt `motion.js`
+   Breite und geschlossene Höhe gemeinsam ohne Zustandswechsel am sichtbaren Menü über eine
+   nur für den synchronen Messzeitpunkt angehängte, unsichtbare Kopie und aktualisiert beide
+   nach Viewport- oder Fontänderungen. So ist auch die 75-%-Position schon vor dem ersten
+   Öffnen korrekt, obwohl der echte geschlossene `details`-Inhalt keine Layoutbox besitzt.
+   Die Messkopie übernimmt dieselbe responsive Maximalbreite wie das echte Menü, sodass
+   ihre Höhe auch bei Umbruch auf Extrembreiten gültig bleibt. Das verhindert den
+   seitlichen Sprung beim Öffnen und nach dem Schließen: Der sichtbare Projektindex bricht
+   innerhalb dieser Inhaltsbreite um und wächst ausschließlich nach unten. Erst am Ende der diskreten
+   `details-content`-/`content-visibility`-Transition nimmt ein Browser den eingeklappten
+   Inhalt vollständig aus der intrinsischen Größenberechnung. Ohne die reservierte Breite
+   würde der mittlere `auto`-Track deshalb beim Aufklappen wachsen, nachträglich wieder
+   schrumpfen und Hauptlinks wie Social-Icons gemeinsam versetzen. Die Außenkanten der
+   Iconreihe bleiben so an linker Stern- und rechter Textkante der Hauptnavigation; nur die
+   Höhe des Akkordeons und die darunterliegende Trennlinie bewegen sich. Ohne JavaScript
+   bleibt die intrinsische `max-content`-Fallbackbreite aktiv; das Menü bleibt nutzbar.
    Das Panel zentriert seinen Inhalt nur, wenn Inhalt sowie oberer und unterer Abstand
    vollständig in die verfügbare Höhe passen. Bei kleineren Viewports bleibt das Panel
    auf die Bildschirmhöhe begrenzt und wird selbst scrollbar; kein Menüpunkt wird geclippt.
@@ -91,6 +109,23 @@ Eine durchgehende Startseite (Design-Stand, Inhalte noch Platzhalter):
    dynamische Beschriftung, `inert` für den abgedeckten Seiteninhalt, Escape zum Schließen
    und einen zyklischen Fokus innerhalb des offenen Panels. Bei
    `prefers-reduced-motion` werden Ankersprünge und Menüwechsel nicht animiert.
+   Mobil ist die opake Panelfläche gleichzeitig an Headerunterkante und Viewportunterkante
+   verankert. Ein Touch-Grenzwächter stoppt auf iOS nur das nach außen gerichtete
+   Rubberbanding am Anfang beziehungsweise Ende des Panel-Scrollbereichs; innerhalb bleibt
+   das Menü nativ scrollbar und Mehrfinger-Zoom unangetastet. Dadurch kann am unteren Rand
+   kein Seiteninhalt hinter dem offenen Menü aufblitzen.
+   Der horizontale Seitenüberlauf wird am `body` mit `overflow-x: clip` statt `hidden`
+   begrenzt. Chromium koppelt `hidden` auf einer Achse mit `auto` auf der anderen und machte
+   den Body dadurch zum Scroll-Container. So konnte der vormals sticky positionierte Header
+   beim absichtlichen Desktop-Hover-Sprung aus dem Bild laufen; das in ihm liegende Panel
+   bewegte sich mit. `clip` verhindert diesen zusätzlichen Scroll-Container. Header und Panel
+   sind außerdem explizit viewportfest positioniert, damit die Navigation auch in Helium und
+   auf Mobile unabhängig von der gerade bewegten Dokumentposition sichtbar bleibt. Bis der
+   `ResizeObserver` die reale Headerhöhe geliefert hat – beziehungsweise dauerhaft ohne
+   JavaScript – verwenden Main, mobiles Statusband und Menü denselben sicheren
+   `4.6rem`-Fallback. Nur Seiten mit einem direkten Statusband nehmen auf Telefonen dessen
+   Margin als Flussausgleich; eine JavaScript-freie Projektseite ohne dieses Band behält den
+   Main-Abstand und wird nicht vom festen Header überdeckt.
 
 1. **Hero** — Fullscreen, großes „MOIN" (echter HTML-Text). Beim Bewegen der Maus über den
    Schriftzug wird per **WebGL-Flüssigkeitssimulation** eine bunte Illustrationswelt darunter
@@ -285,28 +320,44 @@ Der Button muss deshalb **mindestens 18,66 px fett** bleiben — bei 1.2rem/700 
 19,2 px. Creme ist die Entscheidung (Katharina); warmes Schwarz wäre mit 4,55 zwar auch in
 Normalgröße zulässig, wirkt auf Tangerine aber stumpf. Der Puffer der gewählten Creme bleibt
 mit 3,42 gegen 3,0 knapp, aber ausreichend.
-7. **Footer** — schwarz, mit Profil, einer kombinierten Spalte für Seitenabschnitte und
-   Rechtliches sowie der Projektliste. Kontakt und Socials sitzen stattdessen als direkte
-   Handlungen im Menü. Darunter folgt die schmale Abschlusszeile.
+7. **Footer** — schwarz, auf Desktop in vier eindeutigen Rasterspalten: Profil, Seite,
+   sämtliche Projektlinks als eine Liste und Rechtliches ganz rechts. Kontakt und Socials
+   sitzen stattdessen als direkte Handlungen im Menü. Darunter folgt die schmale
+   Abschlusszeile. Die vier Bereiche stehen auch im DOM in genau dieser Reihenfolge, damit
+   visuelle Anordnung, Tastaturfokus und Screenreader-Lesefolge übereinstimmen.
 
 ## Mobile (unter 52rem)
 
 - **Headerstatus:** Bis einschließlich Tablet bleibt „Verfügbar für Projekte“ in der
   Kopfzeile. Erst unter `36rem` wechselt der Status in einen flachen Balken direkt darunter.
   Dieser Balken ist kein Sticky-Element und scrollt mit dem Seiteninhalt weg; im Footer
-  erscheint der Status erneut.
+  erscheint der Status erneut. Auf mobilen Viewports blendet die feste Leinentextur an der
+  oberen Viewport- beziehungsweise Safe-Area-Kante vollständig aus und gewinnt erst über
+  Headerhöhe weich an Deckkraft. So bleibt der Notch-Bereich ruhig cremefarben, ohne eine
+  zusätzliche Farbfläche oder Änderung am eigentlichen Headergrund; Desktop behält die
+  durchgehende Textur.
 - **Footer:** Unterhalb von 52rem belegt das Profilpaket eine volle Zeile. Darunter stehen
   Seite plus Rechtliches in der linken und die Projekte in der rechten Spalte; ihre nahezu
   gleichen Inhaltshöhen vermeiden die früheren Löcher. Da die lange E-Mail nun im Menü
   sitzt, bleibt diese kompakte Zweiteilung bis 320px erhalten; erst darunter wird die
-  Sitemap einspaltig. Der mobile Top-Anker ist exakt so hoch wie die Abschlusszeile; „Designed in
-  Düsseldorf“ steht unmittelbar links daneben.
+  Sitemap einspaltig. Die Abschlusszeile übernimmt mobil dasselbe Zweispaltenraster:
+  Copyright beginnt sinnvoll links, „Designed in Düsseldorf“ exakt am Textanschlag der
+  Projektspalte darüber. Beide verwenden wieder die reguläre fluide Eyebrow-Größe statt der
+  früheren Verkleinerung für den alten Ankerplatz. Das rechte Zellpadding des Ortsvermerks
+  reserviert die transparente 44-px-Trefferfläche des Ankers mit L-Kontur; sein linker
+  Textanschlag bleibt dadurch unverändert, während langer Text vor der Trefferfläche
+  umbricht. Auch das Copyright darf
+  innerhalb seiner Spalte umbrechen. Die Textzeile respektiert die untere Safe Area.
 - **Hero:** Solange der Einleitungstext absolut im Raster sitzt, wird seine Höhe gemessen:
   Er beginnt entweder an der 75-Prozent-Linie oder endet dort vollständig in der Zeile
   darüber. Eine horizontale Linie kann den Lead deshalb nicht mehr durchschneiden. Auf
   schmalen Screens sitzt der Einleitungstext im freien unteren Bereich; seine
-  Unterkante fluchtet direkt oberhalb des mobilen Top-Ankers. Die zusätzliche Höhe des
-  Statusbalkens wird dabei mitgerechnet. `100svh` ist dabei nur die Mindesthöhe: Reicht die
+  Unterkante endet am aktuellen visuellen Viewportrand (nur die normale innere
+  `--hero-inset`-Polsterung und eine vorhandene Bottom Safe Area bleiben). Die 44-px-
+  Trefferfläche des Top-Ankers liegt unabhängig in der Seitenkante und verkürzt die
+  Lead-Breite nicht. Die Statusbandhöhe wird bereits von der Stage abgezogen und deshalb nicht
+  nochmals als unterer Abstand addiert. Eine `100vh`/`100svh`/`100dvh`-Kaskade folgt auf
+  aktuellen iOS-Browsern auch ein- und ausfahrenden Browserleisten. Reicht die
   verfügbare Höhe für MOIN, Erfahrungsvermerk und Einleitung nicht aus, wächst der Hero mit
   seinem normal eingebundenen Einleitungstext weiter, statt Inhalte zu überlagern oder
   abzuschneiden. Die zweite horizontale Rasterlinie ist mobil nicht
@@ -316,7 +367,32 @@ mit 3,42 gegen 3,0 knapp, aber ausreichend.
   ausdrücklich auch Tablets, wird der Custom Cursor zum statischen „I-Punkt“ über dem I von
   „Moin“. Er verschwindet weich, sobald die erste Wischbewegung beginnt; ein bloßes Antippen
   entfernt ihn nicht. Der separate Scroll-Aktivator entfällt auf diesen Geräten. Der
-  Erfahrungs-Hinweis „15+ years in branding“ bleibt links oben erhalten. Bis etwa 410 px
+  Fluid-Reveal unterscheidet Touch-Gesten nach 6 px einmalig und scrollfreundlich: Nur wenn
+  die horizontale Distanz die vertikale um mindestens den Faktor 1,2 überwiegt, wird die
+  Geste bis zum Loslassen als Reveal behandelt. Vertikale und uneindeutig diagonale Gesten
+  bleiben natives Seitenscrollen; die Zuordnung wechselt innerhalb einer Geste nicht.
+  Mehrfinger-Gesten steuern den Reveal nie. Auf touchfähigen Geräten ist ein früh
+  registrierter, nicht-passiver `touchmove`-Pfad allein für Touch verantwortlich; er ruft
+  `preventDefault()` erst nach klar horizontaler Klassifikation auf. Das verhindert in iOS
+  Safari, dass dessen Scroll-Erkennung den Pointer-Stream vorher per `pointercancel` beendet.
+  Pointer Events bedienen dort nur Maus und Stift und sind nur in Browsern ohne Touch Events
+  selbst der Touch-Fallback, sodass kein Kontakt doppelt in die Simulation gelangt.
+  Im Pointer-Touch-Fallback bleibt `touch-action: pan-y` als WebKit-kompatible Basis wirksam;
+  `pinch-zoom` wird nur per `@supports` ergänzt, damit eine unbekannte zweite Angabe nicht die
+  gesamte Deklaration ungültig macht. Der Touch-Event-Pfad setzt dagegen `touch-action: auto`:
+  Damit dürfen vertikale und uneindeutig diagonale Gesten nativ scrollen sowie Mehrfinger-
+  gesten zoomen, während ausschließlich die erkannte Horizontalgeste verhindert wird. Maus
+  und Stift behalten ihre direkte Zeigersteuerung. **Mobile Idle-Einladung:** Auf
+  Touchgeräten wandert ein einzelner kleiner Reveal-Impuls
+  nach 700 ms Ruhe langsam auf einer aus fünf verschieden schnellen Sinusanteilen gebildeten,
+  bei jedem Laden leicht variierten Bahn durch den mittleren Hero-Bereich. Die Bahn bleibt
+  ungefähr innerhalb von 28–72 % der Breite und 38–66 % der Höhe, erzeugt höchstens rund
+  30 Splats pro Sekunde und verwendet 28 % der normalen Gestenkraft. Eine Berührung
+  übernimmt sofort;
+  nach ihrem Ende setzt die Automation erst nach 3,2 s Ruhe weich und ohne Positionssprung
+  wieder ein. Sie pausiert bei unsichtbarem Hero, verborgenem Tab und offenem Menü.
+  `prefers-reduced-motion`, fehlendes WebGL und Desktop ohne Touch deaktivieren sie komplett.
+  Der Erfahrungs-Hinweis „15+ years in branding“ bleibt links oben erhalten. Bis etwa 410 px
   erhält er drei Rasterspalten; der dort nur dekorative Touch-Cursor macht ihm Platz.
 - **Projekte:** die erste Kachel steht als Hero über die volle Breite (16:9), alle weiteren
   laufen darunter als **Reel** (Every Layout) horizontal durch. Die gemeinsame fluide
@@ -349,6 +425,15 @@ mit 3,42 gegen 3,0 knapp, aber ausreichend.
   fluid verkleinert, wenn sie neben „ICH BIN“ steht und breiter als der verbleibende
   Inhaltsraum wäre. Springt der Name auf sehr schmalen Screens in eine eigene Zeile, bleibt
   seine normale Größe erhalten.
+- **About ohne Scrollruck:** Beim Hinunterscrollen wird eine oben hinter dem festen Header
+  verschwundene Kachel nicht mehr in ihren Ausgangszustand zurückanimiert. Zuvor wuchs das
+  mobile Zeilenpadding dort nachträglich von `0` auf `--about-travel`: bei 390 px waren das
+  32 px je Kachel beziehungsweise 96 px Dokumenthöhe, denen Chromium per Scroll Anchoring
+  über rund 1,2 s mit `scrollY` folgte. Zurückgesetzt wird erst beim Hinaufscrollen, wenn die
+  Kachel unterhalb des Viewports austritt. Damit bleiben sichtbare Eintrittswelle und
+  Akkordeon-Höhenanimation erhalten, aber oberhalb des Viewports ändert die Reveal-Logik
+  keine Layoutgröße mehr. Der `ResizeObserver` der Linien darf weiterlaufen: Er schreibt nur
+  neue Farbverläufe und war nicht die Ursache der Bewegung.
 - **Extrem schmale Ansichten (< 320 px):** Die vorhandenen fluiden Typovariablen skalieren
   ohne zusätzlichen Schriftgrößen-Breakpoint weiter ab. Header, Kontaktzeile und lange
   Footer-Adressen bleiben innerhalb des Viewports; horizontales Dokument-Scrolling wird an
@@ -357,9 +442,12 @@ mit 3,42 gegen 3,0 knapp, aber ausreichend.
   Rasterspalten; unter `15rem` wird zusätzlich das redundante Kontaktlabel der
   Projektanfrage ausgeblendet.
   Ab 320 px greifen unverändert die regulären mobilen Größen.
-- **Marken:** `50svh` bleibt auf ausreichend breiten Screens die Mindesthöhe. Auf schmalen,
-  hohen Geräten deckelt `72vw` die künstliche Untergrenze; längerer Inhalt kann die Section
-  weiterhin vergrößern, aber unter dem Marquee entsteht keine viewportbedingte Leerfläche.
+- **Marken:** Ausschließlich im Telefon-Hochformat bis 35 rem erhält die Section eine
+  Mindesthöhe von `66svh` und zentriert ihren weiterhin intrinsisch wachsenden Inhalt darin.
+  Zwei direkt aufeinanderfolgende Bänder zeigen dieselbe Folge mit `96s` statt `42s`; das
+  zweite läuft gegenläufig und ist vollständig `aria-hidden`. Bei reduzierter Bewegung
+  bleibt nur die einmalige, statisch umbrechende zugängliche Liste stehen. Landscape,
+  Tablet und Desktop behalten Mindesthöhe, Einzelband und 42-s-Lauf unverändert.
 - **Durchgehende Linien:** Ein `ResizeObserver` synchronisiert die Hell-/Dunkelstopps des
   zentralen Seitengrids mit animierten Layoutänderungen. Wenn About-Kacheln wachsen,
   Akkordeons öffnen oder schließen, bleiben die Außenlinien deshalb exakt an den Grenzen
@@ -449,7 +537,7 @@ Düsseldorf“; nur die relativen
 Linkziele werden an die Unterordner angepasst. In der Abschlusszeile liegt der echte
 Ankerlink `.to-top`. Er bleibt mit `position: fixed` erreichbar und führt auf der Startseite
 zu `#stage`, auf Projektseiten zu `#projektstart`. Die Iconfläche verwendet denselben Pfeil
-wie die Projektkacheln und sitzt auf Desktop und Tablet als nach unten gespiegeltes
+wie die Projektkacheln und sitzt oberhalb von 52 rem als nach unten gespiegeltes
 Gegenstück zum Menü in der rechten unteren Seitenecke. Dort entspricht ihre sichtbare Breite
 dem rechten Seitenabstand `--pad`; ihre linke 1-px-Kante liegt exakt auf der ohnehin
 darunterliegenden rechten Padding-Gridlinie, statt direkt daneben eine Doppellinie zu bilden.
@@ -457,15 +545,21 @@ darunterliegenden rechten Padding-Gridlinie, statt direkt daneben eine Doppellin
 Kontur gemeinsam mit dem Pfeil zwischen warmem Schwarz und Creme um. Dadurch löscht der
 frühere `difference`-Blend die deckungsgleichen Linien nicht mehr gegenseitig aus; ohne
 JavaScript bleibt dieser Blend-Modus als kontrastfähiger Fallback aktiv.
-Desktop und Tablet zeigen keine Füllfläche, sondern nur den Pfeil und die Begrenzung links
+Oberhalb von 52 rem gibt es keine Füllfläche, sondern nur den Pfeil und die Begrenzung links
 und oben. Beides invertiert sich CSS-seitig passend zum Untergrund. Ankerfeld und
 Footer-Abschlusszeile teilen dort eine feste Höhe von `3.5rem`, damit ihre Kanten exakt auf
-derselben Gridlinie liegen. Mobil bleibt der Anker quadratisch bei 44 × 44 px, rückt unter
-Beachtung der Safe Area am rechten Rand in den Inhalt und erhält auf hellen Flächen einen
-Cremegrund mit warm-schwarzer Kontur oben, links und rechts. Über dunklen Flächen schaltet
-die bestehende JavaScript-Kontrasterkennung Füllung und Kontur ins warme Schwarz
-beziehungsweise Creme um. Ohne JavaScript bleibt der mobile Anker bewusst cremefarben mit
-warm-schwarzer Zeichnung.
+derselben Gridlinie liegen. Mobil bleibt die Trefferfläche quadratisch bei 44 × 44 px.
+Sichtbar bleibt nur der kleine Pfeil: Sein Mittelpunkt liegt horizontal in der rechten
+`--pad`-Randzone. Bei vorhandener Safe Area werden Trefferfläche und Pfeil gemeinsam weiter
+nach innen beziehungsweise oben versetzt und bleiben dadurch auch neben Notch oder
+Home-Indikator deckungsgleich. Eine obere und linke L-Kontur macht die vollständige
+Trefferfläche erkennbar, während das transparente Innere darunterliegenden Text lesbar
+lässt; über dunklen Flächen schaltet die bestehende JavaScript-Kontrasterkennung Kontur und
+Pfeil gemeinsam um. Ohne JavaScript hält `mix-blend-mode: difference` beide auf unbekanntem
+Grund sichtbar. Solange das Hauptmenü geöffnet ist, sind Pfeil und gesamte
+44×44-px-Trefferfläche dagegen per nativem `details[open]`-Zustand verborgen und vom
+Hit-Testing ausgeschlossen; sie können das Menüpanel daher auch ohne JavaScript nicht
+überlagern oder Interaktionen abfangen.
 Der Link bleibt ohne JavaScript als normaler Hash-Anker bedienbar. Mit JavaScript löst er
 ein verlässliches weiches Scroll-up aus; bei aktivierter Einstellung „Bewegung reduzieren“
 bleibt es aus Accessibility-Gründen beim direkten Sprung.
@@ -494,29 +588,50 @@ Bild- noch Textfläche durchschneidet.
 Hero-Bild als Pflichtfeld. Die nachgelagerte Galerie ist eine wiederholbare, sortierbare
 Liste mit mindestens zwei Bildern und ohne feste Obergrenze. Damit besteht ein Projekt aus
 mindestens drei Bildern insgesamt; weitere Bilder benötigen keine neue Template-Variante.
-Das Galerie-Raster arbeitet mit drei gleich breiten Spalten und `grid-auto-flow: dense`:
-Querformate belegen zwei Spalten, Hochformate eine, ein redaktionell als `wide` markiertes
-Bild alle drei. Dadurch schließen nachfolgende Bilder freie Rasterplätze automatisch.
-Mobile wird daraus ein Zweispaltenraster: Quer- und Extrabreitformate belegen die volle
-Breite, normale Hochformate jeweils eine Hälfte. Auch ein Hochformat kann redaktionell als
-`wide` hervorgehoben werden und nimmt dann beide Spalten ein. Die drei aktuellen
-Platzhalter sind ausschließlich ein Beispiel für diese wiederholbare Liste, keine feste
-Bildanzahl.
+Sie arbeitet mit geschlossenen Flexzeilen statt mit `grid-auto-flow: dense`: Auf Desktop
+und Tablet wachsen 3:2-Quer- und 4:5-Hochformate proportional zu ihrem Seitenverhältnis,
+sodass eine gemeinsame Zeile ohne Beschnitt dieselbe Bildhöhe erhält. Ein redaktionell mit
+dem booleschen Wagtail-Feld „Großes Motiv“ (`large`, im Prototyp zusätzlich kompatibel zur
+Klasse `wide`) gekennzeichnetes Bild belegt unabhängig vom Format immer eine volle Zeile.
+Mobil bleiben Querformate vollbreit. Nur unmittelbar benachbarte gewöhnliche Hochformate
+werden zu einem lückenlosen Paar aus zwei Hälften; ein einzelnes oder ungerades letztes
+Hochformat nimmt die volle Breite ein. Dadurch kann weder vor noch nach einem vollbreiten
+Motiv eine leere halbe Zeile entstehen. Die drei aktuellen Platzhalter sind ausschließlich
+ein Beispiel für diese wiederholbare Liste, keine feste Bildanzahl.
 
 Dasselbe gilt für „Was bleibt“: Die vier sichtbaren Elemente sind Beispieldaten einer
 optionalen, wiederholbaren Ergebnisliste. Es gibt weder exakt vier Pflichtfelder noch eine
 inhaltlich festgeschriebene Nummerierung. Das Template erzeugt `01`, `02`, `03` usw.
 automatisch aus der aktuellen Reihenfolge und kann damit auch weniger oder mehr Ergebnisse
-ausgeben; bei einer leeren Liste entfällt die gesamte Ergebnis-Section.
+ausgeben; bei einer leeren Liste entfällt die gesamte Ergebnis-Section. Auf schmalen
+Ansichten ist die Ausgangsform ein kompaktes Raster mit zwei Karten pro Zeile. Ein ungerades
+letztes Ergebnis schließt die Zeile vollbreit, statt rechts eine unbeabsichtigte Lücke zu
+lassen. `projekt.js` prüft die tatsächlich gerenderten Inhalte nach dem Rendern, nach dem
+Laden der Schriften und bei Viewportänderungen. Erst wenn eine Karte in der zweispaltigen
+Form horizontal nicht mehr hineinpasst, wird das gesamte Ergebnisraster einspaltig; sehr
+lange untrennbare Inhalte dürfen dort notfalls umbrechen. Ohne JavaScript bleibt die
+zweispaltige Ausgangsform erhalten.
 
 „Weitere Projekte“ wiederholt keine neue Card-Variante, sondern exakt die Konstruktion der
 großen Startseiten-Projektkacheln: zwei Kacheln nebeneinander im Vier-Spalten-Raster, je zwei
 Spalten breit, mit `21:9`-Bildfeld, identischem Innenabstand, Subline-Größe für den Titel und
-Eyebrow-Größe für Bereich/Jahr. Mobil stapeln sie sich wie das bestehende Projektraster. Ein
-kleiner Pfeil rechts gehört wie auf der Startseite zur Titelzeile. Kacheln, Projektanfrage
-und Kontaktbuttons verwenden dieselbe fontunabhängige CSS-Geometrie: eine 1,25-px-Haarlinie
-mit kleiner Pfeilspitze. Damit sind Form, Tangerine-Farbe und kurze Hoverbewegung auf Start-
-und Unterseiten identisch; eine abweichende Unicode-Glyphe kann nicht mehr dazwischenfunken.
+Eyebrow-Größe für Bereich/Jahr. Auch mobil bleiben beide Kacheln grundsätzlich
+nebeneinander; echte Bilder füllen ihre feste Bildbox mit `object-fit: cover` und dürfen
+dabei beschnitten werden. Es gibt dafür bewusst keinen globalen Pixel-Breakpoint:
+`projekt.js` prüft nach dem Rendern, nach geladenen Schriften und bei jeder
+Viewportänderung die beiden konkreten Titel-/Pfeilzeilen in ihrer zweispaltigen Form. Nur
+wenn eine davon überläuft oder den vorgeschriebenen Abstand zum Pfeil unterschreitet, erhält
+dieses Kartenpaar die einspaltige Stapelklasse. So bleiben etwa „Buchgestaltung“ und
+„Plakatserie“ auch bei 390 px nebeneinander, während ein Paar mit
+„Geschäftsausstattung“ dort bereits stapelt. Die Messung wird nur von Font- und
+Viewportereignissen angestoßen, nicht durch einen `ResizeObserver`; die eigene
+Klassenänderung kann daher keine Layout-Oszillation auslösen. Ohne JavaScript ist die
+zweispaltige CSS-Ausgangsform der sinnvolle Fallback. Ein kleiner Pfeil rechts gehört wie
+auf der Startseite zur Titelzeile; seine gezeichnete Mitte ist auch bei mehrzeiligen Titeln
+an der Mitte der ersten Titelzeile ausgerichtet. Kacheln, Projektanfrage und Kontaktbuttons verwenden
+dieselbe fontunabhängige CSS-Geometrie: eine 1,25-px-Haarlinie mit kleiner Pfeilspitze. Damit
+sind Form, Tangerine-Farbe und kurze Hoverbewegung auf Start- und Unterseiten identisch;
+eine abweichende Unicode-Glyphe kann nicht mehr dazwischenfunken.
 
 Der vertikale Rhythmus von Start- und Projektseiten verwendet drei gemeinsame Tokens:
 `--space-section` für das Section-Padding, `--space-eyebrow-title` für den kleinen optischen
@@ -529,8 +644,11 @@ etwa vor dem Kundenstatement, verwenden weiterhin den größeren Inhaltsabstand.
 Die vier zentralen Display-Stufen `--headline-xl`, `--headline-l`, `--headline-m` und
 `--headline-s` halten die Überschriften auf Start- und Projektseiten zusammen. Jede Stufe
 verwendet genau eine durchgängige `clamp()`-Formel mit Grenzen in `rem` und einer fluiden
-Viewport-Komponente; Schriftgrößen werden weder am Mobile- noch am Desktop-Breakpoint
-überschrieben. Das About-Statement verwendet wie die kleinere Markenheadline die M-Stufe;
+Viewport-Komponente; die Tokenwerte selbst werden weder am Mobile- noch am
+Desktop-Breakpoint überschrieben. Lediglich die Komponentenrolle kann gezielt wechseln:
+„Was bleibt.“ und „Weitersehen.“ verwenden unter 52 rem wie die Kontaktheadline die
+L-Stufe statt XL, auf Desktop bleiben sie XL. Das About-Statement verwendet wie die kleinere
+Markenheadline die M-Stufe;
 die Akkordeon- und Leistungstitel verwenden gemeinsam S.
 
 Für die kleinen Textebenen gibt es zwei gemeinsame fluide Größen: `--type-eyebrow` für alle
@@ -556,12 +674,21 @@ Schriftgrößen-Rollen**:
 9. Hero-Wort „MOIN“ (Canvas und HTML-Fallback sind dieselbe Rolle)
 10. großer Case-Fließtext und Kundenstatement (`--type-case-large`)
 
-Das ✳ vor den Menüpunkten ist kein eigener Textstil mehr: Es skaliert relativ zum
-Menüpunkt und wird durch die bestehende Headline-S-Stufe gedeckelt. Inhaltlich besteht das
-reguläre Typografiesystem damit aus acht Größen; Astagina-Handschrift und das geometrisch
-eingepasste „MOIN“ bleiben zwei bewusste Signature-Sonderfälle.
+Der Asterisk vor den Menüpunkten ist kein eigener Textstil: Alle dekorativen Marker in
+Menü, Eyebrows und Kunden-Marquee verwenden dieselbe achtstrahlige SVG-Geometrie aus
+`--asterisk-mark` als CSS-Maske. Das sichtbare Grundmaß beträgt `0.75em` und skaliert damit
+weiter relativ zum jeweiligen Elternstil. Eyebrow und Marquee behalten eine minimal breitere
+Layoutbox, welche die vorher geerbte Laufweite beim Textanschlag ausgleicht; Menümarker
+werden zusätzlich durch die bestehende Headline-S-Stufe gedeckelt.
+`background-color: currentColor` erhält Tangerine beziehungsweise
+Creme, und `-webkit-mask` unterstützt Safari/iOS. Weil kein Unicode-Zeichen mehr gerendert
+wird, kann iOS weder einen grünen Emoji-Font einsetzen noch einen dekorativen Stern in den
+Accessibility-Text aufnehmen. Die eingebettete Data-URL funktioniert sowohl per HTTP als
+auch beim direkten Öffnen der Prototypdateien. Inhaltlich besteht das reguläre
+Typografiesystem damit aus acht Größen; Astagina-Handschrift und das geometrisch eingepasste
+„MOIN“ bleiben zwei bewusste Signature-Sonderfälle.
 
-Die zusätzlichen `em`-Werte an `sup`, ✳ und den intern verschachtelten
+Die zusätzlichen `em`-Werte an `sup`, Asterisk-Maske und den intern verschachtelten
 Handschrift-Ebenen sind relative Skalierungsfaktoren ihrer jeweiligen Eltern und daher keine
 eigenständigen Textstufen. Es gibt in den produktiven Start-/Projektstyles keine
 `font-size` in Pixeln und keine Schriftgrößen-Überschreibung innerhalb einer
@@ -665,8 +792,9 @@ Die About-Section bleibt auf ausreichend breiten Laptop- und großen Screens min
 hoch wie die sichtbare Fläche unter der Navigation. Auf schmaleren Hochformaten deckelt
 `72vw` diese künstliche Mindesthöhe; dann bestimmen Inhalt plus großzügiges Sektionspadding
 die Höhe, statt die lange Viewportachse mit Leerraum zu füllen. Die Marken-Section „Mit
-diesen Marken & Menschen“ belegt weiterhin mindestens `50svh`; beide Sections wachsen bei
-mehr Inhalt jederzeit mit.
+diesen Marken & Menschen“ belegt im Telefon-Hochformat mindestens `66svh`; außerhalb dieses
+engen Hochformat-Cuts bleibt die bisherige `min(50svh, 72vw)`-Regel bestehen. Beide Sections
+wachsen bei mehr Inhalt jederzeit mit.
 Der untere rechte, freischwebende Spritzer der Porträtmaske liegt gegenüber seiner früheren
 Position um sieben Prozentpunkte weiter rechts und 7,5 Prozentpunkte höher. Damit bleibt er
 auch während seiner Eigenbewegung frei vom Vermerk „that's me“.
@@ -678,7 +806,10 @@ Die sichtbare Kundenfolge im Marquee lautet: ALDI Nord, Kerrygold, L’Oréal, T
 Maybelline, essie, Weight Watchers, Miele, Yokohama, McCann, Marina Adler, Fabian Heis,
 Villa Kunterbunt e.V., Ökologische Tierzucht gGmbH, django chat, GGS Lennéstraße und
 erneut McCann. Für den nahtlosen Lauf folgt im Markup dieselbe Sequenz ein zweites Mal;
-diese technische Kopie ist mit `aria-hidden` vor assistiven Technologien verborgen.
+diese technische Kopie ist mit `aria-hidden` vor assistiven Technologien verborgen. Im
+Telefon-Hochformat folgt ein zweites, gegenläufiges Sichtband mit identischem Doppeltrack;
+sein gesamter Container ist dekorativ und `aria-hidden`, sodass die Kundenfolge im
+Accessibility Tree weiterhin genau einmal vorkommt.
 
 Die `Write`-Animation der Astagina-Vermerke verwendet dieselbe, im CV-/Coverletter-Projekt
 bewährte Pipeline: `handwriting-glyphs.js` enthält die echten, in Pfade umgewandelten
@@ -771,10 +902,12 @@ Browser-JavaScript abhängen.
 Die Projektgalerie ordnet beliebig viele Wagtail-Bildblöcke in geschlossenen, flexiblen
 Zeilen an. Auf Desktop und Tablet wachsen 3:2-Querformate und 4:5-Hochformate proportional
 zu ihrem jeweiligen Seitenverhältnis; nebeneinander liegende Bilder erhalten dadurch exakt
-dieselbe dargestellte Höhe, ohne Beschnitt oder Verzerrung. Ein als `wide` markiertes Bild
-belegt eine eigene volle Zeile. Mobile bleiben Querformate und `wide`-Bilder vollbreit,
-gewöhnliche Hochformate halbbreit. Sämtliche Galerie- und Hero-Bildflächen liegen deckend
-vor dem seitenweiten Grid; die gestrichelten Hilfslinien dürfen durch Bilder nie sichtbar sein.
+dieselbe dargestellte Höhe, ohne Beschnitt oder Verzerrung. Ein als großes Motiv markiertes
+Bild belegt eine eigene volle Zeile. Mobile bleiben Querformate und große Motive vollbreit.
+Gewöhnliche Hochformate sind nur als unmittelbar benachbartes Paar halbbreit; ohne direkten
+Partner schließen sie die Zeile vollbreit. Sämtliche Galerie- und Hero-Bildflächen liegen
+deckend vor dem seitenweiten Grid; die gestrichelten Hilfslinien dürfen durch Bilder nie
+sichtbar sein.
 Die feste `.linen`-Ebene ist ebenfalls eine gemeinsame Komponente: Startseite und sämtliche
 Projektseiten beziehen dieselbe CV-Leinentextur samt Multiply-Blending aus `motion.css`.
 
@@ -809,7 +942,47 @@ Trennlinie eine horizontale Iconleiste für E-Mail, LinkedIn, GitHub und Mastodo
 enthält keine separate Kontaktspalte mehr. Alle vier Zeichen liegen als Inline-SVG direkt im
 Seiten-Markup, benötigen keinen zusätzlichen Abruf und übernehmen die aktuelle Textfarbe.
 LinkedIn verwendet eine rahmenlose, hohle `in`-Kontur; Mastodon die luftigere Light-Variante
-von Phosphor Icons. Die Trennlinie darüber nutzt immer die volle innere Breite des Menüpanels.
+von Phosphor Icons. Die Social-Zone beginnt im geschlossenen Ausgangszustand exakt auf der
+75-%-Linie des Hero-Rasters. Ihre Trennlinie läuft ohne seitlichen Innenabstand von der inneren
+Kante des Tangerine-Balkens bis an den rechten Viewportrand. Eine separate 2-rem-
+Überzeichnung reicht dabei auch unter den reservierten Bereich klassischer Scrollbars; das
+Panel kappt sie erst an seiner echten Außenkante und bleibt ausschließlich vertikal
+scrollbar. Der Linkblock darüber sitzt vertikal zentriert in der oberen Rasterzone.
+`motion.js` misst dafür die geschlossene Höhe der tatsächlich vorhandenen Top-Level-Zeilen
+auf jeder Seite und verteilt den Rest gleichmäßig auf zwei Spacer – ohne fest angenommene
+Zeilenzahl. Öffnet sich der Projektindex, bleiben beide Basis-Spacer stehen und die wachsende
+Liste schiebt Trennlinie und Icons nach unten. Selbst ein Viewportwechsel bei offenem Index
+vermisst nur Summary und geschlossene Hauptzeilen; bei geringer Höhe bleibt alles über den
+internen Panel-Scroll erreichbar.
+Die etwas größeren Iconkreise stehen mit identischen Zwischenräumen in einer optisch
+zentrierten Reihe. Ihre beiden Außenkanten liegen exakt innerhalb der linken Sternkante und
+der rechten Kante des breitesten Menüpunkts; kein Kreis ragt mehr über diese Inhaltsflucht.
+Ihre Treffer- und Kreisfläche unterschreitet auch auf schmalen Telefonen 44 × 44 px nicht;
+die sichtbaren SVG-Zeichen bleiben mindestens 28 × 28 px groß. Ihre runde Außenkontur ist
+1,5 px stark. Die Kreisgröße wird, sofern vom Browser unterstützt,
+mit CSS-`round()` auf ganze Layoutpixel gesetzt und die Kontur nativ statt mit einem
+halbpixeligen Inset-Schatten gezeichnet. Ein echter `@supports`-Test auf der
+`width`-Property schützt diese progressive Verfeinerung; ältere Browser behalten die
+vorher deklarierte fluide `clamp()`-Größe. Das verhindert die ungleichmäßige Rasterung der
+früheren Zwischenstärke, ohne dass die Buttons bei fehlendem `round()` auf Inhaltsgröße
+zusammenfallen. LinkedIn ist
+gegenüber den übrigen Line-Icons etwas leichter
+gesetzt; die gefüllte Mastodon-Light-Form erhält zum optischen Ausgleich eine feine
+Zusatzkontur. Beim Briefumschlag ist nur das äußere Rechteck mit 1,35 px einen Hauch
+leichter als die unveränderten inneren Klappenlinien. Dafür trägt der Link den semantischen
+Hook `.mail-link`; die optische Gewichtung hängt nicht am übersetzbaren `aria-label`.
+Unterhalb von 320 px garantiert die gemeinsame Reihenuntergrenze zusätzlich drei mindestens
+2 px breite Zwischenräume; die Iconreihe und der Hauptblock bleiben als Einheit zentriert.
+Die gemeinsame zentrale Subgrid-Spalte
+des Menüs liefert dafür die Flächenmitte; es wird kein zusätzlicher Text in den
+Accessibility-Baum eingetragen.
+Beim Hover oder Tastaturfokus sinkt ausschließlich die technisch getrennte Kreisfassung in
+360 ms mit kurzem Nachfedern ein. Icon, Trefferfläche, Kreisgröße und transparenter Grund
+bleiben vollkommen unbewegt. Zwei sehr schmale Licht-/Schattenkanten liegen nur innen am
+Ring; es gibt weder eine abgedunkelte Gesamtfläche noch einen Schlagschatten um den Button.
+`prefers-reduced-motion` zeigt nur den statischen versenkten Rand. Auch der Einflug des
+Projekt-Menüpunkts, das Aufklappen seines Index und sämtliche Linkbewegungen erscheinen
+dann ohne Transition oder verzögerten Start.
 LinkedIn verwendet den bereinigten Profilpfad ohne
 Trackingparameter; Mastodon verweist mit `rel="me"` auf
 `https://fedi.wersdoerfer.de/@katharina`; GitHub auf das verifizierte öffentliche Profil
@@ -1055,11 +1228,11 @@ Headline**, von Tinte zu Tinte gemessen (nicht an den Kästen). Zwei Anlässe da
 
 Der Wert ist **textabhängig und größenabhängig** — bei geänderter Headline neu messen.
 
-**Eyebrow-Auftakt:** Die Nummerierung `(01)`…`(05)` ist entfallen; stattdessen leitet das
-**✳ aus dem Kunden-Marquee** die Zeile ein, in der Akzentfarbe. Es steckt als `::before` am
-`.sec-label`, damit im Markup nichts Dekoratives steht. Zwei Details: `align-items: center`
-statt `baseline`, weil das Zeichen keine sinnvolle Grundlinie hat, und `line-height: 0`, sonst
-schöbe sein Zeilenkasten die Eyebrow auseinander. Alternativen siehe `eyebrow-zeichen.html`.
+**Eyebrow-Auftakt:** Die Nummerierung `(01)`…`(05)` ist entfallen; stattdessen leitet der
+**Asterisk aus dem Kunden-Marquee** die Zeile ein, in der Akzentfarbe. Er steckt als leeres,
+SVG-maskiertes `::before` an `.sec-label`, damit im Markup und Accessibility-Text nichts
+Dekoratives steht. `align-items: center` richtet die quadratische Markerbox ohne künstliche
+Textgrundlinie aus. Alternativen siehe `eyebrow-zeichen.html`.
 
 **Eyebrow-Texte:** Sie sollen einen *Ton* setzen statt die Headline zu wiederholen. In
 Seitenreihenfolge gelesen ergeben die fünf einen Satz — das ist der Grund für die Auswahl,
@@ -1098,7 +1271,9 @@ optisch zusammen:
 - Die 1/4-Linie hat im Hero eine Lücke: sie setzt an der Oberkante der Subline-Doppelzelle aus
   und läuft unter deren Unterkante weiter (zwei Segmente, `.vsplit` / `.vsplit2`). Weil das
   Gerüst über der ganzen Seite liegt, misst `updateSubBottom()` die beiden Grenzen
-  **dokument-absolut** in `--gap-start` / `--gap-end`.
+  relativ zum tatsächlichen `.pagegrid`-Ursprung in `--gap-start` / `--gap-end`. Der eigene
+  Farbverlauf des erst bei `--gap-end` beginnenden `.vsplit2` zieht genau diesen lokalen
+  Offset wieder ab.
 - **Das Gerüst läuft im Hintergrund** (`z-index: -1`). Die Regel dahinter (Vorgabe Katharina):
   **Flächen dürfen unter das Grid, Bilder liegen immer darüber.** Daraus die Schichtung:
 
@@ -1139,6 +1314,12 @@ optisch zusammen:
   Section mit der Klasse `.on-dark` (aktuell Kunden und Footer) und baut daraus die Verläufe
   mit harten Stopps — beliebig viele Bänder statt eines fest verdrahteten. Dieselbe Klasse
   liefert auch die Farbgebung der Section selbst, die Umschaltung steht also an einer Stelle.
+  Die Messwerte werden ausdrücklich auf die tatsächliche Oberkante von `.pagegrid`
+  normalisiert. Unter 36 rem verschiebt der kollabierende obere Abstand der mobilen
+  Verfügbarkeitszeile den Body und damit das absolut positionierte Gerüst um die Headerhöhe;
+  reine Dokumentkoordinaten ließen den Farbwechsel deshalb genau um diesen Betrag zu spät
+  erscheinen. Der relative Ursprung hält die Außenlinien nun auf Start-, Rechts- und
+  Projektseiten exakt an jeder realen Hell-/Dunkelkante.
   Deshalb sind die
   Linien **Hintergrund-Ebenen statt Borders** (eine Border kann keinen Verlauf tragen) und die
   Strichelung kommt als `mask-image` dazu, damit Farbe und Muster unabhängig bleiben.
@@ -1194,10 +1375,13 @@ nächsten Zeile stellen. Hinter dem Gedankenstrich bleibt der normale Umbruch er
 - **Hero-Höhe = genau EIN Bildschirm, Navigation eingerechnet:**
   `min-height: clamp(var(--hero-floor), calc(100svh - var(--header-h)), 1600px)`.
   Ein `clamp` erledigt beide Grenzen ohne Media Query.
-  **Der Header-Abzug ist der Punkt:** `header.site` ist `sticky` und steht damit IM FLUSS —
-  seine Höhe kam zur vollen `100svh` der Stage hinzu. Die erste Bildschirmseite war dadurch
-  auf *jeder* Größe um exakt die Header-Höhe zu hoch (gemessen: 62,3 px bei 1366/1440/1512/
-  1680/1920/2560 px Breite), und die Subline wurde unten um denselben Betrag angeschnitten.
+  **Der Header-Abzug ist der Punkt:** `header.site` ist inzwischen viewportfest und damit
+  außerhalb des Flusses. Ein `padding-block-start` in gemessener Headerhöhe setzt den
+  Hauptinhalt exakt darunter; auf Telefonen übernimmt die separate Verfügbarkeitszeile diesen
+  Ausgleich. Zusammen mit dem Abzug in der Stage bleibt die erste Bildschirmseite exakt so
+  hoch wie der Viewport. Ohne den Abzug war sie zuvor auf *jeder* Größe um exakt die
+  Header-Höhe zu hoch (gemessen: 62,3 px bei 1366/1440/1512/1680/1920/2560 px Breite), und
+  die Subline wurde unten um denselben Betrag angeschnitten.
   `--header-h` setzt ein **ResizeObserver** am Header — keine Media Query, und es folgt auch
   dem Umbruch der Wortmarke auf schmalen Breiten.
   `--hero-floor` (33 rem) greift erst unterhalb von ~590 px Viewporthöhe; darüber ist der Hero

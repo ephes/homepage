@@ -5,8 +5,32 @@
   --motion-fold-ease: cubic-bezier(.65, 0, .2, 1);
   --motion-enter: 760ms;
   --motion-hover: 320ms;
-  --menu-panel-block-space: clamp(2rem, 6vh, 6rem);
+  /* Ein einziges geometrisches Zeichen statt U+2733: iOS darf den dekorativen Marker
+     dadurch nicht mehr durch ein farbiges Emoji aus einem Systemfont ersetzen. */
+  --asterisk-mark: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12%201.5v21M1.5%2012h21M4.58%204.58l14.84%2014.84M19.42%204.58L4.58%2019.42'%20fill='none'%20stroke='%23000'%20stroke-width='2.4'%20stroke-linecap='square'/%3E%3C/svg%3E");
 }
+
+/* Alle sichtbaren Asterisk-Marker teilen dieselbe 3:4-em-Fassung. `currentColor` erhält
+   die jeweilige Tangerine-/Cremefarbe; die leere Pseudoelement-Box bleibt rein dekorativ
+   und erzeugt keinen vorlesbaren Stern. Der WebKit-Präfix deckt Safari/iOS ab. */
+.project-menu > summary::before,
+.project-menu-links::before,
+.site-nav nav .menu-primary > a::before,
+.sec-label::before,
+.eyebrow::before,
+.marquee-track .item::after {
+  content: "";
+  display: inline-block;
+  inline-size: .75em;
+  block-size: .75em;
+  background-color: currentColor;
+  -webkit-mask: var(--asterisk-mark) center / contain no-repeat;
+  mask: var(--asterisk-mark) center / contain no-repeat;
+}
+/* Diese beiden Textfassungen erbten zuvor zusätzliches Tracking. Eine etwas breitere
+   Layoutbox um die weiterhin quadratische Maske erhält ihren bisherigen Textanschlag. */
+.eyebrow::before { inline-size: .836em; }
+.marquee-track .item::after { inline-size: .77em; }
 
 /* Gemeinsame CV-Leinentextur über Start- und Projektseiten. */
 .linen {
@@ -17,6 +41,35 @@
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsBAMAAAAfmfjxAAAAFVBMVEX////ExMS/v7/8/PyLi4ufn5+6uro3PuJqAAAAB3RSTlMARTAACxAlpkPg9gAAAWVJREFUeF7t1EENgEAABLF9wB8LBGXn3wQ+Jq2I7orYF7E3YnfEnoidCGtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZK8Ba1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1EqxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1kr4gcY9P+FkIkE1AAAAABJRU5ErkJggg==');
   background-repeat: repeat;
   mix-blend-mode: multiply;
+}
+/* Auf kleinen Viewports beginnt die feste Leinentextur an der oberen Safe-Area-Kante
+   vollständig ruhig und gewinnt erst über die Headerhöhe weich an Präsenz. Die
+   cremefarbene Headerfläche selbst bleibt unverändert; maskiert wird ausschließlich die
+   darüberliegende Textur. Ohne Notch ist env() null, in Standalone-/Cover-Kontexten wird
+   der geschützte obere Bereich automatisch in den Verlauf einbezogen. */
+@media (max-width: 52rem) {
+  .linen {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      rgba(0, 0, 0, .08) env(safe-area-inset-top, 0px),
+      rgba(0, 0, 0, .48) calc(env(safe-area-inset-top, 0px) + 2rem),
+      #000 max(
+        calc(var(--header-h, 4.6rem) + 1.25rem),
+        calc(env(safe-area-inset-top, 0px) + 4.5rem)
+      )
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      rgba(0, 0, 0, .08) env(safe-area-inset-top, 0px),
+      rgba(0, 0, 0, .48) calc(env(safe-area-inset-top, 0px) + 2rem),
+      #000 max(
+        calc(var(--header-h, 4.6rem) + 1.25rem),
+        calc(env(safe-area-inset-top, 0px) + 4.5rem)
+      )
+    );
+  }
 }
 .skip-link {
   position: fixed;
@@ -31,24 +84,102 @@
 }
 .skip-link:focus { transform: translateY(0); }
 
-/* Das Panel bleibt auf die verfügbare Viewporthöhe begrenzt. `safe center` zentriert
-   nur, solange Inhalt samt beider Innenabstände hineinpasst; andernfalls beginnt das
-   Raster oben und der Panelbereich selbst wird vollständig scrollbar. */
+/* Der Seitenkopf ist bewusst viewportfest statt nur sticky. Damit bleibt auch das in ihm
+   liegende, feste Menü in Helium/Chromium an seinem Platz, selbst wenn ein Hover-Sprung
+   gerade die Seite hinter dem offenen Panel bewegt. Der Ausgleich am Hauptinhalt erhält
+   die bisherige Geometrie der ersten Bildschirmseite. */
+header.site,
+.site-header {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  inline-size: 100%;
+}
+body > main,
+body > noscript > main { padding-block-start: var(--header-h, 4.6rem); }
+html:has(.site-nav[open]:not(.is-measuring)),
+body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
+
+/* Auf Telefonen sitzt die separate Verfügbarkeitszeile zwischen festem Header und Main.
+   Sie übernimmt deshalb den Flussausgleich; ein zusätzlicher Main-Abstand wäre doppelt. */
+@media (max-width: 36rem) {
+  body > .availability-strip,
+  body > noscript > .availability-strip { margin-block-start: var(--header-h, 4.6rem); }
+  body:has(> .availability-strip) > main,
+  body > noscript:has(> .availability-strip) > main { padding-block-start: 0; }
+}
+
+/* Das Panel übernimmt die 25/75-Teilung des Hero-Rasters. Der Hauptblock sitzt vertikal
+   zentriert in der oberen Zone, die Social-Zone beginnt exakt auf der 75-%-Linie. Zwei
+   gleich große, feste Spacer lassen einen geöffneten Projektindex nach unten wachsen und
+   die Trennlinie mitnehmen. Das Panel bleibt bei geringer Höhe vollständig scrollbar. */
 .site-nav nav {
+  --menu-panel-inline-size: 50vw;
   position: fixed;
   inset-block-start: var(--header-h, 4.6rem);
   inset-inline-end: 0;
-  align-content: safe center;
-  padding-block: var(--menu-panel-block-space);
+  inline-size: var(--menu-panel-inline-size);
+  block-size: calc(100vh - var(--header-h, 4.6rem) + 1px);
+  block-size: calc(100dvh - var(--header-h, 4.6rem) + 1px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* Der freie Raum bis zur 75-%-Linie wird gleichmäßig über und unter dem Linkblock
+     verteilt. motion.js ersetzt den neutralen Fallback durch die gemessene Höhe der
+     tatsächlich vorhandenen Top-Level-Zeilen. Beide Spacer bleiben beim Öffnen des
+     Projekt-Disclosure unverändert. */
+  --menu-row-gap: clamp(.7rem, 1.5vh, 1.35rem);
+  --menu-primary-base-size: var(--menu-primary-measured-size, 50%);
+  --menu-grid-line-adjust: 1px;
+  --menu-primary-side-space: max(
+    0px,
+    calc(.5 * (75% - var(--menu-grid-line-adjust) - var(--menu-primary-base-size)))
+  );
+  grid-template-rows:
+    var(--menu-primary-side-space)
+    max-content
+    var(--menu-primary-side-space)
+    min-content;
+  align-content: start;
+  justify-content: stretch;
+  justify-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-block: contain;
   scrollbar-gutter: stable;
-  scroll-padding-block: var(--menu-panel-block-space);
+  scroll-padding-block: 2rem;
+  --menu-social-size: clamp(2.75rem, 3.25vw, 3.15rem);
+  --menu-social-row-min-size: calc(4 * var(--menu-social-size) + 6px);
+}
+/* Custom Properties akzeptieren unbekannte Funktions-Tokens zunächst trotzdem. Der
+   Feature-Test muss deshalb die echte Größenproperty prüfen, damit ältere Browser die
+   vorherige clamp()-Größe behalten und nicht erst bei var()-Substitution scheitern. */
+@supports (width: round(nearest, 1px, 1px)) {
+  .site-nav nav {
+    --menu-social-size: round(nearest, clamp(2.75rem, 3.25vw, 3.15rem), 1px);
+  }
+}
+.menu-primary {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  display: grid;
+  grid-auto-rows: min-content;
+  justify-items: start;
+  gap: var(--menu-row-gap);
+  /* Der mittlere Auto-Track behält über den gesamten Akkordeonzyklus die intrinsische
+     Breite der geschlossenen Hauptnavigation. Andernfalls würde der Projektindex ihn
+     beim Öffnen verbreitern und am Ende der diskreten details-content-Schließtransition
+     wieder freigeben; Linkblock und Social-Icons sprängen dann gemeinsam seitlich. */
+  inline-size: var(--menu-primary-measured-inline-size, max-content);
+  min-inline-size: var(--menu-social-row-min-size);
+  max-inline-size: calc(var(--menu-panel-inline-size) - 2 * clamp(2rem, 6vw, 6rem));
+  padding-block: 2rem clamp(.6rem, 1.8vh, 1.15rem);
 }
 
 /* Projektindex innerhalb des bestehenden Menüs. Native details/summary statt Hover:
    dieselbe Bedienung auf Desktop, Touch und Tastatur, ohne zweite seitliche Ebene. */
-.site-nav nav > .project-menu {
+.site-nav nav .menu-primary > .project-menu {
   /* Sichtbarer linker Glyphenrand: Saira gibt dem großen P mehr Vorraum als der
      kleinen 0. Der fluide Ausgleich folgt exakt den beiden vorhandenen Typostufen. */
   --project-number-optical-offset:
@@ -61,7 +192,7 @@
   transition: opacity .4s ease,
               transform .65s cubic-bezier(.16, 1, .3, 1);
 }
-.site-nav[open] nav > .project-menu {
+.site-nav[open] nav .menu-primary > .project-menu {
   opacity: 1;
   transform: translateX(0);
   transition-delay: .52s;
@@ -78,7 +209,7 @@
   cursor: pointer;
 }
 .project-menu > summary::before {
-  content: "✳";
+  content: "";
   flex: none;
   margin-inline-end: clamp(.7rem, 1.2vw, 1rem);
   color: var(--tangerine);
@@ -130,10 +261,10 @@
   padding: 1rem 0 1.15rem;
   counter-reset: project-menu-item;
 }
-/* Unsichtbare Kopie desselben Asterisk: Ihre echte Glyphenbreite bildet zusammen mit
-   demselben Spaltenabstand den exakten P-Anschlag – ohne angenäherte Einrückungswerte. */
+/* Unsichtbare Kopie derselben festen Markerbox: Ihre `.75em`-Breite bildet zusammen mit
+   demselben Spaltenabstand den exakten P-Anschlag. */
 .project-menu-links::before {
-  content: "✳";
+  content: "";
   grid-column: 1;
   grid-row: 1 / 6;
   visibility: hidden;
@@ -178,16 +309,16 @@
   .project-menu-links::before {
     grid-row: 1 / 10;
   }
-  .site-nav nav > .project-menu { inline-size: 100%; }
+  .site-nav nav .menu-primary > .project-menu { inline-size: 100%; }
 }
 
 /* Tablet hochkant: vom ersten inneren Rasterteiler bis zum rechten Viewportrand.
    Das sind exakt drei der vier optischen Inhaltsspalten zuzüglich des rechten Randes. */
 @media (min-width: 36.001rem) and (max-width: 90rem) {
   .site-nav nav {
+    --menu-panel-inline-size: calc(75vw - .5 * var(--pad));
     inset-inline-start: auto;
     inset-inline-end: 0;
-    inline-size: calc(75vw - .5 * var(--pad));
     box-shadow:
       -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
       -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
@@ -195,7 +326,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-nav nav > .project-menu,
+  .site-nav nav .menu-primary > .project-menu,
   .project-menu::details-content,
   .site-nav nav .project-menu-links a { transition: none; }
 }
@@ -733,63 +864,179 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .site-nav nav a:focus-visible { color: var(--tangerine); }
 .menu-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
 
-/* Direkte Kontaktwege sind bewusst keine weiteren großen Menüpunkte. Die feine
-   horizontale Iconleiste trennt Navigation und Handlung, bleibt aber vollständig
-   per Tastatur und mit zugänglichen Linknamen bedienbar. */
+/* Die Linie ist die untere Kante der 75-%-Rasterzone und läuft ohne Innenabstand über
+   die ganze cremefarbene Panelbreite. Die zentrale Subgrid-Spalte wird vom breitesten
+   Menüpunkt bestimmt; ihr Mittelpunkt ist zugleich der Mittelpunkt der weißen Fläche. */
 .menu-socials {
-  inline-size: 100%;
-  display: flex;
-  align-items: center;
-  gap: clamp(.35rem, 1.2vw, .7rem);
   position: relative;
-  margin-block-start: clamp(.6rem, 1.8vh, 1.15rem);
-  padding-block: clamp(1.1rem, 2.5vh, 1.5rem) clamp(.65rem, 1.5vh, 1rem);
+  grid-column: 1 / -1;
+  grid-row: 4;
+  inline-size: 100%;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--menu-primary-measured-inline-size, max-content)
+    minmax(0, 1fr);
+  margin: 0;
+  padding-block: clamp(1.25rem, 2.8vh, 1.75rem) clamp(.75rem, 1.6vh, 1.1rem);
 }
+@supports (grid-template-columns: subgrid) {
+  .menu-socials { grid-template-columns: subgrid; }
+}
+/* Die Linie wird separat gezeichnet und darf um mehr als eine klassische
+   Scrollbarbreite über die Scrollportkante hinauslaufen. overflow-x:hidden am Panel
+   kappt sie erst an dessen echter rechter Viewportkante, ohne horizontales Scrollen. */
 .menu-socials::before {
   content: "";
   position: absolute;
   inset-block-start: 0;
-  inset-inline-start: 50%;
-  inline-size: calc(50vw - 2 * clamp(2rem, 6vw, 6rem));
-  border-block-start: 1px solid var(--rule-strong, var(--ink));
-  transform: translateX(-50%);
+  inset-inline-start: 0;
+  inline-size: calc(100% + 2rem);
+  block-size: 1px;
+  background: var(--rule-strong, var(--ink));
+  pointer-events: none;
 }
+.menu-social-links {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  inline-size: 100%;
+  min-inline-size: var(--menu-social-row-min-size);
+  block-size: var(--menu-social-size);
+  margin: 0;
+  color: var(--ink);
+}
+.menu-social-links::before { content: none; }
+.site-nav nav .menu-social-links a {
+  position: relative;
+  flex: none;
+  margin: 0;
+  transition: opacity .4s ease,
+              transform .65s cubic-bezier(.16, 1, .3, 1),
+              color 180ms ease;
+}
+/* Die Social-Buttons brauchen nach dem Einflug keine gestaffelten Link-Delays: Das hält
+   das taktile Feedback ohne die Verzögerung der Hauptnavigation unmittelbar. */
+.site-nav[open] nav .menu-social-links > a:any-link { transition-delay: 0s; }
 .site-nav nav .menu-socials a {
   flex: 0 0 auto;
-  inline-size: clamp(2rem, 12vw, 2.75rem);
-  block-size: clamp(2rem, 12vw, 2.75rem);
+  inline-size: var(--menu-social-size);
+  block-size: var(--menu-social-size);
   display: grid;
   place-items: center;
-  border: 1px solid currentColor;
+  border: 0;
+  box-shadow: none;
   border-radius: 50%;
+  background: transparent;
   font-size: 0;
   line-height: 1;
 }
-.site-nav nav .menu-socials a::before { content: none; }
+.site-nav nav .menu-socials a::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border: 1.5px solid currentColor;
+  border-radius: inherit;
+  color: inherit;
+  font-size: 0;
+  line-height: normal;
+  letter-spacing: normal;
+  box-shadow: none;
+  transform: translateY(0);
+  pointer-events: none;
+}
+/* Nur die Fassung bewegt sich: Icon, Trefferfläche und transparenter Buttongrund bleiben
+   unverändert. Die schmalen Inset-Kanten lesen sich als versenkter Ring, nicht als
+   Schlagschatten um den kompletten Button. */
+.site-nav nav .menu-social-links a:hover::before,
+.site-nav nav .menu-social-links a:focus-visible::before {
+  animation: social-rim-press 360ms var(--motion-ease) both;
+}
+.site-nav nav .menu-social-links a:active::before {
+  animation: none;
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1.5px 1.5px rgba(23, 20, 16, .5),
+    inset 0 -1px 1px rgba(255, 255, 255, .72);
+}
+@keyframes social-rim-press {
+  0% {
+    transform: translateY(0);
+    box-shadow: inset 0 0 0 rgba(23, 20, 16, 0), inset 0 0 0 rgba(255, 255, 255, 0);
+  }
+  62% {
+    transform: translateY(1.5px);
+    box-shadow:
+      inset 0 1.5px 1.75px rgba(23, 20, 16, .52),
+      inset 0 -1px 1px rgba(255, 255, 255, .76);
+  }
+  82% {
+    transform: translateY(.5px);
+    box-shadow:
+      inset 0 1px 1.25px rgba(23, 20, 16, .38),
+      inset 0 -.75px .75px rgba(255, 255, 255, .62);
+  }
+  100% {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1.25px 1.5px rgba(23, 20, 16, .46),
+      inset 0 -1px 1px rgba(255, 255, 255, .7);
+  }
+}
 .site-nav nav .menu-socials svg {
-  inline-size: clamp(1.25rem, 7vw, 1.75rem);
-  block-size: clamp(1.25rem, 7vw, 1.75rem);
+  inline-size: clamp(1.75rem, 2vw, 2rem);
+  block-size: clamp(1.75rem, 2vw, 2rem);
   fill: none;
   stroke: currentColor;
   stroke-width: 1.45;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.site-nav nav .menu-socials .mail-link rect { stroke-width: 1.35; }
+.site-nav nav .menu-socials .linkedin-link svg { stroke-width: 1.3; }
 .site-nav nav .menu-socials svg.phosphor-icon {
   fill: currentColor;
-  stroke: none;
+  /* Die kleine Zusatzkontur gibt der gefüllten Light-Variante optisch dasselbe Gewicht
+     wie den 24×24-Line-Icons; SVG-Strokes skalieren hier im 256er-ViewBox. */
+  stroke: currentColor;
+  stroke-width: 3;
 }
 @media (max-width: 52rem) {
-  .menu-socials::before { inline-size: calc(100vw - 2 * var(--pad)); }
+  .site-nav nav {
+    --menu-panel-inline-size: 100vw;
+    --menu-grid-line-adjust: .25px;
+    /* Die opake Panel-Fläche beginnt unter dem festen Header und endet exakt am
+       visuellen Viewport. Die Höhenkaskade folgt dabei auch dynamischen Browserleisten. */
+    inset-block-end: auto;
+    inset-inline: 0;
+    block-size: calc(100vh - var(--header-h, 4.6rem));
+    block-size: calc(100svh - var(--header-h, 4.6rem));
+    block-size: calc(100dvh - var(--header-h, 4.6rem));
+    box-shadow: 0 1.25rem 2.5rem rgba(23, 20, 16, .22);
+  }
+  .menu-primary { max-inline-size: calc(100vw - 2 * var(--pad)); }
 }
-@media (min-width: 52.001rem) and (max-width: 90rem) {
-  .menu-socials::before {
-    inline-size: calc(75vw - .5 * var(--pad) - 2 * clamp(2rem, 6vw, 6rem));
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav nav .menu-social-links a { transition: none; }
+  .site-nav nav .menu-social-links a:hover::before,
+  .site-nav nav .menu-social-links a:focus-visible::before {
+    animation: none;
+    transform: none;
+    box-shadow:
+      inset 0 1.25px 1.5px rgba(23, 20, 16, .46),
+      inset 0 -1px 1px rgba(255, 255, 255, .7);
   }
 }
 
 /* Semantisch Teil der unteren Footerleiste, visuell das nach unten gespiegelte
-   Gegenstück zum Menüfeld: im Desktop-Seitenrand, mobil im sicheren Inhaltsbereich. */
+   Gegenstück zum Menüfeld: im Desktop-Seitenrand; mobil bleibt nur der Pfeil im
+   Seitenrand sichtbar, während die unsichtbare Trefferfläche bis in die Ecke reicht. */
 .to-top {
   position: fixed;
   z-index: 35;
@@ -831,78 +1078,129 @@ html:not(.has-js) .to-top {
   color: inherit;
   transform: translateY(-.22rem) rotate(-90deg);
 }
-.to-top:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
-
-/* Eine feste gemeinsame Höhe hält Footerlinie und obere Ankerkante auf ganzen
-   Gerätepixeln; die frühere fluide Bruchposition ließ die vertikale Linie grau wirken. */
-.foot-bar { min-block-size: 3.5rem; padding-block: 0; }
-
-/* Ohne die ehemalige Kontaktspalte bilden Seite + Rechtliches eine kompakte
-   Verzeichnisspalte. Die Projektliste nutzt auf Desktop die beiden verbleibenden
-   Spalten in Leserichtung erst nach unten und dann nach rechts. */
-.foot-projects { grid-column: span 2; }
-.foot-projects ul {
-  display: grid;
-  grid-template-rows: repeat(5, auto);
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+.to-top:focus-visible,
+.foot-bar .to-top:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+/* Der feste Anker darf auf keiner Seitenschale über dem geöffneten Panel liegen. Das
+   native details-Attribut deckt Darstellung und Hit-Testing auch ohne JavaScript ab. */
+body:has(.site-nav[open]:not(.is-measuring)) .to-top {
+  visibility: hidden;
+  pointer-events: none;
 }
 
+/* Die gemeinsame Footerleiste lebt vollständig im Shell-Stylesheet. Eine feste Höhe hält
+   Linie und obere Ankerkante auf ganzen Gerätepixeln; die Seitenstyles liefern hier keine
+   konkurrierenden Desktop- oder Mobile-Geometrien mehr. */
+.foot-bar {
+  min-block-size: 3.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-block: 0;
+  border-top: 1px solid var(--dark-rule);
+  color: var(--dark-muted);
+  font-size: var(--type-eyebrow);
+}
+.foot-bar.pad { padding-inline: calc(var(--pad) + var(--hero-inset, 1rem)); }
+
+/* Desktop nutzt vier echte Geschwister in derselben visuellen, Tastatur- und
+   Screenreader-Reihenfolge: Profil, Seite, sämtliche Projekte, Rechtliches. */
+.foot-profile { grid-column: 1; }
+.foot-pages { grid-column: 2; }
+.foot-projects { grid-column: 3; }
+.foot-legal { grid-column: 4; }
+.foot-profile,
+.foot-pages,
+.foot-projects,
+.foot-legal { grid-row: 1; }
+
 @media (max-width: 52rem) {
-  /* Profil über die volle Breite; darunter balancieren die gebündelten Seiten- und
-     Rechtslinks die neun Projektlinks in der zweiten Spalte aus. */
+  /* Profil über die volle Breite; Seite und Rechtliches stehen links untereinander,
+     sämtliche Projekte rechts. Explizite Plätze ändern dabei nicht die DOM-Reihenfolge. */
   .foot-cols {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2.5rem 0;
+    grid-template-rows: max-content max-content max-content;
+    gap: 0;
   }
-  .foot-profile { grid-column: 1 / -1; }
-  .foot-projects { grid-column: auto; }
-  .foot-projects ul { display: flex; }
+  .foot-profile { grid-column: 1 / -1; grid-row: 1; margin-block-end: 2.5rem; }
+  .foot-pages { grid-column: 1; grid-row: 2; }
+  .foot-projects { grid-column: 2; grid-row: 2 / span 2; }
+  .foot-legal { grid-column: 1; grid-row: 3; margin-block-start: 2rem; }
 
   .foot-bar {
     min-block-size: 3.5rem;
-    padding-block: 0;
-    padding-inline-end: calc(var(--pad) + 3.5rem + .75rem);
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 0;
+    padding-block: .75rem max(.75rem, env(safe-area-inset-bottom, 0px));
+    font-size: var(--type-eyebrow);
+    line-height: 1.25;
   }
-  .foot-bar > span { white-space: nowrap; }
-  .foot-bar > span:nth-child(2) { margin-inline-start: auto; }
+  .foot-bar.pad { padding-inline: var(--pad); }
+  .foot-bar > span {
+    min-inline-size: 0;
+    padding-inline: var(--hero-inset, 1rem);
+    white-space: normal;
+  }
+  .foot-bar > span:first-child { grid-column: 1; }
+  /* Dieselbe zweite Grundspalte und derselbe innere Textabstand wie `.foot-projects`:
+     Ortszeile und Projektverzeichnis beginnen dadurch exakt auf einer Achse. */
+  .foot-bar > span:nth-child(2) {
+    grid-column: 2;
+    margin-inline-start: 0;
+    padding-inline-end: calc(var(--hero-inset, 1rem) + 2.75rem);
+    text-align: start;
+  }
   .to-top {
-    inset-inline-end: calc(var(--pad) + env(safe-area-inset-right));
-    inset-block-end: env(safe-area-inset-bottom);
-    inline-size: 3.5rem;
-    block-size: 3.5rem;
-    border: 0;
-    border-block-start: 1px solid currentColor;
-    border-inline-start: 1px solid currentColor;
-    border-inline-end: 1px solid currentColor;
-    background: var(--creme, #f0ece2);
+    inset-inline-end: env(safe-area-inset-right, 0px);
+    inset-block-end: env(safe-area-inset-bottom, 0px);
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 1px solid currentColor;
+    border-inline-end: 0;
+    border-block-end: 0;
+    background: transparent;
+  }
+  /* Der gedrehte Pfeil ist sichtbar etwa 10.4 × 24 px groß. Sein Mittelpunkt sitzt
+     horizontal in der rechten Paddingzone. Safe-Area-Inserts verschieben die vollständige
+     44-px-Trefferfläche samt Zeichen, sodass beides auch an Notch- und Home-Indikator-
+     Kanten deckungsgleich bleibt. */
+  .to-top .tile-arrow {
+    position: absolute;
+    inset-inline-end: calc(.5 * var(--pad) - .75rem);
+    inset-block-end: 1.425rem;
   }
   .foot-bar .to-top { color: var(--warm-black, #171410); }
   .to-top.is-on-dark,
   .foot-bar .to-top.is-on-dark {
-    background: var(--warm-black, #171410);
     color: var(--creme, #f0ece2);
   }
   html:not(.has-js) .to-top,
   html:not(.has-js) .foot-bar .to-top {
-    background: var(--creme, #f0ece2);
-    color: var(--warm-black, #171410);
-    mix-blend-mode: normal;
+    background: transparent;
+    color: #fff;
+    mix-blend-mode: difference;
   }
-}
-
-/* Die Abschlusszeile skaliert auf schmalen Telefonen etwas nach, damit Ortsangabe und
-   Copyright weiterhin links neben dem unveränderten quadratischen Anker Platz finden. */
-@media (max-width: 28.125rem) {
-  .foot-bar { gap: .35rem; font-size: clamp(.45rem, 2.2vw, var(--type-eyebrow)); }
 }
 
 /* Ohne die lange E-Mail-Adresse können die beiden ausgeglichenen Verzeichnisspalten
    bis 320px nebeneinander bleiben. Erst darunter wird der Footer einspaltig. */
 @media (max-width: 19.9375rem) {
-  .foot-cols { grid-template-columns: minmax(0, 1fr); }
-  .foot-profile { grid-column: auto; }
+  .foot-cols {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 2.5rem 0;
+  }
+  .foot-profile,
+  .foot-pages,
+  .foot-projects,
+  .foot-legal {
+    grid-column: auto;
+    grid-row: auto;
+    margin-block: 0;
+  }
 }
 
 /* Unter 288px reicht selbst die kleinste gemeinsame Textstufe nicht mehr für beide

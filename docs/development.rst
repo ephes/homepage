@@ -159,8 +159,13 @@ production settings check reported no issues. Neither Cast nor IndieWeb adds
 migration changes between the old and new pins. A fresh custom-format database
 dump and copies of the previous dependency files were saved on the host before
 deployment; rollback can redeploy the preceding commit and lock without schema
-rollback for this refresh. PostgreSQL reported an existing collation-version
-mismatch during backup, which needs separate maintenance.
+rollback for this refresh. PostgreSQL's existing collation-version mismatch was
+resolved on 2026-09-16 by rebuilding all 117 indexes that use the database
+default collation concurrently, then refreshing the database metadata from
+glibc 2.35 to 2.39. The post-maintenance check found no invalid user indexes;
+system catalog indexes were outside the targeted rebuild. A cluster-wide check
+found that the unrelated ``lead`` and ``template1`` databases still carry the
+old version and are outside this application release follow-up.
 
 Code Quality
 ~~~~~~~~~~~~

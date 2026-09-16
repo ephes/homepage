@@ -108,6 +108,17 @@ SQLite checks do not substitute for PostgreSQL validation. Deploy with the
 committed lock, apply migrations, and collect static files through the deployment
 workflow.
 
+2026-09-16 django-cast release pin
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The focused django-cast refresh advances the Git pin from ``b36ddd4b`` to the
+released 0.2.65 commit ``1021142d``. PyPI now also publishes 0.2.65. No other
+locked dependency changed. See the
+`final 0.2.65 release notes <https://github.com/ephes/django-cast/blob/0.2.65/docs/releases/0.2.65.rst>`_.
+The 102 application tests passed on Python 3.14.5, the migration graph applied
+to empty SQLite, and the settings, model-change, documentation, and hook checks
+completed with only the already documented test-manifest warnings.
+
 2026-09-08 dependency refresh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

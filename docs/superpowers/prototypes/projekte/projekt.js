@@ -8,7 +8,15 @@ const projects = [
   { slug: "plakatserie", title: "Plakatserie", field: "Print", year: "2025" },
   { slug: "illustrationsserie", title: "Illustrationsserie", field: "Illustration", year: "2025" },
   { slug: "magazin-layout", title: "Magazin-Layout", field: "Print", year: "2024" },
-  { slug: "onlineshop-redesign", title: "Onlineshop Redesign", field: "Digital", year: "2024" },
+  {
+    slug: "onlineshop-redesign",
+    title: "Onlineshop Redesign",
+    field: "Digital",
+    year: "2024",
+    liveUrl: "https://example.com/",
+    liveLinkLabel: "Website ansehen",
+    services: ["Brand Identity", "Art Direction", "UX/UI", "Webdesign"],
+  },
   { slug: "markenauftritt-praxis", title: "Markenauftritt Praxis", field: "Web", year: "2024" },
   { slug: "kinderbuch", title: "Kinderbuch", field: "Illustration", year: "2023" },
   { slug: "geschaeftsausstattung", title: "Geschäftsausstattung", field: "Print", year: "2023" },
@@ -18,6 +26,7 @@ const slug = document.body.dataset.project;
 const index = projects.findIndex((project) => project.slug === slug);
 const project = projects[index] || projects[0];
 const moreProjects = [projects[(index + 1) % projects.length], projects[(index + 2) % projects.length]];
+const serviceItems = project.services || ["[Leistung]", "[Leistung]", "[Leistung]"];
 
 /* Später kommen beide Listen aus wiederholbaren Wagtail-Blöcken. Das Hero-Bild bleibt
    ein eigenes Pflichtfeld; die Galerie verlangt mindestens zwei Einträge, hat aber keine
@@ -88,7 +97,7 @@ document.body.innerHTML = `
           </details>
           <a href="#case-study">Case Study</a>
           <a href="#galerie">Galerie</a>
-          ${resultItems.length ? '<a href="#ergebnisse">Ergebnisse</a>' : ""}
+          ${resultItems.length ? '<a href="#ergebnisse">Mehrwert</a>' : ""}
           <a href="#kontakt">Kontakt</a>
           </div>
           <div class="menu-socials" role="group" aria-label="Direkte Kontaktwege">
@@ -112,13 +121,23 @@ document.body.innerHTML = `
         <p class="eyebrow">Projekt ${String(index + 1).padStart(2, "0")} / ${String(projects.length).padStart(2, "0")}</p>
         <h1 class="motion-heading">${project.title}</h1>
         <div class="intro-grid">
-          <p class="project-lead">[Kurze Projektzusammenfassung: Aufgabe, Haltung und wichtigste Wirkung.]</p>
-          <dl class="project-meta">
-            <div><dt>Bereich</dt><dd>${project.field}</dd></div>
-            <div><dt>Jahr</dt><dd>${project.year}</dd></div>
-            <div><dt>Kunde</dt><dd>[Kundenname]</dd></div>
-            <div><dt>Leistungen</dt><dd>[Leistungen]</dd></div>
-          </dl>
+          <div class="project-summary">
+            <p class="project-lead">[Kurze Projektzusammenfassung: Aufgabe, Haltung und wichtigste Wirkung.]</p>
+            ${project.liveUrl ? `<a class="pill prio project-live-link" href="${project.liveUrl}"><span class="pill-label">${project.liveLinkLabel || "Website ansehen"} <span class="ar" aria-hidden="true">→</span></span></a>` : ""}
+          </div>
+          <aside class="project-meta" aria-label="Projektdetails">
+            <dl class="project-meta__facts">
+              <div><dt>Bereich</dt><dd>${project.field}</dd></div>
+              <div><dt>Kunde</dt><dd>[Kundenname]</dd></div>
+              <div><dt>Jahr</dt><dd>${project.year}</dd></div>
+            </dl>
+            <dl class="project-meta__services">
+              <div>
+                <dt>Leistungen</dt>
+                <dd><ul class="marker-list project-service-list">${serviceItems.map((service) => `<li>${service}</li>`).join("")}</ul></dd>
+              </div>
+            </dl>
+          </aside>
         </div>
       </header>
 
@@ -147,7 +166,7 @@ document.body.innerHTML = `
 
       ${resultItems.length ? `
         <section class="block results on-dark" id="ergebnisse">
-          <p class="eyebrow">Ergebnisse</p>
+          <p class="eyebrow">Mehrwert</p>
           <h2 class="block-title motion-heading">Was bleibt.</h2>
           <div class="result-grid">
             ${resultItems.map((item, itemIndex) => `
@@ -156,11 +175,11 @@ document.body.innerHTML = `
         </section>` : ""}
 
       <section class="block">
-        <p class="eyebrow">Rückmeldung</p>
-        <blockquote class="quote">
-          <p>„[Optionales Kundenstatement zum Projekt.]“</p>
-          <footer>[Name · Rolle]</footer>
-        </blockquote>
+        <p class="eyebrow">Kundenstimmen</p>
+        <figure class="quote">
+          <blockquote><p>„[Optionales Kundenstatement zum Projekt.]“</p></blockquote>
+          <figcaption>[Name · Rolle]</figcaption>
+        </figure>
       </section>
 
       <section class="block more-projects">

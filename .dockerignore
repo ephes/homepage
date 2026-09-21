@@ -2,3 +2,12 @@
 !.coveragerc
 !.env
 !.pylintrc
+
+# The canonical portfolio prototype is also the production runtime source for
+# the allowlisted parity assets collected by PortfolioPrototypeFinder.
+# Docker disregards leading and trailing slashes in ignore patterns; keeping
+# the slash here makes the intended build-context-root location explicit.
+!/docs/
+!/docs/superpowers/
+!/docs/superpowers/prototypes/
+!/docs/superpowers/prototypes/**

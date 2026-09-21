@@ -77,30 +77,53 @@ cross-project resource reuse. Reports and screenshots go to ignored `artifacts/`
 
 ## Wagtail / deployment contract
 
-These assets remain in the prototype directory; they are not automatically
-collected as Wagtail static files yet. On migration, place both bundles with the
-portfolio static assets and render their manifest-resolved URLs on the motion
-script. Relative filenames remain the static prototype fallback:
+Wagtail collects the byte-identical Saira and Astagina WOFF2 font files centrally
+under `portfolio/static/portfolio/fonts/`. Saira is preloaded and used for the
+initial design. Astagina is declared with `font-display: swap` and used by the
+server-rendered SVG-text fallback, but it is deliberately not preloaded. Missing or
+late font delivery therefore never creates an invisible-text phase.
+
+The canonical prototype directory is registered once as the namespaced Django static
+source `portfolio/prototype`. The full and contact-only outline/mask bundles remain in
+that source of truth and are collected without a copied Wagtail mirror. Templates pass
+their manifest-resolved URLs to the canonical motion script:
 
 ```django
 {% load static %}
-<script src="{% static 'portfolio/motion.js' %}" defer
-        data-handwriting-src="{% static 'portfolio/handwriting-glyphs.js' %}"
-        data-handwriting-contact-src="{% static 'portfolio/handwriting-contact.js' %}"></script>
+{# Homepage #}
+<script src="{% static 'portfolio/prototype/motion.js' %}"
+        data-handwriting-src="{% static 'portfolio/prototype/handwriting-glyphs.js' %}"
+        defer></script>
+
+{# Project page #}
+<script src="{% static 'portfolio/prototype/motion.js' %}"
+        data-handwriting-contact-src="{% static 'portfolio/prototype/handwriting-contact.js' %}"
+        defer></script>
 ```
 
-This avoids assuming that unhashed aliases survive `collectstatic` or that a
-future static origin has a particular hostname. No site content relies on either
-file loading; a Wagtail-edited phrase without matching outline data stays visible
-as its original SVG text rather than being silently substituted.
+The 501, Impressum and Datenschutz pages have no handwritten phrase and supply neither
+bundle URL. The legal pages still load `motion.js` for their non-handwriting motion,
+while the shared `site-shell.js` pauses and resumes the decorative organic SVG for
+Reduced Motion; absence of a handwriting data attribute prevents a glyph request. The static
+prototype's `projekte/projekt.js` is also absent from every Wagtail page: it is a
+client-side body generator, not a handwriting dependency or a production renderer.
+Wagtail uses its semantic server output plus the narrow `project-wagtail.js` overflow
+adapter instead.
+
+This avoids assuming that unhashed aliases survive `collectstatic` or that a future
+static origin has a particular hostname. `motion.js` requests the full homepage data
+only when a phrase approaches the viewport and the smaller contact subset on project
+pages; reduced motion requests neither bundle. No site content relies on either file
+loading. A Wagtail-edited phrase without matching outline data stays visible as its
+original SVG text rather than being silently substituted.
 
 Production settings already select WhiteNoise's
-`CompressedManifestStaticFilesStorage`, but the current project dependency is
-plain `whitenoise`: the optional `brotli` encoder is absent from the checked local
-environment. Its storage processing therefore produces gzip only. Enable the
-`whitenoise[brotli]` extra in the deployment build dependencies and lockfile before
-the production migration, then run the existing `collectstatic` pipeline. No
-dependency or hosting configuration was changed by this prototype refactor.
+`CompressedManifestStaticFilesStorage`, and the project dependency is
+`whitenoise[brotli]`. The portfolio test suite exercises the real backend, requires
+the Brotli encoder, verifies byte-equivalent gzip and Brotli sidecars for a
+compressible fixture, and checks that the collected font stylesheet points to the
+manifest-hashed, byte-identical WOFF2 files. WOFF2 is already compressed internally;
+the test does not claim or require redundant gzip/Brotli sidecars for the font files.
 
 The following check processes these two files through the same storage backend in
 an isolated temporary root and requests their hashed URLs through WhiteNoise. It
@@ -113,9 +136,8 @@ credentials, a database, or an assumed host:
 python quality/portfolio/check-handwriting-compression.py --require-brotli
 ```
 
-It fails explicitly when Brotli generation is unavailable. The current local
-environment passes the non-required gzip fallback check. An isolated environment
-with the same WhiteNoise 6.12.0 / Django 6.0.5 and its Brotli extra passed the full
-generation and encoding check. A future proxy/CDN must preserve negotiation and
+It fails explicitly when Brotli generation is unavailable. The current project
+environment and the real portfolio collectstatic test require the full Brotli path.
+A future proxy/CDN must preserve negotiation and
 the `Vary` header; verify the actual deployed response over HTTPS after deployment.
 The prototype's Python HTTP server intentionally does not represent that pipeline.

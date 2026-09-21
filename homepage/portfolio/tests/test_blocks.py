@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import Mock
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -9,16 +10,27 @@ from wagtail.models import Collection
 from homepage.portfolio.blocks import (
     BODY_RICH_TEXT_FEATURES,
     INLINE_RICH_TEXT_FEATURES,
+    PROJECT_BLOCK_REGIONS,
     CaptionedImageBlock,
     ChallengeSolutionBlock,
     GalleryBlock,
+    LegalCopyBlock,
     PortraitDuoBlock,
     ProjectBodyBlock,
     ProjectGalleryImageBlock,
     StatementBlock,
+    get_project_block_region,
 )
 
 pytestmark = pytest.mark.django_db
+
+
+def test_legal_contact_is_a_structural_reference_without_an_email_field():
+    contact = LegalCopyBlock().child_blocks["contact"]
+
+    assert list(contact.child_blocks) == ["prefix", "label", "suffix"]
+    assert contact.meta.label == "Globale Kontaktadresse"
+    assert all("email" not in name for name in contact.child_blocks)
 
 
 def make_image(title, *, width, height):
@@ -113,8 +125,37 @@ def test_mobile_gallery_rows_only_pair_adjacent_ordinary_portraits():
     rows = value.mobile_rows
 
     assert [len(row) for row in rows] == [2, 1, 1, 1, 1]
-    assert rows[0][0].is_portrait and rows[0][1].is_portrait
-    assert rows[3][0].is_large
+    assert all(item.block is block.child_blocks["images"].child_block for row in rows for item in row)
+    assert rows[0][0].value.is_portrait and rows[0][1].value.is_portrait
+    assert rows[3][0].value.is_large
+
+
+def test_gallery_renders_bound_images_through_the_child_block_template_contract(
+    monkeypatch,
+):
+    portrait_a = make_image("Bound Portrait A", width=800, height=1200)
+    portrait_b = make_image("Bound Portrait B", width=800, height=1200)
+    block = GalleryBlock()
+    child = block.child_blocks["images"].child_block
+    value = block.normalize(
+        {
+            "images": [
+                image_value(child, portrait_a),
+                image_value(child, portrait_b),
+            ]
+        }
+    )
+    render = Mock(side_effect=lambda _value, context=None: context.get("modifier", "single"))
+    monkeypatch.setattr(child, "render", render)
+
+    rendered = block.render(value)
+
+    assert rendered.count("portrait-paired") == 2
+    assert render.call_count == 2
+    for call in render.call_args_list:
+        context = call.kwargs["context"]
+        assert context["modifier"] == "portrait-paired"
+        assert context["image_sizes"].endswith("100vw")
 
 
 def test_portrait_duo_rejects_a_landscape_source():
@@ -141,6 +182,8 @@ def test_rich_text_features_exclude_editor_control_of_heading_hierarchy():
 
     assert statement_features == INLINE_RICH_TEXT_FEATURES
     assert challenge_features == BODY_RICH_TEXT_FEATURES
+    assert "no-break" in statement_features
+    assert "no-break" in challenge_features
     assert "h2" not in statement_features
     assert "h2" not in challenge_features
     assert "h3" not in challenge_features
@@ -159,6 +202,19 @@ def test_project_body_exposes_only_the_approved_structured_block_types():
         "stats",
         "testimonial",
     ]
+
+
+def test_project_body_render_regions_cover_every_type_and_default_to_visible_copy():
+    block = ProjectBodyBlock()
+
+    assert set(PROJECT_BLOCK_REGIONS) == set(block.child_blocks)
+    assert set(PROJECT_BLOCK_REGIONS.values()) == {
+        "case-study",
+        "media",
+        "results",
+        "testimonial",
+    }
+    assert get_project_block_region("future_editorial_block") == "case-study"
 
 
 def test_project_body_children_own_their_rendering_templates():
@@ -182,6 +238,20 @@ def test_project_body_children_own_their_rendering_templates():
         block.child_blocks["gallery"].child_blocks["images"].child_block.meta.template
         == "portfolio/blocks/captioned_image.html"
     )
+
+
+def test_project_value_block_uses_the_approved_editorial_label():
+    stats = ProjectBodyBlock().child_blocks["stats"]
+
+    assert stats.label == "Mehrwert"
+    assert stats.child_blocks["items"].label == "Mehrwert"
+    assert stats.child_blocks["items"].child_block.label == "Mehrwert"
+
+
+def test_project_testimonial_uses_the_approved_editorial_label():
+    testimonial = ProjectBodyBlock().child_blocks["testimonial"]
+
+    assert testimonial.label == "Kundenstimmen"
 
 
 def test_singleton_case_study_sections_are_enforced_by_stream_validation():

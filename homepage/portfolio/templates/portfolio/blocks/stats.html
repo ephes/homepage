@@ -1,11 +1,12 @@
-<section class="stack project-results">
-  <h2>Ergebnisse</h2>
-  <dl class="grid">
+<section class="block results on-dark project-results" id="ergebnisse">
+  <p class="eyebrow">{{ portfolio_site_settings.results_label }}</p>
+  <h2 class="block-title motion-heading project-results__title">{{ portfolio_site_settings.project_results_heading }}</h2>
+  <ul class="result-grid" role="list">
     {% for item in value.items %}
-      <div class="stack">
-        <dt>{{ item.label }}</dt>
-        <dd>{{ item.value }}</dd>
-      </div>
+      <li class="result">
+        <div class="result-value"><strong>{{ item.value }}</strong></div>
+        <span class="result-label">{{ item.label }}</span>
+      </li>
     {% endfor %}
-  </dl>
+  </ul>
 </section>

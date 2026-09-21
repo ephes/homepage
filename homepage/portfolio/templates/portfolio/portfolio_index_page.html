@@ -1,36 +1,196 @@
 {% extends "portfolio/base.html" %}
-{% load wagtailcore_tags %}
+{% load portfolio_content static wagtailcore_tags %}
 
-{% block meta_description %}{{ page.hero_intro|default:page.hero_heading|striptags }}{% endblock %}
+{% block meta_description %}{{ page.hero_intro|default:"Moin"|striptags }}{% endblock %}
+{% block body_class %} portfolio-homepage{% endblock %}
+
+{% block organic_shapes %}{% include "portfolio/components/organic_shapes.html" %}{% endblock %}
+
+{% block custom_cursor %}
+  <div class="cursor" aria-hidden="true">
+    <svg class="cursor-ring" viewBox="0 0 120 120">
+      <path id="cursor-top" fill="none" d="M21.6,60 a38.4,38.4 0 1,1 76.8,0 a38.4,38.4 0 1,1 -76.8,0"/>
+      <path id="cursor-bottom" fill="none" d="M10.4,60 a49.6,49.6 0 1,0 99.2,0 a49.6,49.6 0 1,0 -99.2,0"/>
+      <text text-anchor="middle"><textPath href="#cursor-top" startOffset="25%">SEI DOCH MAL</textPath></text>
+      <text text-anchor="middle"><textPath href="#cursor-bottom" startOffset="25%" textLength="110.5" lengthAdjust="spacing">KREATIV</textPath></text>
+      <circle class="cursor-sep" cx="102.8" cy="70" r="2.2"/>
+      <circle class="cursor-sep" cx="17.2" cy="70" r="2.2"/>
+      <path class="cursor-arrow" d="M53 50 L53 70 L58.6 65.2 L67 64 Z"/>
+    </svg>
+  </div>
+{% endblock %}
+
+{% block extra_styles %}
+  {# Canonical current-prototype assets; configured as prefixed Django static sources. #}
+  {% versioned_static 'portfolio/prototype/portfolio-startseite.css' as homepage_prototype_css_url %}
+  {% versioned_static 'portfolio/prototype/motion.css' as portfolio_motion_css_url %}
+  {% versioned_static 'portfolio/homepage.css' as homepage_adapter_css_url %}
+  <link rel="stylesheet" href="{{ homepage_prototype_css_url }}">
+  <link rel="stylesheet" href="{{ portfolio_motion_css_url }}">
+  <link rel="stylesheet" href="{{ homepage_adapter_css_url }}">
+{% endblock %}
 
 {% block content %}
-  <div class="center stack page-flow">
-    <section class="cover portfolio-hero" aria-labelledby="portfolio-title">
-      <div class="stack">
-        <h1 id="portfolio-title">{{ page.hero_heading }}</h1>
-        {% if page.hero_intro %}<p>{{ page.hero_intro }}</p>{% endif %}
+  <section class="stage" id="stage">
+    <h1 class="sr-only">Moin</h1>
+    <canvas id="fluid" aria-hidden="true"></canvas>
+    <div class="fallback" aria-hidden="true"><h1>Moin</h1></div>
+    <div class="grid" aria-hidden="true">
+      <div class="under"></div>
+      <div class="rows"><b></b><b></b></div>
+    </div>
+    <!-- Scroll-Hinweis: die Stage ist jetzt exakt ein Bildschirm, es fehlt also das
+         „hier geht es weiter", das die frühere Überlänge unfreiwillig geliefert hat. -->
+    <div class="scrollcue" aria-hidden="true"><i></i></div>
+    <p class="hero-note"><strong>{{ page.hero_note_heading }}</strong><br>{{ page.hero_note_text }}</p>
+    <div class="sub">
+      <p><strong>{{ page.hero_intro_emphasis }}</strong>{% if page.hero_intro %} – {{ page.hero_intro }}{% endif %}</p>
+      {% if page.hero_intro_secondary %}<p>{{ page.hero_intro_secondary }}</p>{% endif %}
+    </div>
+  </section>
+  <section class="block pad" id="projekte">
+    <div class="sec-label"><span>{{ page.projects_eyebrow }}</span></div>
+    <div class="proj-head">
+      <!-- Der handschriftliche Vermerk ist aus der Eyebrow gelöst und hängt jetzt in der
+           Headline. Er liegt IM h2-Wrapper, damit er sich auf dessen Kante bezieht. -->
+      <h2 class="sec-title motion-heading" id="projects-title"><svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.projects_annotation }}</text></svg>{{ page.projects_heading }}</h2>
+      <span class="count">[{{ portfolio_projects|length }}]</span>
+    </div>
+    <div class="tilegrid">
+      <!-- Auf dem Smartphone: erste Kachel als Hero, der Rest als Reel darunter.
+           Auf dem Desktop lösen sich .lead und .reel per display:contents auf, damit
+           alle Kacheln wieder direkte Grid-Elemente im Wechselrhythmus sind. -->
+      <div class="lead">
+        {% with first_project=portfolio_projects|first %}
+          {% if first_project %}{% include "portfolio/components/project_card.html" with project=first_project request=request mobile_lead=True only %}{% endif %}
+        {% endwith %}
       </div>
-    </section>
-
-    <section id="projekte" class="stack" aria-labelledby="projects-title">
-      <h2 id="projects-title">Projekte</h2>
-      <div class="grid project-grid">
-        {% for project in portfolio_projects %}
+      <div class="reel" id="project-reel" tabindex="-1" role="group" aria-labelledby="projects-title">
+        {% for project in portfolio_projects|slice:"1:" %}
           {% include "portfolio/components/project_card.html" with project=project request=request only %}
-        {% empty %}
-          <p>Noch keine veröffentlichten Projekte.</p>
         {% endfor %}
       </div>
+      <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="scrollbar"
+        tabindex="0" aria-label="Durch die Projekte blättern" aria-controls="project-reel" aria-orientation="horizontal"
+        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
+      <a class="project-inquiry" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="k">{{ portfolio_site_settings.contact_label }}</span><strong>{{ page.project_inquiry_label }} <span class="ar" aria-hidden="true">→</span></strong></a>
+    </div>
     </section>
 
-    <section id="ueber-mich" class="stack readable" aria-labelledby="about-title">
-      <h2 id="about-title">{{ page.about_heading }}</h2>
-      {{ page.about_text|richtext }}
+  <!-- 03 · Leistungen / Skills -->
+  <section class="block pad" id="leistungen">
+    <div class="sec-label"><span>{{ page.services_eyebrow }}</span></div>
+    <div class="proj-head">
+      <h2 class="sec-title motion-heading" id="services-title"><svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.services_annotation }}</text></svg>{{ page.services_heading }}</h2>
+    </div>
+    <!-- Auf dem Desktop ein 4er-Raster, auf dem Smartphone derselbe Reel wie bei den
+         Projekten (die Klasse `reel` greift nur in der Mobile-Regel). -->
+    <div class="svc-grid reel" id="service-reel" tabindex="-1" role="group" aria-labelledby="services-title">
+      {% for service in page.homepage_services.all %}
+        <div class="svc">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            {% if service.icon == "web" %}<rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18M6 21h12"/>
+            {% elif service.icon == "product" %}<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>
+            {% elif service.icon == "graphic" %}<path d="M6 17l6-12 6 12M8.4 12.6h7.2M3.5 21h17"/>
+            {% elif service.icon == "branding" %}<path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3z"/>
+            {% elif service.icon == "illustration" %}<path d="M15 4l5 5L9 20l-5 1 1-5L15 4z"/><path d="M13 6l5 5"/>
+            {% elif service.icon == "packaging" %}<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>
+            {% elif service.icon == "campaign" %}<path d="M3 10v4l4 .5 8 4.5V5L7 9.5 3 10z"/><path d="M18 9a4 4 0 010 6M8 15v4h2"/>
+            {% elif service.icon == "ai" %}<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/>{% endif %}
+          </svg></span>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="scrollbar"
+      tabindex="0" aria-label="Durch die Leistungen blättern" aria-controls="service-reel" aria-orientation="horizontal"
+      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div></div>
     </section>
 
-    <section id="kontakt" class="stack contact" aria-labelledby="contact-title">
-      <h2 id="contact-title">{{ page.contact_heading }}</h2>
-      <a href="mailto:{{ page.contact_email }}">{{ page.contact_email }}</a>
+  <!-- 04 · About -->
+  <section class="block pad" id="about">
+    <div class="sec-label"><span>{{ page.about_eyebrow }}</span></div>
+    <div class="about">
+      <!-- Der erste Absatz setzt den Satz der Headline fort („… rein. In neue Themen, in
+           Marken …"), deshalb steht er ohne eigenen Auftakt direkt daneben. -->
+      <!-- Der Name steht ZWEIMAL: der HTML-Text hält den Platz im Satz und bleibt für
+           Screenreader und Seitensuche der eigentliche Inhalt (er ist nur transparent);
+           gezeichnet wird das SVG darüber, weil nur dort die Kontur glatt UND rund sein
+           kann. Das SVG ist deshalb `aria-hidden`. -->
+      <h2 class="statement motion-heading">{{ page.about_statement_intro }} <span class="katha">{{ page.about_name }}<svg class="scr" aria-hidden="true"><text>{{ page.about_name }}</text></svg></span><br>{{ page.about_statement_outro }}</h2>
+      <!-- Der handschriftliche Vermerk liegt auf der Unterkante des Porträtfeldes,
+           dieselbe Geste wie die Vermerke auf den Sektions-Headlines. -->
+      <div class="portrait"><div class="frame"><span>Porträt</span></div><svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.about_annotation }}</text></svg></div>
+      <!-- Akkordeon statt drei Spalten. `<details>` statt eigener Klapp-Logik: Der
+           Fließtext bleibt im Dokument, ist per Tastatur erreichbar und wird von der
+           Seitensuche des Browsers gefunden — das ist bei About wichtiger als anderswo,
+           weil hier die Selbstbeschreibung steht.
+           BEWUSST OHNE `name`: das Attribut machte daraus ein exklusives Akkordeon, bei
+           dem sich beim Öffnen der einen die andere schließt. So lassen sich alle drei
+           gleichzeitig lesen und vergleichen.
+           Beim Laden ist keine offen — die drei Köpfe sollen zuerst als Reihe
+           gleichwertiger Kacheln lesen. -->
+      <div class="me-text">
+        {% for item in page.about_items.all %}
+          <details class="me-row">
+            <summary>
+              <h3>{{ item.title }}</h3>
+              <span class="me-lead">{{ item.lead }}</span>
+              <span class="mark" aria-hidden="true"></span>
+            </summary>
+            <p>{{ item.text }}</p>
+          </details>
+        {% endfor %}
+      </div>
+      <!-- Abschlusszeile über die volle Rasterbreite: die Verortung links, der Lebenslauf
+           rechts an derselben Kante wie der Textanschlag. -->
+      <div class="me-bar">
+        <p class="me-claim">{{ page.about_claim }}</p>
+        <a class="pill ghost" href="mailto:{{ portfolio_site_settings.contact_email }}?subject=Anfrage%20zum%20Lebenslauf"><span class="pill-label">{{ page.resume_label }}</span></a>
+      </div>
+    </div>
     </section>
-  </div>
+
+  <!-- 05 · Kunden -->
+  <section class="block pad clients on-dark" id="kunden">
+    <div class="sec-label"><span>{{ page.clients_eyebrow }}</span></div>
+    <h2 class="big motion-heading">{{ page.clients_heading }}<br><span class="lastline">{{ page.clients_heading_secondary }}<svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.clients_annotation }}</text></svg></span></h2>
+    {% with clients=page.clients.all %}
+      <div class="marquee marquee-primary" tabindex="0" role="region" aria-label="Automatisch laufende Kundenliste; bei Fokus pausiert">
+        <div class="marquee-track">
+          <!-- Liste doppelt für den nahtlosen Loop -->
+          {% for client in clients %}<span class="item">{{ client.name }}</span>{% endfor %}
+          {% for client in clients %}<span class="item" aria-hidden="true">{{ client.name }}</span>{% endfor %}
+        </div>
+      </div>
+      <!-- Im mobilen Hochformat nutzt eine gegenläufige, rein dekorative Kopie die größere
+           Sectionhöhe. Sie ist samt technischer Loop-Kopie vor Screenreadern verborgen. -->
+      <div class="marquee marquee-secondary" aria-hidden="true">
+        <div class="marquee-track">
+          {% for client in clients %}<span class="item">{{ client.name }}</span>{% endfor %}
+          {% for client in clients %}<span class="item">{{ client.name }}</span>{% endfor %}
+        </div>
+      </div>
+    {% endwith %}
+    </section>
+
+  <!-- 06 · Kontakt -->
+  <section class="block pad contact" id="kontakt">
+    <div class="sec-label"><span>{{ page.contact_eyebrow }}</span></div>
+    <div class="stack">
+      <h2 class="big motion-heading">{{ page.contact_heading_primary }}<br><span class="lastline">{{ page.contact_heading_secondary }} <span class="lastword">{{ page.contact_heading_emphasis }}<svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.contact_annotation }}</text></svg></span></span></h2>
+      <div class="buttons">
+        <a class="pill prio" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="pill-label">{{ page.contact_cta_label }} <span class="ar" aria-hidden="true">→</span></span></a>
+      </div>
+    </div>
+    </section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'portfolio/prototype/homepage.js' %}" defer></script>
+  <script src="{% static 'portfolio/prototype/motion.js' %}"
+          data-handwriting-src="{% static 'portfolio/prototype/handwriting-glyphs.js' %}"
+          defer></script>
 {% endblock %}

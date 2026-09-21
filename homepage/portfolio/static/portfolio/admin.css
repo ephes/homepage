@@ -1,0 +1,169 @@
+/* Portfolio brand theme for the Wagtail editor. Layout remains Wagtail-owned. */
+
+:root {
+  --portfolio-admin-cream: #f0ece2;
+  --portfolio-admin-cream-soft: #f8f5ee;
+  --portfolio-admin-cream-strong: #e2dbcd;
+  --portfolio-admin-ink: #171410;
+  --portfolio-admin-ink-raised: #29241e;
+  --portfolio-admin-orange: #eb3d00;
+  --portfolio-admin-orange-dark: #c43100;
+  --portfolio-admin-orange-soft: #f9d9cd;
+  --portfolio-admin-menu-surface: #393734;
+  --portfolio-admin-menu-muted: #b7ab9d;
+  --portfolio-admin-green: #1c995c;
+  --portfolio-admin-green-hover: #24a866;
+
+  --portfolio-admin-surface-page: var(--portfolio-admin-cream);
+  --portfolio-admin-surface-field: var(--portfolio-admin-cream-soft);
+  --portfolio-admin-surface-header: var(--portfolio-admin-cream-soft);
+  --portfolio-admin-surface-panel: var(--portfolio-admin-cream-soft);
+  --portfolio-admin-text: var(--portfolio-admin-ink);
+  --portfolio-admin-text-context: #514a41;
+  --portfolio-admin-text-meta: #746b60;
+  --portfolio-admin-border: var(--portfolio-admin-cream-strong);
+  --portfolio-admin-link: var(--portfolio-admin-orange-dark);
+  --portfolio-admin-link-hover: var(--portfolio-admin-ink);
+}
+
+:root,
+.w-theme-light,
+.w-theme-dark,
+.w-theme-system {
+  --w-color-primary: var(--portfolio-admin-ink);
+  --w-color-primary-200: var(--portfolio-admin-ink-raised);
+  --w-color-secondary: var(--portfolio-admin-orange);
+  --w-color-secondary-50: var(--portfolio-admin-orange-soft);
+  --w-color-secondary-75: #f3b49e;
+  --w-color-secondary-100: #f06837;
+  --w-color-secondary-400: var(--portfolio-admin-orange-dark);
+  --w-color-secondary-600: #9f2800;
+
+  --w-color-surface-page: var(--portfolio-admin-surface-page);
+  --w-color-surface-field: var(--portfolio-admin-surface-field);
+  --w-color-surface-field-inactive: var(--portfolio-admin-cream-strong);
+  --w-color-surface-header: var(--portfolio-admin-surface-header);
+  --w-color-surface-menus: var(--portfolio-admin-ink);
+  --w-color-surface-menu-item-active: var(--portfolio-admin-orange-dark);
+  --w-color-surface-tooltip: var(--portfolio-admin-ink-raised);
+  --w-color-surface-button-default: var(--portfolio-admin-green);
+  --w-color-surface-button-hover: var(--portfolio-admin-green-hover);
+  --w-color-surface-button-outline-hover: var(--portfolio-admin-orange-soft);
+  --w-color-surface-dashboard-panel: var(--portfolio-admin-surface-panel);
+
+  --w-color-text-button: var(--portfolio-admin-ink);
+  --w-color-text-label-menus-default: var(--portfolio-admin-cream);
+  --w-color-text-label-menus-active: var(--portfolio-admin-ink);
+  --w-color-text-label: var(--portfolio-admin-text);
+  --w-color-text-context: var(--portfolio-admin-text-context);
+  --w-color-text-meta: var(--portfolio-admin-text-meta);
+  --w-color-text-placeholder: var(--portfolio-admin-text-meta);
+  --w-color-text-link-default: var(--portfolio-admin-link);
+  --w-color-text-link-hover: var(--portfolio-admin-link-hover);
+  --w-color-text-button-outline-default: var(--portfolio-admin-link);
+  --w-color-text-button-outline-hover: var(--portfolio-admin-link-hover);
+  --w-color-text-highlight: var(--portfolio-admin-orange-soft);
+
+  --w-color-icon-primary: var(--portfolio-admin-text);
+  --w-color-icon-primary-hover: var(--portfolio-admin-link);
+  --w-color-icon-secondary: var(--portfolio-admin-text-meta);
+  --w-color-icon-secondary-hover: var(--portfolio-admin-link);
+  --w-color-border-furniture: var(--portfolio-admin-border);
+  --w-color-border-button-small-outline-default: var(--portfolio-admin-border);
+  --w-color-border-field-default: #b8afa2;
+  --w-color-border-field-inactive: var(--portfolio-admin-border);
+  --w-color-border-field-hover: var(--portfolio-admin-ink);
+  --w-color-border-button-outline-default: var(--portfolio-admin-link);
+  --w-color-border-button-outline-hover: var(--portfolio-admin-link-hover);
+  --w-color-focus: var(--portfolio-admin-orange);
+
+  --w-login-fullscreen-background: linear-gradient(
+    135deg,
+    var(--portfolio-admin-ink) 0 58%,
+    var(--portfolio-admin-orange) 58% 64%,
+    var(--portfolio-admin-cream) 64% 100%
+  );
+}
+
+.sidebar-sub-menu-panel {
+  --w-color-surface-menu-item-active: var(--portfolio-admin-menu-surface);
+  --w-color-text-label-menus-default: var(--portfolio-admin-menu-muted);
+  --w-color-text-label-menus-active: var(--portfolio-admin-cream);
+  background-color: var(--portfolio-admin-menu-surface);
+}
+
+.sidebar-sub-menu-panel > h2 {
+  color: var(--portfolio-admin-cream);
+}
+
+.sidebar-sub-menu-panel .sidebar-menu-item__link {
+  color: var(--portfolio-admin-menu-muted);
+  text-shadow: none;
+}
+
+.sidebar-sub-menu-panel .sidebar-menu-item__link:is(:hover, :focus) {
+  color: var(--portfolio-admin-cream);
+  background-color: rgba(240, 236, 226, 0.07);
+  text-shadow: none;
+}
+
+.sidebar-sub-menu-panel .sidebar-menu-item--active {
+  color: var(--portfolio-admin-cream);
+  background-color: rgba(240, 236, 226, 0.1);
+  border-inline-start-color: var(--portfolio-admin-orange);
+  text-shadow: none;
+}
+
+.sidebar-sub-menu-panel .sidebar-menu-item--active > .sidebar-menu-item__link {
+  color: var(--portfolio-admin-cream);
+}
+
+/* Wagtail also uses its button-text token on the dark Draftail toolbars. Keep
+   those editing controls light while confirming actions retain dark text. */
+.Draftail-Toolbar,
+.Draftail-FloatingToolbar {
+  --w-color-text-button: var(--portfolio-admin-cream);
+}
+
+.w-theme-dark {
+  --portfolio-admin-surface-page: var(--portfolio-admin-ink);
+  --portfolio-admin-surface-field: var(--portfolio-admin-ink-raised);
+  --portfolio-admin-surface-header: #211d18;
+  --portfolio-admin-surface-panel: var(--portfolio-admin-ink-raised);
+  --portfolio-admin-text: var(--portfolio-admin-cream);
+  --portfolio-admin-text-context: #ddd4c4;
+  --portfolio-admin-text-meta: #b8afa2;
+  --portfolio-admin-border: #514a41;
+  --portfolio-admin-link: #ff7040;
+  --portfolio-admin-link-hover: var(--portfolio-admin-cream);
+  --w-color-surface-field-inactive: #39332b;
+  --w-color-border-field-default: #746b60;
+  --w-color-border-field-hover: var(--portfolio-admin-cream);
+}
+
+@media (prefers-color-scheme: dark) {
+  .w-theme-system {
+    --portfolio-admin-surface-page: var(--portfolio-admin-ink);
+    --portfolio-admin-surface-field: var(--portfolio-admin-ink-raised);
+    --portfolio-admin-surface-header: #211d18;
+    --portfolio-admin-surface-panel: var(--portfolio-admin-ink-raised);
+    --portfolio-admin-text: var(--portfolio-admin-cream);
+    --portfolio-admin-text-context: #ddd4c4;
+    --portfolio-admin-text-meta: #b8afa2;
+    --portfolio-admin-border: #514a41;
+    --portfolio-admin-link: #ff7040;
+    --portfolio-admin-link-hover: var(--portfolio-admin-cream);
+    --w-color-surface-field-inactive: #39332b;
+    --w-color-border-field-default: #746b60;
+    --w-color-border-field-hover: var(--portfolio-admin-cream);
+  }
+}
+
+@media (forced-colors: active) {
+  :root,
+  .w-theme-light,
+  .w-theme-dark,
+  .w-theme-system {
+    --w-color-focus: Highlight;
+  }
+}

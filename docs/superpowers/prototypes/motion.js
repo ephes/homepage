@@ -119,22 +119,6 @@
     requestTopAnchorContrast();
   }
 
-  /* Organische SVG-Masken bewegen sich ohne Skript. JavaScript greift nur ein,
-     wenn das Betriebssystem reduzierte Bewegung verlangt. */
-  var organicShapes = [].slice.call(document.querySelectorAll("svg.organic-shape"));
-  function syncOrganicMotion() {
-    organicShapes.forEach(function (shape) {
-      if (typeof shape.pauseAnimations !== "function") return;
-      if (reduce.matches) shape.pauseAnimations();
-      else shape.unpauseAnimations();
-    });
-  }
-  if (organicShapes.length) {
-    syncOrganicMotion();
-    if (reduce.addEventListener) reduce.addEventListener("change", syncOrganicMotion);
-    else reduce.addListener(syncOrganicMotion);
-  }
-
   /* Die unveränderte Dokumentposition bleibt unabhängig von Reveal-Transforms. */
   function documentTop(node) {
     var top = 0;

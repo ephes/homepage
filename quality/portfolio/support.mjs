@@ -14,6 +14,8 @@ const pagePathEnvironment = Object.freeze({
   homepage: "PORTFOLIO_AUDIT_HOMEPAGE_PATH",
   error: "PORTFOLIO_AUDIT_ERROR_PATH",
   project: "PORTFOLIO_AUDIT_PROJECT_PATH",
+  imprint: "PORTFOLIO_AUDIT_IMPRINT_PATH",
+  privacy: "PORTFOLIO_AUDIT_PRIVACY_PATH",
 });
 
 function configuredProfile(profile) {

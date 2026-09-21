@@ -25,7 +25,9 @@
 }
 .privacy-page .legal-section { padding-block: clamp(2rem, 4vw, 3.5rem); }
 .privacy-page .legal-copy { inline-size: 100%; }
-.privacy-page .legal-copy p { margin-block: 0 .8em; }
+.privacy-page .legal-copy > p {
+  margin-block: var(--legal-copy-paragraph-margin, 0 .8em);
+}
 .legal-copy > :first-child { margin-block-start: 0; }
 .legal-copy > :last-child { margin-block-end: 0; }
 .legal-copy h3 {

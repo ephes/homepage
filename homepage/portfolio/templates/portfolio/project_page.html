@@ -1,47 +1,117 @@
 {% extends "portfolio/base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load portfolio_content static wagtailcore_tags wagtailimages_tags %}
 
-{% block meta_description %}{{ page.teaser_text|striptags }}{% endblock %}
+{% block meta_description %}{{ page.teaser_text|richtext_plaintext }}{% endblock %}
+{% block body_attributes %} data-project="{{ page.slug }}"{% endblock %}
+
+{% block extra_styles %}
+  {% versioned_static 'portfolio/prototype/projekte/projekt.css' as project_prototype_css_url %}
+  {% versioned_static 'portfolio/prototype/motion.css' as portfolio_motion_css_url %}
+  {% versioned_static 'portfolio/project-wagtail.css' as project_adapter_css_url %}
+  <link rel="stylesheet" href="{{ project_prototype_css_url }}">
+  <link rel="stylesheet" href="{{ portfolio_motion_css_url }}">
+  <link rel="stylesheet" href="{{ project_adapter_css_url }}">
+{% endblock %}
 
 {% block content %}
   {% pageurl portfolio_index as portfolio_home_url %}
-  <article class="center stack page-flow">
-    <header class="stack project-hero">
-      <p><a href="{{ portfolio_home_url }}#projekte">Zurück zu den Projekten</a></p>
-      <h1>{{ page.title }}</h1>
-      <p>{{ page.teaser_text }}</p>
-      <dl class="cluster project-meta">
-        <div><dt>Kategorie</dt><dd>{{ page.get_category_display }}</dd></div>
-        <div><dt>Jahr</dt><dd>{{ page.year }}</dd></div>
-        {% if page.client %}<div><dt>Kunde</dt><dd>{{ page.client }}</dd></div>{% endif %}
-        <div><dt>Leistungen</dt><dd>{{ page.get_service_names|join:", " }}</dd></div>
-      </dl>
-      {% if page.live_url %}<p><a href="{{ page.live_url }}">Website ansehen</a></p>{% endif %}
+  <article>
+    <header class="project-hero" id="projektstart">
+      <a class="project-index-link sr-only" href="{{ portfolio_home_url }}#projekte">Zurück zu allen Projekten</a>
+      <p class="eyebrow">{{ portfolio_site_settings.project_kicker }} {{ project_number|stringformat:"02d" }} / {{ project_total|stringformat:"02d" }}</p>
+      <h1 class="motion-heading">{{ page.title }}</h1>
+      <div class="intro-grid">
+        <div class="project-summary">
+          <div class="project-lead">{{ page.teaser_text|richtext }}</div>
+          {% if page.live_url %}
+            <a class="pill prio project-live-link" href="{{ page.live_url }}"><span class="pill-label">{{ page.live_link_label|default:portfolio_site_settings.project_live_link_label }} <span class="ar" aria-hidden="true">→</span></span></a>
+          {% endif %}
+        </div>
+        <aside class="project-meta" aria-label="Projektdetails">
+          <dl class="project-meta__facts">
+            <div><dt>{{ portfolio_site_settings.project_meta_category_label }}</dt><dd>{{ page.get_category_display }}</dd></div>
+            {% if page.client %}<div><dt>{{ portfolio_site_settings.project_meta_client_label }}</dt><dd>{{ page.client }}</dd></div>{% endif %}
+            <div><dt>{{ portfolio_site_settings.project_meta_year_label }}</dt><dd>{{ page.year_display }}</dd></div>
+          </dl>
+          <dl class="project-meta__services">
+            <div>
+              <dt>{{ portfolio_site_settings.project_meta_services_label }}</dt>
+              <dd>
+                <ul class="marker-list project-service-list">
+                  {% for service in page.get_service_names %}
+                    <li>{{ service }}</li>
+                  {% endfor %}
+                </ul>
+              </dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
     </header>
 
     {% if page.hero_image %}
-      <div class="frame project-hero__image">
-        {% srcset_image page.hero_image fill-{1920x1080,640x360,1280x720} sizes="(min-width: 94.5rem) 90rem, calc(100vw - 2 * clamp(1rem, 4vw, 2.25rem))" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
-      </div>
+      <figure class="project-hero-media">
+        {% srcset_image page.hero_image fill-{2100x900,700x300,1400x600} sizes="100vw" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
+      </figure>
+    {% else %}
+      <div class="media-placeholder hero-media" role="img" aria-label="Platzhalter für das Projekt-Titelbild">Projekt-Titelbild · 21:9</div>
     {% endif %}
 
-    {% if page.content %}
-      <section id="case-study" class="stack project-content" aria-label="Case Study">
+    {% if project_has_case_study %}
+      <section id="case-study" class="block project-content" aria-label="{{ portfolio_site_settings.case_study_label }}">
+        <p class="eyebrow project-content__eyebrow">{{ portfolio_site_settings.case_study_label }}</p>
         {% for block in page.content %}
-          {% include_block block %}
+          {% if block|project_block_region == "case-study" %}{% include_block block %}{% endif %}
         {% endfor %}
       </section>
     {% endif %}
 
+    {% if project_has_editorial_media %}
+      <section id="galerie" aria-label="{{ portfolio_site_settings.gallery_label }}">
+        {% for block in page.content %}
+          {% if block|project_block_region == "media" %}{% include_block block %}{% endif %}
+        {% endfor %}
+      </section>
+    {% else %}
+      <section class="gallery project-gallery" id="galerie" aria-label="{{ portfolio_site_settings.gallery_label }}">
+        <div class="media-placeholder wide landscape" role="img" aria-label="Platzhalter für ein breites Projektbild">Projektbild · 3:2</div>
+        <div class="media-placeholder landscape" role="img" aria-label="Platzhalter für ein Projektbild im Querformat">Projektbild · 3:2</div>
+        <div class="media-placeholder portrait" role="img" aria-label="Platzhalter für ein Projektbild im Hochformat">Projektbild · 4:5</div>
+      </section>
+    {% endif %}
+    {% for block in page.content %}
+      {% if block|project_block_region == "results" %}{% include_block block %}{% endif %}
+    {% endfor %}
+    {% for block in page.content %}
+      {% if block|project_block_region == "testimonial" %}{% include_block block %}{% endif %}
+    {% endfor %}
     {% if other_projects %}
-      <aside class="stack" aria-labelledby="other-projects-title">
-        <h2 id="other-projects-title">Weitere Projekte</h2>
-        <div class="grid project-grid">
+      <section class="block more-projects" aria-labelledby="other-projects-title">
+        <p class="eyebrow">{{ portfolio_site_settings.related_projects_eyebrow }}</p>
+        <h2 class="block-title motion-heading" id="other-projects-title">{{ portfolio_site_settings.related_projects_heading }}</h2>
+        <div class="more-grid">
           {% for project in other_projects %}
             {% include "portfolio/components/related_project_card.html" with project=project request=request only %}
           {% endfor %}
         </div>
-      </aside>
+      </section>
     {% endif %}
+
+    <section class="block contact" id="kontakt">
+      <div class="sec-label"><span>{{ portfolio_index.contact_eyebrow }}</span></div>
+      <div class="stack">
+        <h2 class="big motion-heading">{{ portfolio_index.contact_heading_primary }}<br><span class="lastline">{{ portfolio_index.contact_heading_secondary }} <span class="lastword">{{ portfolio_index.contact_heading_emphasis }}<svg class="scr" aria-hidden="true"><text>{{ portfolio_index.contact_annotation }}</text></svg></span></span></h2>
+        <div class="buttons">
+          <a class="pill prio" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="pill-label">{{ portfolio_index.contact_cta_label }} <span class="ar" aria-hidden="true">→</span></span></a>
+        </div>
+      </div>
+    </section>
   </article>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'portfolio/prototype/motion.js' %}" data-handwriting-contact-src="{% static 'portfolio/prototype/handwriting-contact.js' %}" defer></script>
+  <script src="{% static 'portfolio/prototype/project-teasers.js' %}" defer></script>
+  <script src="{% static 'portfolio/project-wagtail.js' %}" defer></script>
+  <script src="{% static 'portfolio/prototype/site-shell.js' %}" defer></script>
 {% endblock %}

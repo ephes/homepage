@@ -2,6 +2,7 @@ from datetime import date
 from unittest.mock import patch
 
 import pytest
+from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory, override_settings
@@ -9,8 +10,15 @@ from django.urls import reverse
 from wagtail.contrib.settings.registry import registry as settings_registry
 from wagtail.models import Locale, Page, Site
 
-from homepage.portfolio.models import ErrorPageSettings, PortfolioIndexPage, ProjectPage
-from homepage.portfolio.views import error_501
+from homepage.portfolio.models import (
+    ErrorPageSettings,
+    LegalPageSettings,
+    PortfolioIndexPage,
+    PortfolioSiteSettings,
+    ProjectCategory,
+    ProjectPage,
+)
+from homepage.portfolio.views import _portfolio_shell_context, error_501
 
 pytestmark = pytest.mark.django_db
 
@@ -46,7 +54,7 @@ def add_project(site, title, *, publish=True):
         title=title,
         slug=title.lower().replace(" ", "-"),
         teaser_text=f"Teaser für {title}.",
-        category=ProjectPage.Category.WEB,
+        category=ProjectCategory.objects.get_or_create(name="Web")[0],
         year=date.today().year,
         services="Design",
         live=False,
@@ -59,9 +67,9 @@ def add_project(site, title, *, publish=True):
 
 
 def featured_markup(content):
-    if 'class="grid project-grid error-projects"' not in content:
+    if 'class="error-projects"' not in content:
         return ""
-    return content.split('class="grid project-grid error-projects"', 1)[1].split("</section>", 1)[0]
+    return content.split('class="error-projects"', 1)[1].split("</nav>", 1)[0]
 
 
 def test_response_has_real_status_and_server_rendered_default_content():
@@ -69,8 +77,15 @@ def test_response_has_real_status_and_server_rendered_default_content():
 
     response = error_501(request_for("default.test"))
     content = response.content.decode()
+    document = BeautifulSoup(content, "html.parser")
+    stylesheet_hrefs = {
+        link["href"] for link in document.select('link[rel="stylesheet"][href]')
+    }
 
     assert response.status_code == 501
+    assert document.body.has_attr("data-portfolio-shell")
+    assert document.select_one('.pagegrid[aria-hidden="true"]') is not None
+    assert document.select_one('.linen[aria-hidden="true"]') is not None
     assert "Fehler 501" in content
     assert "Ablage P." in content
     assert (
@@ -78,19 +93,77 @@ def test_response_has_real_status_and_server_rendered_default_content():
         "Du könntest dir so lange diese Projekte anschauen."
     ) in content
     assert '<meta name="robots" content="noindex,follow">' in content
-    assert "<script" not in content
-    assert content.count('<link rel="stylesheet"') == 1
+    assert "/static/portfolio/prototype/project-teasers.js" in content
+    assert "/static/portfolio/prototype/site-shell.js" in content
+    assert stylesheet_hrefs == {
+        "/static/portfolio/fonts.css",
+        "/static/portfolio/portfolio.css",
+        "/static/portfolio/prototype/projekte/projekt.css",
+        "/static/portfolio/prototype/motion.css",
+        "/static/portfolio/prototype/501.css",
+        "/static/portfolio/project-wagtail.css",
+    }
+    assert content.index("/static/portfolio/fonts.css") < content.index(
+        "/static/portfolio/portfolio.css"
+    )
+    assert (
+        '<link rel="preload" href="/static/portfolio/fonts/saira-variable.woff2" '
+        'as="font" type="font/woff2" crossorigin>'
+    ) in content
+    assert 'rel="preload" href="/static/portfolio/fonts/astagina.woff2"' not in content
     assert "/static/portfolio/portfolio.css" in content
     assert "foundation.css" not in content
-    assert "/static/portfolio/501.css" not in content
+    assert "/static/portfolio/prototype/projekte/projekt.css" in content
+    assert "/static/portfolio/prototype/501.css" in content
+    assert "/static/portfolio/project-wagtail.css" in content
     assert not ErrorPageSettings.objects.filter(site=site).exists()
+    assert not PortfolioSiteSettings.objects.filter(site=site).exists()
+    assert not LegalPageSettings.objects.filter(site=site).exists()
+
+
+def test_501_shell_uses_empty_unsaved_legal_sections_without_site_leakage():
+    site = make_site("shell.test", default=True)
+    request = request_for("shell.test")
+
+    with (
+        patch(
+            "homepage.portfolio.views.Site.find_for_request", return_value=site
+        ) as find_site,
+        patch("homepage.portfolio.views.render", return_value=object()) as render,
+    ):
+        error_501(request)
+
+    find_site.assert_called_once_with(request)
+    context = render.call_args.args[2]
+    legal_settings = context["portfolio_legal_settings"]
+    assert "site" not in context
+    assert list(legal_settings.imprint_sections) == []
+    assert list(legal_settings.privacy_sections) == []
+    assert not LegalPageSettings.objects.filter(site=site).exists()
+
+
+def test_shell_context_never_performs_its_own_site_lookup():
+    site = make_site("resolved.test", default=True)
+
+    with patch(
+        "homepage.portfolio.views.Site.find_for_request",
+        side_effect=AssertionError("site lookup must stay with the request entry point"),
+    ):
+        context = _portfolio_shell_context(site=site)
+
+    assert "site" not in context
+    assert context["portfolio_index"].get_site() == site
 
 
 def test_settings_are_selected_for_the_request_site():
     alpha = make_site("alpha.test", default=True)
     beta = make_site("beta.test")
-    ErrorPageSettings.objects.create(site=alpha, headline="Alpha fehlt", sentence="Satz für Alpha.")
-    ErrorPageSettings.objects.create(site=beta, headline="Beta fehlt", sentence="Satz für Beta.")
+    ErrorPageSettings.objects.create(
+        site=alpha, headline="Alpha fehlt", sentence="Satz für Alpha."
+    )
+    ErrorPageSettings.objects.create(
+        site=beta, headline="Beta fehlt", sentence="Satz für Beta."
+    )
 
     alpha_content = error_501(request_for("alpha.test")).content.decode()
     beta_content = error_501(request_for("beta.test")).content.decode()
@@ -123,7 +196,8 @@ def test_zero_projects_keeps_the_start_link_and_omits_the_teaser_grid():
 
     assert "error-projects" not in content
     assert "related-project-card" not in content
-    assert f'href="{index.url}">Zur Startseite</a>' in content
+    assert f'href="{index.url}"' in content
+    assert "Zur Startseite" in content
 
 
 def test_one_project_is_shown_once_and_drafts_are_ignored():
@@ -134,9 +208,9 @@ def test_one_project_is_shown_once_and_drafts_are_ignored():
     content = error_501(request_for("one.test")).content.decode()
     featured = featured_markup(content)
 
-    assert featured.count('class="related-project-card stack"') == 1
-    assert '<div class="related-project-card__meta">' in featured
-    assert '<h3 class="related-project-card__title">' in featured
+    assert featured.count('class="more-card related-project-card"') == 1
+    assert 'class="meta related-project-card__meta"' in featured
+    assert 'class="row1 related-project-card__title"' in featured
     assert published.title in featured
     assert draft.title not in featured
 
@@ -150,7 +224,7 @@ def test_two_of_multiple_projects_are_selected_in_tree_order_without_duplicates(
     content = error_501(request_for("many.test")).content.decode()
     featured = featured_markup(content)
 
-    assert featured.count('class="related-project-card stack"') == 2
+    assert featured.count('class="more-card related-project-card"') == 2
     assert featured.count(f'href="{first.url}"') == 1
     assert featured.count(f'href="{second.url}"') == 1
     assert third.title not in featured
@@ -164,7 +238,9 @@ def test_headline_validator_rejects_more_than_three_words_in_german():
     with pytest.raises(ValidationError) as error:
         settings.full_clean()
 
-    assert error.value.message_dict["headline"] == ["Die Überschrift darf höchstens drei Wörter enthalten."]
+    assert error.value.message_dict["headline"] == [
+        "Die Überschrift darf höchstens drei Wörter enthalten."
+    ]
 
 
 def test_preview_route_is_explicit_and_does_not_mount_a_catch_all(client):
@@ -193,7 +269,12 @@ def test_missing_site_uses_defaults_without_broken_navigation():
 
     assert response.status_code == 501
     assert "Ablage P." in content
-    assert ">Katharina Wersdörfer</span>" in content
+    assert "Katharina Wersdörfer" not in content
+    assert 'class="site site-header"' not in content
+    assert '<footer class="site on-dark"' not in content
+    assert "data-portfolio-shell" not in content
+    assert 'class="pagegrid"' not in content
+    assert 'class="linen"' not in content
     assert 'href="">' not in content
     assert "#projekte" not in content
     assert "#ueber-mich" not in content
@@ -205,29 +286,84 @@ def test_missing_site_uses_defaults_without_broken_navigation():
 def test_site_without_portfolio_index_omits_index_dependent_links():
     Locale.objects.get_or_create(language_code="en")
     root = Page.add_root(instance=Page(title="Bare site", slug="bare-site"))
-    Site.objects.create(
+    site = Site.objects.create(
         hostname="bare.test",
         root_page=root,
         is_default_site=True,
         site_name="bare.test",
+    )
+    PortfolioSiteSettings.objects.create(
+        site=site,
+        brand_name="Fremde Marke",
+        availability_text="Fremde Verfügbarkeit",
+        profile_text="Fremdes Profil",
+        contact_email="fremd@example.com",
+        linkedin_url="https://example.com/linkedin",
+        github_url="https://example.com/github",
+        mastodon_url="https://example.com/mastodon",
+        copyright_text="Fremdes Copyright",
+        location_text="Fremder Ort",
     )
 
     response = error_501(request_for("bare.test"))
     content = response.content.decode()
 
     assert response.status_code == 501
+    assert 'class="site site-header"' not in content
+    assert '<footer class="site on-dark"' not in content
+    assert "data-portfolio-shell" not in content
+    assert 'class="pagegrid"' not in content
+    assert 'class="linen"' not in content
+    assert "Fremde Marke" not in content
+    assert "Fremde Verfügbarkeit" not in content
+    assert "Fremdes Profil" not in content
+    assert "fremd@example.com" not in content
+    assert "example.com/linkedin" not in content
+    assert "example.com/github" not in content
+    assert "example.com/mastodon" not in content
+    assert "Fremdes Copyright" not in content
+    assert "Fremder Ort" not in content
+    assert "Katharina Wersdörfer" not in content
     assert 'href="">' not in content
     assert "#projekte" not in content
     assert "#ueber-mich" not in content
     assert "#kontakt" not in content
     assert 'href="mailto:' not in content
-    assert 'href="/">Zur Startseite</a>' in content
+    assert 'href="/"' in content
+    assert "Zur Startseite" in content
 
 
 def test_error_page_settings_dependency_and_registration_are_active():
     assert "wagtail.contrib.settings" in django_settings.INSTALLED_APPS
     assert ErrorPageSettings in settings_registry
-    assert [panel.field_name for panel in ErrorPageSettings.panels] == ["headline", "sentence"]
+    assert [panel.field_name for panel in ErrorPageSettings.panels] == [
+        "code_label",
+        "headline",
+        "sentence",
+        "featured_projects_heading",
+        "home_link_label",
+    ]
+
+
+def test_error_page_renders_all_editorial_labels_from_site_settings():
+    site = make_site("labels.test", default=True)
+    add_project(site, "Empfohlenes Projekt")
+    ErrorPageSettings.objects.create(
+        site=site,
+        code_label="Sentinel Fehlercode",
+        headline="Sentinel fehlt",
+        sentence="Sentinel Erklärungssatz.",
+        featured_projects_heading="Sentinel Empfehlungen",
+        home_link_label="Sentinel Startlink",
+    )
+
+    content = error_501(request_for("labels.test")).content.decode()
+
+    assert "Sentinel Fehlercode" in content
+    assert "Sentinel fehlt" in content
+    assert "Sentinel Erklärungssatz." in content
+    assert "Sentinel Empfehlungen" in content
+    assert "Sentinel Startlink" in content
 
 
 def test_https_multisite_links_are_relative_to_the_request_site():
@@ -244,17 +380,20 @@ def test_https_multisite_links_are_relative_to_the_request_site():
 
     assert 'href="/blogs/arbeiten/">Katharina Wersdörfer</a>' in content
     assert 'href="/blogs/arbeiten/#projekte">Projekte</a>' in content
-    assert 'href="/blogs/arbeiten/#ueber-mich">Über mich</a>' in content
+    assert 'href="/blogs/arbeiten/#about">Über mich</a>' in content
     assert 'href="/blogs/arbeiten/#kontakt">Kontakt</a>' in content
     assert (
-        '<a class="related-project-card stack" href="/blogs/arbeiten/sicheres-projekt/">'
+        '<a class="more-card related-project-card" href="/blogs/arbeiten/sicheres-projekt/">'
         in content
     )
-    assert 'href="/blogs/arbeiten/">Zur Startseite</a>' in content
+    assert 'href="/blogs/arbeiten/"' in content
+    assert "Zur Startseite" in content
     assert "default-portfolio" not in content
 
 
-def test_https_multisite_index_uses_its_own_request_relative_navigation(client, settings):
+def test_https_multisite_index_uses_its_own_request_relative_navigation(
+    client, settings
+):
     settings.ALLOWED_HOSTS = [*settings.ALLOWED_HOSTS, "secure.test"]
     make_site("default.test", default=True, index_slug="default-portfolio")
     secure_site = make_site("secure.test", port=8443, index_slug="arbeiten")
@@ -268,11 +407,13 @@ def test_https_multisite_index_uses_its_own_request_relative_navigation(client, 
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert 'href="/blogs/arbeiten/">Katharina Wersdörfer</a>' in content
+    assert (
+        '<span class="brand site-header__brand">Katharina Wersdörfer</span>' in content
+    )
     assert 'href="/blogs/arbeiten/#projekte">Projekte</a>' in content
-    assert 'href="/blogs/arbeiten/#ueber-mich">Über mich</a>' in content
+    assert 'href="/blogs/arbeiten/#about">Über mich</a>' in content
     assert 'href="/blogs/arbeiten/#kontakt">Kontakt</a>' in content
-    assert '<h3><a href="/blogs/arbeiten/sicheres-projekt/">Sicheres Projekt</a></h3>' in content
+    assert '<a class="tile" href="/blogs/arbeiten/sicheres-projekt/">' in content
     assert "default-portfolio" not in content
 
     project_response = client.get(
@@ -283,5 +424,5 @@ def test_https_multisite_index_uses_its_own_request_relative_navigation(client, 
     project_content = project_response.content.decode()
 
     assert project_response.status_code == 200
-    assert 'href="/blogs/arbeiten/#projekte">Zurück zu den Projekten</a>' in project_content
+    assert 'href="/blogs/arbeiten/#projekte">Projekte</a>' in project_content
     assert "default-portfolio" not in project_content

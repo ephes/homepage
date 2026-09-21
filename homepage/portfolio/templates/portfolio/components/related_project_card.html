@@ -1,17 +1,19 @@
 {% load wagtailcore_tags wagtailimages_tags %}
-<a class="related-project-card stack" href="{% pageurl project %}">
-  <div class="related-project-card__frame frame">
-    {% if project.teaser_image %}
-      {% srcset_image project.teaser_image fill-{1260x540,420x180,840x360} sizes=image_sizes|default:"(min-width: 94.5rem) 45rem, (min-width: 42rem) 45vw, calc(100vw - 2rem)" alt="" loading="lazy" %}
-    {% else %}
-      <span class="related-project-card__placeholder" aria-hidden="true">21:9</span>
-    {% endif %}
-  </div>
-  <div class="related-project-card__meta">
-    <h3 class="related-project-card__title">
-      <span>{{ project.title }}</span>
-      <span class="related-project-card__arrow" aria-hidden="true">→</span>
-    </h3>
-    <span class="related-project-card__details">{{ project.get_category_display }} · {{ project.year }}</span>
+<a class="more-card related-project-card" href="{% pageurl project %}">
+  <div class="tile-depth">
+    <div class="frame related-project-card__frame{% if project.teaser_image %} frame--image{% endif %}">
+      {% if project.teaser_image %}
+        {% srcset_image project.teaser_image fill-{1260x540,420x180,840x360} sizes=image_sizes|default:"(min-width: 100rem) calc(50vw - 4rem), (min-width: 52rem) 46vw, (min-width: 31.25rem) 92vw, calc(100vw - 2.5rem)" alt="" loading="lazy" %}
+      {% else %}
+        <span class="related-project-card__placeholder" aria-hidden="true">21:9</span>
+      {% endif %}
+    </div>
+    <div class="meta related-project-card__meta">
+      <div class="row1 related-project-card__title">
+        <h3>{{ project.title }}</h3>
+        <span class="tile-arrow related-project-card__arrow" aria-hidden="true">→</span>
+      </div>
+      <div class="row2 related-project-card__details">{{ project.get_category_display }} · {{ project.year_display }}</div>
+    </div>
   </div>
 </a>

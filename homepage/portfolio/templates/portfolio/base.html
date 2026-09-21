@@ -1,23 +1,43 @@
-{% load static %}
+{% load portfolio_content static %}
 <!doctype html>
 <html lang="de">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>document.documentElement.classList.add("has-js");</script>
     <meta name="description" content="{% block meta_description %}Portfolio von Katharina Wersdörfer{% endblock %}">
     {% block meta_robots %}{% endblock %}
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'portfolio/portfolio.css' %}">
+    <link rel="preload" href="{% static 'portfolio/fonts/saira-variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+    {% versioned_static 'portfolio/fonts.css' as portfolio_fonts_css_url %}
+    {% versioned_static 'portfolio/portfolio.css' as portfolio_css_url %}
+    <link rel="stylesheet" href="{{ portfolio_fonts_css_url }}">
+    <link rel="stylesheet" href="{{ portfolio_css_url }}">
     {% block extra_styles %}{% endblock %}
     {% block extra_head %}{% endblock %}
   </head>
-  <body{% block body_attributes %}{% endblock %}>
-    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
-    {% include "portfolio/components/site_header.html" %}
+  <body class="portfolio-site{% block body_class %}{% endblock %}"{% if portfolio_index %} data-portfolio-shell{% endif %}{% block body_attributes %}{% endblock %}>
+    <a class="skip-link" href="#main-content">Zum Hauptinhalt</a>
+    {% if portfolio_index %}
+      {% include "portfolio/components/site_header.html" %}
+    {% endif %}
     <main id="main-content" tabindex="-1">
       {% block content %}{% endblock %}
     </main>
-    {% include "portfolio/components/site_footer.html" %}
+    {% if portfolio_index %}
+      {% include "portfolio/components/site_footer.html" %}
+    {% endif %}
+    {% block organic_shapes %}{% endblock %}
+    {% if portfolio_index %}
+      <div class="pagegrid" aria-hidden="true">
+        <div class="pads pagegrid__pads"></div>
+        <div class="cols pagegrid__cols"><i></i><i></i><i></i><i></i></div>
+        <div class="vsplit"></div>
+        <div class="vsplit2"></div>
+      </div>
+    {% endif %}
+    {% block custom_cursor %}{% endblock %}
+    {% if portfolio_index %}<div class="linen" aria-hidden="true"></div>{% endif %}
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>

@@ -42,6 +42,12 @@
         src: "{{ playbook_dir }}/../"
         dest: "{{ site_path }}"
         rsync_opts:
+          # PortfolioPrototypeFinder collects its allowlisted production assets
+          # from this canonical source; keep it in every deployment payload.
+          - "--include=/docs/"
+          - "--include=/docs/superpowers/"
+          - "--include=/docs/superpowers/prototypes/"
+          - "--include=/docs/superpowers/prototypes/***"
           - "--exclude=homepage/media"
           - "--exclude=backups"
           - "--exclude=databases"

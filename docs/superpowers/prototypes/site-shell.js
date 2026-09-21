@@ -1,6 +1,30 @@
 /* Gemeinsames Verhalten für Raster, Navigation und Seitenschale. Das Menü bleibt als
    natives details/summary auch ohne JavaScript vollständig bedienbar. */
 (() => {
+  /* SMIL wertet prefers-reduced-motion nicht selbst aus. Die organische Form bleibt
+     ohne JavaScript als sichtbare Illustration erhalten; mit JavaScript friert die
+     gemeinsame Seitenschale sie bei reduzierter Bewegung verlässlich ein. */
+  const shapes = [...document.querySelectorAll("svg.organic-shape")];
+  if (!shapes.length) return;
+
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const syncOrganicMotion = () => {
+    shapes.forEach((shape) => {
+      if (typeof shape.pauseAnimations !== "function") return;
+      if (reducedMotion.matches) shape.pauseAnimations();
+      else shape.unpauseAnimations();
+    });
+  };
+
+  syncOrganicMotion();
+  if (reducedMotion.addEventListener) {
+    reducedMotion.addEventListener("change", syncOrganicMotion);
+  } else {
+    reducedMotion.addListener(syncOrganicMotion);
+  }
+})();
+
+(() => {
   const grid = document.querySelector(".pagegrid");
   if (!grid) return;
 

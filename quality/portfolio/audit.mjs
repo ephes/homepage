@@ -210,6 +210,277 @@ async function auditReflow(browser, pageTarget, label, javaScriptEnabled, contra
   }
 }
 
+async function auditHomepageEnhancementFailureIsolation(browser, pageTarget) {
+  const expectedEnhancements = [
+    "navigation",
+    "header",
+    "reels",
+    "about-lines",
+    "about-tiles",
+    "custom-cursor",
+    "reduced-motion-shapes",
+  ];
+  const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 900 } });
+  await context.addInitScript(() => {
+    const originalQuerySelector = Document.prototype.querySelector;
+    const originalQuerySelectorAll = Document.prototype.querySelectorAll;
+    const singleFailures = new Set(["header.site", ".cursor", ".shapes"]);
+    const multipleFailures = new Set([".reelbar", ".about .me-row"]);
+    let siteNavQueries = 0;
+
+    Document.prototype.querySelector = function querySelectorWithAuditFailure(selector) {
+      if (selector === ".site-nav") {
+        siteNavQueries += 1;
+        // The first lookup lets the WebGL idle controller observe the menu. The
+        // second belongs to the independently guarded navigation initializer.
+        // Failing only that lookup verifies isolation without disabling the hero.
+        if (siteNavQueries === 2) throw new Error(`Intentional audit failure for ${selector}`);
+      }
+      if (singleFailures.has(selector)) throw new Error(`Intentional audit failure for ${selector}`);
+      return originalQuerySelector.call(this, selector);
+    };
+    Document.prototype.querySelectorAll = function querySelectorAllWithAuditFailure(selector) {
+      if (multipleFailures.has(selector)) throw new Error(`Intentional audit failure for ${selector}`);
+      return originalQuerySelectorAll.call(this, selector);
+    };
+  });
+
+  const page = await context.newPage();
+  const isolatedFailures = [];
+  const escapedFailures = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().startsWith("Portfolio enhancement failed: ")) {
+      isolatedFailures.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => escapedFailures.push(error.message));
+
+  try {
+    const response = await page.goto(pageTarget.url, { waitUntil: "networkidle" });
+    const actualStatus = response?.status();
+    if (actualStatus !== pageTarget.expectedStatus) {
+      throw new Error(
+        `Page load failed at ${pageTarget.url}: expected HTTP ${pageTarget.expectedStatus}, received ${actualStatus ?? "no response"}`,
+      );
+    }
+    const missing = expectedEnhancements.filter(
+      (name) => !isolatedFailures.some((message) => message.startsWith(`Portfolio enhancement failed: ${name}`)),
+    );
+    const webgl = await page.evaluate(() => {
+      const canvas = document.querySelector("#stage #fluid");
+      return {
+        active: Boolean(
+          canvas
+          && !document.documentElement.classList.contains("no-webgl")
+          && canvas.width >= canvas.clientWidth
+          && canvas.height >= canvas.clientHeight
+        ),
+        noWebGL: document.documentElement.classList.contains("no-webgl"),
+      };
+    });
+    check(
+      "homepage: optional enhancement failures stay isolated",
+      missing.length === 0 && escapedFailures.length === 0 && webgl.active,
+      missing.length || escapedFailures.length || !webgl.active
+        ? `missing isolated failures: ${missing.join(", ") || "none"}; escaped page errors: ${escapedFailures.join(" | ") || "none"}; WebGL active=${webgl.active}; no-webgl=${webgl.noWebGL}`
+        : `${expectedEnhancements.length} injected failures caught; every later initializer still attempted; WebGL remained active`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+async function auditHomepageFontFailureFallback(browser, pageTarget) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.addInitScript(() => {
+    window.__portfolioAuditFontLoadRequests = [];
+    Object.defineProperty(document.fonts, "load", {
+      configurable: true,
+      value: (...args) => {
+        window.__portfolioAuditFontLoadRequests.push(String(args[0] ?? ""));
+        return Promise.reject(new Error("Intentional font loading failure"));
+      },
+    });
+  });
+  const page = await context.newPage();
+  const escapedFailures = [];
+  page.on("pageerror", (error) => escapedFailures.push(error.message));
+
+  try {
+    const response = await page.goto(pageTarget.url, { waitUntil: "networkidle" });
+    const actualStatus = response?.status();
+    if (actualStatus !== pageTarget.expectedStatus) {
+      throw new Error(
+        `Page load failed at ${pageTarget.url}: expected HTTP ${pageTarget.expectedStatus}, received ${actualStatus ?? "no response"}`,
+      );
+    }
+    const fallback = await page.evaluate(() => {
+      const canvas = document.querySelector("#stage #fluid");
+      return {
+        fontLoadRequests: window.__portfolioAuditFontLoadRequests,
+        noWebGL: document.documentElement.classList.contains("no-webgl"),
+        canvasInitialized: Boolean(
+          canvas
+          && canvas.clientWidth > 0
+          && canvas.clientHeight > 0
+          && canvas.width >= canvas.clientWidth
+          && canvas.height >= canvas.clientHeight
+        ),
+      };
+    });
+    const sairaRequested = fallback.fontLoadRequests.includes("800 40px Saira");
+    check(
+      "homepage: rejected font readiness still starts the WebGL enhancement",
+      sairaRequested && !fallback.noWebGL && fallback.canvasInitialized && escapedFailures.length === 0,
+      `Saira requested=${sairaRequested}; no-webgl=${fallback.noWebGL}; canvas initialized=${fallback.canvasInitialized}; page errors=${escapedFailures.join(" | ") || "none"}`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+async function auditHomepageNoWebGLFallback(browser, pageTarget) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.addInitScript(() => {
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function getContextWithWebGLFailure(type, ...args) {
+      if (type === "webgl" || type === "experimental-webgl") return null;
+      return originalGetContext.call(this, type, ...args);
+    };
+  });
+  const page = await context.newPage();
+  const escapedFailures = [];
+  page.on("pageerror", (error) => escapedFailures.push(error.message));
+
+  try {
+    const response = await page.goto(pageTarget.url, { waitUntil: "networkidle" });
+    const actualStatus = response?.status();
+    if (actualStatus !== pageTarget.expectedStatus) {
+      throw new Error(
+        `Page load failed at ${pageTarget.url}: expected HTTP ${pageTarget.expectedStatus}, received ${actualStatus ?? "no response"}`,
+      );
+    }
+    const fallback = await page.evaluate(() => {
+      const element = document.querySelector("#stage .fallback");
+      const style = element ? getComputedStyle(element) : null;
+      return {
+        noWebGL: document.documentElement.classList.contains("no-webgl"),
+        visible: Boolean(element && style && style.display !== "none" && style.visibility !== "hidden"),
+      };
+    });
+    check(
+      "homepage: unavailable WebGL keeps the static fallback visible",
+      fallback.noWebGL && fallback.visible && escapedFailures.length === 0,
+      `no-webgl=${fallback.noWebGL}; visible=${fallback.visible}; page errors=${escapedFailures.join(" | ") || "none"}`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+async function auditHomepageWebGLRuntimeFailureFallback(browser, pageTarget) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.addInitScript(() => {
+    window.__portfolioAuditFailNextWebGLViewport = false;
+    const originalViewport = WebGLRenderingContext.prototype.viewport;
+    WebGLRenderingContext.prototype.viewport = function viewportWithRuntimeFailure(...args) {
+      if (window.__portfolioAuditFailNextWebGLViewport) {
+        window.__portfolioAuditFailNextWebGLViewport = false;
+        throw new Error("Intentional WebGL runtime failure");
+      }
+      return originalViewport.apply(this, args);
+    };
+  });
+  const page = await context.newPage();
+  const escapedFailures = [];
+  page.on("pageerror", (error) => escapedFailures.push(error.message));
+
+  try {
+    const response = await page.goto(pageTarget.url, { waitUntil: "networkidle" });
+    const actualStatus = response?.status();
+    if (actualStatus !== pageTarget.expectedStatus) {
+      throw new Error(
+        `Page load failed at ${pageTarget.url}: expected HTTP ${pageTarget.expectedStatus}, received ${actualStatus ?? "no response"}`,
+      );
+    }
+    const initialized = await page.evaluate(() => {
+      const canvas = document.querySelector("#stage #fluid");
+      return Boolean(
+        canvas
+        && !document.documentElement.classList.contains("no-webgl")
+        && canvas.width >= canvas.clientWidth
+        && canvas.height >= canvas.clientHeight
+      );
+    });
+    await page.evaluate(() => {
+      window.__portfolioAuditFailNextWebGLViewport = true;
+      window.dispatchEvent(new Event("resize"));
+      window.dispatchEvent(new Event("resize"));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await page.waitForTimeout(100);
+    const fallback = await page.evaluate(() => {
+      const element = document.querySelector("#stage .fallback");
+      const style = element ? getComputedStyle(element) : null;
+      return {
+        noWebGL: document.documentElement.classList.contains("no-webgl"),
+        visible: Boolean(element && style && style.display !== "none" && style.visibility !== "hidden"),
+      };
+    });
+    check(
+      "homepage: a WebGL runtime failure stops the simulation and keeps the static fallback visible",
+      initialized && fallback.noWebGL && fallback.visible && escapedFailures.length === 0,
+      `initialized=${initialized}; no-webgl=${fallback.noWebGL}; visible=${fallback.visible}; page errors=${escapedFailures.join(" | ") || "none"}`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+async function auditOrganicShapeReducedMotion(browser, pageTarget, label) {
+  const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 900 } });
+  try {
+    const page = await loadPage(context, pageTarget);
+    const animationState = async () => page.evaluate(() => {
+      const shape = document.querySelector("svg.organic-shape");
+      return {
+        present: Boolean(shape),
+        supportsPause: typeof shape?.pauseAnimations === "function" && typeof shape?.animationsPaused === "function",
+        paused: typeof shape?.animationsPaused === "function" ? shape.animationsPaused() : false,
+      };
+    });
+    const initial = await animationState();
+
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    if (initial.supportsPause) {
+      await page.waitForFunction(
+        () => document.querySelector("svg.organic-shape")?.animationsPaused() === false,
+        null,
+        { timeout: 2000 },
+      ).catch(() => {});
+    }
+    const resumed = await animationState();
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    if (initial.supportsPause) {
+      await page.waitForFunction(
+        () => document.querySelector("svg.organic-shape")?.animationsPaused() === true,
+        null,
+        { timeout: 2000 },
+      ).catch(() => {});
+    }
+    const reduced = await animationState();
+
+    check(
+      `${label}: reduced motion pauses organic SMIL`,
+      initial.present && initial.supportsPause && initial.paused && !resumed.paused && reduced.paused,
+      `present=${initial.present}; supported=${initial.supportsPause}; initial paused=${initial.paused}; resumes=${!resumed.paused}; pauses again=${reduced.paused}`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
 async function collectSourceFiles() {
   const extensions = new Set([".html", ".css", ".js", ".svg"]);
   const files = [];
@@ -296,6 +567,10 @@ try {
     "homepage, JS on",
     homepageContract,
   );
+  await auditHomepageEnhancementFailureIsolation(browser, server.pages.homepage);
+  await auditHomepageFontFailureFallback(browser, server.pages.homepage);
+  await auditHomepageNoWebGLFallback(browser, server.pages.homepage);
+  await auditHomepageWebGLRuntimeFailureFallback(browser, server.pages.homepage);
   await auditContext(
     browser,
     server.pages.homepage,
@@ -321,6 +596,8 @@ try {
       jsOff: await auditReflow(browser, pageTarget, `${contract.name}, JS off at 320px`, false, contract),
     };
   }
+
+  await auditOrganicShapeReducedMotion(browser, server.pages.imprint, "imprint");
 
   const reduced = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 900 } });
   const reducedPage = await loadPage(reduced, server.pages.homepage);

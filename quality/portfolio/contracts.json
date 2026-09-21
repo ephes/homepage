@@ -4,17 +4,18 @@
     "projects": "#projekte",
     "services": "#leistungen",
     "about": "#about",
-    "wagtailAbout": "#ueber-mich",
     "clients": "#kunden",
     "contact": "#kontakt",
     "homepageProjectLink": "a.tile[href]",
-    "wagtailHomepageProjectLink": "main .project-card a[href]",
+    "wagtailHomepageProjectLink": "main a.tile[href]",
     "emailLink": "a[href^='mailto:']",
     "contactEmailLink": "#kontakt a[href^='mailto:']",
     "imprintLink": "footer a[href='impressum.html']",
     "privacyLink": "footer a[href='datenschutz.html']",
     "projectImprintLink": "footer a[href='../impressum.html']",
     "projectPrivacyLink": "footer a[href='../datenschutz.html']",
+    "wagtailImprintLink": "footer .foot-legal li:first-child a[href]",
+    "wagtailPrivacyLink": "footer .foot-legal li:nth-child(2) a[href]",
     "skipLink": "a.skip-link",
     "brandLink": "a.brand[href]",
     "wagtailBrandLink": "a.site-header__brand[href]",
@@ -24,8 +25,10 @@
     "wagtailErrorProjectLink": "main .error-projects a.related-project-card[href]",
     "errorHomeLink": "a.error-home-link[href]",
     "projectHeading": "h1",
+    "legalSection": ".legal-section",
+    "legalNote": ".legal-note",
     "caseStudy": "#case-study",
-    "wagtailProjectBackLink": "main a[href$='#projekte']",
+    "wagtailProjectBackLink": "footer .foot-projects h2 a[href$='#projekte']",
     "wagtailRelatedProjectLink": "main a.related-project-card[href]",
     "siteMenu": "details.site-nav",
     "wagtailSiteMenu": "details.site-menu",
@@ -103,6 +106,46 @@
           { "name": "legal link", "locator": "projectImprintLink" }
         ],
         "keyboardTargets": ["skipLink", "brandLink", "contactEmailLink", "projectImprintLink", "projectPrivacyLink"]
+      },
+      "imprint": {
+        "name": "imprint",
+        "menu": {
+          "root": "siteMenu",
+          "summary": "siteMenuSummary",
+          "navigation": "siteMenuNavigation",
+          "firstLink": "siteMenuFirstLink",
+          "projectMenu": "projectMenu",
+          "projectMenuSummary": "projectMenuSummary",
+          "projectOverviewLink": "projectOverviewLink"
+        },
+        "essentials": [
+          { "name": "main", "locator": "main" },
+          { "name": "heading", "locator": "projectHeading" },
+          { "name": "legal section", "locator": "legalSection" },
+          { "name": "email link", "locator": "emailLink" },
+          { "name": "legal link", "locator": "imprintLink" }
+        ],
+        "keyboardTargets": ["skipLink", "brandLink", "emailLink", "imprintLink", "privacyLink"]
+      },
+      "privacy": {
+        "name": "privacy",
+        "menu": {
+          "root": "siteMenu",
+          "summary": "siteMenuSummary",
+          "navigation": "siteMenuNavigation",
+          "firstLink": "siteMenuFirstLink",
+          "projectMenu": "projectMenu",
+          "projectMenuSummary": "projectMenuSummary",
+          "projectOverviewLink": "projectOverviewLink"
+        },
+        "essentials": [
+          { "name": "main", "locator": "main" },
+          { "name": "heading", "locator": "projectHeading" },
+          { "name": "legal section", "locator": "legalSection" },
+          { "name": "version note", "locator": "legalNote" },
+          { "name": "legal link", "locator": "privacyLink" }
+        ],
+        "keyboardTargets": ["skipLink", "brandLink", "emailLink", "imprintLink", "privacyLink"]
       }
     },
     "wagtail": {
@@ -117,12 +160,15 @@
         "essentials": [
           { "name": "main", "locator": "main" },
           { "name": "projects", "locator": "projects" },
-          { "name": "about", "locator": "wagtailAbout" },
+          { "name": "services", "locator": "services" },
+          { "name": "about", "locator": "about" },
+          { "name": "clients", "locator": "clients" },
           { "name": "contact", "locator": "contact" },
           { "name": "project link", "locator": "wagtailHomepageProjectLink" },
-          { "name": "email link", "locator": "contactEmailLink" }
+          { "name": "email link", "locator": "contactEmailLink" },
+          { "name": "legal link", "locator": "wagtailImprintLink" }
         ],
-        "keyboardTargets": ["skipLink", "wagtailHomepageProjectLink", "contactEmailLink"]
+        "keyboardTargets": ["skipLink", "wagtailHomepageProjectLink", "contactEmailLink", "wagtailImprintLink", "wagtailPrivacyLink"]
       },
       "error": {
         "name": "501",
@@ -137,9 +183,10 @@
           { "name": "heading", "locator": "errorHeading" },
           { "name": "project recommendations", "locator": "errorProjects" },
           { "name": "project link", "locator": "wagtailErrorProjectLink" },
-          { "name": "home link", "locator": "errorHomeLink" }
+          { "name": "home link", "locator": "errorHomeLink" },
+          { "name": "legal link", "locator": "wagtailImprintLink" }
         ],
-        "keyboardTargets": ["skipLink", "wagtailErrorProjectLink", "errorHomeLink"]
+        "keyboardTargets": ["skipLink", "wagtailErrorProjectLink", "errorHomeLink", "wagtailImprintLink", "wagtailPrivacyLink"]
       },
       "project": {
         "name": "project",
@@ -154,9 +201,52 @@
           { "name": "heading", "locator": "projectHeading" },
           { "name": "case study", "locator": "caseStudy" },
           { "name": "project-index link", "locator": "wagtailProjectBackLink" },
-          { "name": "related-project link", "locator": "wagtailRelatedProjectLink" }
+          { "name": "related-project link", "locator": "wagtailRelatedProjectLink" },
+          { "name": "contact", "locator": "contact" },
+          { "name": "email link", "locator": "contactEmailLink" },
+          { "name": "legal link", "locator": "wagtailImprintLink" }
         ],
-        "keyboardTargets": ["skipLink", "wagtailBrandLink", "wagtailProjectBackLink", "wagtailRelatedProjectLink"]
+        "keyboardTargets": ["skipLink", "wagtailBrandLink", "wagtailProjectBackLink", "wagtailRelatedProjectLink", "contactEmailLink", "wagtailImprintLink", "wagtailPrivacyLink"]
+      },
+      "imprint": {
+        "name": "imprint",
+        "menu": {
+          "root": "wagtailSiteMenu",
+          "summary": "siteMenuSummary",
+          "navigation": "siteMenuNavigation",
+          "firstLink": "siteMenuFirstLink",
+          "projectMenu": "projectMenu",
+          "projectMenuSummary": "projectMenuSummary",
+          "projectOverviewLink": "projectOverviewLink"
+        },
+        "essentials": [
+          { "name": "main", "locator": "main" },
+          { "name": "heading", "locator": "projectHeading" },
+          { "name": "legal section", "locator": "legalSection" },
+          { "name": "email link", "locator": "emailLink" },
+          { "name": "legal link", "locator": "wagtailImprintLink" }
+        ],
+        "keyboardTargets": ["skipLink", "wagtailBrandLink", "emailLink", "wagtailImprintLink", "wagtailPrivacyLink"]
+      },
+      "privacy": {
+        "name": "privacy",
+        "menu": {
+          "root": "wagtailSiteMenu",
+          "summary": "siteMenuSummary",
+          "navigation": "siteMenuNavigation",
+          "firstLink": "siteMenuFirstLink",
+          "projectMenu": "projectMenu",
+          "projectMenuSummary": "projectMenuSummary",
+          "projectOverviewLink": "projectOverviewLink"
+        },
+        "essentials": [
+          { "name": "main", "locator": "main" },
+          { "name": "heading", "locator": "projectHeading" },
+          { "name": "legal section", "locator": "legalSection" },
+          { "name": "version note", "locator": "legalNote" },
+          { "name": "legal link", "locator": "wagtailPrivacyLink" }
+        ],
+        "keyboardTargets": ["skipLink", "wagtailBrandLink", "emailLink", "wagtailImprintLink", "wagtailPrivacyLink"]
       }
     }
   }

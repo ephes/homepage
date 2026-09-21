@@ -1,0 +1,78 @@
+{% extends "portfolio/base.html" %}
+{% load portfolio_content static wagtailcore_tags %}
+
+{% block title %}{{ legal_title }} — {{ portfolio_site_settings.brand_name|default:"Katharina Wersdörfer" }}{% endblock %}
+{% block meta_description %}{{ legal_title }} von {{ portfolio_site_settings.brand_name|default:"Katharina Wersdörfer" }}{% endblock %}
+{% block meta_robots %}<meta name="robots" content="index,follow">{% endblock %}
+{% block body_class %}{% if legal_page_kind == "imprint" %} imprint-page{% else %} privacy-page{% endif %}{% endblock %}
+{% block body_attributes %} data-project="legal"{% endblock %}
+
+{% block extra_styles %}
+  {% versioned_static 'portfolio/prototype/projekte/projekt.css' as project_prototype_css_url %}
+  {% versioned_static 'portfolio/prototype/motion.css' as portfolio_motion_css_url %}
+  {% versioned_static 'portfolio/prototype/legal.css' as legal_page_css_url %}
+  {% versioned_static 'portfolio/project-wagtail.css' as project_adapter_css_url %}
+  <link rel="stylesheet" href="{{ project_prototype_css_url }}">
+  <link rel="stylesheet" href="{{ portfolio_motion_css_url }}">
+  <link rel="stylesheet" href="{{ legal_page_css_url }}">
+  <link rel="stylesheet" href="{{ project_adapter_css_url }}">
+{% endblock %}
+
+{% block content %}
+  <article>
+    {% if legal_page_kind == "imprint" %}<div class="imprint-layout"><div class="imprint-copy">{% endif %}
+      <header class="project-hero" id="seitenanfang">
+        <p class="eyebrow">{{ legal_settings.eyebrow }}</p>
+        <h1>{{ legal_title }}</h1>
+      </header>
+      <div class="legal-content">
+        {% for block in legal_sections %}
+          <section class="legal-section" aria-labelledby="legal-section-{{ forloop.counter }}">
+            <h2 id="legal-section-{{ forloop.counter }}">{{ block.value.heading }}</h2>
+            <div class="legal-copy">
+              {% for item in block.value.copy %}
+                {% if item.block_type == "address" %}
+                  <address>{{ item.value|richtext }}</address>
+                {% elif item.block_type == "note" %}
+                  <p class="legal-note">{{ item.value }}</p>
+                {% elif item.block_type == "contact" %}
+                  <p class="legal-contact">{% if item.value.prefix %}{{ item.value.prefix }} {% endif %}<a href="mailto:{{ portfolio_site_settings.contact_email }}">{{ item.value.label|default:portfolio_site_settings.contact_email }}</a>{{ item.value.suffix }}</p>
+                {% else %}
+                  {{ item.value|richtext }}
+                {% endif %}
+              {% endfor %}
+            </div>
+          </section>
+        {% endfor %}
+      </div>
+    {% if legal_page_kind == "imprint" %}
+      </div>
+      <figure class="imprint-visual">
+        <svg class="organic-shape" viewBox="0 0 100 125" preserveAspectRatio="none" role="img" aria-label="{{ legal_settings.imprint_visual_label }}">
+          <defs>
+            <clipPath id="impressum-klecks" clipPathUnits="objectBoundingBox">
+              <path d="M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z">
+                <animate attributeName="d" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" values="M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z;M0.51 0.05C0.67 0.06 0.79 0.16 0.81 0.28C0.83 0.37 0.76 0.45 0.80 0.53C0.85 0.62 0.93 0.70 0.85 0.79C0.78 0.87 0.63 0.79 0.54 0.85C0.44 0.91 0.31 0.98 0.22 0.90C0.13 0.83 0.23 0.72 0.17 0.65C0.11 0.57 0.02 0.43 0.07 0.34C0.13 0.25 0.27 0.30 0.32 0.21C0.37 0.13 0.42 0.04 0.51 0.05Z;M0.44 0.10C0.58 0.03 0.71 0.10 0.76 0.21C0.81 0.30 0.85 0.40 0.88 0.48C0.92 0.56 0.86 0.66 0.80 0.74C0.73 0.82 0.70 0.88 0.61 0.91C0.51 0.97 0.37 0.92 0.28 0.85C0.19 0.78 0.16 0.68 0.11 0.61C0.05 0.53 0.09 0.48 0.14 0.39C0.19 0.30 0.21 0.23 0.26 0.16C0.31 0.08 0.35 0.11 0.44 0.10Z;M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z"/>
+              </path>
+              <circle cx=".90" cy=".13" r=".045"><animateTransform attributeName="transform" type="translate" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.33;0.66;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" values="0 0;0.018 -0.022;-0.014 0.012;0 0"/></circle>
+              <circle cx=".955" cy=".42" r=".028"><animateTransform attributeName="transform" type="translate" dur="17s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.33;0.66;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" values="0 0;-0.020 0.016;0.012 0.020;0 0"/></circle>
+              <circle cx=".10" cy=".86" r=".035"><animateTransform attributeName="transform" type="translate" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.33;0.66;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" values="0 0;0.022 0.014;-0.016 -0.018;0 0"/></circle>
+              <circle cx=".91" cy=".82" r=".025"><animateTransform attributeName="transform" type="translate" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.33;0.66;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" values="0 0;-0.014 -0.018;0.020 0.010;0 0"/></circle>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#impressum-klecks)">
+            <rect class="imprint-visual-fill" width="100" height="125"/>
+            <path class="imprint-visual-lines" d="M0 0L100 125M100 0L0 125"/>
+          </g>
+          <text class="imprint-visual-label" x="50" y="64">{{ legal_settings.imprint_visual_label }}</text>
+        </svg>
+      </figure>
+      </div>
+    {% endif %}
+  </article>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'portfolio/prototype/motion.js' %}" defer></script>
+  <script src="{% static 'portfolio/prototype/site-shell.js' %}" defer></script>
+{% endblock %}

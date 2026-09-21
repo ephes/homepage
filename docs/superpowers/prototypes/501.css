@@ -73,7 +73,7 @@
 /* Ohne JavaScript bleibt dieselbe lesbare Endentscheidung erhalten. Mit Enhancement
    übernimmt die gemeinsame Projektteaser-Komponente exakt die Unterseitenmessung. */
 html:not(.has-js) .error-projects .more-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  --project-grid-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
 }
 
 .error-projects-title {
@@ -86,7 +86,7 @@ html:not(.has-js) .error-projects .more-grid {
 }
 
 html:not(.has-js) .error-projects .more-card {
-  grid-column: auto;
+  --more-card-grid-column: auto;
 }
 
 .error-projects .tile-depth {

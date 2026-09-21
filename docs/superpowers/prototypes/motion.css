@@ -791,6 +791,10 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .pill .ar {
   transition: color var(--motion-hover) var(--motion-ease), transform var(--motion-hover) var(--motion-ease);
 }
+.project-inquiry .ar {
+  color: inherit;
+  transition: transform var(--motion-hover) var(--motion-ease);
+}
 .tile:hover .meta h3,
 .tile:focus-visible .meta h3,
 .more-card:hover h3,
@@ -803,47 +807,15 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   transform: translateX(.38rem);
 }
 .pill:hover .ar,
-.pill:focus-visible .ar { transform: translateX(.38rem); }
-
-/* Die breite Projektanfrage bleibt eine Rasterzeile. Ihre Tangerine-Fläche liegt beim
-   Eintritt sofort vollständig unter Label und Pfeil und wächst anschließend von rechts
-   bis zur Layoutmitte. Rechts schließt sie bündig; nur links trägt sie die Pill-Rundung.
-   Beim Austritt fährt erst die Breite zurück, bevor die Ausgangsfläche verschwindet. */
-.project-inquiry {
-  --inquiry-pill-rest: clamp(12rem, 16vw, 15rem);
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  transition: color var(--motion-hover) ease;
-}
-.project-inquiry::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: 0;
-  border-radius: 999rem 0 0 999rem;
-  background: var(--tangerine);
-  opacity: 0;
-  transition:
-    inline-size 640ms var(--motion-ease),
-    opacity 0s linear 640ms;
-}
-.project-inquiry > * { position: relative; z-index: 1; }
-.project-inquiry .ar { transition: transform var(--motion-hover) var(--motion-ease); }
-.project-inquiry:hover,
-.project-inquiry:focus-visible { color: #fff; }
-.project-inquiry:hover::before,
-.project-inquiry:focus-visible::before {
-  inline-size: 50%;
-  opacity: 1;
-  transition:
-    inline-size 6400ms linear(0, .4 4%, 1),
-    opacity 0s;
-}
+.pill:focus-visible .ar,
 .project-inquiry:hover .ar,
 .project-inquiry:focus-visible .ar { transform: translateX(.38rem); }
+
+/* Der Projektanfrage-Text ist normale Schrift, nicht der große Prio-1-Button. Seine
+   Tangerine-Fläche liegt deshalb im ersten aktiven Frame bereits vollständig hinter
+   Text und Pfeil und wird beim Verlassen sofort ausgeblendet (siehe Basis-Styles).
+   Der AA-sichere warm-schwarze Vordergrund erreicht dort 4,55:1; Creme nur 3,42:1. */
+.project-inquiry:is(:hover, :focus-visible) strong { color: var(--warm-black); }
 
 /* Einfache Textlinks verwenden überall dieselbe einfahrende Haarlinie. */
 .foot-col a:not(.pill),
@@ -862,6 +834,34 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .foot-bar a:not(.to-top):focus-visible,
 .project-footer a:hover,
 .project-footer a:focus-visible {
+  color: var(--tangerine);
+  background-size: 100% 1px;
+}
+
+/* Redaktionelle Inline-Links greifen dieselbe einfahrende Haarlinie auf. Ihre ruhende
+   Stärke entspricht den Leistungswerten; Hover und Tastaturfokus färben den Text wie
+   die Linie Tangerine. */
+.project-lead a,
+.rich-text a {
+  color: inherit;
+  font-weight: 600;
+  background-image: linear-gradient(var(--tangerine), var(--tangerine));
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  text-decoration: none;
+  transition: color var(--motion-hover) ease, background-size var(--motion-hover) var(--motion-ease);
+}
+.project-lead a b,
+.project-lead a strong,
+.rich-text a b,
+.rich-text a strong {
+  font-weight: inherit;
+}
+.project-lead a:hover,
+.project-lead a:focus-visible,
+.rich-text a:hover,
+.rich-text a:focus-visible {
   color: var(--tangerine);
   background-size: 100% 1px;
 }
@@ -1235,8 +1235,9 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   .hw-outline-pen { animation: none !important; stroke-dashoffset: 0 !important; }
   .pill, .pill::before,
   .tile, .more-card, .tile-depth, .tile .meta h3, .more-card h3, .tile-arrow,
-  .pill .ar, .project-inquiry, .project-inquiry::before, .project-inquiry .ar, .brand,
+  .pill .ar, .project-inquiry .ar, .brand,
   .foot-col a:not(.pill), .foot-bar a, .project-footer a, .to-top,
+  .project-lead a, .rich-text a,
   .scrollcue, .cursor { transition: none; }
   .pill:hover::before, .pill:focus-visible::before {
     animation: none;
@@ -1254,7 +1255,4 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   .tile:not(.cta):focus-visible,
   .more-card:hover,
   .more-card:focus-visible { animation: none; }
-  .project-inquiry::before,
-  .project-inquiry:hover::before,
-  .project-inquiry:focus-visible::before { transition: none; }
 }

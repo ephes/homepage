@@ -32,6 +32,8 @@ export const targetProfiles = Object.freeze({
       homepage: Object.freeze({ path: "portfolio-startseite.html", expectedStatus: 200 }),
       error: Object.freeze({ path: "501.html", expectedStatus: 200 }),
       project: Object.freeze({ path: "projekte/buchgestaltung.html", expectedStatus: 200 }),
+      imprint: Object.freeze({ path: "impressum.html", expectedStatus: 200 }),
+      privacy: Object.freeze({ path: "datenschutz.html", expectedStatus: 200 }),
     }),
   }),
   wagtail: Object.freeze({
@@ -40,6 +42,8 @@ export const targetProfiles = Object.freeze({
       homepage: Object.freeze({ path: "/blogs/portfolio/katharina/", expectedStatus: 200 }),
       error: Object.freeze({ path: "/portfolio/501/", expectedStatus: 501 }),
       project: Object.freeze({ path: "/blogs/portfolio/katharina/buchgestaltung/", expectedStatus: 200 }),
+      imprint: Object.freeze({ path: "/impressum/", expectedStatus: 200 }),
+      privacy: Object.freeze({ path: "/datenschutz/", expectedStatus: 200 }),
     }),
   }),
 });

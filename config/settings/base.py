@@ -237,6 +237,7 @@ STATICFILES_DIRS = [
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
+    "config.staticfiles.PortfolioPrototypeFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 

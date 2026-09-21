@@ -1,0 +1,44 @@
+/* Wagtail-only integration glue for the canonical prototype homepage assets. */
+@layer pages {
+  /* The canonical contact stack owns its rhythm through flex gap. */
+  .portfolio-homepage .contact .stack > * + * {
+    margin-block-start: 0;
+  }
+
+  /* Real Wagtail renditions replace the prototype's crossed image placeholder. */
+  .portfolio-homepage .frame--image {
+    --frame-placeholder-content: none;
+  }
+
+  .portfolio-homepage .frame--image > picture,
+  .portfolio-homepage .frame--image > img,
+  .portfolio-homepage .frame--image > picture > img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .portfolio-homepage .frame--image > img,
+  .portfolio-homepage .frame--image > picture > img {
+    object-fit: cover;
+  }
+
+  /* The directly served prototype is an HTML fragment and therefore uses
+     Chromium's BackCompat inline-line-box calculation. Wagtail correctly
+     renders in standards mode. Make the two affected footer text patterns
+     explicit so their height remains identical without inheriting quirks-mode
+     behaviour: the profile brand owns its line box, while a wrapped project
+     link keeps the 1rem parent strut on its first line. */
+  .portfolio-homepage .foot-profile > .brand {
+    display: block;
+    line-height: 1.5;
+  }
+
+  .portfolio-homepage .foot-projects li > a {
+    display: block;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    line-height: 1.5;
+    padding-block-end: max(0px, calc(1.5rem - 1.5em));
+  }
+}

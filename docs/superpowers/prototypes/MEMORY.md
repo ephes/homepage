@@ -1,16 +1,120 @@
 # Arbeitsstand Portfolio-Prototyp
 
-Stand: 9. September 2026
+Stand: 21. September 2026
 
 ## Wiedereinstieg
 
 - Arbeitsbranch: `portfolio-site`
-- Letzter vollständiger Implementierungsstand: Commit `911c1d1`
-- Haupteinstieg: `portfolio-startseite.html` direkt in Helium öffnen.
+- Letzter vollständiger reiner Prototypstand: Commit `911c1d1`.
+- Basis des aktuellen Wagtail-Paritätsstands: Commit `36aeb78`. Der vollständige
+  Paritätsslice vom 21. September 2026 wurde in der laufenden Vorschau visuell abgenommen;
+  die separat orchestrierte Claude-Review mit `REVIEW: CLEAN` bleibt vor der
+  Veröffentlichung verbindliches Gate.
+- Visuelle Quelle der Wahrheit: die aktuelle `portfolio-startseite.html`, lokal unter
+  `http://127.0.0.1:8001/portfolio-startseite.html`, samt ihren aktuellen Unterseiten.
 - Gemeinsame Gestaltung und Interaktionen: `motion.css`, `motion.js` und `site-shell.js`.
-- Projektunterseiten: `projekte/`; gemeinsamer Aufbau in `projekt.css` und `projekt.js`.
-- Rechtsseiten: `impressum.html`, `datenschutz.html` und `legal.css`.
+- Projektunterseiten: `projekte/`; `projekt.css` ist auch die kanonische Wagtail-
+  Präsentation. `projekte/projekt.js` bleibt ausschließlich der clientseitige Generator
+  des statischen Prototyps und wird von Wagtail bewusst **nicht** geladen.
+- Rechtsseiten: statisch `impressum.html` und `datenschutz.html`; Wagtail unter
+  `/impressum/` und `/datenschutz/`. Beide verwenden die kanonische `legal.css`.
 - Ausführliche Design- und Verhaltensdokumentation: `README.md` in diesem Ordner.
+
+## Wagtail-Parität — abgenommener Implementierungsstand
+
+- Die gemeinsame Wagtail-Ausgabe verwendet die freigegebene variable Saira-Datei,
+  lädt sie früh über eine manifestfähige Preload-URL und behält dank
+  `font-display: swap` sichtbaren Systemfont-Fallback.
+- Astagina ist als zentrale Wagtail-Fontressource eingebunden, aber nicht vorab geladen.
+  Handschriftliche Inhalte stehen serverseitig als lesbarer SVG-Text im Dokument. Die
+  Homepage lädt die exakten Pfaddaten aus `handwriting-glyphs.js` erst bei Bedarf;
+  Projektseiten teilen sich das kleinere `handwriting-contact.js`. Bei reduzierter
+  Bewegung wird keines der Pfadbündel angefordert.
+- Globale Palette, Display-/Lesestufen, Rhythmus- und Trackingrollen sind in den
+  unverändert geordneten Wagtail-CSS-Layern abgebildet. Viewportkomposition,
+  Komponenteninputs und JavaScript-Messwerte wurden nicht zu globalen Tokens gemacht.
+- Der komplette aktuelle Startseitenaufbau ist serverseitig vorhanden: Header und
+  animiertes natives Menü, Verfügbarkeitsband, Hero mit lesbarem `MOIN`-Fallback und
+  WebGL-Enhancement, Seitenraster, Leinentextur, Projekte, Leistungen, About, Kunden,
+  Kontakt, Footer, Custom Cursor, Top-Anker, organische Formen und Handschrift/Motion.
+- Wagtail nutzt die freigegebenen Prototype-Dateien direkt unter dem statischen Namespace
+  `portfolio/prototype`; es gibt keine zweite kopierte CSS-, Motion- oder
+  Handschriftquelle. `homepage.css` und `project-wagtail.css` sind nur schmale Adapter
+  für abweichendes serverseitiges Markup und Wagtail-Renditions.
+- Projektseiten und die 501-Seite verwenden den gemeinsamen Header, Footer und
+  `related_project_card`. Jede Projektseite besitzt ihre eigenen editierbaren Felder
+  und StreamField-Blöcke; responsive Bildrenditions und Alttextverträge bleiben
+  erhalten. Neu angelegte Projekte erhalten einen editierbaren semantischen
+  Starterinhalt, aber keine siteweiten Projekttext-Fallbacks. `/portfolio/501/` bleibt
+  HTTP 501.
+- Die Rechtsseiten werden aus gemeinsamen `LegalPageSettings` ausschließlich für die
+  Wagtail-Site mit einer veröffentlichten Portfolio-Startseite serverseitig gerendert.
+  Eine vorhandene veröffentlichte Wagtail-Seite unter demselben Pfad hat auch dort
+  Vorrang; das gilt ebenso für zugriffsbeschränkte Seiten, deren Anmeldung oder Passwort
+  weiterhin Wagtail selbst durchsetzt. Auf anderen Sites gehen gleichnamige Pfade
+  ebenfalls an Wagtails normale Seitenauflösung. So erscheinen weder fremde
+  Portfolio-Personendaten noch werden eigene Seiten verdeckt.
+  Semantische StreamFields halten Überschriften, Absätze,
+  Adressen und Standhinweise editierbar; die Template-Hierarchie und das Layout bleiben
+  geschützt. Sie verwenden Projekt-Shell, Leinentextur, Menü, Footer und `legal.css`,
+  aber kein Handschriftbündel.
+- Die Paritätsmigrationen reichen bis `0022`: `0007` ergänzt die semantischen
+  Startseitenfelder und sortierbaren Leistungen/About-/Kundenlisten, `0008` und `0010`
+  bilden die geteilte Kontaktheadline ab, `0009` ergänzt die Projektkategorie „Digital“;
+  `0011` führt die per Site editierbaren Rechtsseiten ein, `0012` zentralisiert wiederkehrende
+  redaktionelle Labels und übernimmt die bisherigen Statement-/Aufgabe-/Lösung-Platzhalter
+  in leere Projekt-StreamFields; `0013` installiert den vollständigen editierbaren
+  Starterinhalt für neue Projekte, ergänzt exakt diesen unveränderten zweiblöckigen
+  Übergangsstarter unter Beibehaltung seiner IDs und befüllt ansonsten nur vollständig
+  leere Projekt-Streams. Andere bestehende redaktionelle Inhalte und historische
+  Revisionen bleiben dabei unangetastet;
+  `0014` bis `0016` ergänzen den Teaser-Rich-Text, gemeinsame Wertelabels und den
+  editierbaren Website-Buttontext. `0017` überführt die bisher festen Projektbereiche in
+  zentral verwaltete Kategorien. Eigene Kategorien können im Projekt-Chooser oder über
+  `Projekte → Kategorien` angelegt werden; bestehende Seiten und Revisionen behalten
+  ihre Zuordnung. `0018` ergänzt das optionale Endjahr für mehrjährige Projekte.
+  `0019` macht die bisherigen positionsabhängigen Startseiten-Hero-Kacheln pro Projekt
+  editierbar und übernimmt die bestehende Optik ohne Neuordnung.
+  `0020` markiert die abgelösten About-/Kontakt-Einzelfelder ausdrücklich als
+  nicht editierbare Kompatibilitätsdaten; sichtbar bleiben die strukturierten Felder.
+  `0021` blendet auch die abgelösten Impressums-/Datenschutz-URL-Spalten aus dem Editor
+  aus und bindet die öffentlichen Ziele fest an die eingebauten benannten Routen; die
+  Spalten bleiben nur für Migrationen und historische Revisionen erhalten. `0022`
+  ersetzt den früher gespeicherten Legal-E-Mail-Platzhalter durch einen strukturellen
+  Kontaktblock; die globale Site-Adresse wird erst beim Rendern eingesetzt. Ein aus
+  einem Adressblock getrenntes Kontaktpaar erhält eine deterministische Zuordnung, damit
+  die Rückwärtsmigration wieder genau einen Adressblock herstellt und unabhängig
+  redigierte benachbarte Blöcke nicht zusammenführt.
+- Ohne JavaScript bleiben alle Inhalte, Links, Sektionen, Fallbacks und das native Menü
+  sichtbar und bedienbar. JavaScript ergänzt nur WebGL, Bewegung, Handschriftpfade,
+  Fokus-/Scrollkomfort und konkrete Überlaufmessungen. Ein Font- oder Assetfehler lässt
+  verständlichen Text stehen.
+- Die öffentlichen Every-Layout-Primitives und die Layerreihenfolge bleiben unverändert.
+  Kanonische, bereits freigegebene Media-/Feature-Queries werden mit den Prototype-
+  Dateien übernommen; die Wagtail-Adapter führen kein konkurrierendes Breakpointsystem ein.
+- Die integrierten Prototype- und Wagtail-Browseraudits sind einschließlich beider
+  Rechtsseiten bestanden: JavaScript an/aus, native Menüs, 320-Pixel-Reflow,
+  Reduced Motion und Forced Colors, jeweils ohne axe-Verstoß. Die reduzierten
+  Wagtail-Rechtsseiten sind bei 1200, 375 und 320 px pixelidentisch zur Prototype-Quelle.
+- Alle neun Wagtail-Projektseiten sind im stabilisierten Reduced-Motion-Vergleich bei
+  1200, 375 und 320 px pixelidentisch zur jeweiligen Prototype-Seite; Geometrie und
+  Gesamthöhe stimmen, bei 320 px entsteht kein Dokumentüberlauf. Eine semantische
+  Soft-Hyphen-Stelle hält ausschließlich die freigegebene mobile Trennung von
+  „Weitersehen.“ stabil, ohne den lesbaren Text oder Desktop zu ändern.
+- Der aktuelle isolierte Mobile-Lighthouse-Lauf misst Wagtail mit 85/100/100/100,
+  FCP 2,6 s, LCP 3,8 s, Speed Index 2,6 s, TBT 30 ms, CLS 0,033, 14 Requests und
+  478 KiB; der jüngste Prototype-Lauf misst 81/100/92/90, FCP 3,6 s, LCP 3,8 s,
+  Speed Index 3,6 s, TBT 0 ms, CLS 0,034, 12 Requests und 521 KiB. Das ist nur der
+  gemessene Vergleich, keine allgemeine Performancebehauptung. Das Performance-Gate
+  von 90 ist mit 85 weiterhin offen. Erster dokumentierter Cleanup-Kandidat ist der
+  überholte Block „Sections (Wireframe)“ in `portfolio-startseite.css`: spätere
+  Fluid-Hero-Regeln überschreiben dort doppelte Selektoren, weitere Selektoren treffen
+  kein aktuelles Markup mehr. Die Entfernung erfolgt erst in einem eigenen,
+  Screenshot-Diff-abgesicherten Performance-Pass, weil diese Datei die kanonische
+  visuelle Quelle für Prototype und Wagtail ist.
+- Der daemonlose Portfolio-Testlauf besteht mit 201 Tests und überspringt nur die zwei
+  separat gegen Colima bestandenen Docker-Build-Context-Tests. Die Vollsuite erreicht
+  259 bestandene Tests, dieselben Skips und genau den bekannten Webmentions-Fehler.
 
 ## Zuletzt bearbeitet
 
@@ -151,7 +255,8 @@ Stand: 9. September 2026
   Kontaktheadline; Desktop bleibt unverändert.
 - Die beiden „Weitere Projekte“-Teaser bleiben auch mobil grundsätzlich nebeneinander;
   echte Bilder dürfen ihre `21:9`-Box per `object-fit: cover` füllen. Statt eines globalen
-  Breakpoints misst `projekt.js` das konkrete Kartenpaar nach dem Rendern, nach geladenen
+  Breakpoints misst im statischen Prototyp `projekt.js` und in Wagtail das gemeinsame
+  `project-teasers.js` das konkrete Kartenpaar nach dem Rendern, nach geladenen
   Fonts und bei Viewportänderungen in seiner zweispaltigen Form. Nur ein tatsächlich
   überlaufendes Titel-/Pfeil-Paar erhält die einspaltige Stapelklasse. Die Messung lauscht
   absichtlich nicht auf die eigene Rastergröße und kann deshalb nicht oszillieren. Der Pfeil
@@ -163,15 +268,16 @@ nicht zuverlässig dargestellt. Für diesen Prototyp deshalb die Icons inline be
 
 ## Ausdrücklich noch offen
 
-Das Menü ist **noch nicht fertig**. Beim nächsten Termin zuerst dort weiterarbeiten:
+Die technische Menü- und Motion-Implementierung ist in den Wagtail-Paritätskandidaten
+übernommen. Nicht ohne gemeinsame visuelle Entscheidung verändern:
 
 - endgültige Auswahl und optische Gewichtung der Social-Icons prüfen;
 - endgültige Gewichtung der neu ausgerichteten Iconreihe im Gesamtbild gemeinsam abnehmen.
 
 Die technische Menü-Geometrie, geringe Viewporthöhen, Tastaturbedienung und
-`prefers-reduced-motion` sind erneut geprüft. Für die endgültige Gestaltung bleibt damit
-nur die subjektive Abnahme der vier Social-Icons; ein realer iOS-Touch-Test gehört weiterhin
-zur Abnahme vor Veröffentlichung.
+`prefers-reduced-motion` sind für den kanonischen Prototyp und den aktuellen Wagtail-
+Kandidaten geprüft. Für die endgültige Gestaltung bleibt die subjektive Abnahme der vier
+Social-Icons; ein realer iOS-Touch-Test gehört weiterhin zur Abnahme vor Veröffentlichung.
 
 Der durchgehende technische Mobile-Regressionstest ab 320 px ist abgeschlossen. Als
 nächster Schritt folgt die gemeinsame gestalterische Abnahme: Social-Icons sowie
@@ -180,6 +286,22 @@ Footer- und Top-Anker-Geometrie sind technisch belastbar; weitere Änderungen da
 von einem konkreten visuellen Änderungswunsch ausgehen.
 
 ## Letzte Prüfungen
+
+Die folgende umfangreiche Liste dokumentiert die freigegebene statische Prototype-
+Baseline. Sie ist weiterhin der Vergleichsvertrag. Der integrierte Wagtail-Endlauf des
+Paritätsslices ist ebenfalls bestanden:
+
+- Prototype- und Wagtail-Audit einschließlich Startseite, 501, Projekt, Impressum und
+  Datenschutz: bestanden; axe 0, 320-Pixel-Reflow, Reduced Motion und Forced Colors
+  ohne Befund.
+- Wagtail-Rechtsseiten bei 1200, 375 und 320 px unter Reduced Motion: pixelidentisch zur
+  jeweiligen kanonischen Prototype-Seite.
+- Portfolio-Django-Tests: 201 bestanden, zwei separat gegen Colima bestandene
+  Docker-Integrationstests im daemonlosen Lauf übersprungen.
+- Vollständige Django-Suite: 259 bestanden, dieselben Skips und ein bekannter bestehender Fehler in
+  `test_webmention_display_template_tags` (`list.count()` wird ohne Argument aufgerufen).
+- Lighthouse Wagtail: 85/100/100/100; Prototype: 81/100/92/90. Der Performance-Zielwert
+  90 ist damit weiterhin nicht erreicht.
 
 - Finaler Chromium-Menüaudit auf Startseite, Impressum, Datenschutz und generierter
   Projektseite in zwölf Viewports von 320×480 bis 2048×1152: 48 Kombinationen ohne
@@ -312,6 +434,127 @@ von einem konkreten visuellen Änderungswunsch ausgehen.
   überein.
 - `.vsplit2` zusätzlich bei künstlich um 73 px verschobenem `.pagegrid` geprüft: Split-Top,
   lokaler Dark-Section-Abstand und nicht-nulliger Verlaufsstopp stimmen bis auf 0,001 px.
+- Den nach dem Wagtail-Port noch sichtbaren Menü-Kaskadenrest entfernt: Das gemeinsame
+  Layer-Stylesheet erzwingt weder eine Header-Mindesthöhe noch eine zweite Social-Trennlinie,
+  ein konkurrierendes Social-Grid oder 4,5 rem hohe Social-Links. Dadurch sind die Buttons
+  wieder 46 × 46 px große Kreise und die Trennlinie wieder genau einen Pixel stark. Der
+  vollständige offene Header-/Panel-Ausschnitt ist bei 1400 × 1800 px pixelidentisch zum
+  aktuellen Prototyp; Header- und Hero-Grenzen stimmen zusätzlich bei 1454 × 898,
+  1200 × 900, 375 × 667 und 320 × 700 px überein.
+- Die Standards-Mode-Anpassung der Wagtail-Startseite begrenzt nur die Blocklinks im
+  Footer-Projektverzeichnis intrinsisch mit `fit-content`. Damit fährt die Hoverlinie wie
+  im Prototyp nur unter dem Projekttitel ein und nicht über die gesamte Spaltenbreite;
+  Seiten- und Rechtslinks bleiben unangetastet. Der Hover-Footer ist bei 576 px weiterhin
+  pixelidentisch, die Linkbreite stimmt zusätzlich bei 375 und 320 px exakt überein.
+- Der aktuelle Editorvertrag trennt feste Gestaltung von redaktionellem Inhalt:
+  ``Moin`` sowie die geprüften Handschrift- und Cursor-Vektortexte bleiben fest; alle
+  übrigen sichtbaren Redaktionstexte kommen aus Seitenfeldern, semantischen
+  Projektblöcken oder gruppierten Site-/501-/Rechtsseiten-Einstellungen. Die öffentliche
+  E-Mail-Adresse und LinkedIn-, GitHub- und Mastodon-Ziele liegen ausschließlich in
+  ``PortfolioSiteSettings``. Auch Rechtstext-Mail-Links werden daraus gerendert; das
+  frühere Startseiten-Mailfeld bleibt nur verborgen zur Migrationskompatibilität.
+- Jedes Portfolio-Projekt ist eine eigene editierbare ``ProjectPage`` unter dem
+  Portfolio-Index. Titel, Teasertext, Kategorie, Jahr beziehungsweise Zeitraum, Kunde, Leistungen, Bilder,
+  Statement, Aufgabe/Lösung, Ergebnisse und Testimonial gehören zum jeweiligen Projekt;
+  projektbezogene Platzhalter liegen nicht in den globalen Site Settings. Neue Seiten
+  erhalten vier editierbare Starterblöcke. Veröffentlichen beziehungsweise Zurückziehen
+  steuert automatisch Startseitenteaser, Menü, Footer, Zähler und Folgeprojekte, deren
+  Titel/Kategorie/Jahr oder Zeitraum/Bild direkt aus derselben Projektseite kommen.
+- Migration ``0018`` ergänzt pro Projekt ein optionales Endjahr. Ohne Endjahr bleibt die
+  bisherige Einzeljahresausgabe unverändert; mit Endjahr verwenden Projektseite,
+  Startseitenteaser und Folgeprojektkarten automatisch denselben kompakten Zeitraum wie
+  ``2021–2024``. Ein Endjahr vor dem Startjahr wird im Editor abgewiesen.
+- Die Projekt-Unterseiten bleiben die einzige Quelle für Startseitenteaser. Im
+  Wagtail-Menü öffnet ``Projekte → Reihenfolge`` die native Drag-and-drop-Sortierung;
+  sie steuert Grid, Menü, Footer und Folgeprojekte gemeinsam. Das Projektfeld
+  ``Hero-Kachel auf der Startseite`` schaltet die zweispaltige 21:9-Kachel im
+  Desktop-Raster. Mobil bleibt das erste sortierte Projekt der 16:9-Einstieg, alle
+  weiteren Karten behalten das einheitliche Reel. Keine zusätzliche Media Query wurde
+  eingeführt.
+- Der Projekt-Teasertext ist ein eng begrenztes Rich-Text-Feld: einzelne Wörter oder
+  Passagen dürfen fett gesetzt, als Inline-Link eingefügt oder über ``Kein Umbruch`` als
+  zusammenhängender Markenname geschützt werden; weitere Struktur- oder Layoutoptionen
+  bleiben templategeführt. Statement, Aufgabe und Lösung erlauben dieselben Funktionen.
+  Die No-Break-Auszeichnung ist ein semantischer ``span[data-no-break]`` und benötigt
+  öffentlich kein JavaScript. Auf Creme bleibt der Linktext in Ruhe warm-schwarz und
+  hat dieselbe 600er Stärke wie die Leistungswerte; bei Hover oder Tastaturfokus werden
+  Text und die von links einfahrende Haarlinie Tangerine. Reduzierte Bewegung
+  entfernt die Transition, nicht Linkunterscheidung oder Fokus. Die sichtbare Einleitung
+  rendert Fettung und Link; die Meta-Description übernimmt denselben Inhalt ohne HTML.
+- Migration `0015` benennt die Projektabschnitte samt Wagtail-Editorlabels von
+  „Ergebnisse“ in „Mehrwert“ und von „Testimonial“/„Rückmeldung“ in „Kundenstimmen“
+  um. Nur die bisherigen globalen Standardwerte werden migriert; bereits individuell
+  gepflegte Bezeichnungen bleiben erhalten. Der stabile Fragmentanker `#ergebnisse`
+  bleibt für bestehende Deep Links unverändert.
+- Die drei Case-Study-Zeilen richten die sichtbare Oberkante von linkem Label und erster
+  Textzeile aus. Der Wagtail-Adapter entfernt nur die zusätzlichen Außenabstände der
+  RichText-Absatzwrapper; zwischen den Zeilen gilt der lokale fluide Rhythmus
+  `clamp(2rem, 3.5vw, 3rem)` statt des bisherigen Sektionsabstands. Dafür kam kein
+  Breakpoint hinzu.
+- Projektmetadaten stapeln Bereich, optionalen Kunden und Jahr beziehungsweise Zeitraum in einer Spalte. Die
+  Leistungen stehen in ihrer redaktionellen Reihenfolge jeweils einzeln in der nächsten
+  Spalte. Sie sind eine echte ungeordnete Liste und verwenden das gemeinsame
+  `.marker-list`-Pattern: eine größere, linksbündige warm-schwarze Dreiecksspitze wird
+  ohne zusätzlichen Markup-Span per CSS erzeugt. Redaktionelle `.rich-text`-ULs nutzen
+  dasselbe Pattern; nummerierte und Navigationslisten bleiben unberührt.
+  Die große Projektüberschrift nutzt intrinsisch bis zu ``18ch`` der
+  verfügbaren Breite. Ihre Zeilenhöhe ``1.03`` gleicht den sichtbaren Abstand der
+  Umlautpunkte zur Versalie und zur vorherigen Zeile aus; sie verwendet nur manuelle
+  Trennstellen. Dadurch bleibt unter anderem ``Leistungen``
+  als Wort zusammen; ein neuer Media Query war dafür nicht nötig.
+- Das Projektintro verwendet zwei verschachtelte intrinsische Switcher statt eines
+  Viewport-Breakpoints: Anleser plus Projektdetails-`aside`, darin Fakten plus Leistungen.
+  Nur im nebeneinanderliegenden Zustand reserviert der Anleser `2rem` Luft zum Aside;
+  gestapelt erhält er seine volle verfügbare Tablet-/Mobile-Breite zurück. Sein
+  Summary-Stack hält mindestens `1.875rem`/30 px Abstand zum Website-Button. Freier
+  vertikaler Raum wandert vor den Button, sodass dessen Unterkante normalerweise mit
+  der letzten Leistungszeile fluchtet; längerer Anlesetext hat Vorrang, vergrößert die
+  Gesamtzeile und drückt den Button weiter nach unten. Die Metadatenlabels werden nur
+  optisch um `1px` angehoben, damit ihre Versaloberkante mit dem Anleser fluchtet, ohne
+  die Box- oder Buttonausrichtung zu verändern.
+- Der optionale externe Projektlink verwendet nun den kompakten gemeinsamen Pill-Button
+  statt des für die Startseite gedachten, hier unvollständigen Rasterzeilen-Links.
+  Er kombiniert die Prio-1-Farbfläche mit der Außenhöhe und dem horizontalen Padding des
+  Prio-2-Headerbuttons. Die 1,2-rem/700-Beschriftung wahrt dabei den Großtextkontrast;
+  reduziertes Block-Padding hält die Außenhöhe kompakt. Der Pfeilabstand kommt vom
+  vorhandenen gemeinsamen Pill-Gap, nicht von einer neuen Buttonvariante.
+  Migration ``0016`` ergänzt dafür einen optionalen Text pro Projekt; leer bleibt der
+  vorhandene globale Standard wirksam. Der Button ist weiterhin semantisch ein Link.
+- Redaktionelle Inline-Links verwenden nun dieselbe 600er Stärke wie die Leistungswerte.
+  Bei Hover und Tastaturfokus färben sich Text und einfahrende Haarlinie Tangerine. Eine
+  gleichzeitig gesetzte Link-, Fett- und ``Kein Umbruch``-Auszeichnung bleibt als ein
+  zusammenhängender ``span[data-no-break]`` erhalten; ein frischer Render bestätigt
+  ``white-space: nowrap`` für den vollständigen markierten Namen.
+- Das Wagtail-Hauptmenü bietet direkte Shortcuts ``Startseite`` und ``Projekte``. Die
+  aufklappbare Projektliste enthält ``Neues Projekt`` sowie alle bearbeitbaren Projekte;
+  Entwürfe bleiben dort erreichbar, erscheinen aber nicht öffentlich. Projekt-Hero und
+  Teaserkarten verwenden Wagtails Focal-Point-fähige ``fill``-Renditions. Bilder für
+  Case Study und Galerie werden als semantische StreamField-Blöcke eingefügt und
+  proportional ohne Beschnitt ausgegeben.
+- Das Wagtail-Admin verwendet über einen manifestfähigen globalen Stylesheet-Hook die
+  Portfolio-Palette Creme/Warm-Schwarz/Tangerine. Das Theme überschreibt ausschließlich
+  semantische Wagtail-Farbvariablen, unterstützt Light, Dark, System und Forced Colors
+  und lässt die responsive Admin-Geometrie unangetastet. Für kleinen Linktext und
+  aktive Navigation wird eine kontraststärkere dunkle Tangerine-Variante verwendet;
+  die großen Untermenüflächen nutzen das freigegebene Warmgrau `#393734`, das sich vom
+  warm-schwarzen Hauptmenü absetzt, mit cremefarbenem aktiven und gedämpftem hell-warmem
+  inaktiven Linktext. Bestätigende Hauptaktionen wie Speichern,
+  Veröffentlichen und Hinzufügen verwenden das freigegebene Smaragdgrün mit
+  warm-schwarzem Text.
+- Das Admin-Theme hängt am offiziellen globalen Wagtail-CSS-Hook und ersetzt keine
+  Wagtail-Templates. Wagtail bleibt auf die `7.4`-Minorserie begrenzt; ein fail-closed
+  Test prüft bei Updates alle verwendeten semantischen Farbvariablen und die wenigen
+  Untermenü-Selektoren gegen das tatsächlich installierte Wagtail-CSS. Im lokalen
+  DEBUG-Betrieb verhindert eine aus dem Dateiänderungszeitpunkt gebildete Query-Version,
+  dass Browser nach Theme-Änderungen eine alte Admin-CSS aus ihrem Cache zeigen.
+- Dieselbe rein lokale Cache-Sicherung gilt nun für alle öffentlichen Wagtail-CSS-
+  Dateien: `versioned_static` ergänzt im DEBUG-Betrieb deren Dateiänderungszeitpunkt,
+  lässt die manifest-gehashte Produktions-URL aber unverändert. Damit zeigt auch eine
+  normale Aktualisierung auf `127.0.0.1` zuverlässig aktuelle Regeln wie
+  `white-space: nowrap` für kombinierte Link-/Fett-/Kein-Umbruch-Auszeichnungen.
+- Die dunklen Draftail-Werkzeugleisten erhalten lokal cremefarbene Bedienelemente;
+  dadurch bleiben Fett- und weitere Rich-Text-Aktionen sichtbar, ohne die warm-schwarze
+  Beschriftung der grünen Bestätigungsbuttons zu verändern.
 - Alle neun Projektseiten bei 320, 360, 390, 414, 476, 576, 736, 832 und 833 px geprüft:
   Jedes konkrete Teaserpaar ist genau dann zweispaltig, wenn beide Titel-/Pfeilzeilen
   hineinpassen, andernfalls einspaltig; nirgends Titel-/Pfeilkollision oder horizontaler
@@ -331,9 +574,10 @@ von einem konkreten visuellen Änderungswunsch ausgehen.
   „Was bleibt.“, „Weitersehen.“ und Kontaktheadline 42/48/48 px; bei 1280 px bleiben die
   ersten beiden mit 102,4 px gegenüber der 76,8-px-Kontaktheadline bewusst groß.
 - `git diff --check`: bestanden.
-- Vollständige Django-Suite: 9 Tests bestanden; 50 Tests konnten ohne laufendes lokales
-  PostgreSQL ausschließlich beim Datenbank-Setup nicht starten. Das betraf nicht die
-  statischen Prototypänderungen.
+- Aktueller vollständiger daemonloser Django-Lauf: 259 Tests bestanden, zwei separat gegen
+  Colima bestandene Docker-Integrationstests übersprungen; ausschließlich der bekannte
+  Webmentions-Test `test_webmention_display_template_tags` schlägt fehl, weil er auf einer
+  Liste noch `count()` ohne Argument aufruft.
 
 ## Repository-Hinweis
 

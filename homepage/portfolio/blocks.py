@@ -10,8 +10,76 @@ from wagtail import blocks
 from wagtail.blocks import StructBlockValidationError
 from wagtail.images.blocks import ImageBlock
 
-INLINE_RICH_TEXT_FEATURES = ["bold", "italic", "link"]
-BODY_RICH_TEXT_FEATURES = ["bold", "italic", "ol", "ul", "link"]
+INLINE_RICH_TEXT_FEATURES = ["bold", "italic", "link", "no-break"]
+BODY_RICH_TEXT_FEATURES = ["bold", "italic", "ol", "ul", "link", "no-break"]
+
+
+class LegalContactBlock(blocks.StructBlock):
+    """A structural reference to the site's one public contact address."""
+
+    prefix = blocks.CharBlock(
+        required=False,
+        max_length=240,
+        label="Text vor dem Link",
+        help_text=(
+            "Zum Beispiel „E-Mail:“; Abstand und globale Adresse werden automatisch ergänzt."
+        ),
+    )
+    label = blocks.CharBlock(
+        required=False,
+        max_length=160,
+        label="Abweichender Linktext",
+        help_text="Leer lassen, um die globale Kontaktadresse sichtbar auszugeben.",
+    )
+    suffix = blocks.CharBlock(
+        required=False,
+        max_length=120,
+        label="Text nach dem Link",
+        help_text="Zum Beispiel ein abschließender Punkt.",
+    )
+
+    class Meta:
+        icon = "mail"
+        label = "Globale Kontaktadresse"
+
+
+class LegalCopyBlock(blocks.StreamBlock):
+    """Semantic copy fragments used inside one legal section."""
+
+    paragraph = blocks.RichTextBlock(
+        features=INLINE_RICH_TEXT_FEATURES,
+        label="Absatz",
+    )
+    address = blocks.RichTextBlock(
+        features=INLINE_RICH_TEXT_FEATURES,
+        label="Adresse",
+    )
+    note = blocks.CharBlock(
+        max_length=240,
+        label="Stand oder Hinweis",
+    )
+    contact = LegalContactBlock()
+
+    class Meta:
+        label = "Inhalt"
+
+
+class LegalSectionBlock(blocks.StructBlock):
+    """A titled legal section whose document heading stays template-owned."""
+
+    heading = blocks.CharBlock(max_length=160, label="Überschrift")
+    copy = LegalCopyBlock(label="Text")
+
+    class Meta:
+        icon = "doc-full"
+        label = "Rechtsabschnitt"
+
+
+class LegalSectionsBlock(blocks.StreamBlock):
+    section = LegalSectionBlock()
+
+    class Meta:
+        label = "Rechtstext"
 
 
 class ProjectGalleryImageValue(blocks.StructValue):
@@ -110,18 +178,25 @@ class GalleryValue(blocks.StructValue):
     def mobile_rows(self):
         """Group only adjacent ordinary portraits; all other items stand alone."""
 
-        images = list(self.get("images") or [])
+        images = self.get("images")
+        if not images:
+            return ()
+
+        # Keep each ListBlock item bound to ProjectGalleryImageBlock so templates
+        # can render it through that block's declared Meta.template. Iterating a
+        # ListValue directly returns only its StructValue and loses the binding.
+        images = list(images.bound_blocks)
         rows = []
         index = 0
         while index < len(images):
             image = images[index]
             next_image = images[index + 1] if index + 1 < len(images) else None
             if (
-                not image.is_large
-                and image.is_portrait
+                not image.value.is_large
+                and image.value.is_portrait
                 and next_image is not None
-                and not next_image.is_large
-                and next_image.is_portrait
+                and not next_image.value.is_large
+                and next_image.value.is_portrait
             ):
                 rows.append((image, next_image))
                 index += 2
@@ -180,19 +255,19 @@ class StatBlock(blocks.StructBlock):
 
     class Meta:
         icon = "order"
-        label = "Ergebnis"
+        label = "Mehrwert"
 
 
 class StatsBlock(blocks.StructBlock):
     items = blocks.ListBlock(
         StatBlock(),
         min_num=1,
-        label="Ergebnisse",
+        label="Mehrwert",
     )
 
     class Meta:
         icon = "list-ul"
-        label = "Ergebnisse"
+        label = "Mehrwert"
         template = "portfolio/blocks/stats.html"
 
 
@@ -203,8 +278,31 @@ class TestimonialBlock(blocks.StructBlock):
 
     class Meta:
         icon = "openquote"
-        label = "Testimonial"
+        label = "Kundenstimmen"
         template = "portfolio/blocks/testimonial.html"
+
+
+PROJECT_BLOCK_REGION_CASE_STUDY = "case-study"
+PROJECT_BLOCK_REGION_MEDIA = "media"
+PROJECT_BLOCK_REGION_RESULTS = "results"
+PROJECT_BLOCK_REGION_TESTIMONIAL = "testimonial"
+
+PROJECT_BLOCK_REGIONS = {
+    "statement": PROJECT_BLOCK_REGION_CASE_STUDY,
+    "challenge_solution": PROJECT_BLOCK_REGION_CASE_STUDY,
+    "full_width_image": PROJECT_BLOCK_REGION_MEDIA,
+    "image_pair": PROJECT_BLOCK_REGION_MEDIA,
+    "portrait_duo": PROJECT_BLOCK_REGION_MEDIA,
+    "gallery": PROJECT_BLOCK_REGION_MEDIA,
+    "stats": PROJECT_BLOCK_REGION_RESULTS,
+    "testimonial": PROJECT_BLOCK_REGION_TESTIMONIAL,
+}
+
+
+def get_project_block_region(block_type):
+    """Place every project block once, keeping future types visible by default."""
+
+    return PROJECT_BLOCK_REGIONS.get(block_type, PROJECT_BLOCK_REGION_CASE_STUDY)
 
 
 class ProjectBodyBlock(blocks.StreamBlock):

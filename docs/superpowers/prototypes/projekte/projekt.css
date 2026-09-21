@@ -315,35 +315,125 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .project-hero > .eyebrow,
 .block > .eyebrow:has(+ .block-title) { margin-block-end: 0; }
 .project-hero h1 {
-  max-inline-size: 12ch;
+  max-inline-size: 18ch;
+  max-inline-size: min(18ch, 100%);
   margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 var(--space-title-content) calc(var(--inset) - .082em);
   font-size: var(--headline-xl);
   font-weight: 600;
-  line-height: .88;
+  line-height: 1.03;
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
   text-wrap: balance;
-  -webkit-hyphens: auto;
-  hyphens: auto;
+  -webkit-hyphens: manual;
+  hyphens: manual;
   overflow-wrap: normal;
 }
-.intro-grid, .case-row, .result-grid, .more-grid, .footer-grid {
+.case-row, .result-grid, .more-grid, .footer-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: var(--project-grid-columns, repeat(4, 1fr));
+}
+.intro-grid {
+  --intro-threshold: 52rem;
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 2.5rem;
+}
+.intro-grid > * {
+  flex-basis: calc((var(--intro-threshold) - 100%) * 999);
+  flex-grow: 1;
 }
 .project-lead {
-  grid-column: 1 / 3;
   min-inline-size: 0;
+  max-inline-size: 100%;
+  /* Keep the stacked tablet/mobile lead at full measure. Once the intrinsic
+     intro switcher has room for both halves, reserve a little breathing room. */
+  max-inline-size: calc(100% - clamp(0rem, calc((100cqi - var(--intro-threshold)) * 999), 2rem));
   margin: 0;
-  padding: 0 var(--inset);
   font-size: var(--type-lead);
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
-.project-meta { min-inline-size: 0; grid-column: 3 / -1; display: grid; grid-template-columns: repeat(2, 1fr); margin: 0; }
-.project-meta div { min-inline-size: 0; padding: 0 var(--inset) 1.4rem; }
-.project-meta dt { color: var(--muted); font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.project-summary {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  align-items: flex-start;
+  gap: 1.875rem;
+  padding-inline: var(--inset);
+}
+.project-live-link {
+  display: inline-flex;
+  max-inline-size: 100%;
+  align-items: center;
+  gap: .7rem;
+  margin-block-start: auto;
+  padding-block: .425rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.project-live-link .pill-label {
+  min-inline-size: 0;
+  white-space: nowrap;
+}
+.project-meta {
+  --meta-threshold: 16rem;
+  display: flex;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  margin: 0;
+}
+.project-meta > dl {
+  min-inline-size: 0;
+  flex-basis: calc((var(--meta-threshold) - 100%) * 999);
+  flex-grow: 1;
+  margin: 0;
+  padding-inline: var(--inset);
+}
+/* The static no-JS project fallback retains its compact definition-list markup. */
+dl.project-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
+.project-meta__facts { display: flex; flex-direction: column; gap: 1.4rem; }
+.project-meta dt {
+  color: var(--muted);
+  font-size: var(--type-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  /* Match the visible cap edge of the larger lead, not merely its line box. */
+  translate: 0 -.0625rem;
+}
 .project-meta dd { margin: .35rem 0 0; font-size: var(--type-subline); font-weight: 600; }
+.marker-list,
+.rich-text ul {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.marker-list > li,
+.rich-text ul > li {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: .55rem;
+}
+.marker-list > li::before,
+.rich-text ul > li::before {
+  content: "";
+  flex: 0 0 auto;
+  inline-size: 0;
+  block-size: 0;
+  margin-block-start: .48em;
+  border-block: .24rem solid transparent;
+  border-inline-start: .34rem solid var(--ink);
+}
 
 .media-placeholder {
   display: grid;
@@ -375,7 +465,8 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   -webkit-hyphens: auto;
   hyphens: auto;
 }
-.case-row + .case-row { margin-block-start: clamp(3rem, 7vw, 6rem); }
+.case-row { align-items: start; }
+.case-row + .case-row { margin-block-start: clamp(2rem, 3.5vw, 3rem); }
 .case-label {
   grid-column: 1 / 2;
   margin: 0;
@@ -426,17 +517,18 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .results .eyebrow, .results .result-copy { color: var(--dark-muted); }
 .results .eyebrow::before { color: var(--tangerine); }
 .result-grid { border-block: 1px solid rgba(240, 236, 226, .18); }
-.result { min-inline-size: 0; min-block-size: 11rem; padding: clamp(1.2rem, 2.5vw, 2rem) var(--inset); border-inline-end: 1px solid rgba(240, 236, 226, .18); }
+.result { display: flex; flex-direction: column; min-inline-size: 0; min-block-size: 11rem; padding: clamp(1.2rem, 2.5vw, 2rem) var(--inset); border-inline-end: 1px solid rgba(240, 236, 226, .18); }
 .result:last-child { border-inline-end: 0; }
 .result strong { display: block; font-size: var(--headline-m); font-weight: 600; line-height: 1; }
 .result span { display: block; margin-block-start: .7rem; color: var(--dark-muted); font-size: var(--type-subline); }
 
 .quote { margin: 0; padding-inline: var(--inset); }
+.quote blockquote { margin: 0; }
 .quote p { max-inline-size: 30ch; margin: 0; font-size: var(--type-case-large); font-weight: 500; line-height: 1.08; }
-.quote footer { margin-block-start: 1.5rem; color: var(--muted); font-size: var(--type-subline); }
+.quote figcaption { margin-block-start: 1.5rem; color: var(--muted); font-size: var(--type-subline); }
 .more-grid { border-block-start: 1px solid var(--rule); border-inline-start: 1px solid var(--rule); }
 .more-card {
-  grid-column: span 2;
+  grid-column: var(--more-card-grid-column, span 2);
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
@@ -463,7 +555,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 }
 .more-card .frame::before,
 .more-card .frame::after {
-  content: "";
+  content: var(--frame-placeholder-content, "");
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom right, transparent calc(50% - .5px), var(--rule-soft) 50%, transparent calc(50% + .5px));
@@ -621,7 +713,7 @@ footer.site a:focus-visible { outline-color: var(--dark-ink); }
 
 @media (max-width: 52rem) {
   .header-actions { gap: clamp(.25rem, calc(-1.25rem + 10vw), .75rem); }
-  .intro-grid, .case-row { grid-template-columns: 1fr; }
+  .case-row { grid-template-columns: 1fr; }
   /* Ergebnisse bilden mobil ein kompaktes 2×n-Raster. Nur ein tatsächlicher
      Inhaltsüberlauf setzt per projekt.js die einspaltige Stapelklasse. */
   .result-grid {
@@ -643,10 +735,10 @@ footer.site a:focus-visible { outline-color: var(--dark-ink); }
   /* Die beiden Folgeprojekte bleiben auch im Mobile-Layout nebeneinander und belegen
      weiterhin je zwei Grundrasterspalten. Nur wenn die konkret gerenderte Titel-/Pfeilzeile
      einer dieser beiden Karten nicht hineinpasst, ergänzt projekt.js die Stapelklasse. */
-  .more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .more-grid.more-grid-stacked { grid-template-columns: 1fr; }
-  .project-lead, .project-meta, .case-label, .case-copy, .more-card { grid-column: auto; }
-  .project-meta { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); margin-block-start: 2.5rem; }
+  .more-grid { --project-grid-columns: repeat(2, minmax(0, 1fr)); }
+  .more-grid.more-grid-stacked { --project-grid-columns: 1fr; }
+  .case-label, .case-copy { grid-column: auto; }
+  .more-card { --more-card-grid-column: auto; }
   .case-copy { margin-block-start: 1rem; }
   /* Ein Hochformat ohne unmittelbaren Partner schließt die Zeile vollbreit. Nur vom
      Template paarweise markierte Hochformate teilen sich eine Zeile; bei ungerader

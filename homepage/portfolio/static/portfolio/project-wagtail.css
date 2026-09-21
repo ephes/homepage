@@ -1,0 +1,204 @@
+/*
+ * Adapter between Wagtail's semantic StreamField markup and the approved project
+ * prototype. Shared design and shell rules continue to come from the canonical
+ * prototype stylesheets; this file contains only server-rendering differences.
+ */
+
+@layer pages {
+body[data-project] {
+  /* The project prototype uses the browser's German hyphenation defaults.
+     The stricter homepage limit must not alter its approved line wraps. */
+  hyphenate-limit-chars: auto;
+  --site-header-block-size: var(--header-h, calc(4.6rem + 1px));
+}
+
+/* The canonical contact stack owns its rhythm through flex gap. */
+body[data-project] .contact .stack > * + * {
+  margin-block-start: 0;
+}
+
+/* Wagtail RichText adds paragraphs inside semantic address elements. Keep the
+   canonical legal rhythm while leaving those server-rendering wrappers in the
+   adapter. The local custom property lets this layered bridge feed the
+   unlayered canonical paragraph rule without an !important override. */
+.legal-copy address p {
+  margin-block: 0;
+}
+
+.privacy-page .legal-copy address p {
+  margin-block: 0;
+}
+
+.privacy-page .legal-copy address + .legal-contact {
+  --legal-copy-paragraph-margin: 1.5em 0;
+  margin-block: 1.5em 0;
+}
+
+body[data-project] .pagegrid > * {
+  position: absolute;
+}
+
+body[data-project] .pagegrid .pagegrid__pads {
+  z-index: 18;
+  inset-block: 0;
+  inset-inline: var(--pad, clamp(1.25rem, 4vw, 4rem));
+  background-image: var(--line-strong), var(--line-strong);
+  background-position: left top, right top;
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+}
+
+body[data-project] .pagegrid .pagegrid__cols {
+  z-index: -1;
+  inset-block: 0;
+  inset-inline: var(--pad, clamp(1.25rem, 4vw, 4rem));
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+body[data-project] .pagegrid .pagegrid__cols > i {
+  background-image: var(--line-soft);
+  background-position: right top;
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+  -webkit-mask-image: var(--dashes);
+  mask-image: var(--dashes);
+}
+
+body[data-project] .pagegrid .pagegrid__cols > i:last-child {
+  background-image: none;
+}
+
+.project-lead > :first-child {
+  margin-block-start: 0;
+}
+
+.project-lead > :last-child {
+  margin-block-end: 0;
+}
+
+/* RichText wraps the canonical case-study paragraphs in a div. Remove that
+   wrapper's default margins so its visible top edge matches the label. */
+.case-copy > :first-child {
+  margin-block-start: 0;
+}
+
+.case-copy > :last-child {
+  margin-block-end: 0;
+}
+
+.project-hero-media {
+  inline-size: 100%;
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  border-block: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--warm-black) 6%, var(--bg));
+}
+
+.project-hero-media img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.project-image {
+  margin-inline: 0;
+  background: color-mix(in srgb, var(--warm-black) 6%, var(--bg));
+}
+
+.project-image img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.project-image figcaption {
+  padding: 0.5rem calc(var(--pad, clamp(1.25rem, 4vw, 4rem)) + var(--inset));
+}
+
+.project-image-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--rule);
+}
+
+.project-image-pair .project-image {
+  min-inline-size: 0;
+}
+
+.project-image-pair--portrait img {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.project-gallery .project-image {
+  margin: 0;
+}
+
+.project-gallery .project-image img {
+  inline-size: 100%;
+}
+
+.project-gallery .project-image figcaption {
+  padding-inline: var(--inset);
+}
+
+.project-results .result-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-testimonial figure {
+  margin: 0;
+}
+
+.related-project-card.tile,
+.more-card.related-project-card {
+  --space: 0;
+  border-block-start: 0;
+  border-inline-start: 0;
+}
+
+.more-card .related-project-card__placeholder {
+  font-weight: 600;
+}
+
+/* Keep the approved mobile break at the semantic soft-hyphen opportunity. */
+.more-projects .block-title {
+  -webkit-hyphens: manual !important;
+  hyphens: manual !important;
+}
+
+.related-project-card__frame img,
+.related-project-card__frame picture,
+.related-project-card__frame picture > img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.related-project-card__frame.frame--image {
+  --frame-placeholder-content: none;
+}
+
+.error-projects .more-grid {
+  --project-grid-columns: repeat(2, minmax(0, 1fr));
+}
+
+.error-projects .more-card {
+  --more-card-grid-column: auto;
+}
+}
+
+@layer motion {
+  @media (prefers-reduced-motion: reduce) {
+    .related-project-card,
+    .related-project-card .tile-depth {
+      transition: none;
+    }
+  }
+}

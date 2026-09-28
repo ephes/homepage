@@ -16,6 +16,8 @@ Contents:
    backup_restore
    media_utils
    portfolio_wagtail
+   weeknote_links
+   seo
    deploy
    tests
    resume_integration

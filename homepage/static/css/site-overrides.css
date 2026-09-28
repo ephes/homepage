@@ -5,7 +5,7 @@
   --cast-surface: #ffffff;
 
   --cast-text: #212529;
-  --cast-text-muted: #6c757d;
+  --cast-text-muted: #626a72;
   --cast-text-light: #adb5bd;
 
   --cast-accent: #0066cc;
@@ -120,4 +120,82 @@
 
 .cast-hero .intro.lead p {
   margin-bottom: 0;
+}
+
+.post-card .post-card-title {
+  font-size: 1.9rem;
+  font-weight: var(--cast-font-weight-bold);
+  line-height: 1.18;
+}
+
+/* Weeknote link collections keep the old heading + ul rhythm with structured metadata. */
+:is(.post-body, .post-card-excerpt) .weeknote-links {
+  margin-block: var(--s1);
+  --weeknote-link-description-color: color-mix(in srgb, var(--cast-text) 92%, var(--cast-text-muted));
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-heading {
+  margin-block-end: var(--s-2);
+}
+
+.post-card .post-card-excerpt-label,
+.post-card .post-card-excerpt .weeknote-link-heading,
+.post-card .post-card-excerpt :is(h2, h3, h4, h5, h6),
+.post-card .post-card-excerpt :is(.block-paragraph, .block-heading) :is(h2, h3, h4, h5, h6) {
+  color: var(--cast-text-muted);
+  color: color-mix(in srgb, var(--cast-text) 72%, var(--cast-text-muted));
+  font-size: 1.2rem;
+  font-weight: var(--cast-font-weight-bold);
+  line-height: 1.3;
+  margin-block: var(--s1) var(--s-2);
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-list {
+  padding-inline-start: 1.25rem;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-item {
+  margin-block: 0.75rem;
+  padding-inline-start: 0.1rem;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-head {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.55rem;
+  margin: 0;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-title {
+  font-weight: 500;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-source {
+  color: var(--cast-text-muted);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-source a {
+  color: inherit;
+  text-decoration-color: currentColor;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-description {
+  color: var(--weeknote-link-description-color);
+  font-size: 0.96em;
+  line-height: 1.55;
+  margin-block-start: 0.1rem;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-description p {
+  margin: 0;
+}
+
+:is(.post-body, .post-card-excerpt) .weeknote-link-description p + p {
+  display: block;
+  margin-block-start: 0.35rem;
 }

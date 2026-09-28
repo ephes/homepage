@@ -106,6 +106,39 @@ the app suites. These integration contracts exercise the editorial cover
 override, anonymous/token/owner access, persisted edits, dependency and homepage
 static assets, and Cast/portfolio coexistence in one Wagtail site tree.
 
-The following package brings this combined branch up to date with
-``origin/main``. It requires its own dependency, migration, browser and
-independent review checks before main-merge readiness is claimed.
+Main reconciliation — 2026-09-28
+--------------------------------
+
+The combined branch incorporates ``origin/main`` at ``1f8e4a1``, including its
+Django 6.1 and Wagtail 8.0 requirements, weeknote blocks and conversion command,
+Micropub fixes, Sentry environment selection and documentation workflow. The
+reviewed django-resume revision, portfolio static finder, Brotli compression,
+editorial overrides and closed-registration policy remain in place. The lock
+is regenerated from main's dependency baseline plus these explicit additions.
+
+This is integration preparation, not a deployment or a merge into ``main``.
+Validate the full homepage test suite, actual migrations, compressed manifest
+assets, both portfolio browser profiles and real Wagtail admin light/dark/system
+themes before accepting the branch. The old webmention list-count test is fixed
+by main and must no longer be treated as an expected failure.
+
+Verification on Python 3.14.4, Django 6.1.1 and Wagtail 8.0: the full homepage
+suite passes (365 tests and four subtests); two container-only static tests are
+skipped because no Docker daemon is available. The disposable database upgrades
+successfully from the previous dependency baseline, portfolio migration checks
+report no changes, and production collectstatic resolves hashed assets with
+gzip/Brotli sidecars. Sphinx builds with warnings treated as errors.
+The real-page smoke covers seven routes at 1440, 800 and 375 pixels, and four
+admin appearance combinations: light, dark, system with a light OS preference,
+and system with a dark OS preference. It also checks one-page CV/cover PDF
+generation. Its only overflow findings are
+the two existing heading cases below; it is not an unconditional reflow pass.
+
+The disposable browser fixture uses synthetic content and images. It is not
+visual acceptance of real editorial content. Two narrow-screen heading overflows
+(``Buchgestaltung`` without a manual soft hyphen and ``Datenschutz``) reproduce
+identically in the canonical prototype and Wagtail at 375 pixels: the document
+does not scroll horizontally, but heading text overflows its box.
+They are existing typography follow-ups, not changes
+introduced by this integration; no unapproved global font-size or wrapping
+redesign is included here.

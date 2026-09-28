@@ -106,9 +106,7 @@ def micropub_preview_view(request):
     # Format blocks for display
     preview_html = []
     for block_type, value in blocks:
-        if block_type == "heading":
-            preview_html.append(f"<h3>{value}</h3>")
-        elif block_type == "paragraph":
+        if block_type == "paragraph":
             preview_html.append(value)
         elif block_type == "code":
             lang = value.get("language", "")

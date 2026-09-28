@@ -164,7 +164,8 @@ as a query version so theme changes cannot be masked by a stale browser cache.
 Dark Draftail toolbars receive a scoped cream control color so rich-text buttons remain
 visible without changing the warm-black labels on green confirming actions.
 
-Wagtail is constrained to the ``7.4`` minor series in ``pyproject.toml``. The admin
+Wagtail is constrained to the ``8.0`` minor series in ``pyproject.toml`` after the
+2026-09-28 main integration (previously ``7.4``). The admin
 theme uses the supported ``insert_global_admin_css`` hook and does not copy or replace
 Wagtail templates. A compatibility test reads the installed Wagtail core stylesheet
 and fails with an upgrade-specific message if any consumed semantic color property or

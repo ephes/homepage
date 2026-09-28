@@ -12,6 +12,13 @@
   {% webmention_endpoint_link %}
 {% endblock %}
 
+{% block social_meta %}
+  {{ block.super }}
+  {% if blog.slug == "ephes_blog" %}
+    <meta name="twitter:creator" content="@ephes">
+  {% endif %}
+{% endblock social_meta %}
+
 {% block content %}
   <article class="post-content cast-reading">
     {% include "./post_body.html" with render_detail=True %}

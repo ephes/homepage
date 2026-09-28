@@ -140,6 +140,21 @@ The deployment creates a ``.env`` file on the server with all necessary environm
 
 These are stored in the ``secrets*.yml`` files which should never be committed to git.
 
+.. _sentry-environment:
+
+Sentry Environment
+~~~~~~~~~~~~~~~~~~
+
+Staging and production both run ``config.settings.production``. The Sentry SDK
+tags events ``production`` whenever no environment is supplied, so staging errors
+would otherwise be indistinguishable from production ones.
+
+``DJANGO_SENTRY_ENVIRONMENT`` sets the tag explicitly and defaults to
+``production`` when unset. The ops-control playbook derives it from the target
+host and renders it into ``.env`` via the ``wagtail_deploy`` role
+(``wagtail_django_sentry_environment``), so staging deploys report
+``environment=staging``.
+
 Static Files
 ~~~~~~~~~~~~
 

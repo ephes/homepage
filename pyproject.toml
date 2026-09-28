@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "argon2-cffi",
-    "django>=6.0,<7.0",
+    "beautifulsoup4",
+    "django>=6.1,<7.0",
     "boto3",
     "cast-vue",
     "cast-bootstrap5",
@@ -15,6 +16,7 @@ dependencies = [
     "django-tasks-db==0.12.0",
     "django-allauth",
     "django-anymail[mailgun]",
+    "django-environ",
     "django-extensions",
     "django-indieweb",
     "django-proxy",
@@ -28,13 +30,12 @@ dependencies = [
     "python-dotenv",
     "pyzmq>=25.1.1",
     "sentry-sdk",
-    "wagtail>=7.4,<7.5",
+    "wagtail>=8.0,<8.1",
     "whitenoise[brotli]",
 ]
 
 [dependency-groups]
 dev = [
-    "beautifulsoup4",
     "black",
     "coverage",
     "factory-boy",
@@ -77,6 +78,7 @@ omit = ["apps/*/tests/*", "apps/*/migrations/*"]
 command_line = "-m pytest"
 
 [tool.pytest.ini_options]
+testpaths = ["homepage"]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 filterwarnings = [
     # "ignore::django.utils.deprecation.RemovedInDjango60Warning",

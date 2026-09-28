@@ -1,16 +1,26 @@
 {% load wagtailcore_tags %}
 {% load i18n %}
 {% load indieweb_tags %}
+{% load post_body_blocks %}
 
 {% if page %}
   <article class="{% if render_detail %}post-detail{% else %}post-card{% endif %} h-entry">
     <header>
-      <h2 class="p-name {% if render_detail %}post-title{% else %}post-card-title{% endif %}">
-        <a class="u-url" href="{{ page.page_url }}"{% if not render_detail %} data-cast-prefetch{% endif %}>{{ page.title }}</a>
-        {% if render_for_feed and comments_are_enabled %}
-          {% translate "(click here to comment)" %}
-        {% endif %}
-      </h2>
+      {% if render_detail %}
+        <h1 class="p-name post-title">
+          <a class="u-url" href="{{ page.page_url }}">{{ page.title }}</a>
+          {% if render_for_feed and comments_are_enabled %}
+            {% translate "(click here to comment)" %}
+          {% endif %}
+        </h1>
+      {% else %}
+        <h2 class="p-name post-card-title">
+          <a class="u-url" href="{{ page.page_url }}" data-cast-prefetch>{{ page.title }}</a>
+          {% if render_for_feed and comments_are_enabled %}
+            {% translate "(click here to comment)" %}
+          {% endif %}
+        </h2>
+      {% endif %}
     <!-- link is on one line to avoid underlined whitespace -->
       <div class="post-card-meta">
         <a href="{{ page.page_url }}"{% if not render_detail %} data-cast-prefetch{% endif %}><time class="dt-published" datetime='{{ page.visible_date|date:"c" }}'>{{ page.visible_date|date }}</time></a>
@@ -51,7 +61,7 @@
             {% for block in block.value %}
             {# this is a block of content like image, gallery or audio #}
               <section class="block-{{ block.block_type }}">
-                {% include_block block %}
+                {% render_post_body_child block %}
               </section>
             {% endfor %}
           </section>

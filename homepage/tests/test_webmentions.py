@@ -182,7 +182,7 @@ class WebmentionIntegrationTest(TestCase):
 
         # Check the context returned by the tag
         self.assertIn("webmentions", context)
-        self.assertEqual(context["webmentions"].count(), 2)
+        self.assertEqual(len(context["webmentions"]), 2)
         self.assertEqual(context["target_url"], self.post_full_url)
 
     def test_webmention_section_hidden_when_no_webmentions(self):

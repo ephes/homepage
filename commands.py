@@ -159,6 +159,19 @@ def jupyterlab():
 
 
 @cli.command()
+def docs():
+    """Build the documentation and fail on Sphinx warnings."""
+    commands = [
+        ["make", "-C", "docs", "clean"],
+        ["make", "-C", "docs", "html", "SPHINXOPTS=-W --keep-going"],
+    ]
+    for command in commands:
+        result = subprocess.run(command)
+        if result.returncode:
+            raise typer.Exit(result.returncode)
+
+
+@cli.command()
 def update(upgrade: bool = typer.Option(True, "--upgrade/--no-upgrade")):
     """
     Update the requirements using uv.

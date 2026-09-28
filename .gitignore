@@ -330,3 +330,6 @@ backups/
 .vscode
 # Added by specsync
 specs
+
+# Local design source material (kept out of the repo)
+_Material/

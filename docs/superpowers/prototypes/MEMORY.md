@@ -5,8 +5,8 @@ Stand: 23. September 2026
 ## Wiedereinstieg
 
 - Arbeitsbranch: `portfolio-site`
-- Letzter vollständiger reiner Prototypstand: Commit `911c1d1`.
-- Aktueller veröffentlichter Wagtail-Paritätsstand: Commit `c52e2c4`. Der vollständige
+- Letzter vollständiger reiner Prototypstand: Commit `3bd7166`.
+- Aktueller veröffentlichter Wagtail-Paritätsstand: Commit `cfd49db`. Der vollständige
   Paritätsslice wurde in der laufenden Vorschau visuell abgenommen, separat mit
   `REVIEW: CLEAN` geprüft und veröffentlicht. Neuere sichtbare Änderungen bleiben bis
   zur nächsten Abnahme uncommitted.

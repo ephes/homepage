@@ -16,6 +16,7 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Locale, Page, PageViewRestriction, Site
 
 from homepage.portfolio.models import (
+    LegalPageSettings,
     PortfolioAboutItem,
     PortfolioClient,
     PortfolioIndexPage,
@@ -501,6 +502,49 @@ def test_homepage_editor_hides_fixed_moin_and_handwriting_fields():
         "clients_annotation",
         "contact_annotation",
     }.isdisjoint(editor_field_names)
+
+
+def test_site_image_fields_are_editorial_and_keep_the_approved_fallbacks_optional():
+    direct_panels = []
+    for panel in PortfolioIndexPage.content_panels:
+        direct_panels.extend(getattr(panel, "children", [panel]))
+    homepage_fields = {
+        panel.field_name for panel in direct_panels if hasattr(panel, "field_name")
+    }
+    legal_fields = {
+        panel.field_name
+        for panel_group in LegalPageSettings.panels
+        for panel in getattr(panel_group, "children", [panel_group])
+        if hasattr(panel, "field_name")
+    }
+
+    assert {"hero_background_image", "about_portrait_image"}.issubset(
+        homepage_fields
+    )
+    assert "imprint_visual_image" in legal_fields
+    assert PortfolioIndexPage._meta.get_field("hero_background_image").blank is True
+    assert PortfolioIndexPage._meta.get_field("about_portrait_image").blank is True
+    assert LegalPageSettings._meta.get_field("imprint_visual_image").blank is True
+
+
+def test_homepage_portrait_needs_explicit_alt_text_when_selected():
+    index = make_portfolio_tree()
+    index.about_portrait_image = make_image("Porträt")
+
+    with pytest.raises(ValidationError) as error:
+        index.full_clean()
+
+    assert "about_portrait_image_alt" in error.value.message_dict
+
+    index.about_portrait_image_alt = "Katharina Wersdörfer im Porträt"
+    index.full_clean()
+
+
+def test_homepage_portrait_alt_validation_honors_form_exclusions():
+    index = make_portfolio_tree()
+    index.about_portrait_image = make_image("Porträt mit Formularfehler")
+
+    index.full_clean(exclude={"about_portrait_image_alt"})
 
 
 def test_draft_project_context_has_a_complete_project_counter():

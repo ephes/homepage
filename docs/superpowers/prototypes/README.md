@@ -55,7 +55,7 @@ Scrollkomfort sowie inhaltsabhängige Überlaufmessungen. Die sieben optionalen
 Startseiten-Verfeinerungen nach dem Hero initialisieren innerhalb eigener Fehlergrenzen:
 ein Fehler in Menü, Header-Messung, Reels, About-Zeilen, Kachelkomfort, Cursor oder
 Reduced-Motion-SMIL kann keine der nachfolgenden Verfeinerungen abschalten. Die Migrationen reichen bis
-`0022`. Migration `0011` ergänzt die per Wagtail-Site editierbaren, semantisch
+`0023`. Migration `0011` ergänzt die per Wagtail-Site editierbaren, semantisch
 strukturierten Rechtstexte mit kanonischen Defaults; die folgenden Migrationen
 zentralisieren wiederkehrende Texte, vervollständigen die Projektinhalte und machen
 Kategorien, Zeiträume, Website-Buttontexte sowie die Startseiten-Hero-Kacheln
@@ -65,6 +65,8 @@ historischen Legal-URL-Spalten aus dem Editor und sperrt die öffentlichen Ziele
 eingebauten benannten Routen; die Spalten bleiben nur aus Kompatibilitätsgründen im
 Datenmodell. `0022` ersetzt gespeicherte Legal-E-Mail-Platzhalter durch einen
 strukturellen Kontaktblock, der die globale Site-Adresse erst beim Rendern einsetzt.
+`0023` ergänzt die optionalen, fokalpunktgesteuerten Bildwahlen für Startseiten-Hero,
+About-Porträt und Impressumsvisual; ohne Auswahl bleiben die generierten Fallbacks erhalten.
 Die Rechtsseiten verwenden Shell,
 Projekt- und `legal.css`, aber kein
 Handschriftbündel. In den kanonischen statischen Rechtsseiten sind alle Absätze innerhalb

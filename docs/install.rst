@@ -14,6 +14,33 @@ Install the command line tools used by the development workflow:
   ``DJANGO_AWS_ACCESS_KEY_ID``, ``DJANGO_AWS_SECRET_ACCESS_KEY``,
   ``DJANGO_AWS_STORAGE_BUCKET_NAME``, and ``CLOUDFRONT_DOMAIN``
 
+The configured S3 bucket or CloudFront distribution must return an
+``Access-Control-Allow-Origin`` response that permits the public site origin for
+anonymous ``GET`` requests. The portfolio Hero requests its editorial reveal image with
+``crossorigin="anonymous"`` before drawing it into a WebGL texture. If CORS is absent or
+the media response cannot be decoded, the page deliberately retains the generated reveal
+instead of disabling the Hero.
+
+For CloudFront, configure the media cache behaviour in one of these two ways:
+
+* forward the browser's ``Origin`` header to S3 (for example with the managed
+  ``CORS-S3Origin`` origin request policy) **and** include ``Origin`` in the associated
+  cache-policy key, so a response cached for a crawler without ``Origin`` cannot be
+  reused for the canvas request; or
+* attach a response-headers policy that always adds the intended
+  ``Access-Control-Allow-Origin`` value for these public media responses.
+
+After deployment, copy the Hero image's resolved ``currentSrc`` URL from the browser and
+verify the real public-site origin rather than only testing the S3 origin directly:
+
+.. code-block:: console
+
+   curl --head --header 'Origin: https://www.example.com' 'https://media.example.com/path/to/rendition.jpg'
+
+The response must contain ``Access-Control-Allow-Origin`` with that site origin (or
+``*`` for intentionally public credential-free media). Repeat after a request without
+``Origin`` to catch an unsafe CloudFront cache configuration.
+
 Local database
 --------------
 

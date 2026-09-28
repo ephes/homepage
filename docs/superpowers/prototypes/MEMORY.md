@@ -1,15 +1,15 @@
 # Arbeitsstand Portfolio-Prototyp
 
-Stand: 21. September 2026
+Stand: 23. September 2026
 
 ## Wiedereinstieg
 
 - Arbeitsbranch: `portfolio-site`
 - Letzter vollständiger reiner Prototypstand: Commit `911c1d1`.
-- Basis des aktuellen Wagtail-Paritätsstands: Commit `36aeb78`. Der vollständige
-  Paritätsslice vom 21. September 2026 wurde in der laufenden Vorschau visuell abgenommen;
-  die separat orchestrierte Claude-Review mit `REVIEW: CLEAN` bleibt vor der
-  Veröffentlichung verbindliches Gate.
+- Aktueller veröffentlichter Wagtail-Paritätsstand: Commit `c52e2c4`. Der vollständige
+  Paritätsslice wurde in der laufenden Vorschau visuell abgenommen, separat mit
+  `REVIEW: CLEAN` geprüft und veröffentlicht. Neuere sichtbare Änderungen bleiben bis
+  zur nächsten Abnahme uncommitted.
 - Visuelle Quelle der Wahrheit: die aktuelle `portfolio-startseite.html`, lokal unter
   `http://127.0.0.1:8001/portfolio-startseite.html`, samt ihren aktuellen Unterseiten.
 - Gemeinsame Gestaltung und Interaktionen: `motion.css`, `motion.js` und `site-shell.js`.
@@ -58,7 +58,7 @@ Stand: 21. September 2026
   Adressen und Standhinweise editierbar; die Template-Hierarchie und das Layout bleiben
   geschützt. Sie verwenden Projekt-Shell, Leinentextur, Menü, Footer und `legal.css`,
   aber kein Handschriftbündel.
-- Die Paritätsmigrationen reichen bis `0022`: `0007` ergänzt die semantischen
+- Die Paritätsmigrationen reichen bis `0023`: `0007` ergänzt die semantischen
   Startseitenfelder und sortierbaren Leistungen/About-/Kundenlisten, `0008` und `0010`
   bilden die geteilte Kontaktheadline ab, `0009` ergänzt die Projektkategorie „Digital“;
   `0011` führt die per Site editierbaren Rechtsseiten ein, `0012` zentralisiert wiederkehrende
@@ -84,7 +84,10 @@ Stand: 21. September 2026
   Kontaktblock; die globale Site-Adresse wird erst beim Rendern eingesetzt. Ein aus
   einem Adressblock getrenntes Kontaktpaar erhält eine deterministische Zuordnung, damit
   die Rückwärtsmigration wieder genau einen Adressblock herstellt und unabhängig
-  redigierte benachbarte Blöcke nicht zusammenführt.
+  redigierte benachbarte Blöcke nicht zusammenführt. `0023` ergänzt die noch fehlenden
+  Wagtail-Bildwahlen für den Hero-Reveal und das About-Porträt der Startseite sowie das
+  Impressumsvisual. Ohne Auswahl bleiben die freigegebenen generierten Darstellungen
+  unverändert.
 - Ohne JavaScript bleiben alle Inhalte, Links, Sektionen, Fallbacks und das native Menü
   sichtbar und bedienbar. JavaScript ergänzt nur WebGL, Bewegung, Handschriftpfade,
   Fokus-/Scrollkomfort und konkrete Überlaufmessungen. Ein Font- oder Assetfehler lässt
@@ -453,6 +456,16 @@ Paritätsslices ist ebenfalls bestanden:
   E-Mail-Adresse und LinkedIn-, GitHub- und Mastodon-Ziele liegen ausschließlich in
   ``PortfolioSiteSettings``. Auch Rechtstext-Mail-Links werden daraus gerendert; das
   frühere Startseiten-Mailfeld bleibt nur verborgen zur Migrationskompatibilität.
+- Alle redaktionellen Bildpositionen sind über Wagtail pflegbar: Startseiten-Hero,
+  About-Porträt, Impressumsvisual, Projektteaser/-Hero und sämtliche semantischen
+  Projektbildblöcke. Der Hero verwendet nach Viewport-Seitenverhältnis gewählte
+  16:9-Landscape- und 3:4-Portrait-Renditions als Quelle der bestehenden
+  WebGL-Reveal-Animation; deren echte Fokalpunktkoordinaten steuern auch den letzten
+  Canvas-Cover-Beschnitt. Porträt und Impressumsvisual erhalten
+  4:5-Renditions. Alle Beschnitte beachten den in Wagtails Bildverwaltung gesetzten
+  Fokuspunkt. Ohne Startseiten-/Rechtsseitenbild bleiben die bisherigen generierten
+  Fallbacks bestehen. Feste SVG-Icons, Linien-/Noise-Texturen und Handschriftpfade sind
+  weiterhin Designressourcen, keine redaktionellen Bilder.
 - Jedes Portfolio-Projekt ist eine eigene editierbare ``ProjectPage`` unter dem
   Portfolio-Index. Titel, Teasertext, Kategorie, Jahr beziehungsweise Zeitraum, Kunde, Leistungen, Bilder,
   Statement, Aufgabe/Lösung, Ergebnisse und Testimonial gehören zum jeweiligen Projekt;

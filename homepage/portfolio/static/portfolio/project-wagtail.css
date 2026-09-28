@@ -185,6 +185,16 @@ body[data-project] .pagegrid .pagegrid__cols > i:last-child {
   --frame-placeholder-content: none;
 }
 
+/* Editorial imprint images use the same intrinsic Frame contract as their
+   approved generated fallback. The Wagtail rendition owns the focal crop. */
+.imprint-visual > img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
 .error-projects .more-grid {
   --project-grid-columns: repeat(2, minmax(0, 1fr));
 }

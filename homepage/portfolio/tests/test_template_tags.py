@@ -3,8 +3,10 @@ from unittest.mock import patch
 
 from django.test import override_settings
 from wagtail.images.models import ResponsiveImage
+from wagtail.images.rect import Rect
 
 from homepage.portfolio.templatetags.portfolio_content import (
+    fill_focal_position,
     responsive_image_srcset,
     richtext_plaintext,
     versioned_static,
@@ -70,3 +72,22 @@ def test_responsive_image_srcset_uses_wagtails_width_srcset_serializer():
         "/media/small.jpg 400w, /media/large.jpg 1200w"
     )
     assert responsive_image_srcset(None) == ""
+
+
+def test_fill_focal_position_tracks_an_off_centre_focal_area_inside_each_crop():
+    focal_area = Rect(50, 50, 350, 250)
+    image = SimpleNamespace(
+        width=1200,
+        height=800,
+        get_focal_point=lambda: focal_area,
+        is_svg=lambda: False,
+    )
+
+    landscape = fill_focal_position(image, 1920, 1080)
+    portrait = fill_focal_position(image, 1080, 1440)
+
+    assert landscape == {"x": "0.166667", "y": "0.187870"}
+    # Wagtail shifts the narrow crop left to retain the complete focal area;
+    # the canvas must use the focal centre inside that shifted crop, not the
+    # source image's approximate 1/6 horizontal position.
+    assert portrait == {"x": "0.250000", "y": "0.187500"}

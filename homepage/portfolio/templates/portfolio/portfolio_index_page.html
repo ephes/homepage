@@ -1,5 +1,5 @@
 {% extends "portfolio/base.html" %}
-{% load portfolio_content static wagtailcore_tags %}
+{% load portfolio_content static wagtailcore_tags wagtailimages_tags %}
 
 {% block meta_description %}{{ page.hero_intro|default:"Moin"|striptags }}{% endblock %}
 {% block body_class %} portfolio-homepage{% endblock %}
@@ -33,6 +33,17 @@
 {% block content %}
   <section class="stage" id="stage">
     <h1 class="sr-only">Moin</h1>
+    {% if page.hero_background_image %}
+      {% srcset_image page.hero_background_image fill-{1920x1080,640x360,1280x720} as hero_background_desktop %}
+      {% srcset_image page.hero_background_image fill-{1080x1440,360x480,720x960} as hero_background_mobile %}
+      {% image page.hero_background_image fill-720x960 as hero_background_fallback %}
+      {% fill_focal_position page.hero_background_image 1920 1080 as hero_background_desktop_focal %}
+      {% fill_focal_position page.hero_background_image 1080 1440 as hero_background_mobile_focal %}
+      <picture hidden aria-hidden="true">
+        <source media="(min-aspect-ratio: 1/1)" srcset="{{ hero_background_desktop|responsive_image_srcset }}" sizes="100vw">
+        <img id="hero-reveal-source" crossorigin="anonymous" src="{{ hero_background_fallback.url }}" srcset="{{ hero_background_mobile|responsive_image_srcset }}" sizes="100vw" width="{{ hero_background_fallback.width }}" height="{{ hero_background_fallback.height }}" alt="" loading="eager" data-focal-landscape-x="{{ hero_background_desktop_focal.x }}" data-focal-landscape-y="{{ hero_background_desktop_focal.y }}" data-focal-portrait-x="{{ hero_background_mobile_focal.x }}" data-focal-portrait-y="{{ hero_background_mobile_focal.y }}">
+      </picture>
+    {% endif %}
     <canvas id="fluid" aria-hidden="true"></canvas>
     <div class="fallback" aria-hidden="true"><h1>Moin</h1></div>
     <div class="grid" aria-hidden="true">
@@ -121,7 +132,16 @@
       <h2 class="statement motion-heading">{{ page.about_statement_intro }} <span class="katha">{{ page.about_name }}<svg class="scr" aria-hidden="true"><text>{{ page.about_name }}</text></svg></span><br>{{ page.about_statement_outro }}</h2>
       <!-- Der handschriftliche Vermerk liegt auf der Unterkante des Porträtfeldes,
            dieselbe Geste wie die Vermerke auf den Sektions-Headlines. -->
-      <div class="portrait"><div class="frame"><span>Porträt</span></div><svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.about_annotation }}</text></svg></div>
+      <div class="portrait">
+        <div class="frame{% if page.about_portrait_image %} frame--image{% endif %}">
+          {% if page.about_portrait_image %}
+            {% srcset_image page.about_portrait_image fill-{1200x1500,400x500,800x1000} sizes="(min-width: 52rem) 25vw, 14rem" alt=page.about_portrait_image_alt loading="lazy" %}
+          {% else %}
+            <span>Porträt</span>
+          {% endif %}
+        </div>
+        <svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.about_annotation }}</text></svg>
+      </div>
       <!-- Akkordeon statt drei Spalten. `<details>` statt eigener Klapp-Logik: Der
            Fließtext bleibt im Dokument, ist per Tastatur erreichbar und wird von der
            Seitensuche des Browsers gefunden — das ist bei About wichtiger als anderswo,

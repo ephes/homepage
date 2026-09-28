@@ -639,10 +639,26 @@ class LegalPageSettings(BaseSiteSetting):
         default=default_imprint_sections,
         verbose_name="Impressum: Abschnitte",
     )
+    imprint_visual_image = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Impressum: Illustration",
+        help_text=(
+            "Optionales 4:5-Motiv. Der in der Bildverwaltung gesetzte Fokuspunkt wird "
+            "beim Ausschnitt berücksichtigt; ohne Bild bleibt der grafische Platzhalter."
+        ),
+    )
     imprint_visual_label = models.CharField(
-        "Impressum: Bildplatzhalter",
+        "Impressum: Bildbeschreibung",
         max_length=160,
         default="Illustrationsmotiv",
+        help_text=(
+            "Alternativtext des gewählten Bildes und sichtbare Beschriftung des "
+            "grafischen Platzhalters."
+        ),
     )
     privacy_title = models.CharField(
         "Datenschutz: Seitentitel",
@@ -661,6 +677,7 @@ class LegalPageSettings(BaseSiteSetting):
             [
                 FieldPanel("imprint_title"),
                 FieldPanel("imprint_sections"),
+                FieldPanel("imprint_visual_image"),
                 FieldPanel("imprint_visual_label"),
             ],
             heading="Impressum",
@@ -729,6 +746,19 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
     admin_default_ordering = "ord"
 
     hero_heading = models.CharField(max_length=120, default="Moin", editable=False)
+    hero_background_image = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Hero-Hintergrundbild",
+        help_text=(
+            "Optionales Motiv für den farbigen Reveal hinter ‚MOIN‘. Der in der "
+            "Bildverwaltung gesetzte Fokuspunkt steuert die Desktop- und Mobile-Ausschnitte. "
+            "Ohne Auswahl bleibt die freigegebene generierte Illustration erhalten."
+        ),
+    )
     hero_intro_emphasis = models.CharField(
         "Hervorgehobener Einstieg",
         max_length=200,
@@ -811,6 +841,24 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
     about_claim = models.CharField(
         max_length=160, default="Digital Creative · Based in Düsseldorf"
     )
+    about_portrait_image = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Porträt",
+        help_text=(
+            "Bild für den Porträtklecks. Der in der Bildverwaltung gesetzte Fokuspunkt "
+            "wird beim 4:5-Ausschnitt berücksichtigt."
+        ),
+    )
+    about_portrait_image_alt = models.CharField(
+        "Alternativtext des Porträts",
+        max_length=240,
+        blank=True,
+        help_text="Beschreibt den Bildinhalt knapp für Menschen, die das Bild nicht sehen können.",
+    )
     resume_label = models.CharField(max_length=120, default="Lebenslauf anfragen")
     clients_eyebrow = models.CharField(max_length=120, default="Über die Jahre")
     clients_heading = models.CharField(max_length=160, default="Mit diesen Marken")
@@ -838,6 +886,7 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
             [
                 FieldPanel("hero_note_heading"),
                 FieldPanel("hero_note_text"),
+                FieldPanel("hero_background_image"),
                 FieldPanel("hero_intro_emphasis"),
                 FieldPanel("hero_intro"),
                 FieldPanel("hero_intro_secondary"),
@@ -867,6 +916,8 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
                 FieldPanel("about_name"),
                 FieldPanel("about_statement_outro"),
                 FieldPanel("about_claim"),
+                FieldPanel("about_portrait_image"),
+                FieldPanel("about_portrait_image_alt"),
                 FieldPanel("resume_label"),
             ],
             heading="Arbeitsweise",
@@ -892,6 +943,23 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
             heading="Kontaktgestaltung",
         ),
     ]
+
+    def clean_fields(self, exclude=None):
+        errors = {}
+        try:
+            super().clean_fields(exclude=exclude)
+        except ValidationError as error:
+            error.update_error_dict(errors)
+        if (
+            "about_portrait_image_alt" not in (exclude or ())
+            and self.about_portrait_image_id
+            and not (self.about_portrait_image_alt or "").strip()
+        ):
+            errors["about_portrait_image_alt"] = (
+                "Bitte einen Alternativtext für das Porträt eingeben."
+            )
+        if errors:
+            raise ValidationError(errors)
 
 
 class PortfolioService(Orderable):

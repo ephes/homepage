@@ -1,5 +1,5 @@
 {% extends "portfolio/base.html" %}
-{% load portfolio_content static wagtailcore_tags %}
+{% load portfolio_content static wagtailcore_tags wagtailimages_tags %}
 
 {% block title %}{{ legal_title }} — {{ portfolio_site_settings.brand_name|default:"Katharina Wersdörfer" }}{% endblock %}
 {% block meta_description %}{{ legal_title }} von {{ portfolio_site_settings.brand_name|default:"Katharina Wersdörfer" }}{% endblock %}
@@ -48,7 +48,10 @@
     {% if legal_page_kind == "imprint" %}
       </div>
       <figure class="imprint-visual">
-        <svg class="organic-shape" viewBox="0 0 100 125" preserveAspectRatio="none" role="img" aria-label="{{ legal_settings.imprint_visual_label }}">
+        {% if legal_settings.imprint_visual_image %}
+          {% srcset_image legal_settings.imprint_visual_image fill-{1200x1500,400x500,800x1000} sizes="(min-width: 52rem) 50vw, 100vw" alt=legal_settings.imprint_visual_label loading="lazy" %}
+        {% else %}
+          <svg class="organic-shape" viewBox="0 0 100 125" preserveAspectRatio="none" role="img" aria-label="{{ legal_settings.imprint_visual_label }}">
           <defs>
             <clipPath id="impressum-klecks" clipPathUnits="objectBoundingBox">
               <path d="M0.47 0.07C0.62 0.05 0.74 0.13 0.79 0.24C0.83 0.33 0.80 0.42 0.84 0.50C0.88 0.58 0.90 0.68 0.83 0.76C0.76 0.84 0.66 0.83 0.57 0.88C0.47 0.94 0.34 0.95 0.25 0.88C0.16 0.81 0.19 0.70 0.14 0.63C0.08 0.55 0.05 0.45 0.10 0.36C0.15 0.27 0.24 0.26 0.29 0.19C0.34 0.11 0.38 0.08 0.47 0.07Z">
@@ -65,7 +68,8 @@
             <path class="imprint-visual-lines" d="M0 0L100 125M100 0L0 125"/>
           </g>
           <text class="imprint-visual-label" x="50" y="64">{{ legal_settings.imprint_visual_label }}</text>
-        </svg>
+          </svg>
+        {% endif %}
       </figure>
       </div>
     {% endif %}

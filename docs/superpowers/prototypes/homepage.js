@@ -15,6 +15,7 @@
   function initWebGL() {
   var canvas = document.getElementById('fluid');
   var stage = document.getElementById('stage');
+  var revealSource = document.getElementById('hero-reveal-source');
   if (!canvas || !stage) { disableWebGL(); return; }
   var gl = canvas.getContext('webgl', {alpha:true, premultipliedAlpha:false, antialias:false})
         || canvas.getContext('experimental-webgl', {alpha:true});
@@ -166,8 +167,55 @@
     uploadTex(baseTex,b); baseAspect=W/H;
     // Reveal = bunte Illustration + MOIN-Outline (identische Geometrie g)
     var r=document.createElement('canvas'); r.width=W; r.height=H; var rx=r.getContext('2d');
-    paintIllustration(rx,W,H); drawMoin(rx, g, 'outline');
-    uploadTex(revealTex,r); revealAspect=W/H;
+    var usedEditorialReveal=paintReveal(rx,W,H); drawMoin(rx, g, 'outline');
+    uploadRevealTexture(r,W,H,g,usedEditorialReveal); revealAspect=W/H;
+  }
+  function coverPlacement(sourceWidth,sourceHeight,targetWidth,targetHeight,focalX,focalY){
+    var scale=Math.max(targetWidth/sourceWidth,targetHeight/sourceHeight);
+    var width=sourceWidth*scale,height=sourceHeight*scale;
+    var x=Math.min(0,Math.max(targetWidth-width,targetWidth/2-focalX*width));
+    var y=Math.min(0,Math.max(targetHeight-height,targetHeight/2-focalY*height));
+    return {x:x,y:y,width:width,height:height};
+  }
+  function revealFocalPoint(){
+    var orientation=revealSource.naturalWidth>=revealSource.naturalHeight?'Landscape':'Portrait';
+    var x=parseFloat(revealSource.dataset['focal'+orientation+'X']);
+    var y=parseFloat(revealSource.dataset['focal'+orientation+'Y']);
+    return {
+      x:Number.isFinite(x)?Math.min(1,Math.max(0,x)):0.5,
+      y:Number.isFinite(y)?Math.min(1,Math.max(0,y)):0.5
+    };
+  }
+  function paintReveal(ctx,W,H){
+    if(revealSource&&revealSource.complete&&revealSource.naturalWidth){
+      try {
+        // Wagtail supplies the focal centre inside each landscape/portrait
+        // rendition. Preserve that real coordinate through the canvas' final
+        // cover crop, whose aspect ratio follows the live stage.
+        var focal=revealFocalPoint();
+        var placement=coverPlacement(revealSource.naturalWidth,revealSource.naturalHeight,W,H,focal.x,focal.y);
+        ctx.drawImage(revealSource,placement.x,placement.y,placement.width,placement.height);
+        return true;
+      } catch (error) {
+        // A decoded image can still become unusable between load and draw.
+        // Retain the approved generated reveal rather than disabling WebGL.
+      }
+    }
+    paintIllustration(ctx,W,H);
+    return false;
+  }
+  function uploadRevealTexture(canvas,W,H,g,usedEditorialReveal){
+    try {
+      uploadTex(revealTex,canvas);
+    } catch (error) {
+      if(!usedEditorialReveal)throw error;
+      // A canvas tainted by an unexpected media-origin response cannot be
+      // repaired by clearing it. Rebuild the fallback on a fresh canvas.
+      var fallback=document.createElement('canvas'); fallback.width=W; fallback.height=H;
+      var fallbackContext=fallback.getContext('2d');
+      paintIllustration(fallbackContext,W,H); drawMoin(fallbackContext,g,'outline');
+      uploadTex(revealTex,fallback);
+    }
   }
   function paintIllustration(ctx,W,H){
     var cols=['#ff5ea8','#ffd23f','#23c9a7','#5b8cff','#b06bff','#ff7a1a'];
@@ -532,6 +580,16 @@
   }
 
   var last=0, simulationFrame=0, simulationReady=false;
+  function refreshRevealSource(){
+    if(!simulationReady||!revealSource)return;
+    try {
+      buildTextures(); render();
+    } catch (error) {
+      disableSimulation();
+    }
+  }
+  if(revealSource)revealSource.addEventListener('load',refreshRevealSource);
+  if(revealSource)revealSource.addEventListener('error',refreshRevealSource);
   function disableSimulation(){
     simulationReady=false;
     if(simulationFrame)cancelAnimationFrame(simulationFrame);

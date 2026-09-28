@@ -82,7 +82,17 @@ the migration marks the generated address/contact pair with deterministic block 
 its reverse operation can therefore restore the single address-block structure without
 collapsing an independently authored adjacent pair. The template resolves the block against
 ``PortfolioSiteSettings.contact_email`` at render time; ordinary editorial mail links
-remain independent. ``0022`` is the current migration tip for the portfolio app.
+remain independent.
+
+Migration ``0023`` adds the remaining editorial site-image slots without changing a
+blank installation's approved appearance. The portfolio start page can select a Hero
+reveal image and an About portrait; ``LegalPageSettings`` can select the Impressum
+illustration. When those fields are empty, the existing generated Hero illustration,
+portrait placeholder and animated Impressum graphic remain unchanged. The Hero image
+is decorative readable-canvas input and therefore has an empty alternative text; the
+portrait requires its own contextual alternative text, while the Impressum image uses
+the adjacent editable image description. ``0023`` is the current migration tip for the
+portfolio app.
 
 ``PortfolioIndexPage`` is the only parent for ``ProjectPage`` records. Public
 project navigation filters to live, public ``ProjectPage`` descendants in Wagtail
@@ -162,14 +172,21 @@ submenu selector disappears. A future ``7.5`` or major-version update therefore 
 an explicit dependency change, passing tests and a visual admin check rather than
 silently shipping a partially broken theme.
 
-Project placeholders are replaced through the project's teaser and hero image choosers
-or by inserting the semantic full-width image, image-pair, portrait-duo and gallery
-blocks. Wagtail's image editor owns one selectable focal area per source image. The
-cropped teaser, related-card and hero ``fill`` renditions honour that focal area and
-fall back to a centred crop when none is set. Editorial content and gallery images use
-proportional ``width`` renditions without cropping, so their complete source image stays
-visible. Editors set or change the focal area from ``Bilder`` by opening the image and
-using Wagtail's focal-area control before selecting it on a project page.
+All editorial image positions now use Wagtail image choosers. This includes the
+start-page Hero reveal and About portrait, the Impressum illustration, each project's
+teaser and Hero image, and the semantic full-width image, image-pair, portrait-duo and
+gallery blocks. Wagtail's image editor owns one selectable focal area per source image.
+The start-page Hero uses focal-aware 16:9 landscape and 3:4 portrait ``fill`` renditions as
+the existing WebGL reveal texture. The browser selects them by viewport aspect ratio,
+and the rendition-relative focal coordinates keep the chosen point visible through the
+canvas's final cover crop. The portrait and Impressum illustration use 4:5
+``fill`` renditions; cropped teaser, related-card and project-Hero renditions likewise
+honour the focal area and fall back to a centred crop when none is set. Editorial
+content and gallery images use proportional ``width`` renditions without cropping, so
+their complete source image stays visible. Editors set or change the focal area from
+``Bilder`` by opening the image and using Wagtail's focal-area control before selecting
+it on a page or in site settings. Fixed interface SVGs, line/noise textures and
+handwriting paths remain design assets rather than editorial image slots.
 
 The shared ``Weitersehen.`` heading keeps the prototype's approved narrow-screen
 break through a semantic soft-hyphen opportunity in the template. The project adapter
@@ -226,10 +243,14 @@ changing existing project URLs or publication state.
 
 All StreamField images use Wagtail's accessible image block: editors must either
 enter contextual alternative text or explicitly mark an image decorative. Teaser
-and hero images have separate project-specific alt-text fields. Their image
-choosers remain optional only during the migration period so existing revisions
-can still be loaded; make both images required after all production projects have
-been populated and validated.
+and hero images have separate project-specific alt-text fields. The About portrait
+also requires explicit alternative text. The homepage Hero reveal is deliberately
+decorative because the visible and accessible ``Moin`` remains real HTML text. The
+Impressum image description supplies its alternative text. Project teaser and Hero choosers remain
+optional only during the migration period so existing revisions can still be loaded;
+make both project images required after all production projects have been populated
+and validated. The three site-level slots stay optional because their approved
+generated fallbacks are intentional.
 
 Migration and compatibility note (2026-09-10)
 ---------------------------------------------

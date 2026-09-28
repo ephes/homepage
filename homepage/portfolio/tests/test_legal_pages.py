@@ -11,12 +11,13 @@ from django.urls import get_script_prefix, include, path, reverse, set_script_pr
 from wagtail import urls as wagtail_urls
 from wagtail.contrib.settings.registry import registry as settings_registry
 from wagtail.fields import StreamField
+from wagtail.images.models import Filter
 from wagtail.models import Page, PageViewRestriction, Site
 
 from homepage.portfolio.models import LegalPageSettings, PortfolioSiteSettings
 from homepage.portfolio.views import _portfolio_index_for_site, imprint, privacy
 
-from .test_pages import add_project, make_portfolio_tree
+from .test_pages import add_project, make_image, make_portfolio_tree
 from .test_styles import declarations_for, layer_body
 
 pytestmark = pytest.mark.django_db
@@ -132,6 +133,65 @@ def test_imprint_visual_uses_the_editable_label_as_its_accessible_name(client):
     assert visual.select_one(".imprint-visual-label").get_text(strip=True) == (
         "Individuelles Illustrationsmotiv"
     )
+
+
+def test_imprint_visual_can_use_an_editorial_focal_point_image(
+    client, settings, tmp_path
+):
+    settings.MEDIA_ROOT = tmp_path
+    make_portfolio_tree()
+    site = Site.objects.get(hostname="testserver")
+    image = make_image("Impressum Illustration")
+    image.focal_point_x = 1
+    image.focal_point_y = 1
+    image.focal_point_width = 1
+    image.focal_point_height = 1
+    image.save(
+        update_fields=[
+            "focal_point_x",
+            "focal_point_y",
+            "focal_point_width",
+            "focal_point_height",
+        ]
+    )
+    LegalPageSettings.objects.create(
+        site=site,
+        imprint_visual_image=image,
+        imprint_visual_label="Individuelles Impressumsmotiv",
+    )
+
+    soup = BeautifulSoup(
+        client.get(reverse("portfolio_imprint")).content,
+        "html.parser",
+    )
+    visual = soup.select_one(".imprint-visual > img")
+
+    assert visual is not None
+    assert visual.get("alt") == "Individuelles Impressumsmotiv"
+    assert visual.get("loading") == "lazy"
+    assert visual.get("sizes") == "(min-width: 52rem) 50vw, 100vw"
+    assert "fill-1200x1500" in visual["srcset"]
+    assert soup.select_one(".imprint-visual svg") is None
+    focal_key = Filter(spec="fill-1200x1500").get_cache_key(image)
+    assert focal_key
+    assert image.renditions.filter(
+        filter_spec="fill-1200x1500",
+        focal_point_key=focal_key,
+    ).exists()
+
+    adapter_path = finders.find("portfolio/project-wagtail.css")
+    assert adapter_path is not None
+    adapter = Path(adapter_path).read_text()
+    rendered_image = declarations_for(
+        layer_body(adapter, "pages"), {".imprint-visual > img"}
+    )
+    assert rendered_image == {
+        "display": "block",
+        "inline-size": "100%",
+        "block-size": "auto",
+        "aspect-ratio": "4 / 5",
+        "object-fit": "cover",
+    }
 
 
 def test_authored_legal_mail_link_remains_independent_from_the_global_contact(client):

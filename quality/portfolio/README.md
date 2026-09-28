@@ -90,7 +90,9 @@ and locks public footer destinations to the built-in named routes; those columns
 only for migration and revision compatibility. ``0021`` is the current portfolio
 migration predecessor. Migration ``0022`` replaces persisted legal-email placeholders
 with a structural contact block whose address comes directly from the global site
-settings at render time; ``0022`` is the current portfolio migration tip.
+settings at render time. Migration ``0023`` adds optional, focal-point-aware start-page
+Hero/portrait and Impressum image slots while retaining the current generated
+placeholders when no image is selected; ``0023`` is the current portfolio migration tip.
 The template keeps gallery/media before results and testimonial regardless of editor
 block insertion order. Project copy is never a sitewide fallback. The homepage project
 links and ordered project cards follow Wagtail's native child-page order. Editors reach its drag-and-drop
@@ -107,6 +109,15 @@ editors but must be absent from every public project collection. Teaser, related
 and hero image crops use Wagtail ``fill`` renditions and therefore the focal area stored
 on the selected source image. Uncropped StreamField and gallery media continue to use
 proportional ``width`` renditions.
+
+The start-page Hero image contract is separate from its readable ``Moin`` fallback:
+when configured, responsive 16:9 landscape and 3:4 portrait focal crops feed the existing
+WebGL reveal. Viewport aspect ratio selects the closer source, and exact focal coordinates
+inside each Wagtail crop position the canvas's final cover crop. A CORS or decode failure
+still leaves the generated reveal plus semantic fallback intact. The About portrait and
+optional Impressum visual use responsive 4:5 focal crops.
+The portrait requires explicit alt text; the Hero source is decorative, and the
+Impressum settings description becomes the image alt text.
 
 ``ProjectPage.teaser_text`` accepts bold emphasis, inline links and the constrained
 ``Kein Umbruch`` inline style. Statement, challenge and solution copy provide the same

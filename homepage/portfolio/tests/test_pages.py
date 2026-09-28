@@ -26,6 +26,8 @@ from homepage.portfolio.models import (
     default_project_content,
 )
 
+from .test_styles import declarations_for, layer_body
+
 pytestmark = pytest.mark.django_db
 
 
@@ -240,6 +242,93 @@ def test_index_is_fully_server_rendered_before_progressive_enhancement(client):
     assert 'class="linen" aria-hidden="true"' in content
     for section_id in ("projekte", "leistungen", "about", "kunden", "kontakt"):
         assert f'id="{section_id}"' in content
+
+
+def test_homepage_editorial_images_render_responsively_with_focal_crops(
+    client, settings, tmp_path
+):
+    settings.MEDIA_ROOT = tmp_path
+    index = make_portfolio_tree()
+    hero = make_image("Hero Reveal")
+    portrait = make_image("About Portrait")
+    for image in (hero, portrait):
+        image.focal_point_x = 1
+        image.focal_point_y = 1
+        image.focal_point_width = 1
+        image.focal_point_height = 1
+        image.save(
+            update_fields=[
+                "focal_point_x",
+                "focal_point_y",
+                "focal_point_width",
+                "focal_point_height",
+            ]
+        )
+    index.hero_background_image = hero
+    index.about_portrait_image = portrait
+    index.about_portrait_image_alt = "Katharina Wersdörfer im Porträt"
+    index.save_revision().publish()
+
+    document = BeautifulSoup(client.get(index.url).content, "html.parser")
+    hero_picture = document.select_one("#stage picture[hidden]")
+    hero_image = hero_picture.select_one("img#hero-reveal-source")
+    desktop_source = hero_picture.select_one("source")
+    portrait_image = document.select_one("#about .portrait .frame--image img")
+
+    assert hero_picture.get("aria-hidden") == "true"
+    assert hero_image.get("alt") == ""
+    assert hero_image.get("loading") == "eager"
+    assert hero_image.get("crossorigin") == "anonymous"
+    assert hero_image.get("fetchpriority") is None
+    assert hero_image.get("sizes") == "100vw"
+    assert hero_image.get("data-focal-landscape-x") == "1.000000"
+    assert hero_image.get("data-focal-landscape-y") == "1.000000"
+    assert hero_image.get("data-focal-portrait-x") == "1.000000"
+    assert hero_image.get("data-focal-portrait-y") == "1.000000"
+    assert "fill-720x960" in hero_image["src"]
+    assert "fill-1080x1440" in hero_image["srcset"]
+    assert desktop_source.get("media") == "(min-aspect-ratio: 1/1)"
+    assert desktop_source.get("sizes") == "100vw"
+    assert "fill-1920x1080" in desktop_source["srcset"]
+    assert portrait_image.get("alt") == "Katharina Wersdörfer im Porträt"
+    assert portrait_image.get("loading") == "lazy"
+    assert portrait_image.get("sizes") == "(min-width: 52rem) 25vw, 14rem"
+    assert "fill-1200x1500" in portrait_image["srcset"]
+
+    homepage_adapter_path = finders.find("portfolio/homepage.css")
+    assert homepage_adapter_path is not None
+    homepage_adapter = Path(homepage_adapter_path).read_text()
+    portrait_image_rule = declarations_for(
+        layer_body(homepage_adapter, "pages"),
+        {
+            ".portfolio-homepage .frame--image > img",
+            ".portfolio-homepage .frame--image > picture > img",
+        },
+    )
+    assert portrait_image_rule["object-fit"] == "cover"
+    frame_rule = declarations_for(
+        layer_body(
+            Path(finders.find("portfolio/portfolio.css")).read_text(), "layout"
+        ),
+        {".frame > img"},
+    )
+    assert frame_rule == {
+        "inline-size": "100%",
+        "block-size": "100%",
+        "object-fit": "cover",
+    }
+
+    for image, filter_spec in (
+        (hero, "fill-1920x1080"),
+        (hero, "fill-1080x1440"),
+        (portrait, "fill-1200x1500"),
+    ):
+        focal_key = Filter(spec=filter_spec).get_cache_key(image)
+        assert focal_key
+        assert image.renditions.filter(
+            filter_spec=filter_spec,
+            focal_point_key=focal_key,
+        ).exists()
 
 
 @pytest.mark.parametrize("page_kind", ["index", "project"])

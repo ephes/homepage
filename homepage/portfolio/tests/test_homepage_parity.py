@@ -1,4 +1,7 @@
+import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -51,6 +54,12 @@ def javascript_function_body(script, name):
     return balanced_block(script, match.end() - 1)
 
 
+def javascript_function_source(script, name):
+    match = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", script)
+    assert match is not None, f"Missing JavaScript function: {name}"
+    return f"{match.group(0)}{balanced_block(script, match.end() - 1)}}}"
+
+
 def test_homepage_renders_the_canonical_prototype_composition_from_wagtail(client):
     index = make_portfolio_tree()
     project = add_project(index, title="Editierbares Projekt")
@@ -77,6 +86,7 @@ def test_homepage_renders_the_canonical_prototype_composition_from_wagtail(clien
     for section_id in ("stage", "projekte", "leistungen", "about", "kunden", "kontakt"):
         assert document.select_one(f"main > section#{section_id}") is not None
     assert document.select_one("#stage canvas#fluid") is not None
+    assert document.select_one("#stage #hero-reveal-source") is None
     assert document.select_one("#stage .fallback h1").get_text(strip=True) == "Moin"
     assert document.select_one("#stage .scrollcue") is not None
     assert document.select_one("#projekte .tile[href='{}']".format(project.url)) is not None
@@ -303,6 +313,87 @@ def test_homepage_webgl_failure_keeps_the_progressive_enhancement_fallback():
     assert "function disableSimulation()" in script
     assert script.count("disableSimulation();") >= 3
     assert script.index("initWebGL();") < script.index("Navigation und Scroll-Lock")
+
+
+def test_homepage_webgl_uses_an_editorial_reveal_image_with_the_generated_fallback():
+    script_path = finders.find("portfolio/prototype/homepage.js")
+
+    assert script_path is not None
+    script = Path(script_path).read_text()
+    build_textures = javascript_function_body(script, "buildTextures")
+    paint_reveal = javascript_function_body(script, "paintReveal")
+
+    assert "document.getElementById('hero-reveal-source')" in script
+    assert "usedEditorialReveal=paintReveal(rx,W,H)" in build_textures
+    assert "uploadRevealTexture(r,W,H,g,usedEditorialReveal)" in build_textures
+    assert "revealSource.complete&&revealSource.naturalWidth" in paint_reveal
+    assert "ctx.drawImage(revealSource" in paint_reveal
+    assert "paintIllustration(ctx,W,H)" in paint_reveal
+    assert "revealSource.addEventListener('load',refreshRevealSource)" in script
+    assert "revealSource.addEventListener('error',refreshRevealSource)" in script
+
+
+def test_homepage_reveal_preserves_off_centre_focal_points_and_recovers_from_media_failures():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is required to execute the canonical Hero crop helper")
+
+    script_path = finders.find("portfolio/prototype/homepage.js")
+    assert script_path is not None
+    script = Path(script_path).read_text()
+    function_sources = "\n".join(
+        javascript_function_source(script, name)
+        for name in (
+            "coverPlacement",
+            "revealFocalPoint",
+            "paintReveal",
+            "uploadRevealTexture",
+        )
+    )
+    exercise = f"""
+{function_sources}
+var left=coverPlacement(1600,900,600,1000,0.05,0.5);
+var right=coverPlacement(1600,900,600,1000,0.95,0.5);
+var revealSource={{
+  complete:true,naturalWidth:1600,naturalHeight:900,
+  dataset:{{focalLandscapeX:'0.05',focalLandscapeY:'0.5'}}
+}};
+var generatedAfterDrawFailure=false;
+function paintIllustration(){{generatedAfterDrawFailure=true;}}
+function drawMoin(){{}}
+var paintResult=paintReveal({{drawImage:function(){{throw new Error('decode');}}}},600,1000);
+var uploadCalls=[];
+var revealTex={{}};
+function uploadTex(texture,canvas){{
+  uploadCalls.push(canvas);
+  if(uploadCalls.length===1)throw new Error('tainted canvas');
+}}
+var fallbackCanvas={{getContext:function(){{return {{}};}}}};
+var document={{createElement:function(){{return fallbackCanvas;}}}};
+uploadRevealTexture({{}},600,1000,{{}},true);
+process.stdout.write(JSON.stringify({{
+  left:left,right:right,paintResult:paintResult,
+  generatedAfterDrawFailure:generatedAfterDrawFailure,
+  uploadCount:uploadCalls.length,freshFallback:uploadCalls[1]===fallbackCanvas
+}}));
+"""
+    result = subprocess.run(
+        [node, "-e", exercise],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    evidence = json.loads(result.stdout)
+
+    assert evidence["left"]["x"] == 0
+    assert 0 <= evidence["left"]["x"] + 0.05 * evidence["left"]["width"] <= 600
+    assert evidence["right"]["x"] < 0
+    assert 0 <= evidence["right"]["x"] + 0.95 * evidence["right"]["width"] <= 600
+    assert evidence["paintResult"] is False
+    assert evidence["generatedAfterDrawFailure"] is True
+    assert evidence["uploadCount"] == 2
+    assert evidence["freshFallback"] is True
 
 
 def test_homepage_optional_enhancements_have_independent_error_boundaries():

@@ -17,6 +17,7 @@ Contents:
    media_utils
    deploy
    tests
+   resume_integration
 
 
 

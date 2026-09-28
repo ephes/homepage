@@ -3,6 +3,37 @@ touching django-resume. It re-registers under the name "cover", which the
 plugin registry overrides by name (see django_resume registry._register)."""
 
 
+def test_resume_upgrade_uses_the_reviewed_editorial_package_version():
+    from importlib.metadata import version
+
+    assert version("django-resume") == "0.3.0+editorial"
+
+
+def test_resume_upgrade_keeps_registered_routes_and_editorial_templates():
+    from django.template.loader import get_template
+    from django.urls import resolve, reverse
+    from django_resume.pages import page_registry
+
+    for name, suffix in (("detail", ""), ("cv", "cv/"), ("403", "403/")):
+        page = page_registry.get_page(name)
+        assert page is not None
+        url = reverse(f"resume:{name}", kwargs={"slug": "katharina"})
+        assert url == f"/resume/katharina/{suffix}"
+        assert resolve(url).url_name == name
+        get_template(f"django_resume/pages/editorial/{page.template_name}")
+
+
+def test_resume_upgrade_keeps_dependency_owned_editorial_assets():
+    from django.contrib.staticfiles import finders
+
+    for name in (
+        "django_resume/css/editorial/screen.css",
+        "django_resume/img/editorial/bg-cv-left.avif",
+        "django_resume/img/editorial/bg-cv-right.avif",
+    ):
+        assert finders.find(name) is not None, name
+
+
 def test_homepage_overrides_cover_plugin_in_registry():
     from django_resume.plugins import plugin_registry
 
@@ -36,9 +67,7 @@ def test_signature_image_clean_reads_signature_field_not_avatar(monkeypatch):
 
     captured = {}
 
-    monkeypatch.setattr(
-        cover_plugin.default_storage, "save", lambda name, content: "uploads/sig.png"
-    )
+    monkeypatch.setattr(cover_plugin.default_storage, "save", lambda name, content: "uploads/sig.png")
 
     def fake_dims(path):
         captured["path"] = path
@@ -46,14 +75,10 @@ def test_signature_image_clean_reads_signature_field_not_avatar(monkeypatch):
 
     monkeypatch.setattr(cover_plugin, "get_image_dimensions_from_storage", fake_dims)
 
-    img = SimpleUploadedFile(
-        "sig.png", b"\x89PNG\r\n\x1a\n" + b"0" * 32, content_type="image/png"
-    )
+    img = SimpleUploadedFile("sig.png", b"\x89PNG\r\n\x1a\n" + b"0" * 32, content_type="image/png")
     # cleaned_data WITHOUT any "avatar_img" key — the exact crash case upstream
     cleaned = {"signature_img": img, "clear_signature": False}
-    result = EditorialCoverFlatForm.do_clean_image_field(
-        cleaned, "signature_img", "clear_signature"
-    )
+    result = EditorialCoverFlatForm.do_clean_image_field(cleaned, "signature_img", "clear_signature")
 
     assert result["signature_img"] == "uploads/sig.png"
     # dimensions were read from the saved signature path, not from avatar_img

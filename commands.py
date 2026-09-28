@@ -335,7 +335,10 @@ def switch_to_git_sources():
         "cast-bootstrap5": {"git": "https://github.com/ephes/cast-bootstrap5"},
         "django-cast": {"git": "https://github.com/ephes/django-cast", "branch": "develop"},
         "django-indieweb": {"git": "https://github.com/ephes/django-indieweb", "branch": "develop"},
-        "django-resume": {"git": "https://github.com/ephes/django-resume", "branch": "editorial-theme"},
+        "django-resume": {
+            "git": "https://github.com/ephes/django-resume",
+            "rev": "806a1b0570870bf0983a9cbf5b87f072c22c4d52",
+        },
     }
 
     print("Restoring git sources in pyproject.toml...")

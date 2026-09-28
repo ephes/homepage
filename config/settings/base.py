@@ -419,6 +419,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Cast default api page size
 CAST_API_PAGE_SIZE = 100
 
+# The blog feed carried all posts in full (5 MB raw, 744 KB gzip for 275
+# posts). Feed readers keep entries they already fetched, so the newest 50 are
+# enough.
+CAST_BLOG_FEED_ITEM_LIMIT = 50
+
 CAST_FOLLOW_LINKS = {
     "rss": "/blogs/ephes_blog/feed/rss.xml",
     "mastodon": "https://wersdoerfer.de/@jochen",

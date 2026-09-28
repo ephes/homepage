@@ -3,6 +3,7 @@ import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
+import { editorialImprintImageCheck, wagtailImprintImageSelector } from "./audit-logic.mjs";
 import { contractProfiles, selector } from "./contracts.mjs";
 import { artifactsDir, formatBytes, markdownTable, packageDir, repoRoot, target } from "./support.mjs";
 
@@ -437,10 +438,39 @@ async function auditHomepageWebGLRuntimeFailureFallback(browser, pageTarget) {
   }
 }
 
-async function auditOrganicShapeReducedMotion(browser, pageTarget, label) {
+async function auditOrganicShapeReducedMotion(browser, pageTarget, label, profile) {
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 900 } });
   try {
     const page = await loadPage(context, pageTarget);
+    const editorialImage = page.locator(wagtailImprintImageSelector);
+    const editorialImageCount = await editorialImage.count();
+    if (profile === "wagtail" && editorialImageCount > 0) {
+      await editorialImage.first().scrollIntoViewIfNeeded();
+      await editorialImage.first().evaluate((image) => image.decode()).catch(() => {});
+      const editorialState = await page.evaluate(({ imageSelector, imageCount }) => {
+        const image = document.querySelector(imageSelector);
+        const style = image ? getComputedStyle(image) : null;
+        const rect = image?.getBoundingClientRect();
+        return {
+          count: imageCount,
+          present: Boolean(image),
+          visible: Boolean(
+            image && style && rect && style.display !== "none" && style.visibility !== "hidden"
+            && Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0
+          ),
+          complete: Boolean(image?.complete),
+          naturalWidth: image?.naturalWidth || 0,
+          organicShapePresent: Boolean(document.querySelector("figure.imprint-visual svg.organic-shape")),
+          smilElementCount: document.querySelectorAll(
+            "figure.imprint-visual animate, figure.imprint-visual animateMotion, figure.imprint-visual animateTransform, figure.imprint-visual set",
+          ).length,
+        };
+      }, { imageSelector: wagtailImprintImageSelector, imageCount: editorialImageCount });
+      const editorialCheck = editorialImprintImageCheck(profile, editorialState);
+      check(editorialCheck.name, editorialCheck.pass, editorialCheck.detail);
+      return;
+    }
+
     const animationState = async () => page.evaluate(() => {
       const shape = document.querySelector("svg.organic-shape");
       return {
@@ -597,7 +627,7 @@ try {
     };
   }
 
-  await auditOrganicShapeReducedMotion(browser, server.pages.imprint, "imprint");
+  await auditOrganicShapeReducedMotion(browser, server.pages.imprint, "imprint", server.profile);
 
   const reduced = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 900 } });
   const reducedPage = await loadPage(reduced, server.pages.homepage);

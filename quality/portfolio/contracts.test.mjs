@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { editorialImprintImageCheck, wagtailImprintImageSelector } from "./audit-logic.mjs";
 import { contractProfiles, locators, selector, targetProfiles } from "./contracts.mjs";
 import { target } from "./support.mjs";
 
@@ -140,4 +141,40 @@ test("explicit prototype homepage path takes precedence over the backwards-compa
   } finally {
     process.env = originalEnvironment;
   }
+});
+
+test("configured Wagtail imprint image replaces the SMIL fallback under reduced motion", () => {
+  assert.equal(wagtailImprintImageSelector, "figure.imprint-visual > img");
+  assert.deepEqual(
+    editorialImprintImageCheck("wagtail", {
+      count: 1,
+      present: true,
+      visible: true,
+      complete: true,
+      naturalWidth: 800,
+      organicShapePresent: false,
+      smilElementCount: 0,
+    }),
+    {
+      name: "imprint: configured editorial image replaces organic SMIL",
+      pass: true,
+      detail: "count=1; visible=true; complete=true; naturalWidth=800; organic SVG present=false; SMIL elements=0",
+    },
+  );
+});
+
+test("imprint image branch fails closed and never weakens the prototype SMIL audit", () => {
+  const brokenWagtailImage = editorialImprintImageCheck("wagtail", {
+    count: 2,
+    present: true,
+    visible: false,
+    complete: true,
+    naturalWidth: 0,
+    organicShapePresent: true,
+    smilElementCount: 5,
+  });
+
+  assert.equal(brokenWagtailImage.pass, false);
+  assert.equal(editorialImprintImageCheck("wagtail", { present: false }), null);
+  assert.equal(editorialImprintImageCheck("prototype", { present: true }), null);
 });

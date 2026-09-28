@@ -223,6 +223,34 @@ blog-cover-update-production: blog-cover-screenshot
             "$BLOG_COVER_USER"
     } | ssh "$BLOG_COVER_REMOTE" 'bash -s'
 
+# Render the editorial CV + cover letter to downloadable A4 PDFs (self-contained: starts its own server)
+render-pdfs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${RESUME_PDF_TOKEN:?Set RESUME_PDF_TOKEN before rendering PDFs}"
+    export RESUME_PDF_TOKEN
+    port=8765
+    # Token-bearing browser requests must not be retained in development logs.
+    uv run python manage.py runserver "127.0.0.1:${port}" --noreload >/dev/null 2>&1 &
+    server_pid=$!
+    trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+    ready=0
+    for _ in $(seq 1 30); do
+        if ! kill -0 "${server_pid}" 2>/dev/null; then
+            echo "render-pdfs: server process died during startup" >&2
+            exit 1
+        fi
+        if curl -sf "http://127.0.0.1:${port}/" -o /dev/null; then
+            ready=1; break
+        fi
+        sleep 1
+    done
+    if [ "${ready}" -ne 1 ]; then
+        echo "render-pdfs: server did not become ready on port ${port}" >&2
+        exit 1
+    fi
+    uv run python manage.py render_resume_pdfs --base-url "http://127.0.0.1:${port}"
+
 # Help for common issues
 troubleshoot:
     @echo "Common issues and solutions:"

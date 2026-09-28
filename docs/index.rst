@@ -18,6 +18,7 @@ Contents:
    portfolio_wagtail
    deploy
    tests
+   resume_integration
 
 
 

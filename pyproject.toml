@@ -10,7 +10,7 @@ dependencies = [
     "boto3",
     "cast-vue",
     "cast-bootstrap5",
-    "django-resume",
+    "django-resume==0.3.0+editorial",
     "django-tasks==0.12.0",
     "django-tasks-db==0.12.0",
     "django-allauth",
@@ -52,6 +52,9 @@ dev = [
     "sphinx",
     "furo",
     "prek>=0.3.9",
+    "pytest-playwright>=0.8.0",
+    "pypdf>=6.14.2",
+    "numpy",
 ]
 
 [tool.uv.sources]
@@ -59,6 +62,7 @@ cast-vue = { git = "https://github.com/ephes/cast-vue" }
 cast-bootstrap5 = { git = "https://github.com/ephes/cast-bootstrap5" }
 django-cast = { git = "https://github.com/ephes/django-cast", branch = "develop" }
 django-indieweb = { git = "https://github.com/ephes/django-indieweb", branch = "develop" }
+django-resume = { git = "https://github.com/ephes/django-resume", rev = "806a1b0570870bf0983a9cbf5b87f072c22c4d52" }
 
 [tool.black]
 line-length = 119

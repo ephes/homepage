@@ -1,0 +1,72 @@
+================
+Homepage Backlog
+================
+
+This page tracks planned and possible future work for the homepage project.
+Items here are not commitments; they are a shared planning list.
+
+Items should be removed when released, or rewritten if the next useful step
+changes.
+
+Editorial CV + Cover Letter — open polish
+-----------------------------------------
+
+The editorial CV got a full responsive rework (single-column mobile structure up
+to a ~975px two-column breakpoint, side illustration as a fixed backdrop on
+tablet, continuous name clamp, fluid content padding, re-architected single-column
+header). It originated in django-resume ``editorial/screen.css`` on branch
+``editorial-theme`` @ ``c353b64`` (reviewed, round-2 clean). The homepage now owns
+runtime overrides in ``homepage/static/django_resume/css/editorial/screen.css``
+and ``print.css``, plus ``js/editorial-lines.js``. Dependency versions of these
+assets are shadowed and must be compared explicitly during upgrades. The cover
+letter (homepage overrides) was adapted to the shared structure. Remaining items:
+
+* **Mobile + tablet: one small refinement still pending (TODO — specify the exact
+  item).** Flagged during the responsive rework; re-check after it. Candidates:
+  the single-column photo size in the upper band (~850–975px, it scales up with
+  the name), and a full mobile-portrait pass across both pages.
+
+* **Cover-letter reduced illustration.** The cover letter currently has NO side
+  illustration on mobile/tablet. The owner will provide a strongly reduced asset
+  (separate from the CV's ``bg-cv-left/right``). The CV-side fixed-backdrop
+  mechanism already exists; re-add a scoped ``bg-layer`` to the letter and couple
+  it to the tiers (illustration in the side gaps, off in phone portrait).
+
+* **Cover-letter A4 print stylesheet** (cover-letter plan Task 6) + verification
+  (Task 7) are still open: ``homepage/static/cover-letter/cover-print.css`` linked
+  ``media="print"`` from the detail override, clean one-page A4.
+
+PDF Output (CV + Cover Letter)
+------------------------------
+
+Downloadable A4 PDFs for the CV and cover letter are **implemented** (branch
+``editorial-resume-theme``). Pre-generated static files live in
+``homepage/static/resume/``:
+
+* ``katharina-lebenslauf.pdf`` — one-page A4 CV
+* ``katharina-anschreiben.pdf`` — one-page A4 cover letter
+
+Generation uses ``manage.py render_resume_pdfs`` (headless Chromium via
+Playwright): runs against a live server, checks HTTP status and page structure
+before writing, and fails loudly on bad tokens or missing pages. The
+``just render-pdfs`` recipe starts its own isolated server on port 8765.
+
+Set ``RESUME_PDF_TOKEN`` in the environment before either command. No token is
+embedded in the repository or accepted through ``--token``. The readiness probe
+uses the public root without a token. ``--slug`` selects a configured resume
+(default ``katharina``); ``--out`` is now the static root, not its ``resume``
+subdirectory. The per-slug ``RESUME_PUBLIC_RESOURCES`` mapping supplies relative
+output paths and download links. Unknown slugs receive no other resume's PDFs.
+
+Download links in the configured resume's "Resources" rail point to its static files;
+they are screen-only (hidden in print via the ``@media print`` block in
+``print.css``). Re-run the command after content edits and commit the updated
+PDFs.
+
+These are public artifacts, not token-protected downloads. Do not register a
+private or recipient-specific letter as a public resource. The portfolio resource
+link is hidden until that resume has an explicit ``portfolio_url`` mapping.
+
+**Remaining:** PDFs can go stale after editorial content edits — no automatic
+re-generation hook exists yet. Consider wiring ``render-pdfs`` into the deploy
+pipeline or adding a CI check.

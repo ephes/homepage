@@ -17,6 +17,13 @@ Saira readiness promise while WebGL remains available and requires the initializ
 canvas to survive; another makes WebGL unavailable and requires the static MOIN to
 remain visible.
 
+The Impressum reduced-motion check follows the page's explicit visual branch. The
+prototype always has to expose the organic SVG and prove that its SMIL animation pauses,
+resumes and pauses again with the media preference. Wagtail does the same while the
+generated fallback is active. When Wagtail is configured with the optional editorial
+image, the audit instead requires the exact ``figure.imprint-visual > img`` to be visible
+and decoded, and requires the organic SVG and all SMIL elements to be absent.
+
 ```sh
 cd quality/portfolio
 npm ci

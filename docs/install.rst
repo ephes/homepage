@@ -43,7 +43,15 @@ expects only PostgreSQL to be running locally. Start PostgreSQL directly with
 .. code-block:: console
 
    $ just postgres
-   $ uv run commands.py production-db-to-local
+   $ just production-db-to-local
+
+To keep the development database untouched, restore into a separate database
+instead, for example to inspect production data:
+
+.. code-block:: console
+
+   $ just production-db-to-local homepage_prod
+   $ psql homepage_prod
 
 Do not use ``uvx honcho start postgres`` for this restore flow; the restore
 command intentionally exits when it sees a running ``honcho`` process.

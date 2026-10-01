@@ -41,7 +41,10 @@ Database Backup
 
 To backup the production database and restore it locally::
 
-    uv run python commands.py production-db-to-local
+    just production-db-to-local
+
+This replaces the local ``homepage`` database. Pass another name to restore into a
+separate database instead, e.g. ``just production-db-to-local homepage_prod``.
 
 **Important**: Make sure only PostgreSQL is running locally (not the full development stack)::
 

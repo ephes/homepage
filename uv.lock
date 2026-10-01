@@ -1092,7 +1092,7 @@ wheels = [
 [[package]]
 name = "django-resume"
 version = "0.3.0"
-source = { git = "https://github.com/ephes/django-resume?branch=feature%2Feditorial-theme#897472224cd08ed69f56fa892ee5a5368994715a" }
+source = { git = "https://github.com/ephes/django-resume?branch=feature%2Feditorial-theme#c92a68cacad4ff0f6ca68403620ca91cf743c910" }
 dependencies = [
     { name = "django" },
     { name = "jsonschema" },

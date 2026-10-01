@@ -53,7 +53,8 @@
 
   --w-color-text-button: var(--portfolio-admin-ink);
   --w-color-text-label-menus-default: var(--portfolio-admin-cream);
-  --w-color-text-label-menus-active: var(--portfolio-admin-ink);
+  /* The sidebar stays dark in every theme: hovered and active labels need light text. */
+  --w-color-text-label-menus-active: var(--portfolio-admin-cream);
   --w-color-text-label: var(--portfolio-admin-text);
   --w-color-text-context: var(--portfolio-admin-text-context);
   --w-color-text-meta: var(--portfolio-admin-text-meta);

@@ -1,9 +1,4 @@
-from pathlib import Path
-
 import wagtail.admin.rich_text.editors.draftail.features as draftail_features
-from django.conf import settings
-from django.contrib.staticfiles import finders
-from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html
 from wagtail import hooks
@@ -87,18 +82,9 @@ def register_no_break_feature(features):
 
 @hooks.register("insert_global_admin_css")
 def portfolio_admin_theme():
-    """Load the portfolio palette without replacing Wagtail's admin layout."""
+    """Link the portfolio admin theme; the view returns it only on portfolio hosts."""
 
-    stylesheet_url = static("portfolio/admin.css")
-    if settings.DEBUG:
-        stylesheet_path = finders.find("portfolio/admin.css")
-        if stylesheet_path:
-            stylesheet_url = f"{stylesheet_url}?v={Path(stylesheet_path).stat().st_mtime_ns}"
-
-    return format_html(
-        '<link rel="stylesheet" href="{}">',
-        stylesheet_url,
-    )
+    return format_html('<link rel="stylesheet" href="{}">', reverse("portfolio:admin_theme_css"))
 
 
 def editable_portfolio_index(request):

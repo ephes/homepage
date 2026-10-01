@@ -293,6 +293,9 @@ def test_wagtail_admin_theme_uses_the_portfolio_palette_without_layout_overrides
     )
     assert wagtail_theme["--w-color-surface-button-default"] == ("var(--portfolio-admin-green)")
     assert wagtail_theme["--w-color-surface-button-hover"] == ("var(--portfolio-admin-green-hover)")
+    # The sidebar is dark in every theme, so hovered menu labels must stay light.
+    assert wagtail_theme["--w-color-text-label-menus-active"] == "var(--portfolio-admin-cream)"
+    assert contrast_ratio(palette["--portfolio-admin-ink"], palette["--portfolio-admin-cream"]) >= 4.5
     assert palette["--portfolio-admin-menu-surface"] == "#393734"
     assert palette["--portfolio-admin-menu-muted"] == "#b7ab9d"
     assert contrast_ratio("#393734", "#f0ece2") >= 4.5

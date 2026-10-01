@@ -21,19 +21,35 @@ from .test_models import add_project, make_portfolio_tree
 pytestmark = pytest.mark.django_db
 
 
-@override_settings(DEBUG=False)
-def test_portfolio_admin_theme_uses_a_manifest_safe_static_url():
+def test_portfolio_admin_theme_links_the_host_aware_stylesheet_route():
     stylesheet = str(portfolio_admin_theme())
 
-    assert stylesheet.startswith('<link rel="stylesheet"')
-    assert 'href="/static/portfolio/admin.css"' in stylesheet
+    assert stylesheet == '<link rel="stylesheet" href="/portfolio/admin-theme.css">'
 
 
-@override_settings(DEBUG=True)
-def test_portfolio_admin_theme_cache_busts_local_css_changes():
-    stylesheet = str(portfolio_admin_theme())
+@override_settings(DEBUG=False, PORTFOLIO_HOSTS=["design.example.test"], ALLOWED_HOSTS=["*"])
+def test_admin_theme_is_served_on_portfolio_hosts_with_a_manifest_safe_url(client):
+    response = client.get("/portfolio/admin-theme.css", HTTP_HOST="design.example.test")
 
-    assert 'href="/static/portfolio/admin.css?v=' in stylesheet
+    assert response.status_code == 302
+    assert response["Location"] == "/static/portfolio/admin.css"
+    assert "no-cache" in response["Cache-Control"]
+
+
+@override_settings(DEBUG=True, PORTFOLIO_HOSTS=["design.example.test"], ALLOWED_HOSTS=["*"])
+def test_admin_theme_cache_busts_local_css_changes(client):
+    response = client.get("/portfolio/admin-theme.css", HTTP_HOST="design.example.test")
+
+    assert response["Location"].startswith("/static/portfolio/admin.css?v=")
+
+
+@override_settings(PORTFOLIO_HOSTS=["design.example.test"])
+def test_main_host_keeps_wagtails_admin_look(client):
+    response = client.get("/portfolio/admin-theme.css")
+
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("text/css")
+    assert response.content == b""
 
 
 def test_no_break_feature_has_a_draftail_control_and_stable_html_conversion():

@@ -1,8 +1,16 @@
-from django.http import Http404
+from pathlib import Path
+
+from django.conf import settings
+from django.contrib.staticfiles import finders
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
+from django.templatetags.static import static
+from django.urls import Resolver404, resolve
+from django.utils.cache import patch_cache_control
 from wagtail import views as wagtail_views
 from wagtail.models import Page, Site
 
+from .hosts import PORTFOLIO_URLCONF, is_portfolio_host
 from .models import (
     ErrorPageSettings,
     LegalPageSettings,
@@ -167,3 +175,32 @@ def bad_request(request, exception=None):
 
 def permission_denied(request, exception=None):
     return _http_error(request, 403, "Kein Zugriff", "Diese Seite ist nicht öffentlich.")
+
+
+def admin_theme_css(request):
+    """Brand the Wagtail admin on portfolio hosts only; other hosts keep Wagtail's look."""
+
+    if not is_portfolio_host(request.get_host().rsplit(":", 1)[0]):
+        response = HttpResponse("", content_type="text/css")
+    else:
+        stylesheet_url = static("portfolio/admin.css")
+        if settings.DEBUG:
+            stylesheet_path = finders.find("portfolio/admin.css")
+            if stylesheet_path:
+                stylesheet_url = f"{stylesheet_url}?v={Path(stylesheet_path).stat().st_mtime_ns}"
+        response = redirect(stylesheet_url)
+    patch_cache_control(response, no_cache=True)
+    return response
+
+
+def not_found_fallback(request, *args, **kwargs):
+    """End URL resolution on portfolio hosts, keeping Django's append-slash redirect."""
+
+    if settings.APPEND_SLASH and not request.path_info.endswith("/"):
+        try:
+            match = resolve(f"{request.path_info}/", urlconf=PORTFOLIO_URLCONF)
+        except Resolver404:
+            match = None
+        if match is not None and match.func is not not_found_fallback:
+            return redirect(request.get_full_path(force_append_slash=True), permanent=True)
+    raise Http404

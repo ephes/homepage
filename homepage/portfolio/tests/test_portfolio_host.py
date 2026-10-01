@@ -86,3 +86,30 @@ def test_seed_site_port_is_configurable_for_local_development(settings):
     site = Site.objects.get(hostname="design.localhost")
     assert site.port == 8000
     assert site.root_url == "http://design.localhost:8000"
+
+
+def test_wagtail_admin_is_available_on_the_portfolio_host(client, portfolio_site, django_user_model):
+    admin = django_user_model.objects.create_superuser("admin", "admin@example.com", "pw")
+    client.force_login(admin)
+
+    response = client.get("/cms/", HTTP_HOST=PORTFOLIO_HOST)
+
+    assert response.status_code == 200
+    assert 'href="/portfolio/admin-theme.css"' in response.content.decode()
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/@jochen", "/.well-known/webfinger", "/blogs/ephes_blog/feed/rss.xml", "/accounts/login/", "/users/"],
+)
+def test_main_site_routes_are_not_served_on_the_portfolio_host(client, portfolio_site, path):
+    response = client.get(path, HTTP_HOST=PORTFOLIO_HOST)
+
+    assert response.status_code == 404
+
+
+def test_missing_trailing_slash_still_redirects_on_the_portfolio_host(client, portfolio_site):
+    response = client.get("/impressum", HTTP_HOST=PORTFOLIO_HOST)
+
+    assert response.status_code == 301
+    assert response["Location"] == "/impressum/"

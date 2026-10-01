@@ -1,0 +1,7 @@
+<section class="block project-testimonial">
+  <p class="eyebrow">{{ portfolio_site_settings.project_testimonial_label }}</p>
+  <figure class="quote">
+    <blockquote><p>„{{ value.quote|linebreaksbr }}“</p></blockquote>
+    <figcaption>{{ value.name }}{% if value.role %} · {{ value.role }}{% endif %}</figcaption>
+  </figure>
+</section>

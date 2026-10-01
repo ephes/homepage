@@ -1,0 +1,58 @@
+{% load wagtailcore_tags %}
+{% with shell=portfolio_site_settings %}
+  {% pageurl portfolio_index as portfolio_home_url %}
+  {% url "portfolio_imprint" as portfolio_imprint_url %}
+  {% url "portfolio_privacy" as portfolio_privacy_url %}
+  <footer class="site on-dark" lang="de">
+    <div class="foot-cols pad">
+      <section class="foot-col foot-profile" aria-label="Profil">
+        <span class="brand">{{ shell.brand_name|default:"Katharina Wersdörfer" }}</span>
+        <p>{{ shell.profile_text|default:"Web & Digital Design, Illustration und Print — aus Düsseldorf." }}</p>
+        {% if shell.show_availability %}<span class="avail">{{ shell.availability_text }}</span>{% endif %}
+      </section>
+      <nav class="foot-col foot-pages" aria-labelledby="ft-seite">
+        <h2 class="foot-h" id="ft-seite">{{ shell.footer_pages_heading }}</h2>
+        <ul>
+          <li><a href="{{ portfolio_home_url }}#stage">Moin</a></li>
+          <li><a href="{{ portfolio_home_url }}#projekte">{{ shell.projects_label }}</a></li>
+          <li><a href="{{ portfolio_home_url }}#leistungen">{{ shell.services_label }}</a></li>
+          <li><a href="{{ portfolio_home_url }}#about">{{ shell.about_label }}</a></li>
+          <li><a href="{{ portfolio_home_url }}#kunden">{{ shell.clients_label }}</a></li>
+          <li><a href="{{ portfolio_home_url }}#kontakt">{{ shell.contact_label }}</a></li>
+        </ul>
+      </nav>
+      {% if portfolio_projects %}
+        <nav class="foot-col foot-projects" aria-labelledby="ft-projekte">
+          <h2 class="foot-h" id="ft-projekte"><a href="{{ portfolio_home_url }}#projekte">{{ shell.projects_label }}</a></h2>
+          <ul>
+            {% for project in portfolio_projects %}
+              <li><a href="{% pageurl project %}">{{ project.title }}</a></li>
+            {% endfor %}
+          </ul>
+        </nav>
+      {% endif %}
+      {% if portfolio_legal_available %}
+        <nav class="foot-col foot-legal" aria-labelledby="ft-recht">
+          <h2 class="foot-h" id="ft-recht">{{ portfolio_legal_settings.eyebrow }}</h2>
+          <ul>
+            <li><a href="{{ portfolio_imprint_url }}"{% if legal_page_kind == "imprint" %} aria-current="page"{% endif %}>{{ portfolio_legal_settings.imprint_title }}</a></li>
+            <li><a href="{{ portfolio_privacy_url }}"{% if legal_page_kind == "privacy" %} aria-current="page"{% endif %}>{{ portfolio_legal_settings.privacy_title }}</a></li>
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+    <div class="foot-bar pad">
+      <span>{{ shell.copyright_text|default:"© 2026 Katharina Wersdörfer" }}</span>
+      <span>{{ shell.location_text|default:"Designed in Düsseldorf" }}</span>
+      {% if top_anchor %}
+        <a class="to-top" href="#{{ top_anchor }}" aria-label="Zurück nach oben"><span class="tile-arrow" aria-hidden="true">→</span></a>
+      {% elif page and page.pk == portfolio_index.pk %}
+        <a class="to-top" href="#stage" aria-label="Zurück nach oben"><span class="tile-arrow" aria-hidden="true">→</span></a>
+      {% elif page %}
+        <a class="to-top" href="#projektstart" aria-label="Zurück nach oben"><span class="tile-arrow" aria-hidden="true">→</span></a>
+      {% else %}
+        <a class="to-top" href="#main-content" aria-label="Zurück nach oben"><span class="tile-arrow" aria-hidden="true">→</span></a>
+      {% endif %}
+    </div>
+  </footer>
+{% endwith %}

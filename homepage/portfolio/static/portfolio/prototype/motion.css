@@ -1,0 +1,1258 @@
+/* Gemeinsames Motion-System: Reveal (Headlines), Write (Astagina), Fold (Buttons).
+   Die Geometrie der Projekt-Raster bleibt dabei vollständig unbewegt. */
+:root {
+  --motion-ease: cubic-bezier(.16, 1, .3, 1);
+  --motion-fold-ease: cubic-bezier(.65, 0, .2, 1);
+  --motion-enter: 760ms;
+  --motion-hover: 320ms;
+  /* Ein einziges geometrisches Zeichen statt U+2733: iOS darf den dekorativen Marker
+     dadurch nicht mehr durch ein farbiges Emoji aus einem Systemfont ersetzen. */
+  --asterisk-mark: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12%201.5v21M1.5%2012h21M4.58%204.58l14.84%2014.84M19.42%204.58L4.58%2019.42'%20fill='none'%20stroke='%23000'%20stroke-width='2.4'%20stroke-linecap='square'/%3E%3C/svg%3E");
+}
+
+/* Alle sichtbaren Asterisk-Marker teilen dieselbe 3:4-em-Fassung. `currentColor` erhält
+   die jeweilige Tangerine-/Cremefarbe; die leere Pseudoelement-Box bleibt rein dekorativ
+   und erzeugt keinen vorlesbaren Stern. Der WebKit-Präfix deckt Safari/iOS ab. */
+.project-menu > summary::before,
+.project-menu-links::before,
+.site-nav nav .menu-primary > a::before,
+.sec-label::before,
+.eyebrow::before,
+.marquee-track .item::after {
+  content: "";
+  display: inline-block;
+  inline-size: .75em;
+  block-size: .75em;
+  background-color: currentColor;
+  -webkit-mask: var(--asterisk-mark) center / contain no-repeat;
+  mask: var(--asterisk-mark) center / contain no-repeat;
+}
+/* Diese beiden Textfassungen erbten zuvor zusätzliches Tracking. Eine etwas breitere
+   Layoutbox um die weiterhin quadratische Maske erhält ihren bisherigen Textanschlag. */
+.eyebrow::before { inline-size: .836em; }
+.marquee-track .item::after { inline-size: .77em; }
+
+/* Gemeinsame CV-Leinentextur über Start- und Projektseiten. */
+.linen {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  pointer-events: none;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsBAMAAAAfmfjxAAAAFVBMVEX////ExMS/v7/8/PyLi4ufn5+6uro3PuJqAAAAB3RSTlMARTAACxAlpkPg9gAAAWVJREFUeF7t1EENgEAABLF9wB8LBGXn3wQ+Jq2I7orYF7E3YnfEnoidCGtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZK8Ba1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1EqxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1kr4gcY9P+FkIkE1AAAAABJRU5ErkJggg==');
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+}
+/* Auf kleinen Viewports beginnt die feste Leinentextur an der oberen Safe-Area-Kante
+   vollständig ruhig und gewinnt erst über die Headerhöhe weich an Präsenz. Die
+   cremefarbene Headerfläche selbst bleibt unverändert; maskiert wird ausschließlich die
+   darüberliegende Textur. Ohne Notch ist env() null, in Standalone-/Cover-Kontexten wird
+   der geschützte obere Bereich automatisch in den Verlauf einbezogen. */
+@media (max-width: 52rem) {
+  .linen {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      rgba(0, 0, 0, .08) env(safe-area-inset-top, 0px),
+      rgba(0, 0, 0, .48) calc(env(safe-area-inset-top, 0px) + 2rem),
+      #000 max(
+        calc(var(--header-h, 4.6rem) + 1.25rem),
+        calc(env(safe-area-inset-top, 0px) + 4.5rem)
+      )
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      rgba(0, 0, 0, .08) env(safe-area-inset-top, 0px),
+      rgba(0, 0, 0, .48) calc(env(safe-area-inset-top, 0px) + 2rem),
+      #000 max(
+        calc(var(--header-h, 4.6rem) + 1.25rem),
+        calc(env(safe-area-inset-top, 0px) + 4.5rem)
+      )
+    );
+  }
+}
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  inset-block-start: .5rem;
+  inset-inline-start: .5rem;
+  padding: .65rem 1rem;
+  background: var(--warm-black);
+  color: var(--creme);
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+}
+.skip-link:focus { transform: translateY(0); }
+
+/* Der Seitenkopf ist bewusst viewportfest statt nur sticky. Damit bleibt auch das in ihm
+   liegende, feste Menü in Helium/Chromium an seinem Platz, selbst wenn ein Hover-Sprung
+   gerade die Seite hinter dem offenen Panel bewegt. Der Ausgleich am Hauptinhalt erhält
+   die bisherige Geometrie der ersten Bildschirmseite. */
+header.site,
+.site-header {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  inline-size: 100%;
+}
+body > main,
+body > noscript > main { padding-block-start: var(--header-h, 4.6rem); }
+html:has(.site-nav[open]:not(.is-measuring)),
+body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
+
+/* Auf Telefonen sitzt die separate Verfügbarkeitszeile zwischen festem Header und Main.
+   Sie übernimmt deshalb den Flussausgleich; ein zusätzlicher Main-Abstand wäre doppelt. */
+@media (max-width: 36rem) {
+  :root { --availability-strip-offset: calc(1.8rem + 1px); }
+  body > .availability-strip,
+  body > noscript > .availability-strip { margin-block-start: var(--header-h, 4.6rem); }
+  body:has(> .availability-strip) > main,
+  body > noscript:has(> .availability-strip) > main { padding-block-start: 0; }
+}
+
+/* Das Panel übernimmt die 25/75-Teilung des Hero-Rasters. Der Hauptblock sitzt vertikal
+   zentriert in der oberen Zone, die Social-Zone beginnt exakt auf der 75-%-Linie. Zwei
+   gleich große, feste Spacer lassen einen geöffneten Projektindex nach unten wachsen und
+   die Trennlinie mitnehmen. Das Panel bleibt bei geringer Höhe vollständig scrollbar. */
+.site-nav nav {
+  --menu-panel-inline-size: 50vw;
+  position: fixed;
+  inset-block-start: var(--header-h, 4.6rem);
+  inset-inline-end: 0;
+  inline-size: var(--menu-panel-inline-size);
+  block-size: calc(100vh - var(--header-h, 4.6rem) + 1px);
+  block-size: calc(100dvh - var(--header-h, 4.6rem) + 1px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* Der freie Raum bis zur 75-%-Linie wird gleichmäßig über und unter dem Linkblock
+     verteilt. motion.js ersetzt den neutralen Fallback durch die gemessene Höhe der
+     tatsächlich vorhandenen Top-Level-Zeilen. Beide Spacer bleiben beim Öffnen des
+     Projekt-Disclosure unverändert. */
+  --menu-row-gap: clamp(.7rem, 1.5vh, 1.35rem);
+  --menu-primary-base-size: var(--menu-primary-measured-size, 50%);
+  --menu-grid-line-adjust: 1px;
+  --menu-primary-side-space: max(
+    0px,
+    calc(.5 * (75% - var(--menu-grid-line-adjust) - var(--menu-primary-base-size)))
+  );
+  grid-template-rows:
+    var(--menu-primary-side-space)
+    max-content
+    var(--menu-primary-side-space)
+    min-content;
+  align-content: start;
+  justify-content: stretch;
+  justify-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 2rem;
+  --menu-social-size: clamp(2.75rem, 3.25vw, 3.15rem);
+  --menu-social-row-min-size: calc(4 * var(--menu-social-size) + 6px);
+}
+/* Custom Properties akzeptieren unbekannte Funktions-Tokens zunächst trotzdem. Der
+   Feature-Test muss deshalb die echte Größenproperty prüfen, damit ältere Browser die
+   vorherige clamp()-Größe behalten und nicht erst bei var()-Substitution scheitern. */
+@supports (width: round(nearest, 1px, 1px)) {
+  .site-nav nav {
+    --menu-social-size: round(nearest, clamp(2.75rem, 3.25vw, 3.15rem), 1px);
+  }
+}
+.menu-primary {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  display: grid;
+  grid-auto-rows: min-content;
+  justify-items: start;
+  gap: var(--menu-row-gap);
+  /* Der mittlere Auto-Track behält über den gesamten Akkordeonzyklus die intrinsische
+     Breite der geschlossenen Hauptnavigation. Andernfalls würde der Projektindex ihn
+     beim Öffnen verbreitern und am Ende der diskreten details-content-Schließtransition
+     wieder freigeben; Linkblock und Social-Icons sprängen dann gemeinsam seitlich. */
+  inline-size: var(--menu-primary-measured-inline-size, max-content);
+  min-inline-size: var(--menu-social-row-min-size);
+  max-inline-size: calc(var(--menu-panel-inline-size) - 2 * clamp(2rem, 6vw, 6rem));
+  padding-block: 2rem clamp(.6rem, 1.8vh, 1.15rem);
+}
+
+/* Projektindex innerhalb des bestehenden Menüs. Native details/summary statt Hover:
+   dieselbe Bedienung auf Desktop, Touch und Tastatur, ohne zweite seitliche Ebene. */
+.site-nav nav .menu-primary > .project-menu {
+  /* Sichtbarer linker Glyphenrand: Saira gibt dem großen P mehr Vorraum als der
+     kleinen 0. Der fluide Ausgleich folgt exakt den beiden vorhandenen Typostufen. */
+  --project-number-optical-offset:
+    calc(.0823 * var(--headline-m) - .0691 * var(--type-subline));
+  inline-size: 100%;
+  margin: 0;
+  font-size: var(--headline-m);
+  opacity: 0;
+  transform: translateX(2.5rem);
+  transition: opacity .4s ease,
+              transform .65s cubic-bezier(.16, 1, .3, 1);
+}
+.site-nav[open] nav .menu-primary > .project-menu {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: .52s;
+}
+.project-menu > summary {
+  display: flex;
+  align-items: center;
+  inline-size: 100%;
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: .95;
+  letter-spacing: var(--tracking-display);
+  cursor: pointer;
+}
+.project-menu > summary::before {
+  content: "";
+  flex: none;
+  margin-inline-end: clamp(.7rem, 1.2vw, 1rem);
+  color: var(--tangerine);
+  font-size: min(.7em, var(--headline-s));
+  line-height: 1;
+  letter-spacing: 0;
+}
+.project-menu > summary::after {
+  content: "+";
+  margin-inline-start: auto;
+  padding-inline-start: 1rem;
+  color: var(--tangerine);
+  font-size: .78em;
+  font-weight: 500;
+  line-height: 1;
+}
+.project-menu[open] > summary::after { content: "−"; }
+.site-nav nav .project-menu > summary > .project-overview {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  opacity: 1;
+  transform: none;
+  transition: color var(--motion-hover) var(--motion-ease);
+}
+.site-nav nav .project-menu > summary > .project-overview::before { content: none; }
+.site-nav nav .project-menu > summary:hover > .project-overview,
+.site-nav nav .project-menu > summary:focus-visible > .project-overview { color: var(--tangerine); }
+.project-menu::details-content {
+  display: block;
+  max-block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition: max-block-size .65s var(--motion-ease),
+              opacity .35s ease,
+              content-visibility .65s allow-discrete;
+}
+.project-menu[open]::details-content {
+  max-block-size: 40rem;
+  opacity: 1;
+}
+.project-menu-links {
+  display: grid;
+  grid-template-columns: max-content repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(5, auto);
+  grid-auto-flow: column;
+  gap: 1rem clamp(.7rem, 1.2vw, 1rem);
+  padding: 1rem 0 1.15rem;
+  counter-reset: project-menu-item;
+}
+/* Unsichtbare Kopie derselben festen Markerbox: Ihre `.75em`-Breite bildet zusammen mit
+   demselben Spaltenabstand den exakten P-Anschlag. */
+.project-menu-links::before {
+  content: "";
+  grid-column: 1;
+  grid-row: 1 / 6;
+  visibility: hidden;
+  font-size: min(.7em, var(--headline-s));
+  line-height: 1;
+  letter-spacing: 0;
+}
+.site-nav nav .project-menu-links a {
+  display: flex;
+  align-items: baseline;
+  gap: calc(.4em + var(--project-number-optical-offset));
+  min-inline-size: 0;
+  color: var(--ink);
+  font-size: var(--type-subline);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-action);
+  opacity: 1;
+  transform: none;
+  transition: color var(--motion-hover) var(--motion-ease);
+}
+.site-nav[open] nav .project-menu-links a { transition-delay: 0s; }
+.site-nav nav .project-menu-links a::before {
+  content: counter(project-menu-item, decimal-leading-zero);
+  counter-increment: project-menu-item;
+  margin: 0;
+  color: var(--tangerine);
+  font-size: inherit;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-action);
+  transform: translateX(var(--project-number-optical-offset));
+}
+.site-nav nav .project-menu-links .project-overview-link::before {
+  content: "00";
+  counter-increment: none;
+  visibility: hidden;
+}
+.site-nav nav .project-menu-links a:hover,
+.site-nav nav .project-menu-links a:focus-visible { color: var(--tangerine); }
+
+@media (max-width: 52rem) {
+  .project-menu-links {
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-rows: repeat(10, auto);
+  }
+  .project-menu-links::before {
+    grid-row: 1 / 11;
+  }
+  .site-nav nav .menu-primary > .project-menu { inline-size: 100%; }
+}
+
+/* Tablet hochkant: vom ersten inneren Rasterteiler bis zum rechten Viewportrand.
+   Das sind exakt drei der vier optischen Inhaltsspalten zuzüglich des rechten Randes. */
+@media (min-width: 36.001rem) and (max-width: 90rem) {
+  .site-nav nav {
+    --menu-panel-inline-size: calc(75vw - .5 * var(--pad));
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+    box-shadow:
+      -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
+      -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav nav .menu-primary > .project-menu,
+  .project-menu::details-content,
+  .site-nav nav .project-menu-links a { transition: none; }
+}
+
+/* JavaScript setzt ausschließlich den Eintrittsstatus; Form, Timing und Bewegung bleiben
+   CSS. Die Grunddarstellung bleibt absichtlich sichtbar (fail-open): Bleibt ein Observer-
+   Signal aus, fehlt höchstens die Animation, niemals die Headline. */
+.motion-heading { transform-origin: left bottom; }
+.motion-heading.is-visible {
+  animation: headline-reveal 1040ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes headline-reveal {
+  from { transform: translateY(var(--headline-enter-y, .42em)); }
+  to { transform: none; }
+}
+
+/* Ohne JavaScript übernimmt eine native View-Timeline denselben Richtungswechsel:
+   Eintritt unten = von unten nach oben, Eintritt oben = von oben nach unten. Die lange
+   ruhige Mitte verhindert, dass die Headline beim Durchscrollen ständig weiterwandert. */
+@supports (animation-timeline: view()) {
+  html:not(.has-js) .motion-heading,
+  html:not(.has-js) .no-js-content h1 {
+    animation: headline-view-in linear forwards,
+               headline-view-out linear forwards;
+    animation-timeline: view(block);
+    animation-range: entry, exit;
+  }
+}
+@keyframes headline-view-in {
+  from { transform: translateY(.42em); }
+  to { transform: none; }
+}
+@keyframes headline-view-out {
+  from { transform: none; }
+  to { transform: translateY(-.42em); }
+}
+
+/* Fließtexte auf den Projektseiten sortieren sich von rechts an ihrer Satzkante ein.
+   Das Raster bleibt stehen; weder Deckkraft noch Buchstabenform werden verändert. Ohne
+   View-Timeline-Support ist alles sichtbar. */
+@supports (animation-timeline: view()) {
+  .project-lead,
+  .case-copy,
+  .quote p {
+    animation: body-copy-settle linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 68%;
+  }
+}
+@keyframes body-copy-settle {
+  from { transform: translateX(.85rem); }
+  to { transform: none; }
+}
+
+/* Leistungen besitzen keinen Hover. JavaScript meldet lediglich Eintritt, Austritt und
+   Richtung; Bewegung, Dauer und Staffelung bleiben CSS. Dadurch läuft die Sequenz nach
+   einem Scrollimpuls mit stabiler Framerate weiter, statt einen schnellen Scrollsprung
+   direkt in einen Bewegungssprung zu übersetzen. */
+.svc-grid { --service-travel: clamp(2rem, 3vw, 3.75rem); }
+html.service-motion-ready .svc > .ico,
+html.service-motion-ready .svc > h3,
+html.service-motion-ready .svc > p {
+  transform: translate3d(0, var(--service-enter-y, var(--service-travel)), 0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+html.service-motion-ready .svc.is-service-entering > .ico,
+html.service-motion-ready .svc.is-service-entering > h3,
+html.service-motion-ready .svc.is-service-entering > p {
+  animation: service-copy-enter 1350ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.service-motion-ready .svc.is-service-entering > .ico {
+  animation-delay: var(--service-card-delay, 0ms);
+}
+html.service-motion-ready .svc.is-service-entering > h3 {
+  animation-delay: calc(var(--service-card-delay, 0ms) + 100ms);
+}
+html.service-motion-ready .svc.is-service-entering > p {
+  animation-delay: calc(var(--service-card-delay, 0ms) + 210ms);
+}
+html.service-motion-ready .svc.is-service-leaving > .ico,
+html.service-motion-ready .svc.is-service-leaving > h3,
+html.service-motion-ready .svc.is-service-leaving > p {
+  animation: service-copy-exit 1050ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.service-motion-ready .svc.is-service-leaving > .ico {
+  animation-delay: var(--service-leave-delay, 0ms);
+}
+html.service-motion-ready .svc.is-service-leaving > h3 {
+  animation-delay: calc(var(--service-leave-delay, 0ms) + 70ms);
+}
+html.service-motion-ready .svc.is-service-leaving > p {
+  animation-delay: calc(var(--service-leave-delay, 0ms) + 140ms);
+}
+@keyframes service-copy-enter {
+  from { transform: translate3d(0, var(--service-enter-y, var(--service-travel)), 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes service-copy-exit {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, var(--service-exit-y, calc(-1 * var(--service-travel))), 0); }
+}
+
+/* Die drei About-Akkordeons übernehmen dieselbe ruhige Textwelle. Bewusst bewegt werden
+   nur Titel und Subline: Raster, Summary-Fläche und das Plus/Minus bleiben vollständig
+   stehen und behalten damit ihre Bedien- und Öffnungsbewegung unverändert. */
+.me-text {
+  --about-travel: clamp(2rem, 3vw, 3.75rem);
+  overflow: clip;
+}
+/* Die gemeinsame Unterkante schafft zuerst Platz für die nach unten versetzten Texte.
+   Nach 720 ms ist der volle Weg erreicht; anschließend zieht sie sich über die komplette
+   Textstaffelung wieder auf ihre reguläre Position zurück. */
+html.about-motion-ready .me-text.is-about-stretching {
+  animation: about-grid-stretch 2430ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.about-motion-ready .me-row > summary > h3,
+html.about-motion-ready .me-row > summary > .me-lead {
+  transform: translate3d(0, var(--about-enter-y, var(--about-travel)), 0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+html.about-motion-ready .me-row.is-about-entering > summary > h3,
+html.about-motion-ready .me-row.is-about-entering > summary > .me-lead {
+  animation: about-copy-enter 1350ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.about-motion-ready .me-row.is-about-entering > summary > h3 {
+  animation-delay: var(--about-row-delay, 0ms);
+}
+html.about-motion-ready .me-row.is-about-entering > summary > .me-lead {
+  animation-delay: calc(var(--about-row-delay, 0ms) + 140ms);
+}
+html.about-motion-ready .me-row.is-about-leaving > summary > h3,
+html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
+  animation: about-copy-exit 1050ms cubic-bezier(.25, .1, .25, 1) both;
+}
+html.about-motion-ready .me-row.is-about-leaving > summary > h3 {
+  animation-delay: var(--about-leave-delay, 0ms);
+}
+html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
+  animation-delay: calc(var(--about-leave-delay, 0ms) + 100ms);
+}
+@keyframes about-copy-enter {
+  from { transform: translate3d(0, var(--about-enter-y, var(--about-travel)), 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes about-copy-exit {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, var(--about-exit-y, calc(-1 * var(--about-travel))), 0); }
+}
+@keyframes about-grid-stretch {
+  from { padding-block-end: 0; }
+  29.63% { padding-block-end: var(--about-travel); }
+  /* 720 ms bis zum Texteinsatz + 2 × 110 ms Reihenstaffel + 140 ms Subline-Versatz. */
+  44.44% { padding-block-end: var(--about-travel); }
+  to { padding-block-end: 0; }
+}
+
+/* Einspaltig besitzt jede About-Kachel eine eigene Unterkante. Deshalb streckt hier
+   nicht der gemeinsame Container, sondern jede Zeile synchron zu ihrer Textwelle.
+   `both` hält während der Staffelverzögerung bereits den nötigen Raum frei; die Subline
+   kann dadurch zu keinem Zeitpunkt über die nächste Trennlinie zeichnen. */
+@media (max-width: 52rem) {
+  html.about-motion-ready .me-text.is-about-stretching { animation: none; }
+  html.about-motion-ready .me-row {
+    padding-block-end: var(--about-travel);
+    overflow: clip;
+  }
+  html.about-motion-ready .me-row.is-about-entering {
+    animation: about-mobile-row-enter 1350ms cubic-bezier(.25, .1, .25, 1) both;
+    animation-delay: calc(var(--about-row-delay, 0ms) + 140ms);
+  }
+  html.about-motion-ready .me-row.is-about-leaving {
+    animation: about-mobile-row-leave 1050ms cubic-bezier(.25, .1, .25, 1) both;
+    animation-delay: var(--about-leave-delay, 0ms);
+  }
+}
+@keyframes about-mobile-row-enter {
+  from { padding-block-end: var(--about-travel); }
+  to { padding-block-end: 0; }
+}
+@keyframes about-mobile-row-leave {
+  from { padding-block-end: 0; }
+  to { padding-block-end: var(--about-travel); }
+}
+
+/* Die sichtbare Tinte bleibt echter Astagina-Text. Die handgetracten Mittellinien in
+   motion.js dienen ausschließlich als Maske und schreiben ihn in realer Strichfolge. */
+.scr.hw-label { display: block; }
+.scr.hw-label .hw-final {
+  position: absolute;
+  inset: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: visible;
+}
+.scr.hw-label .hw-svg {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: var(--hw-base);
+  display: block;
+  max-inline-size: none;
+  block-size: auto;
+  overflow: visible;
+  color: var(--ink);
+  transform: translateX(-50%) rotate(-5deg);
+  transform-origin: center;
+}
+.scr.hw-label.hw-start .hw-svg {
+  inset-inline-start: var(--hw-origin);
+  transform: rotate(-5deg);
+}
+.scr.hw-label .hw-svg .hw-ink {
+  fill: currentColor;
+}
+.scr.hw-label .hw-svg .hw-ink-edge {
+  stroke: currentColor;
+}
+/* Die zusätzliche generierte Kantenlinie produziert bei „that's me“ an den engen
+   Selbstüberschneidungen Doppelkonturen. Tintenfläche, Außenkontur und Schreibmaske
+   reichen dort allein aus und ergeben die unverfälschte Astagina-Glyphe. */
+.scr.hw-label .hw-svg.hw-clean-joins .hw-ink-edge { display: none; }
+.scr.hw-label .hw-svg .hw-outline {
+  fill: none;
+  stroke: var(--hw-outline, var(--creme));
+  stroke-width: 225px; /* 0.11 × 2048: exakt die Kontur des Originals */
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.on-dark .scr.hw-label .hw-svg { color: var(--tangerine); --hw-outline: var(--dark-bg); }
+.about .statement .katha .scr.hw-label .hw-svg { color: var(--accent); }
+.hw-pen,
+.hw-outline-pen {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--L);
+  stroke-dashoffset: 0;
+}
+.hw-outline-pen {
+  /* Die Außenkontur braucht eine größere Abdeckung, läuft aber auf einem eigenen
+     Maskenpfad. Die Tinte behält die schmale 86,9er CV-Stiftbreite. */
+  stroke-width: 312px !important;
+}
+/* Während und nach dem Schreiben bleibt dieselbe normalisierte Ebene sichtbar. Ein
+   Rückwechsel auf das anders verankerte Original würde die Notiz seitlich springen lassen. */
+html.js-hw .hw-label .hw-final { visibility: hidden; }
+html.js-hw .hw-label.hw-fallback .hw-final { visibility: visible; }
+html.js-hw .hw-ink-group,
+html.js-hw .hw-outline-group { visibility: hidden; }
+html.js-hw .hw-svg.hw-go .hw-ink-group,
+html.js-hw .hw-svg.hw-go .hw-outline-group { visibility: visible; }
+html.js-hw .hw-svg.hw-go .hw-pen,
+html.js-hw .hw-svg.hw-go .hw-outline-pen {
+  animation: hw-write var(--hw-duration) cubic-bezier(.7, 0, .3, 1) var(--hw-delay) both;
+}
+@keyframes hw-write {
+  /* Die kurze Opacity-Schwelle verhindert den isolierten Punkt, den eine runde
+     Maskenkappe bei exakt null gezeichneter Länge sonst am Strichanfang erzeugt. */
+  from { stroke-dashoffset: var(--L); opacity: 0; }
+  .5% { opacity: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Gefüllte Buttons besitzen eine echte Vorderfläche. Sie ist an der Unterkante
+   angeschlagen und fällt von dort nach hinten: So schließt sich die Fläche optisch nach
+   unten, statt wie eine nach oben herausgezogene Blende zu wirken. */
+.pill {
+  --fold-face: var(--warm-black);
+  --fold-bg: var(--tangerine);
+  --fold-face-ink: var(--creme);
+  --fold-ink: #fff;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--fold-bg);
+  color: var(--fold-face-ink);
+  perspective: 22rem;
+  perspective-origin: center bottom;
+  transform-style: preserve-3d;
+  transition: color 140ms ease 120ms;
+}
+.pill::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--fold-face);
+  transform: translate3d(0, 0, 0) rotateX(0deg);
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+  transition: transform 460ms var(--motion-fold-ease);
+  pointer-events: none;
+}
+.pill:hover,
+.pill:focus-visible { color: var(--fold-ink); }
+.pill:hover::before,
+.pill:focus-visible::before {
+  animation: fold-fall 760ms both;
+}
+@keyframes fold-fall {
+  /* Erst beschleunigt die Klappe wie angestoßene Pappe zum unteren Anschlag. */
+  0% {
+    transform: translate3d(0, 0, 0) rotateX(0deg);
+    animation-timing-function: cubic-bezier(.58, .02, .92, .36);
+  }
+  58% {
+    transform: translate3d(0, 0, -.75rem) rotateX(88deg);
+    animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+  }
+  /* Der erste Rückprall ist deutlich, die zweite Bewegung nur noch ein Nachfedern. */
+  76% {
+    transform: translate3d(0, 0, -.18rem) rotateX(50deg);
+    animation-timing-function: cubic-bezier(.55, .05, .72, .42);
+  }
+  88% {
+    transform: translate3d(0, 0, -.72rem) rotateX(89deg);
+    animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+  }
+  95% {
+    transform: translate3d(0, 0, -.5rem) rotateX(78deg);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: translate3d(0, 0, -.7rem) rotateX(88deg);
+  }
+}
+.pill.ghost {
+  --fold-face: var(--creme);
+  --fold-bg: var(--warm-black);
+  --fold-face-ink: var(--warm-black);
+  --fold-ink: var(--creme);
+  background: var(--fold-bg);
+  color: var(--fold-face-ink);
+}
+.pill.ghost:hover,
+.pill.ghost:focus-visible {
+  /* Schwarz bleibt lesbar, solange die cremefarbene Vorderfläche sichtbar ist.
+     Erst am Anschlag wechselt die Schrift auf Creme über dem dunklen Untergrund. */
+  animation: ghost-fold-ink 760ms linear both;
+}
+@keyframes ghost-fold-ink {
+  0%, 54% { color: var(--fold-face-ink); }
+  62%, 100% { color: var(--fold-ink); }
+}
+.pill.prio {
+  --fold-face: var(--tangerine);
+  --fold-bg: var(--warm-black);
+  --fold-face-ink: #fff;
+  --fold-ink: #fff;
+}
+.contact .pill.prio {
+  background: var(--fold-bg);
+  color: var(--fold-face-ink);
+  box-shadow: none;
+}
+.contact .pill.prio:hover,
+.contact .pill.prio:focus-visible { color: var(--fold-ink); }
+.pill > .pill-label { position: relative; z-index: 2; }
+.pill > .pill-label { display: inline-flex; align-items: center; gap: inherit; }
+
+/* Gemeinsame Projektkarten-Komponente für Startseite und Unterseiten: Ihr bestehender
+   Cremegrund deckt das durchlaufende Seitenraster ab. Das Rasterfeld selbst bleibt
+   unverändert; nur sein Inhalt sinkt per `translateZ()` perspektivisch nach innen.
+   Kontur und innerer Schatten sitzen fest auf der vorhandenen Gridkante. */
+.tile:not(.cta),
+.more-card {
+  position: relative;
+  z-index: 0;
+  background: var(--bg);
+  transition: box-shadow var(--motion-hover) var(--motion-ease), background-color var(--motion-hover) ease;
+}
+.tile-depth {
+  display: flex;
+  flex: 1;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: inherit;
+  transform-origin: center;
+  transition: transform var(--motion-hover) var(--motion-ease);
+}
+.tile:not(.cta):hover,
+.tile:not(.cta):focus-visible,
+.more-card:hover,
+.more-card:focus-visible {
+  animation: tile-shadow-in 360ms var(--motion-ease) both;
+  box-shadow:
+    inset 0 0 .65rem rgba(23, 20, 16, .3),
+    inset 0 0 0 1px rgba(23, 20, 16, .14);
+}
+.tile:not(.cta):hover .tile-depth,
+.tile:not(.cta):focus-visible .tile-depth,
+.more-card:hover .tile-depth,
+.more-card:focus-visible .tile-depth {
+  animation: tile-press-in 360ms var(--motion-ease) both;
+  transform: perspective(45rem) translateZ(-.5rem);
+}
+@keyframes tile-press-in {
+  0% { transform: perspective(45rem) translateZ(0); }
+  62% { transform: perspective(45rem) translateZ(-.68rem); }
+  82% { transform: perspective(45rem) translateZ(-.44rem); }
+  100% { transform: perspective(45rem) translateZ(-.5rem); }
+}
+@keyframes tile-shadow-in {
+  0% { box-shadow: inset 0 0 0 rgba(23, 20, 16, 0), inset 0 0 0 1px rgba(23, 20, 16, 0); }
+  62% { box-shadow: inset 0 0 .72rem rgba(23, 20, 16, .35), inset 0 0 0 1px rgba(23, 20, 16, .16); }
+  100% { box-shadow: inset 0 0 .65rem rgba(23, 20, 16, .3), inset 0 0 0 1px rgba(23, 20, 16, .14); }
+}
+.tile:not(.cta):hover,
+.tile:not(.cta):focus-visible,
+.more-card:hover,
+.more-card:focus-visible { background: var(--creme); }
+.tile-arrow,
+.pill .ar,
+.project-inquiry .ar {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: .65rem;
+  overflow: visible;
+  font-size: 0;
+  line-height: 0;
+}
+.tile-arrow::before,
+.pill .ar::before,
+.project-inquiry .ar::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0 .32rem;
+  inset-block-start: 50%;
+  block-size: 1.25px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+.tile-arrow::after,
+.pill .ar::after,
+.project-inquiry .ar::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: 50%;
+  inline-size: 0;
+  block-size: 0;
+  border-block: .22rem solid transparent;
+  border-inline-start: .42rem solid currentColor;
+  transform: translateY(-50%);
+}
+.tile .meta h3,
+.more-card h3,
+.tile-arrow,
+.pill .ar {
+  transition: color var(--motion-hover) var(--motion-ease), transform var(--motion-hover) var(--motion-ease);
+}
+.project-inquiry .ar {
+  color: inherit;
+  transition: transform var(--motion-hover) var(--motion-ease);
+}
+.tile:hover .meta h3,
+.tile:focus-visible .meta h3,
+.more-card:hover h3,
+.more-card:focus-visible h3 { color: var(--tangerine); }
+.tile:hover .tile-arrow,
+.tile:focus-visible .tile-arrow,
+.more-card:hover .tile-arrow,
+.more-card:focus-visible .tile-arrow {
+  color: var(--tangerine);
+  transform: translateX(.38rem);
+}
+.pill:hover .ar,
+.pill:focus-visible .ar,
+.project-inquiry:hover .ar,
+.project-inquiry:focus-visible .ar { transform: translateX(.38rem); }
+
+/* Der Projektanfrage-Text ist normale Schrift, nicht der große Prio-1-Button. Seine
+   Tangerine-Fläche liegt deshalb im ersten aktiven Frame bereits vollständig hinter
+   Text und Pfeil und wird beim Verlassen sofort ausgeblendet (siehe Basis-Styles).
+   Der AA-sichere warm-schwarze Vordergrund erreicht dort 4,55:1; Creme nur 3,42:1. */
+.project-inquiry:is(:hover, :focus-visible) strong { color: var(--warm-black); }
+
+/* Einfache Textlinks verwenden überall dieselbe einfahrende Haarlinie. */
+.foot-col a:not(.pill),
+.foot-bar a:not(.to-top),
+.project-footer a {
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  text-decoration: none !important;
+  background-image: linear-gradient(var(--tangerine), var(--tangerine));
+  transition: color var(--motion-hover) ease, background-size var(--motion-hover) var(--motion-ease);
+}
+.foot-col a:not(.pill):hover,
+.foot-col a:not(.pill):focus-visible,
+.foot-bar a:not(.to-top):hover,
+.foot-bar a:not(.to-top):focus-visible,
+.project-footer a:hover,
+.project-footer a:focus-visible {
+  color: var(--tangerine);
+  background-size: 100% 1px;
+}
+
+/* Redaktionelle Inline-Links greifen dieselbe einfahrende Haarlinie auf. Ihre ruhende
+   Stärke entspricht den Leistungswerten; Hover und Tastaturfokus färben den Text wie
+   die Linie Tangerine. */
+.project-lead a,
+.rich-text a {
+  color: inherit;
+  font-weight: 600;
+  background-image: linear-gradient(var(--tangerine), var(--tangerine));
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  text-decoration: none;
+  transition: color var(--motion-hover) ease, background-size var(--motion-hover) var(--motion-ease);
+}
+.project-lead a b,
+.project-lead a strong,
+.rich-text a b,
+.rich-text a strong {
+  font-weight: inherit;
+}
+.project-lead a:hover,
+.project-lead a:focus-visible,
+.rich-text a:hover,
+.rich-text a:focus-visible {
+  color: var(--tangerine);
+  background-size: 100% 1px;
+}
+.brand { transition: color var(--motion-hover) ease; }
+.brand:hover,
+.brand:focus-visible { color: var(--tangerine); }
+.site-nav nav a:focus-visible { color: var(--tangerine); }
+.menu-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+
+/* Die Linie ist die untere Kante der 75-%-Rasterzone und läuft ohne Innenabstand über
+   die ganze cremefarbene Panelbreite. Die zentrale Subgrid-Spalte wird vom breitesten
+   Menüpunkt bestimmt; ihr Mittelpunkt ist zugleich der Mittelpunkt der weißen Fläche. */
+.menu-socials {
+  position: relative;
+  grid-column: 1 / -1;
+  grid-row: 4;
+  inline-size: 100%;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--menu-primary-measured-inline-size, max-content)
+    minmax(0, 1fr);
+  margin: 0;
+  padding-block: clamp(1.25rem, 2.8vh, 1.75rem) clamp(.75rem, 1.6vh, 1.1rem);
+}
+@supports (grid-template-columns: subgrid) {
+  .menu-socials { grid-template-columns: subgrid; }
+}
+/* Die Linie wird separat gezeichnet und darf um mehr als eine klassische
+   Scrollbarbreite über die Scrollportkante hinauslaufen. overflow-x:hidden am Panel
+   kappt sie erst an dessen echter rechter Viewportkante, ohne horizontales Scrollen. */
+.menu-socials::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: calc(100% + 2rem);
+  block-size: 1px;
+  background: var(--rule-strong, var(--ink));
+  pointer-events: none;
+}
+.menu-social-links {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  inline-size: 100%;
+  min-inline-size: var(--menu-social-row-min-size);
+  block-size: var(--menu-social-size);
+  margin: 0;
+  color: var(--ink);
+}
+.menu-social-links::before { content: none; }
+.site-nav nav .menu-social-links a {
+  position: relative;
+  flex: none;
+  margin: 0;
+  transition: opacity .4s ease,
+              transform .65s cubic-bezier(.16, 1, .3, 1),
+              color 180ms ease;
+}
+/* Die Social-Buttons brauchen nach dem Einflug keine gestaffelten Link-Delays: Das hält
+   das taktile Feedback ohne die Verzögerung der Hauptnavigation unmittelbar. */
+.site-nav[open] nav .menu-social-links > a:any-link { transition-delay: 0s; }
+.site-nav nav .menu-socials a {
+  flex: 0 0 auto;
+  inline-size: var(--menu-social-size);
+  block-size: var(--menu-social-size);
+  display: grid;
+  place-items: center;
+  border: 0;
+  box-shadow: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 0;
+  line-height: 1;
+}
+.site-nav nav .menu-socials a::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border: 1.5px solid currentColor;
+  border-radius: inherit;
+  color: inherit;
+  font-size: 0;
+  line-height: normal;
+  letter-spacing: normal;
+  box-shadow: none;
+  transform: translateY(0);
+  pointer-events: none;
+}
+/* Nur die Fassung bewegt sich: Icon, Trefferfläche und transparenter Buttongrund bleiben
+   unverändert. Die schmalen Inset-Kanten lesen sich als versenkter Ring, nicht als
+   Schlagschatten um den kompletten Button. */
+.site-nav nav .menu-social-links a:hover::before,
+.site-nav nav .menu-social-links a:focus-visible::before {
+  animation: social-rim-press 360ms var(--motion-ease) both;
+}
+.site-nav nav .menu-social-links a:active::before {
+  animation: none;
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1.5px 1.5px rgba(23, 20, 16, .5),
+    inset 0 -1px 1px rgba(255, 255, 255, .72);
+}
+@keyframes social-rim-press {
+  0% {
+    transform: translateY(0);
+    box-shadow: inset 0 0 0 rgba(23, 20, 16, 0), inset 0 0 0 rgba(255, 255, 255, 0);
+  }
+  62% {
+    transform: translateY(1.5px);
+    box-shadow:
+      inset 0 1.5px 1.75px rgba(23, 20, 16, .52),
+      inset 0 -1px 1px rgba(255, 255, 255, .76);
+  }
+  82% {
+    transform: translateY(.5px);
+    box-shadow:
+      inset 0 1px 1.25px rgba(23, 20, 16, .38),
+      inset 0 -.75px .75px rgba(255, 255, 255, .62);
+  }
+  100% {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1.25px 1.5px rgba(23, 20, 16, .46),
+      inset 0 -1px 1px rgba(255, 255, 255, .7);
+  }
+}
+.site-nav nav .menu-socials svg {
+  inline-size: clamp(1.75rem, 2vw, 2rem);
+  block-size: clamp(1.75rem, 2vw, 2rem);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.site-nav nav .menu-socials .mail-link rect { stroke-width: 1.35; }
+.site-nav nav .menu-socials .linkedin-link svg { stroke-width: 1.3; }
+.site-nav nav .menu-socials svg.phosphor-icon {
+  fill: currentColor;
+  /* Die kleine Zusatzkontur gibt der gefüllten Light-Variante optisch dasselbe Gewicht
+     wie den 24×24-Line-Icons; SVG-Strokes skalieren hier im 256er-ViewBox. */
+  stroke: currentColor;
+  stroke-width: 3;
+}
+@media (max-width: 52rem) {
+  .site-nav nav {
+    --menu-panel-inline-size: 100vw;
+    --menu-grid-line-adjust: .25px;
+    /* Die opake Panel-Fläche beginnt unter dem festen Header und endet exakt am
+       visuellen Viewport. Die Höhenkaskade folgt dabei auch dynamischen Browserleisten. */
+    inset-block-end: auto;
+    inset-inline: 0;
+    block-size: calc(100vh - var(--header-h, 4.6rem));
+    block-size: calc(100svh - var(--header-h, 4.6rem));
+    block-size: calc(100dvh - var(--header-h, 4.6rem));
+    box-shadow: 0 1.25rem 2.5rem rgba(23, 20, 16, .22);
+  }
+  .menu-primary { max-inline-size: calc(100vw - 2 * var(--pad)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav nav .menu-social-links a { transition: none; }
+  .site-nav nav .menu-social-links a:hover::before,
+  .site-nav nav .menu-social-links a:focus-visible::before {
+    animation: none;
+    transform: none;
+    box-shadow:
+      inset 0 1.25px 1.5px rgba(23, 20, 16, .46),
+      inset 0 -1px 1px rgba(255, 255, 255, .7);
+  }
+}
+
+/* Semantisch Teil der unteren Footerleiste, visuell das nach unten gespiegelte
+   Gegenstück zum Menüfeld: im Desktop-Seitenrand; mobil bleibt nur der Pfeil im
+   Seitenrand sichtbar, während die unsichtbare Trefferfläche bis in die Ecke reicht. */
+.to-top {
+  position: fixed;
+  z-index: 35;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  /* Die eigene linke Kante liegt exakt ÜBER dem innen gemalten rechten Rasterstrich.
+     Ohne den zusätzlichen Pixel stünden beide 1-px-Flächen direkt nebeneinander. */
+  inline-size: calc(var(--pad) + 1px);
+  block-size: 3.5rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-block-start: 1px solid currentColor;
+  border-inline-start: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: var(--warm-black, #171410);
+  mix-blend-mode: normal;
+  text-decoration: none;
+}
+.to-top.is-on-dark { color: var(--creme, #f0ece2); }
+/* Progressive Fallback: Ohne Skript bleibt der Pfeil auch über unbekannten Flächen
+   kontrastfähig. Im regulären Betrieb vermeidet die explizite Farbklasse das Auslöschen
+   der deckungsgleichen linken Raster- und Ankerkante. */
+html:not(.has-js) .to-top {
+  color: #fff;
+  mix-blend-mode: difference;
+}
+.to-top .tile-arrow { color: inherit; transform: rotate(-90deg); }
+.foot-bar .to-top { color: var(--warm-black, #171410); }
+.foot-bar .to-top.is-on-dark { color: var(--creme, #f0ece2); }
+.foot-bar .to-top:hover,
+.foot-bar .to-top:focus-visible {
+  background: transparent;
+}
+.foot-bar .to-top:hover .tile-arrow,
+.foot-bar .to-top:focus-visible .tile-arrow {
+  color: inherit;
+  transform: translateY(-.22rem) rotate(-90deg);
+}
+.to-top:focus-visible,
+.foot-bar .to-top:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+/* Der feste Anker darf auf keiner Seitenschale über dem geöffneten Panel liegen. Das
+   native details-Attribut deckt Darstellung und Hit-Testing auch ohne JavaScript ab. */
+body:has(.site-nav[open]:not(.is-measuring)) .to-top {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Die gemeinsame Footerleiste lebt vollständig im Shell-Stylesheet. Eine feste Höhe hält
+   Linie und obere Ankerkante auf ganzen Gerätepixeln; die Seitenstyles liefern hier keine
+   konkurrierenden Desktop- oder Mobile-Geometrien mehr. */
+.foot-bar {
+  min-block-size: 3.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-block: 0;
+  border-top: 1px solid var(--dark-rule);
+  color: var(--dark-muted);
+  font-size: var(--type-eyebrow);
+}
+.foot-bar.pad { padding-inline: calc(var(--pad) + var(--hero-inset, 1rem)); }
+
+/* Desktop nutzt vier echte Geschwister in derselben visuellen, Tastatur- und
+   Screenreader-Reihenfolge: Profil, Seite, sämtliche Projekte, Rechtliches. */
+.foot-profile { grid-column: 1; }
+.foot-pages { grid-column: 2; }
+.foot-projects { grid-column: 3; }
+.foot-legal { grid-column: 4; }
+.foot-profile,
+.foot-pages,
+.foot-projects,
+.foot-legal { grid-row: 1; }
+
+@media (max-width: 52rem) {
+  /* Profil über die volle Breite; Seite und Rechtliches stehen links untereinander,
+     sämtliche Projekte rechts. Explizite Plätze ändern dabei nicht die DOM-Reihenfolge. */
+  .foot-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: max-content max-content max-content;
+    gap: 0;
+  }
+  .foot-profile { grid-column: 1 / -1; grid-row: 1; margin-block-end: 2.5rem; }
+  .foot-pages { grid-column: 1; grid-row: 2; }
+  .foot-projects { grid-column: 2; grid-row: 2 / span 2; }
+  .foot-legal { grid-column: 1; grid-row: 3; margin-block-start: 2rem; }
+
+  .foot-bar {
+    min-block-size: 3.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 0;
+    padding-block: .75rem max(.75rem, env(safe-area-inset-bottom, 0px));
+    font-size: var(--type-eyebrow);
+    line-height: 1.25;
+  }
+  .foot-bar.pad { padding-inline: var(--pad); }
+  .foot-bar > span {
+    min-inline-size: 0;
+    padding-inline: var(--hero-inset, 1rem);
+    white-space: normal;
+  }
+  .foot-bar > span:first-child { grid-column: 1; }
+  /* Dieselbe zweite Grundspalte und derselbe innere Textabstand wie `.foot-projects`:
+     Ortszeile und Projektverzeichnis beginnen dadurch exakt auf einer Achse. */
+  .foot-bar > span:nth-child(2) {
+    grid-column: 2;
+    margin-inline-start: 0;
+    padding-inline-end: calc(var(--hero-inset, 1rem) + 2.75rem);
+    text-align: start;
+  }
+  .to-top {
+    inset-inline-end: env(safe-area-inset-right, 0px);
+    inset-block-end: env(safe-area-inset-bottom, 0px);
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 1px solid currentColor;
+    border-inline-end: 0;
+    border-block-end: 0;
+    background: transparent;
+  }
+  /* Der gedrehte Pfeil ist sichtbar etwa 10.4 × 24 px groß. Sein Mittelpunkt sitzt
+     horizontal in der rechten Paddingzone. Safe-Area-Inserts verschieben die vollständige
+     44-px-Trefferfläche samt Zeichen, sodass beides auch an Notch- und Home-Indikator-
+     Kanten deckungsgleich bleibt. */
+  .to-top .tile-arrow {
+    position: absolute;
+    inset-inline-end: calc(.5 * var(--pad) - .75rem);
+    inset-block-end: 1.425rem;
+  }
+  .foot-bar .to-top { color: var(--warm-black, #171410); }
+  .to-top.is-on-dark,
+  .foot-bar .to-top.is-on-dark {
+    color: var(--creme, #f0ece2);
+  }
+  html:not(.has-js) .to-top,
+  html:not(.has-js) .foot-bar .to-top {
+    background: transparent;
+    color: #fff;
+    mix-blend-mode: difference;
+  }
+}
+
+/* Ohne die lange E-Mail-Adresse können die beiden ausgeglichenen Verzeichnisspalten
+   bis 320px nebeneinander bleiben. Erst darunter wird der Footer einspaltig. */
+@media (max-width: 19.9375rem) {
+  .foot-cols {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 2.5rem 0;
+  }
+  .foot-profile,
+  .foot-pages,
+  .foot-projects,
+  .foot-legal {
+    grid-column: auto;
+    grid-row: auto;
+    margin-block: 0;
+  }
+}
+
+/* Unter 288px reicht selbst die kleinste gemeinsame Textstufe nicht mehr für beide
+   Abschlussangaben neben dem quadratischen Anker. Die Ortsangabe bleibt als wichtigere
+   gestalterische Signatur stehen; das Copyright bleibt im Dokument erst darüber sichtbar. */
+@media (max-width: 18rem) {
+  .foot-bar > span:first-child { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .motion-heading,
+  html:not(.has-js) .motion-heading,
+  html:not(.has-js) .no-js-content h1,
+  .project-lead, .case-copy, .quote p,
+  .svc > .ico, .svc > h3, .svc > p,
+  .me-row > summary > h3, .me-row > summary > .me-lead,
+  .me-text {
+    transform: none;
+    animation: none;
+  }
+  html.js-hw .hw-label .hw-final { visibility: visible; }
+  html.js-hw .hw-label .hw-svg { visibility: hidden; }
+  .hw-pen,
+  .hw-outline-pen { animation: none !important; stroke-dashoffset: 0 !important; }
+  .pill, .pill::before,
+  .tile, .more-card, .tile-depth, .tile .meta h3, .more-card h3, .tile-arrow,
+  .pill .ar, .project-inquiry .ar, .brand,
+  .foot-col a:not(.pill), .foot-bar a, .project-footer a, .to-top,
+  .project-lead a, .rich-text a,
+  .scrollcue, .cursor { transition: none; }
+  .pill:hover::before, .pill:focus-visible::before {
+    animation: none;
+    transform: translate3d(0, 0, -.7rem) rotateX(88deg);
+  }
+  .pill.ghost:hover, .pill.ghost:focus-visible {
+    animation: none;
+    color: var(--fold-ink);
+  }
+  .tile:not(.cta):hover .tile-depth,
+  .tile:not(.cta):focus-visible .tile-depth,
+  .more-card:hover .tile-depth,
+  .more-card:focus-visible .tile-depth { transform: none; animation: none; }
+  .tile:not(.cta):hover,
+  .tile:not(.cta):focus-visible,
+  .more-card:hover,
+  .more-card:focus-visible { animation: none; }
+}

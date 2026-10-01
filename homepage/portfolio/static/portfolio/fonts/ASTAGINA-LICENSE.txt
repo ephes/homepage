@@ -1,0 +1,15 @@
+Astagina Signature
+==================
+
+File:      astagina.woff2 (converted from the original TrueType font)
+Designer:  Green Adventure STD (https://greenadventurestd.com/)
+Copyright: Astagina Signature (c) Green Adventure Std. 2020
+Version:   1.00, September 22, 2020
+Source:    https://www.fontspace.com/astagina-signature-font-f50595
+
+License (FontSpace, category "Freeware"), as stated by the designer:
+
+    "This font is free 100% for personal use and commercial use"
+
+The handwriting animation data in ../prototype/handwriting-glyphs.js is
+derived from the glyph outlines of this font and is covered by the same terms.

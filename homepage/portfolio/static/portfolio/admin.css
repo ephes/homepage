@@ -24,6 +24,7 @@
   --portfolio-admin-border: var(--portfolio-admin-cream-strong);
   --portfolio-admin-link: var(--portfolio-admin-orange-dark);
   --portfolio-admin-link-hover: var(--portfolio-admin-ink);
+  --portfolio-admin-login-card: var(--portfolio-admin-surface-page);
 }
 
 :root,
@@ -119,6 +120,12 @@
   color: var(--portfolio-admin-cream);
 }
 
+/* In dark mode the login card would match the dark part of the background and hide
+   Wagtail's black logo bird; lift it onto the raised surface. */
+.login .content-wrapper {
+  background-color: var(--portfolio-admin-login-card);
+}
+
 /* Wagtail also uses its button-text token on the dark Draftail toolbars. Keep
    those editing controls light while confirming actions retain dark text. */
 .Draftail-Toolbar,
@@ -140,6 +147,7 @@
   --w-color-surface-field-inactive: #39332b;
   --w-color-border-field-default: #746b60;
   --w-color-border-field-hover: var(--portfolio-admin-cream);
+  --portfolio-admin-login-card: var(--portfolio-admin-ink-raised);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -157,6 +165,7 @@
     --w-color-surface-field-inactive: #39332b;
     --w-color-border-field-default: #746b60;
     --w-color-border-field-hover: var(--portfolio-admin-cream);
+    --portfolio-admin-login-card: var(--portfolio-admin-ink-raised);
   }
 }
 

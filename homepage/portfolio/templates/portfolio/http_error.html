@@ -1,0 +1,12 @@
+{% extends "portfolio/base.html" %}
+
+{% block title %}{{ status_title }}{% endblock %}
+{% block meta_robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+  <section class="http-error">
+    <h1>{{ status_title }}</h1>
+    <p>{{ status_text }}</p>
+    <p><a href="/">Zur Startseite</a></p>
+  </section>
+{% endblock %}

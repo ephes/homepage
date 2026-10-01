@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from wagtail.models import Site
+from wagtail.models import Page, Site
 
 from homepage.portfolio.models import (
     PortfolioAboutItem,
@@ -118,15 +118,28 @@ class Command(BaseCommand):
             help="Create a draft portfolio page below the default site's root page if none exists.",
         )
         parser.add_argument("--slug", default="portfolio", help="Slug for the page created by --create.")
+        parser.add_argument(
+            "--hostname",
+            help=(
+                "With --create: create the page as root page of a new Wagtail site for this hostname "
+                "(e.g. design.wersdoerfer.de) instead of below the default site."
+            ),
+        )
+        parser.add_argument(
+            "--port",
+            type=int,
+            default=443,
+            help="Port of the Wagtail site created with --hostname (443 for HTTPS, e.g. 8000 locally).",
+        )
 
     @transaction.atomic
-    def handle(self, *args, create, slug, **options):
+    def handle(self, *args, create, slug, hostname=None, port=443, **options):
         for name in CATEGORIES:
             ProjectCategory.objects.get_or_create(name=name)
 
         pages = list(PortfolioIndexPage.objects.all())
         if not pages and create:
-            pages = [self.create_page(slug)]
+            pages = [self.create_page(slug, hostname, port)]
         if not pages:
             raise CommandError("No portfolio page exists. Create one in the Wagtail admin or pass --create.")
 
@@ -134,12 +147,18 @@ class Command(BaseCommand):
             self.seed_page(page)
             self.stdout.write(f"Seeded {page.title} ({page.url_path})")
 
-    def create_page(self, slug):
-        site = Site.objects.filter(is_default_site=True).select_related("root_page").first()
-        if site is None:
-            raise CommandError("No default Wagtail site configured.")
+    def create_page(self, slug, hostname=None, port=443):
         page = PortfolioIndexPage(title="Katharina Wersdörfer", slug=slug, live=False)
-        site.root_page.add_child(instance=page)
+        if hostname:
+            if Site.objects.filter(hostname=hostname).exists():
+                raise CommandError(f"A Wagtail site for {hostname} already exists.")
+            Page.get_first_root_node().add_child(instance=page)
+            Site.objects.create(hostname=hostname, port=port, root_page=page, site_name=page.title)
+        else:
+            site = Site.objects.filter(is_default_site=True).select_related("root_page").first()
+            if site is None:
+                raise CommandError("No default Wagtail site configured.")
+            site.root_page.add_child(instance=page)
         page.save_revision()
         return page
 

@@ -140,3 +140,30 @@ def imprint(request):
 
 def privacy(request):
     return _legal_page(request, page_kind="privacy")
+
+
+def _http_error(request, status, title, text):
+    """Render a plain error page that needs no route of the main site."""
+
+    return render(
+        request,
+        "portfolio/http_error.html",
+        {"status_title": title, "status_text": text},
+        status=status,
+    )
+
+
+def page_not_found(request, exception=None):
+    return _http_error(request, 404, "Seite nicht gefunden", "Diese Seite gibt es nicht (mehr).")
+
+
+def server_error(request):
+    return _http_error(request, 500, "Fehler", "Da ist etwas schiefgegangen. Bitte versuch es später noch einmal.")
+
+
+def bad_request(request, exception=None):
+    return _http_error(request, 400, "Ungültige Anfrage", "Diese Anfrage konnte nicht verarbeitet werden.")
+
+
+def permission_denied(request, exception=None):
+    return _http_error(request, 403, "Kein Zugriff", "Diese Seite ist nicht öffentlich.")

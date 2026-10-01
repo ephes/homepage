@@ -17,6 +17,7 @@ from .blocks import (
     ProjectBodyBlock,
     get_project_block_region,
 )
+from .hosts import portfolio_page_path
 
 
 def current_year():
@@ -649,6 +650,13 @@ def get_site_setting_or_default(setting_model, site, **unsaved_values):
 
 class PortfolioContextMixin:
     """Provide the shared, server-rendered portfolio navigation context."""
+
+    def get_url_parts(self, request=None):
+        url_parts = super().get_url_parts(request)
+        if url_parts is None:
+            return None
+        site_id, root_url, page_path = url_parts
+        return site_id, root_url, portfolio_page_path(root_url, page_path)
 
     def get_portfolio_index(self):
         if isinstance(self, PortfolioIndexPage):

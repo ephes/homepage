@@ -48,15 +48,32 @@ and is therefore excluded from the ``check-added-large-files`` hook.
 Routes
 ------
 
-* The page tree is served by Wagtail's catch-all mounted under ``/blogs/``.
+The portfolio runs on its own hostname. ``DJANGO_PORTFOLIO_HOSTS`` (comma separated,
+setting ``PORTFOLIO_HOSTS``) lists these hostnames, e.g. ``design.wersdoerfer.de``.
+``homepage.portfolio.hosts.PortfolioHostMiddleware`` serves requests for them with
+``config/urls_portfolio.py``:
+
+* Wagtail serves the page tree from ``/``, so the portfolio landing page is ``/`` and a
+  project is ``/<slug>/``. Portfolio pages compute their URLs for these hosts without
+  the ``/blogs/`` prefix, also when the URL is rendered on the main host (admin links).
 * ``/impressum/`` and ``/datenschutz/`` render ``LegalPageSettings`` only when the
   request's Wagtail site has a live, public ``PortfolioIndexPage`` **as its root
-  page**. On every other site, including ``wersdoerfer.de`` with a portfolio nested
-  below its root, they return 404. A live Wagtail page with the same relative path
+  page**; otherwise they return 404. A live Wagtail page with the same relative path
   takes precedence and is redirected to. The portfolio footer only links to these
   pages when the portfolio is the site's root page.
-* ``/portfolio/501/`` renders the editable placeholder with HTTP status 501. On a site
-  without a portfolio root it omits all portfolio identity.
+* ``/portfolio/501/`` renders the editable placeholder with HTTP status 501.
+* ``robots.txt`` and ``favicon.ico`` as on the main host. Errors (400, 403, 404, 500)
+  use the plain ``portfolio/http_error.html`` instead of the blog's error pages.
+* Admin, blog, accounts and all other routes exist only on the main host.
+
+Every other host keeps ``config/urls.py``: the Wagtail page tree stays under
+``/blogs/``. The legal and 501 routes exist there as well (the admin preview of a
+portfolio page needs them to resolve its links), but return 404 or omit the portfolio
+identity on a site without a portfolio root.
+
+A portfolio host needs a Wagtail site with that hostname whose root page is the
+portfolio page, the hostname in ``DJANGO_ALLOWED_HOSTS`` and ``DJANGO_PORTFOLIO_HOSTS``,
+and a reverse-proxy rule that routes it to the homepage application.
 
 Navigation and home links use Wagtail's request-aware ``pageurl`` tag, so they resolve
 against the site of the current request.
@@ -93,16 +110,18 @@ Local development
 
 Create the page in the Wagtail admin, or let the seed command create it::
 
-    uv run python manage.py seed_portfolio --create
+    uv run python manage.py seed_portfolio --create --hostname design.localhost --port 8000
 
 ``seed_portfolio`` fills empty service, about and client lists of every portfolio page
 with Katharina's default copy and creates the project categories. It never overwrites
 existing entries and can be run repeatedly. The entries are saved as a new page
 revision, so the Wagtail editor shows them; the revision is published only if the page
 was live without pending draft changes. ``--create`` creates an unpublished portfolio
-page below the default site's root page if none exists. The command can also prefill a
-production page once.
+page if none exists. With ``--hostname`` it becomes the root page of a new Wagtail site
+for that hostname (next to the main site's tree), with ``--port`` as the site's port
+(default 443, so Wagtail renders ``https://`` URLs); without it, it is created below the
+default site's root page. The command can also prefill a production page once.
 
-To view the portfolio as its own site locally, add a Wagtail site (for example
-hostname ``design.localhost``, port ``8000``) with the portfolio page as root page and
-open ``http://design.localhost:8000/blogs/``.
+To view the portfolio as its own site locally, run the command above, publish the page
+in the admin, start Django with ``DJANGO_PORTFOLIO_HOSTS=design.localhost`` (and the
+hostname in ``DJANGO_ALLOWED_HOSTS``) and open ``http://design.localhost:8000/``.

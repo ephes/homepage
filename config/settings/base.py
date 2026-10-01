@@ -113,6 +113,7 @@ TASKS = {
 MIDDLEWARE = [
     # "django.middleware.cache.UpdateCacheMiddleware",  # caching
     "django.middleware.security.SecurityMiddleware",
+    "homepage.portfolio.hosts.PortfolioHostMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -124,6 +125,9 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     # "django.middleware.cache.FetchFromCacheMiddleware",  # caching
 ]
+
+# Hosts that serve the portfolio as its own Wagtail site, with pages below / instead of /blogs/.
+PORTFOLIO_HOSTS = env.list("DJANGO_PORTFOLIO_HOSTS", default=[])
 
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------

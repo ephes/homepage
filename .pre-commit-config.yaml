@@ -6,6 +6,8 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        # Generated handwriting path data for the portfolio (~670 KB, served gzip/brotli-compressed).
+        exclude: ^homepage/portfolio/static/portfolio/prototype/handwriting-glyphs\.js$
       - id: check-toml
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2

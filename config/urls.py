@@ -10,6 +10,7 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from homepage.core import views as core_views
+from homepage.portfolio import views as portfolio_views
 
 handler404 = default_views_cast.page_not_found
 handler500 = default_views_cast.server_error
@@ -21,6 +22,8 @@ urlpatterns = [
     path("", core_views.home, name="home"),
     path("robots.txt", core_views.robots_txt, name="robots_txt"),
     path("favicon.ico", core_views.favicon),
+    path("impressum/", portfolio_views.imprint, name="portfolio_imprint"),
+    path("datenschutz/", portfolio_views.privacy, name="portfolio_privacy"),
     path(
         "jochen/",
         core_views.jochen_profile,
@@ -54,6 +57,8 @@ urlpatterns = [
     path("", include("homepage.fedi.urls", namespace="fedi")),
     # Resume
     path("resume/", include("django_resume.urls", namespace="resume")),
+    # Explicit portfolio utility routes; Wagtail's page tree remains under /blogs/.
+    path("portfolio/", include("homepage.portfolio.urls", namespace="portfolio")),
     # Wagtail
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),

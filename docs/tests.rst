@@ -56,6 +56,14 @@ Key settings:
 * ``--no-migrations``: Skips migrations during test runs for speed
 * ``-ra``: Shows a short summary of all test outcomes
 
+Media Storage in Tests
+~~~~~~~~~~~~~~~~~~~~~~
+
+Tests never write to the S3 bucket. ``config/settings/test.py`` replaces the ``default`` and
+``production`` storages with Django's ``InMemoryStorage`` and sets AWS credentials that S3 rejects,
+so an accidental S3 access fails instead of uploading files. ``homepage/tests/test_storage_settings.py``
+guards this: it fails if any configured storage backend uses S3.
+
 Coverage Configuration
 ----------------------
 

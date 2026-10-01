@@ -64,3 +64,16 @@ DJANGO_VITE = {
     "default": {"dev_mode": False, "manifest_path": "test-manifest.json"},
     "cast": {"dev_mode": False, "manifest_path": "test-manifest.json"},
 }
+
+# STORAGE
+# ------------------------------------------------------------------------------
+# Tests must never write to the S3 bucket. Keep all uploads in memory and use
+# credentials that S3 rejects, so an accidental S3 access fails loudly.
+STORAGES = {
+    **STORAGES,
+    "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+    "production": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+}
+MEDIA_URL = "/media/"
+AWS_ACCESS_KEY_ID = "test-invalid-access-key"
+AWS_SECRET_ACCESS_KEY = "test-invalid-secret-key"

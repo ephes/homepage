@@ -76,9 +76,8 @@ Updating Dependencies
 
 The committed ``uv.lock`` pins the complete environment, including exact Git
 commits for django-cast, django-indieweb, django-resume, and the Cast themes.
-django-cast tracks ``develop`` and django-resume tracks ``feature/editorial-theme``
-(the editorial resume theme, until it is merged into django-resume's ``main``), so an
-update can include unreleased changes even when the package version is unchanged. Review upstream release notes as well as the commit change.
+django-cast tracks ``develop`` and django-resume tracks ``main``, so an update can
+include unreleased changes even when the package version is unchanged. Review upstream release notes as well as the commit change.
 
 Refresh all dependencies within the constraints in ``pyproject.toml``::
 

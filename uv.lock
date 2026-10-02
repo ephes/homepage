@@ -1092,7 +1092,7 @@ wheels = [
 [[package]]
 name = "django-resume"
 version = "0.3.0"
-source = { git = "https://github.com/ephes/django-resume?branch=feature%2Feditorial-theme#c92a68cacad4ff0f6ca68403620ca91cf743c910" }
+source = { git = "https://github.com/ephes/django-resume?branch=main#bcdeb44ba0bfb02d963d6debf896468902534f53" }
 dependencies = [
     { name = "django" },
     { name = "jsonschema" },
@@ -1465,7 +1465,7 @@ requires-dist = [
     { name = "django-extensions" },
     { name = "django-indieweb", git = "https://github.com/ephes/django-indieweb?branch=develop" },
     { name = "django-proxy" },
-    { name = "django-resume", git = "https://github.com/ephes/django-resume?branch=feature%2Feditorial-theme" },
+    { name = "django-resume", git = "https://github.com/ephes/django-resume?branch=main" },
     { name = "django-storages" },
     { name = "django-tasks", specifier = "==0.12.0" },
     { name = "django-tasks-db", specifier = "==0.12.0" },

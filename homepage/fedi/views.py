@@ -3,6 +3,7 @@ import logging
 import socket
 import ssl
 import threading
+import time
 from urllib.parse import urljoin, urlsplit
 
 import certifi
@@ -64,6 +65,71 @@ def _read_limited(upstream) -> bytes:
     return b"".join(chunks)
 
 
+def _resolve(host, port, remaining):
+    """
+    Resolve ``host`` in a helper thread so that a stalled resolver cannot hold
+    the request past the deadline (``getaddrinfo`` itself cannot be interrupted).
+    """
+    result = {}
+
+    def resolve():
+        try:
+            result["addresses"] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        except OSError as exc:
+            result["error"] = exc
+
+    resolver = threading.Thread(target=resolve, daemon=True)
+    resolver.start()
+    resolver.join(max(remaining, 0))
+    if resolver.is_alive():
+        raise UpstreamTimeout
+    if "error" in result:
+        raise UpstreamError(f"cannot resolve {host}: {result['error']}")
+    return result["addresses"]
+
+
+def _connect(conn, parts, deadline, deadline_hit, active):
+    """
+    Open the socket for ``conn`` ourselves, bounding DNS, every TCP connect
+    attempt and the TLS handshake by the overall deadline.
+    """
+
+    def remaining():
+        left = deadline - time.monotonic()
+        if left <= 0 or deadline_hit.is_set():
+            raise UpstreamTimeout
+        return left
+
+    port = parts.port or (443 if parts.scheme == "https" else 80)
+    last_error = None
+    for family, socktype, proto, _, address in _resolve(parts.hostname, port, remaining()):
+        sock = socket.socket(family, socktype, proto)
+        try:
+            sock.settimeout(min(CONNECT_TIMEOUT, remaining()))
+            sock.connect(address)
+        except OSError as exc:
+            sock.close()
+            last_error = exc
+            continue
+        except UpstreamTimeout:
+            sock.close()
+            raise
+        active["sock"] = sock
+        if parts.scheme == "https":
+            sock = _get_ssl_context().wrap_socket(sock, server_hostname=parts.hostname, do_handshake_on_connect=False)
+            # Register the TLS socket before the handshake so the deadline timer
+            # can abort it, and bound the handshake by the remaining time.
+            active["sock"] = sock
+            sock.settimeout(min(CONNECT_TIMEOUT, remaining()))
+            sock.do_handshake()
+        sock.settimeout(min(READ_TIMEOUT, remaining()))
+        conn.sock = sock
+        return
+    if isinstance(last_error, TimeoutError):
+        raise UpstreamTimeout from last_error
+    raise UpstreamError(f"cannot connect to {parts.hostname}: {last_error}")
+
+
 def _fetch(url, accept):
     """
     GET ``url`` and return ``(status, headers, body)``.
@@ -73,12 +139,8 @@ def _fetch(url, accept):
     ``UpstreamTimeout`` or ``UpstreamError``.
     """
     parts = urlsplit(url)
-    if parts.scheme == "https":
-        conn = http.client.HTTPSConnection(
-            parts.hostname, parts.port, timeout=CONNECT_TIMEOUT, context=_get_ssl_context()
-        )
-    else:
-        conn = http.client.HTTPConnection(parts.hostname, parts.port, timeout=CONNECT_TIMEOUT)
+    # The socket is set up by _connect; http.client only speaks HTTP over it.
+    conn = http.client.HTTPConnection(parts.hostname, parts.port)
     target = parts.path + (f"?{parts.query}" if parts.query else "")
 
     deadline_hit = threading.Event()
@@ -96,13 +158,12 @@ def _fetch(url, accept):
             except OSError:
                 pass
 
+    deadline = time.monotonic() + UPSTREAM_DEADLINE
     timer = threading.Timer(UPSTREAM_DEADLINE, abort)
     timer.daemon = True
     timer.start()
     try:
-        conn.connect()
-        active["sock"] = conn.sock
-        conn.sock.settimeout(READ_TIMEOUT)
+        _connect(conn, parts, deadline, deadline_hit, active)
         conn.request(
             "GET",
             target,
@@ -157,6 +218,16 @@ def _proxy_wellknown(request, path, *, forward_query=True, default_accept="*/*")
         logger.warning("Failed to fetch %s: %s", path, exc)
         return HttpResponse("Bad gateway", status=502, content_type="text/plain")
 
+    try:
+        return _build_response(request, url, status, headers, content)
+    except ValueError as exc:
+        # Invalid upstream status or header values (BadHeaderError is a ValueError),
+        # or a malformed redirect location.
+        logger.warning("Invalid upstream response for %s: %s", path, exc)
+        return HttpResponse("Bad gateway", status=502, content_type="text/plain")
+
+
+def _build_response(request, url, status, headers, content):
     response = HttpResponse(
         b"" if request.method == "HEAD" else content,
         status=status,

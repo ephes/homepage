@@ -26,10 +26,13 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
      any ``Content-Encoding`` the upstream still uses is passed on as is.
    * Upstream redirects are not followed; a ``3xx`` is returned to the client
      with its ``Location`` made absolute against the fedi host.
-   * Timeouts: 3 s to connect (including TLS), 10 s per socket read and a hard
-     15 s overall deadline, after which the upstream socket is shut down. A
-     timeout returns ``504``; any other connection or protocol error, a
-     truncated body, or a body larger than 1 MiB returns ``502``.
+   * Timeouts: 3 s per TCP connect attempt, 10 s per socket read and a hard
+     15 s overall deadline that also bounds DNS resolution (done in a helper
+     thread), every connect attempt and the TLS handshake; when it passes, the
+     upstream socket is shut down. A timeout returns ``504``; any other
+     connection or protocol error, a truncated body, a body larger than
+     1 MiB, or an invalid upstream status, header or redirect location returns
+     ``502``.
    * The request is made with the standard library (``http.client``) and
      verified against the ``certifi`` CA bundle.
 

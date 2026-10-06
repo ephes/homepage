@@ -3,7 +3,10 @@ Tests for the fediverse .well-known proxy, run against a real local HTTP server
 standing in for the fedi host.
 """
 
+import datetime
 import http.server
+import ipaddress
+import ssl
 import threading
 import time
 from urllib.parse import urlsplit
@@ -287,3 +290,182 @@ def test_content_encoding_passed_through_undecoded(client, upstream):
     assert response.content == b"\x1f\x8bnot-really-gzip"
     assert response["Content-Encoding"] == "gzip"
     assert upstream.requests[0]["headers"]["Accept-Encoding"] == "identity"
+
+
+def test_stalled_dns_resolution_hits_deadline(client, upstream, monkeypatch):
+    real_getaddrinfo = views.socket.getaddrinfo
+
+    def slow_getaddrinfo(*args, **kwargs):
+        time.sleep(3)
+        return real_getaddrinfo(*args, **kwargs)
+
+    monkeypatch.setattr(views.socket, "getaddrinfo", slow_getaddrinfo)
+
+    started = time.monotonic()
+    response = client.get("/.well-known/nodeinfo")
+    elapsed = time.monotonic() - started
+
+    assert response.status_code == 504
+    assert elapsed < views.UPSTREAM_DEADLINE + 0.5
+
+
+def test_unresolvable_host_returns_502(client, upstream, monkeypatch):
+    def fail(*args, **kwargs):
+        raise views.socket.gaierror("Name or service not known")
+
+    monkeypatch.setattr(views.socket, "getaddrinfo", fail)
+
+    response = client.get("/.well-known/nodeinfo")
+
+    assert response.status_code == 502
+
+
+@pytest.mark.parametrize(
+    "raw_headers",
+    [
+        b"Content-Type: application/json\r\n folded\r\nContent-Length: 2\r\n",
+        b"Location: http://[::1\r\nContent-Length: 2\r\n",
+    ],
+    ids=["folded-content-type", "malformed-location"],
+)
+def test_invalid_upstream_headers_return_502(client, upstream, raw_headers):
+    def invalid(handler):
+        handler.wfile.write(b"HTTP/1.1 302 Found\r\n" + raw_headers + b"\r\n{}")
+        handler.close_connection = True
+
+    upstream.routes["/.well-known/nodeinfo"] = invalid
+
+    response = client.get("/.well-known/nodeinfo")
+
+    assert response.status_code == 502
+
+
+def _write_self_signed_cert(directory):
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.x509.oid import NameOID
+
+    key = ec.generate_private_key(ec.SECP256R1())
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "localhost")])
+    now = datetime.datetime.now(datetime.UTC)
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - datetime.timedelta(minutes=5))
+        .not_valid_after(now + datetime.timedelta(hours=1))
+        .add_extension(
+            x509.SubjectAlternativeName(
+                [x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]
+            ),
+            critical=False,
+        )
+        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+        .sign(key, hashes.SHA256())
+    )
+    cert_file = directory / "cert.pem"
+    key_file = directory / "key.pem"
+    cert_file.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    key_file.write_bytes(
+        key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    )
+    return cert_file, key_file
+
+
+class TLSUpstream(Upstream):
+    handshake_delay = 0
+
+    def __init__(self, cert_file, key_file):
+        super().__init__()
+        self.tls_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.tls_context.load_cert_chain(cert_file, key_file)
+
+    @property
+    def base_url(self):
+        return f"https://127.0.0.1:{self.server_address[1]}"
+
+    def finish_request(self, request, client_address):
+        time.sleep(self.handshake_delay)
+        try:
+            tls_request = self.tls_context.wrap_socket(request, server_side=True)
+        except OSError:
+            return
+        try:
+            self.RequestHandlerClass(tls_request, client_address, self)
+        finally:
+            tls_request.close()
+
+
+@pytest.fixture
+def tls_upstream(monkeypatch, tmp_path):
+    cert_file, key_file = _write_self_signed_cert(tmp_path)
+    server = TLSUpstream(cert_file, key_file)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    monkeypatch.setattr(views, "FEDI_BASE_URL", server.base_url)
+    monkeypatch.setattr(views, "_ssl_context", ssl.create_default_context(cafile=str(cert_file)))
+    monkeypatch.setattr(views, "CONNECT_TIMEOUT", 1)
+    monkeypatch.setattr(views, "READ_TIMEOUT", 0.5)
+    monkeypatch.setattr(views, "UPSTREAM_DEADLINE", 1)
+    yield server
+    server.shutdown()
+    server.server_close()
+
+
+def test_https_upstream_happy_path(client, tls_upstream):
+    response = client.get("/.well-known/nodeinfo")
+
+    assert response.status_code == 200
+    assert response.content == b'{"links": []}'
+
+
+def test_https_upstream_with_untrusted_cert_returns_502(client, tls_upstream, monkeypatch):
+    monkeypatch.setattr(views, "_ssl_context", ssl.create_default_context())
+
+    response = client.get("/.well-known/nodeinfo")
+
+    assert response.status_code == 502
+
+
+def test_slow_tls_handshake_then_dripping_body_hits_deadline(client, tls_upstream, monkeypatch):
+    """A handshake finishing just before the deadline must not let the body read run on."""
+    monkeypatch.setattr(views, "CONNECT_TIMEOUT", 5)
+    monkeypatch.setattr(views, "READ_TIMEOUT", 5)
+    tls_upstream.handshake_delay = 0.8
+    stop = threading.Event()
+
+    def drip(handler):
+        handler.wfile.write(b"HTTP/1.1 200 OK\r\nContent-Length: 1000\r\n\r\n")
+        handler.wfile.flush()
+        while not stop.is_set():
+            try:
+                handler.wfile.write(b"a")
+                handler.wfile.flush()
+            except OSError:
+                return
+            time.sleep(0.1)
+
+    tls_upstream.routes["/.well-known/nodeinfo"] = drip
+
+    started = time.monotonic()
+    response = client.get("/.well-known/nodeinfo")
+    elapsed = time.monotonic() - started
+    stop.set()
+
+    assert response.status_code == 504
+    assert elapsed < views.UPSTREAM_DEADLINE + 0.5
+
+
+def test_stalled_tls_handshake_hits_deadline(client, tls_upstream, monkeypatch):
+    monkeypatch.setattr(views, "CONNECT_TIMEOUT", 5)
+    tls_upstream.handshake_delay = 3
+
+    started = time.monotonic()
+    response = client.get("/.well-known/nodeinfo")
+    elapsed = time.monotonic() - started
+
+    assert response.status_code == 504
+    assert elapsed < views.UPSTREAM_DEADLINE + 0.5

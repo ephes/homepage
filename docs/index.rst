@@ -20,6 +20,7 @@ Contents:
    seo
    indieweb
    api_token_auth
+   admin_login_throttle
    fediverse
    deploy
    tests

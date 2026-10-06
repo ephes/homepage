@@ -97,6 +97,11 @@ Supports:
 - Photo URLs (converted to image HTML)
 - Location data (formatted with OpenStreetMap links)
 
+All paragraph HTML (from HTML input, plain text, photos and locations) is
+sanitized with `nh3`, a runtime dependency, against the converter's tag
+allow-list before it is stored; scripts, event handlers and `javascript:` URLs
+are removed. There is no unsanitized fallback.
+
 The preview page (`/indieweb/micropub-form/preview/`) escapes code blocks and
 sanitizes paragraph HTML against the converter's tag allow-list before
 rendering; form messages are rendered with autoescaping.

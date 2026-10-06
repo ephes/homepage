@@ -4,7 +4,6 @@ Views for local micropub posting interface.
 
 import logging
 
-import nh3
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -28,21 +27,11 @@ from .handler import (
 
 logger = logging.getLogger(__name__)
 
-PREVIEW_ALLOWED_TAGS = {*ContentConverter.ALLOWED_TAGS, "img"}
-PREVIEW_ALLOWED_ATTRIBUTES = {
-    **{tag: set(attributes) for tag, attributes in ContentConverter.ALLOWED_ATTRIBUTES.items()},
-    "img": {"src", "alt"},
-}
-
 
 def _sanitize_preview_html(html: str) -> str:
-    """Strip markup outside the converter's allow-list from preview paragraph HTML."""
-    return nh3.clean(
-        str(html),
-        tags=PREVIEW_ALLOWED_TAGS,
-        attributes=PREVIEW_ALLOWED_ATTRIBUTES,
-        url_schemes={"http", "https", "mailto"},
-        link_rel=None,
+    """Re-sanitize preview paragraph HTML with the converter's block allow-list."""
+    return ContentConverter.sanitize_html(
+        html, ContentConverter.BLOCK_ALLOWED_TAGS, ContentConverter.BLOCK_ALLOWED_ATTRIBUTES
     )
 
 

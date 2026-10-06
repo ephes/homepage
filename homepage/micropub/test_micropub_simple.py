@@ -129,7 +129,7 @@ class ContentConverterTests(TestCase):
         blocks = self.converter.convert_content(content, {})
 
         self.assertEqual(blocks[0][0], "paragraph")
-        self.assertEqual(blocks[0][1], "<h3>&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;</h3>")
+        self.assertEqual(blocks[0][1], "<h3>&lt;script&gt;alert('x')&lt;/script&gt;</h3>")
 
     def test_convert_html_heading_preserves_level(self):
         """Test HTML headings become rich text paragraphs preserving tags."""

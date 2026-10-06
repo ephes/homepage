@@ -24,6 +24,11 @@ Permissions
    Rejected requests create nothing; the endpoint answers ``400
    invalid_request`` and the form shows a generic error without exception text.
 
+Content sanitization
+   The content converter sanitizes every paragraph block with ``nh3`` (a
+   runtime dependency) against its tag allow-list before storing it; there is
+   no fallback that stores unsanitized HTML.
+
 Source queries
    ``q=source&url=...`` resolves the URL through the Wagtail page tree (using
    Wagtail's hostname/port site selection and the percent-decoded path) and

@@ -40,7 +40,8 @@ Webmention targets
 ``homepage.webmention_config.CastURLResolver`` accepts targets on the current
 site's domain (``localhost:8000`` when the Django site domain is ``localhost``):
 
-* ``/jochen/`` – the personal page.
+* ``/jochen/`` – the personal page (the view returns 404 while no ``jochen``
+  user exists).
 * ``/blogs/{blog}/`` – the blog, if it is a live, public child of the Wagtail
   site root.
 * ``/blogs/{blog}/{post}/`` (and sub-routes such as ``.../transcript/``) – the

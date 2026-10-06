@@ -3,7 +3,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import FileResponse, HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET, require_http_methods
 
@@ -52,7 +52,7 @@ def home(request: HttpRequest) -> HttpResponse:
 
 def jochen_profile(request: HttpRequest) -> HttpResponse:
     """View for Jochen's profile page with h-card."""
-    user = User.objects.get(username="jochen")
+    user = get_object_or_404(User, username="jochen")
     context = {
         "user": user,
         "cast_base_template": "cast/bootstrap5/base.html",  # Default template

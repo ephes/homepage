@@ -97,4 +97,3 @@ Static Files
 ~~~~~~~~~~~~
 
 Static files are served using WhiteNoise in production, eliminating the need for a separate web server for static content.
-

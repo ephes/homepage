@@ -6,11 +6,14 @@ from micropub requests, enabling IndieWeb publishing to your blog.
 """
 
 import logging
+from collections import Counter
 from datetime import datetime
 from typing import Any
 
 from cast.models import Blog, Post
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from indieweb.handlers import MicropubContentHandler, MicropubEntry
@@ -18,10 +21,56 @@ from wagtail.blocks import StreamValue
 from wagtail.log_actions import log as wagtail_log
 from wagtail.models import PageLogEntry
 
+from homepage.core.page_lookup import find_page_for_url
+
 from .converters import ContentConverter
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+# Micropub property a client uses to choose the target blog (Micropub channels
+# extension). Its value is a blog slug as advertised by ``q=channel``.
+TARGET_BLOG_PROPERTY = "mp-channel"
+DEFAULT_MICROPUB_BLOG_SLUG = "ephes_blog"
+
+
+class MicropubTargetError(ValueError):
+    """The requested target blog does not exist or cannot be determined.
+
+    Subclasses ``ValueError`` so django-indieweb answers with ``invalid_request``.
+    """
+
+
+class MicropubPermissionError(ValueError):
+    """The user lacks the Wagtail page permissions needed to publish into the target blog.
+
+    Subclasses ``ValueError`` so django-indieweb rejects the request instead of
+    treating it as a server error.
+    """
+
+
+def get_default_blog_slug() -> str:
+    """Return the slug of the blog used when a request does not select one."""
+    return getattr(settings, "MICROPUB_DEFAULT_BLOG_SLUG", DEFAULT_MICROPUB_BLOG_SLUG)
+
+
+def user_can_publish_into(blog: Blog, user) -> bool:
+    """Return whether ``user`` may create and immediately publish a Post below ``blog``."""
+    if not Post.can_create_at(blog):
+        return False
+    permissions = blog.permissions_for_user(user)
+    return permissions.can_add_subpage() and permissions.can_publish_subpage()
+
+
+def publishable_blogs_for_user(user) -> list[Blog]:
+    """Return the live blogs ``user`` may publish Micropub posts into.
+
+    Blogs whose slug is shared by another live blog are left out: a slug is the
+    channel identifier, and ``_get_target_blog`` rejects ambiguous slugs.
+    """
+    blogs = list(Blog.objects.live().order_by("path"))
+    slug_counts = Counter(blog.slug for blog in blogs)
+    return [blog for blog in blogs if slug_counts[blog.slug] == 1 and user_can_publish_into(blog, user)]
 
 
 class CastPostMicropubHandler(MicropubContentHandler):
@@ -58,10 +107,22 @@ class CastPostMicropubHandler(MicropubContentHandler):
         logger.info(f"Received properties: {properties}")
         logger.info(f"Categories/tags: {categories}")
 
-        # Get the first blog as parent (you might want to make this configurable)
-        blog = self._get_default_blog()
-        if not blog:
-            raise ValueError("No blog found to create post in")
+        with transaction.atomic():
+            return self._create_post(properties, user, title, content, published, categories)
+
+    def _create_post(
+        self,
+        properties: dict[str, list[Any]],
+        user: User,
+        title: str,
+        content: str,
+        published: datetime,
+        categories: list[Any],
+    ) -> MicropubEntry:
+        """Create and publish the post; runs inside a transaction so failures leave no partial post."""
+        # Resolve the explicitly selected (or configured default) blog and make sure
+        # the user may add and publish posts there before writing anything.
+        blog = self._get_target_blog(properties, user)
 
         # Create the post as a draft first
         post = Post(
@@ -199,24 +260,39 @@ class CastPostMicropubHandler(MicropubContentHandler):
 
         return timezone.now()
 
-    def _get_default_blog(self) -> Blog | None:
-        """Get the default blog to post to."""
-        # Try to get ephes_blog first
-        try:
-            blog = Blog.objects.live().filter(slug="ephes_blog").first()
-            if blog:
-                logger.info(f"Using blog: {blog.title} (id: {blog.id}, slug: {blog.slug})")
-                return blog
+    def _get_target_blog(self, properties: dict[str, list[Any]], user: User) -> Blog:
+        """Return the blog the post should be created in, enforcing page permissions.
 
-            # Fallback to first available blog if ephes_blog not found
-            blog = Blog.objects.live().first()
-            if blog:
-                logger.warning(f"Blog 'ephes_blog' not found, using: {blog.title} (slug: {blog.slug})")
-                return blog
+        The blog is chosen explicitly via the ``mp-channel`` property (a blog slug) or,
+        when absent, the configured ``MICROPUB_DEFAULT_BLOG_SLUG``. There is no fallback
+        to an arbitrary blog.
 
-            return None
-        except Blog.DoesNotExist:
-            return None
+        Raises:
+            MicropubTargetError: no unique live blog matches the selection
+            MicropubPermissionError: the user may not add and publish posts there
+        """
+        requested = [value for value in properties.get(TARGET_BLOG_PROPERTY, []) if value]
+        if len(requested) > 1:
+            raise MicropubTargetError("Only one target blog may be selected")
+        if requested:
+            if not isinstance(requested[0], str):
+                raise MicropubTargetError("Target blog must be given as a blog slug")
+            slug = requested[0].strip()
+        else:
+            slug = get_default_blog_slug()
+        if not slug:
+            raise MicropubTargetError("No target blog selected")
+
+        blogs = list(Blog.objects.live().filter(slug=slug)[:2])
+        if len(blogs) != 1:
+            raise MicropubTargetError(f"No unique live blog with slug {slug!r}")
+        blog = blogs[0]
+
+        if not user_can_publish_into(blog, user):
+            raise MicropubPermissionError(f"User {user.pk} may not publish posts in blog {blog.pk}")
+
+        logger.info(f"Using blog: {blog.title} (id: {blog.id}, slug: {blog.slug})")
+        return blog
 
     def _create_streamfield_content(self, content: str, properties: dict[str, list[Any]]) -> StreamValue:
         """
@@ -245,21 +321,14 @@ class CastPostMicropubHandler(MicropubContentHandler):
         Returns:
             MicropubEntry if found and user has access, None otherwise
         """
-        # Parse the URL to find the post
-        # This is a simplified implementation
-        try:
-            # Try to find post by URL path
-            from django.urls import resolve
-
-            match = resolve(url)
-            if "pk" in match.kwargs:
-                post = Post.objects.get(pk=match.kwargs["pk"])
-                if post.owner == user or user.is_superuser:
-                    return MicropubEntry(url=post.get_full_url(), properties=self._post_to_properties(post))
-        except Exception as e:
-            logger.error(f"Error retrieving post: {e}")
-
-        return None
+        page = find_page_for_url(url)
+        if not isinstance(page, Post):
+            return None
+        # Source queries hand out page content for editing, so require Wagtail edit
+        # permission on the page itself rather than ownership or superuser status.
+        if not page.permissions_for_user(user).can_edit():
+            return None
+        return MicropubEntry(url=page.get_full_url(), properties=self._post_to_properties(page))
 
     def _post_to_properties(self, post: Post) -> dict[str, list[Any]]:
         """Convert a Post object back to micropub properties."""
@@ -307,6 +376,7 @@ class CastPostMicropubHandler(MicropubContentHandler):
         This tells micropub clients what features are supported.
         """
         return {
+            "channels": [{"uid": blog.slug, "name": blog.title} for blog in publishable_blogs_for_user(user)],
             "media-endpoint": None,  # TODO: Implement media endpoint
             "syndicate-to": [],  # TODO: Add syndication targets
             "post-types": [

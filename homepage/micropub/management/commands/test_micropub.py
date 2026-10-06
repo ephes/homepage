@@ -17,6 +17,9 @@ class Command(BaseCommand):
         parser.add_argument(
             "--content", type=str, default="This is a test post created via the micropub handler.", help="Post content"
         )
+        parser.add_argument(
+            "--blog", type=str, default="", help="Slug of the target blog (defaults to MICROPUB_DEFAULT_BLOG_SLUG)"
+        )
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -34,6 +37,8 @@ class Command(BaseCommand):
             "content": [options["content"]],
             "category": ["test", "micropub"],
         }
+        if options["blog"]:
+            properties["mp-channel"] = [options["blog"]]
 
         # Create post
         handler = CastPostMicropubHandler()

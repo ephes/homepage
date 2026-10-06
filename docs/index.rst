@@ -18,6 +18,7 @@ Contents:
    portfolio_wagtail
    weeknote_links
    seo
+   indieweb
    deploy
    tests
 

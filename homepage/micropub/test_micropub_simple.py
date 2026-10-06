@@ -2,6 +2,8 @@
 Simple tests for micropub endpoints that don't require full Wagtail setup.
 """
 
+from types import SimpleNamespace
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -10,35 +12,43 @@ from .forms import MicropubPostForm
 
 User = get_user_model()
 
+BLOGS = [SimpleNamespace(slug="alpha", title="Alpha")]
+
 
 class MicropubFormTests(TestCase):
     """Tests for the MicropubPostForm."""
 
     def test_form_valid_note(self):
         """Test form validation for a note."""
-        form_data = {"post_type": "note", "content": "This is a test note.", "category": "test, note"}
+        form_data = {"blog": "alpha", "post_type": "note", "content": "This is a test note.", "category": "test, note"}
 
-        form = MicropubPostForm(data=form_data)
+        form = MicropubPostForm(data=form_data, blogs=BLOGS)
         self.assertTrue(form.is_valid())
 
     def test_form_valid_article(self):
         """Test form validation for an article."""
-        form_data = {"post_type": "article", "name": "Test Article", "content": "This is the article content."}
+        form_data = {
+            "blog": "alpha",
+            "post_type": "article",
+            "name": "Test Article",
+            "content": "This is the article content.",
+        }
 
-        form = MicropubPostForm(data=form_data)
+        form = MicropubPostForm(data=form_data, blogs=BLOGS)
         self.assertTrue(form.is_valid())
 
     def test_form_requires_content(self):
         """Test that content is required."""
-        form_data = {"post_type": "note", "content": ""}
+        form_data = {"blog": "alpha", "post_type": "note", "content": ""}
 
-        form = MicropubPostForm(data=form_data)
+        form = MicropubPostForm(data=form_data, blogs=BLOGS)
         self.assertFalse(form.is_valid())
         self.assertIn("content", form.errors)
 
     def test_to_micropub_properties(self):
         """Test conversion to micropub properties."""
         form_data = {
+            "blog": "alpha",
             "post_type": "article",
             "name": "Test Article",
             "content": "Article content",
@@ -46,7 +56,7 @@ class MicropubFormTests(TestCase):
             "photo": "https://example.com/photo.jpg",
         }
 
-        form = MicropubPostForm(data=form_data)
+        form = MicropubPostForm(data=form_data, blogs=BLOGS)
         self.assertTrue(form.is_valid())
 
         properties = form.to_micropub_properties()
@@ -55,12 +65,18 @@ class MicropubFormTests(TestCase):
         self.assertEqual(properties["content"], ["Article content"])
         self.assertEqual(properties["category"], ["python", "django"])
         self.assertEqual(properties["photo"], ["https://example.com/photo.jpg"])
+        self.assertEqual(properties["mp-channel"], ["alpha"])
 
     def test_category_cleaning(self):
         """Test that categories are properly cleaned and split."""
-        form_data = {"post_type": "note", "content": "Test content", "category": " python ,  django  , testing "}
+        form_data = {
+            "blog": "alpha",
+            "post_type": "note",
+            "content": "Test content",
+            "category": " python ,  django  , testing ",
+        }
 
-        form = MicropubPostForm(data=form_data)
+        form = MicropubPostForm(data=form_data, blogs=BLOGS)
         self.assertTrue(form.is_valid())
 
         # Check cleaned categories

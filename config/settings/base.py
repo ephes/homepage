@@ -527,6 +527,9 @@ CAST_POST_BODY_BLOCKS = {
 # ------------------------------------------------------------------------------
 INDIEWEB_ME_URL = env("INDIEWEB_ME_URL", default="http://localhost:8000")  # Your domain
 INDIEWEB_MICROPUB_HANDLER = "homepage.micropub.handler.CastPostMicropubHandler"
+# Blog (slug) that Micropub posts go to when the client does not select one via mp-channel.
+# The posting user still needs Wagtail add + publish permission on that blog.
+MICROPUB_DEFAULT_BLOG_SLUG = env("MICROPUB_DEFAULT_BLOG_SLUG", default="ephes_blog")
 
 # Webmention Configuration
 # ------------------------------------------------------------------------------

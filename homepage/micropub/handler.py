@@ -351,23 +351,21 @@ class CastPostMicropubHandler(MicropubContentHandler):
 
         return properties
 
+    # Update, delete and undelete are not supported. django-indieweb treats a handler that returns
+    # normally as success (``delete`` answers 204, ``update``/``undelete`` read ``entry.url``), so these
+    # must raise ``ValueError``; the endpoint then answers ``400 invalid_request`` and leaves the post as is.
+
     def update_entry(self, url: str, updates: dict[str, Any], user: User) -> MicropubEntry | None:
-        """Update an existing post (not implemented yet)."""
-        # TODO: Implement post updates
-        logger.warning("Post updates not yet implemented")
-        return None
+        """Reject post updates: they are not supported."""
+        raise ValueError("Micropub update is not supported")
 
     def delete_entry(self, url: str, user: User) -> bool:
-        """Delete a post (not implemented yet)."""
-        # TODO: Implement post deletion
-        logger.warning("Post deletion not yet implemented")
-        return False
+        """Reject post deletion: it is not supported."""
+        raise ValueError("Micropub delete is not supported")
 
     def undelete_entry(self, url: str, user: User) -> MicropubEntry | None:
-        """Undelete a post (not implemented yet)."""
-        # TODO: Implement post undeletion
-        logger.warning("Post undeletion not yet implemented")
-        return None
+        """Reject post undeletion: it is not supported."""
+        raise ValueError("Micropub undelete is not supported")
 
     def get_config(self, user: User) -> dict[str, Any]:
         """

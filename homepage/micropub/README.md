@@ -56,6 +56,12 @@ response), and the form shows a generic error message.
 `q=source` lookups resolve the URL through the Wagtail page tree and require
 Wagtail **edit** permission on the post (not mere ownership).
 
+Only creating posts and `q=source` lookups are supported. The Micropub
+`update`, `delete` and `undelete` actions are rejected with
+`400 invalid_request` and change nothing (the handler raises `ValueError`, so
+clients do not report a success that did not happen). Edit or unpublish posts
+in the Wagtail admin instead.
+
 ## Usage
 
 ### Via Micropub Clients
@@ -86,6 +92,7 @@ The `CastPostMicropubHandler` class:
 - Handles categories/tags
 - Creates proper Wagtail revisions and log entries
 - Publishes posts immediately
+- Rejects `update`, `delete` and `undelete` with `ValueError` (not supported)
 
 ## Content Conversion
 

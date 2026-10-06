@@ -56,8 +56,7 @@ instead, for example to inspect production data:
 Do not use ``uvx honcho start postgres`` for this restore flow; the restore
 command intentionally exits when it sees a running ``honcho`` process.
 
-The command no longer uses the legacy Ansible Vault files in ``deploy/``. To
-override the SSH host or database names, see:
+To override the SSH host or database names, see:
 
 .. code-block:: console
 

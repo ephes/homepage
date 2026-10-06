@@ -1,5 +1,0 @@
-- hosts: all
-  tasks:
-    - name: change hostname of server
-      hostname:
-        name: "{{ host_name }}"

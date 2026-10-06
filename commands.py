@@ -1,4 +1,3 @@
-import contextlib
 import datetime
 import os
 import platform
@@ -209,17 +208,6 @@ def clean():
     clean_pyc()
 
 
-@contextlib.contextmanager
-def working_directory(path):
-    """Changes working directory and returns to previous on exit."""
-    prev_cwd = Path.cwd().absolute()
-    try:
-        os.chdir(path)
-        yield
-    finally:
-        os.chdir(prev_cwd)
-
-
 @cli.command()
 def production_db_to_local(
     production_host: str = typer.Option("wersdoerfer.de", help="SSH host for the production server."),
@@ -278,15 +266,6 @@ def production_db_to_local(
         print(f"production backup was saved at {backup_path}")
         raise
     print(backup_path)
-
-
-def deploy(environment):
-    """
-    Use legacy ansible-playbook flow under deploy/ (kept for reference).
-    """
-    deploy_root = Path(__file__).parent / "deploy"
-    with working_directory(deploy_root):
-        subprocess.call(["ansible-playbook", "deploy.yml", "--limit", environment])
 
 
 @cli.command()

@@ -63,6 +63,9 @@ TEMPLATES[0]["OPTIONS"]["loaders"] = [
 DJANGO_VITE = {
     "default": {"dev_mode": False, "manifest_path": "test-manifest.json"},
     "cast": {"dev_mode": False, "manifest_path": "test-manifest.json"},
+    # Lets views that extend the cast-bootstrap5 base template render in tests
+    # without a built manifest (dev mode only emits dev-server script tags).
+    "cast-bootstrap5": {"dev_mode": True},
 }
 
 # STORAGE

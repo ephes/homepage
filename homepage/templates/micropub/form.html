@@ -29,7 +29,7 @@
               {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                   <i class="bi bi-check-circle-fill me-2"></i>
-                  {{ message|safe }}
+                  {{ message }}
                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
               {% endfor %}
@@ -80,11 +80,11 @@
                 {% if blog_count == 0 %}
                   <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <strong>No blogs found!</strong>
-                    <p class="mb-0 mt-2">Please create a blog in the <a href="/cms/" class="alert-link">Wagtail admin</a> first.</p>
+                    <strong>No blog available!</strong>
+                    <p class="mb-0 mt-2">You need permission to add and publish pages in a live blog. Create a blog or grant page permissions in the <a href="/cms/" class="alert-link">Wagtail admin</a> first.</p>
                   </div>
                 {% else %}
-                  <p class="small text-muted mb-3">Posts will be created in:</p>
+                  <p class="small text-muted mb-3">You can publish posts in:</p>
                   <div class="list-group list-group-flush">
                     {% for blog in blogs %}
                       <div class="list-group-item px-0 border-0">

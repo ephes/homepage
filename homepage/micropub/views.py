@@ -2,33 +2,76 @@
 Views for local micropub posting interface.
 """
 
+import logging
+
+import nh3
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from indieweb.models import Token
 
+from .converters import ContentConverter
 from .forms import MicropubPostForm
 
 # Import handler after Token to avoid circular imports
-from .handler import CastPostMicropubHandler
+from .handler import (
+    CastPostMicropubHandler,
+    MicropubPermissionError,
+    MicropubTargetError,
+    get_default_blog_slug,
+    publishable_blogs_for_user,
+)
+
+logger = logging.getLogger(__name__)
+
+PREVIEW_ALLOWED_TAGS = {*ContentConverter.ALLOWED_TAGS, "img"}
+PREVIEW_ALLOWED_ATTRIBUTES = {
+    **{tag: set(attributes) for tag, attributes in ContentConverter.ALLOWED_ATTRIBUTES.items()},
+    "img": {"src", "alt"},
+}
+
+
+def _sanitize_preview_html(html: str) -> str:
+    """Strip markup outside the converter's allow-list from preview paragraph HTML."""
+    return nh3.clean(
+        str(html),
+        tags=PREVIEW_ALLOWED_TAGS,
+        attributes=PREVIEW_ALLOWED_ATTRIBUTES,
+        url_schemes={"http", "https", "mailto"},
+        link_rel=None,
+    )
 
 
 @login_required
 def micropub_form_view(request):
     """Local form for creating micropub posts."""
+    blogs = publishable_blogs_for_user(request.user)
+    form_kwargs = {"blogs": blogs, "default_blog_slug": get_default_blog_slug()}
+
     if request.method == "POST":
-        form = MicropubPostForm(request.POST)
+        form = MicropubPostForm(request.POST, **form_kwargs)
         if form.is_valid():
             # Convert form data to micropub properties
             properties = form.to_micropub_properties()
 
-            # Create the post using the micropub handler
+            # Create the post using the micropub handler (which enforces page permissions)
             handler = CastPostMicropubHandler()
             try:
                 entry = handler.create_entry(properties, request.user)
-
+            except MicropubPermissionError:
+                logger.warning("Micropub form: user %s may not publish into the selected blog", request.user.pk)
+                messages.error(request, "You do not have permission to publish posts in the selected blog.")
+            except MicropubTargetError:
+                logger.warning("Micropub form: target blog could not be resolved", exc_info=True)
+                messages.error(request, "The selected blog is not available.")
+            except Exception:
+                logger.exception("Micropub form: error creating post")
+                messages.error(request, "Error creating post. Details have been logged.")
+            else:
                 # Try to build absolute URL
                 post_url = entry.url
                 if not post_url.startswith("http"):
@@ -36,35 +79,25 @@ def micropub_form_view(request):
 
                 messages.success(
                     request,
-                    f'Post created successfully! <a href="{post_url}" class="alert-link">View post</a>',
-                    extra_tags="safe",
+                    format_html(
+                        'Post created successfully! <a href="{}" class="alert-link">View post</a>',
+                        post_url,
+                    ),
                 )
-
-                # Log for debugging
-                import logging
-
-                logger = logging.getLogger(__name__)
                 logger.info(f"Created post with URL: {entry.url}")
                 logger.info(f"Absolute URL: {post_url}")
 
                 # Redirect to create another post
                 return redirect("micropub-form")
-            except Exception as e:
-                messages.error(request, f"Error creating post: {str(e)}")
     else:
-        form = MicropubPostForm()
-
-    # Get available blogs for display
-    from cast.models import Blog
-
-    blogs = Blog.objects.live()
+        form = MicropubPostForm(**form_kwargs)
 
     context = {
         "form": form,
         "micropub_endpoint": request.build_absolute_uri(reverse("indieweb:micropub")),
         "site_url": getattr(settings, "INDIEWEB_ME_URL", request.build_absolute_uri("/")),
         "blogs": blogs,
-        "blog_count": blogs.count(),
+        "blog_count": len(blogs),
     }
 
     return render(request, "micropub/form.html", context)
@@ -103,21 +136,26 @@ def micropub_preview_view(request):
     # Convert content to blocks
     blocks = handler.converter.convert_content(content, properties)
 
-    # Format blocks for display
-    preview_html = []
+    # Format blocks for display. Everything derived from POST data is sanitized or
+    # escaped here, so the template does not need (and must not use) ``|safe``.
+    preview_parts = []
     for block_type, value in blocks:
         if block_type == "paragraph":
-            preview_html.append(value)
+            preview_parts.append(_sanitize_preview_html(value))
         elif block_type == "code":
-            lang = value.get("language", "")
-            code = value.get("code", "")
-            preview_html.append(f'<pre><code class="language-{lang}">{code}</code></pre>')
+            preview_parts.append(
+                format_html(
+                    '<pre><code class="language-{}">{}</code></pre>',
+                    value.get("language", ""),
+                    value.get("code", ""),
+                )
+            )
 
     return render(
         request,
         "micropub/preview.html",
         {
-            "preview_html": "\n".join(preview_html),
+            "preview_html": mark_safe("\n".join(preview_parts)),  # nosec: parts are sanitized/escaped above
             "blocks": blocks,
         },
     )

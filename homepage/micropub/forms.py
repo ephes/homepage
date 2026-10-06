@@ -16,6 +16,11 @@ class MicropubPostForm(forms.Form):
         ("article", "Article (with title)"),
     ]
 
+    blog = forms.ChoiceField(
+        label="Blog",
+        help_text="Only blogs you may add and publish posts in are listed",
+    )
+
     post_type = forms.ChoiceField(
         choices=POST_TYPE_CHOICES, initial="note", widget=forms.RadioSelect, label="Post Type"
     )
@@ -59,13 +64,20 @@ class MicropubPostForm(forms.Form):
         widget=forms.URLInput(attrs={"placeholder": "https://example.com/photo.jpg"}),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, blogs=(), default_blog_slug=None, **kwargs):
+        """``blogs`` are the blogs the current user may publish into (see ``publishable_blogs_for_user``)."""
         super().__init__(*args, **kwargs)
+        self.fields["blog"].choices = [(blog.slug, blog.title) for blog in blogs]
+        slugs = [blog.slug for blog in blogs]
+        if default_blog_slug in slugs:
+            self.fields["blog"].initial = default_blog_slug
+        elif len(slugs) == 1:
+            self.fields["blog"].initial = slugs[0]
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.form_class = "micropub-form"
         self.helper.layout = Layout(
-            Div(HTML("<h3>Create a Post</h3>"), Field("post_type"), css_class="mb-3"),
+            Div(HTML("<h3>Create a Post</h3>"), Field("blog"), Field("post_type"), css_class="mb-3"),
             Div(FloatingField("name"), css_id="title-field", css_class="mb-3"),
             FloatingField("content"),
             Div(FloatingField("category"), FloatingField("photo"), FloatingField("published"), css_class="mb-3"),
@@ -82,6 +94,10 @@ class MicropubPostForm(forms.Form):
     def to_micropub_properties(self):
         """Convert form data to micropub properties."""
         properties = {}
+
+        # Explicit target blog (Micropub channels extension); the handler re-checks
+        # page permissions for it.
+        properties["mp-channel"] = [self.cleaned_data["blog"]]
 
         # Add content
         content = self.cleaned_data.get("content", "")

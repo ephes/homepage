@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 
 from indieweb.interfaces import URLResolver
 
+from homepage.core.page_lookup import get_wagtail_site, url_path_parts
+
 
 class CastURLResolver(URLResolver):
     """Resolve URLs to django-cast blog posts, blog overview pages, and personal pages"""
@@ -18,9 +20,9 @@ class CastURLResolver(URLResolver):
             from django.contrib.sites.models import Site
 
             parsed = urlparse(target_url)
-            path = parsed.path
 
-            # Verify domain matches current site
+            # Verify domain matches current site. The local development server is
+            # addressed as localhost:8000 while the Django site domain is "localhost".
             current_site = Site.objects.get_current()
             expected_domain = (
                 f"{current_site.domain}:{8000}" if current_site.domain == "localhost" else current_site.domain
@@ -34,29 +36,32 @@ class CastURLResolver(URLResolver):
                 return None
 
             # Extract parts from URL
-            path_parts = [p for p in path.strip("/").split("/") if p]
+            path_parts = url_path_parts(parsed)
 
             # Handle personal page (/jochen/)
             if len(path_parts) == 1 and path_parts[0] == "jochen":
                 # Return a simple dictionary to represent the personal page
                 return {"type": "personal_page", "url": target_url}
 
-            # Handle blog URLs
+            # Handle blog URLs (/blogs/{blog_slug}/ and /blogs/{blog_slug}/{post_slug}/...).
+            # Lookups are scoped through the page tree: the blog must be a live, public
+            # child of the site's root page and the post a live, public child of that
+            # blog. Drafts, private pages and same-slug posts in other blogs never match.
             if len(path_parts) >= 2 and path_parts[0] == "blogs":
-                blog_slug = path_parts[1]
+                site = get_wagtail_site(parsed)
+                if site is None:
+                    return None
+                blog = Blog.objects.live().public().child_of(site.root_page).filter(slug=path_parts[1]).first()
+                if blog is None:
+                    return None
 
                 # Handle blog overview page (/blogs/{blog_slug}/)
                 if len(path_parts) == 2:
-                    blog = Blog.objects.filter(slug=blog_slug).first()
-                    if blog:
-                        return blog
+                    return blog
 
-                # Handle individual blog post (/blogs/{blog_slug}/{post_slug}/)
-                elif len(path_parts) >= 3:
-                    post_slug = path_parts[2]
-                    post = Post.objects.filter(slug=post_slug).first()
-                    if post:
-                        return post
+                # Handle individual blog post (/blogs/{blog_slug}/{post_slug}/), including
+                # sub-routes such as /blogs/{blog_slug}/{episode_slug}/transcript/
+                return Post.objects.live().public().child_of(blog).filter(slug=path_parts[2]).first()
 
         except Exception as e:
             import logging

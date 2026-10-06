@@ -93,6 +93,41 @@ host and renders it into ``.env`` via the ``wagtail_deploy`` role
 (``wagtail_django_sentry_environment``), so staging deploys report
 ``environment=staging``.
 
+.. _hsts:
+
+HSTS
+~~~~
+
+Two layers send ``Strict-Transport-Security``:
+
+* Traefik, through the ``wagtail_deploy`` headers middleware in ops-library:
+  ``stsSeconds: 15552000`` (180 days), ``stsIncludeSubdomains`` and
+  ``stsPreload``. This is the header visitors see while that middleware is in
+  place.
+* Django's ``SecurityMiddleware`` (``config.settings.production``), as the
+  fallback when the site is served without that middleware.
+
+Django defaults to the same 180 days with ``includeSubDomains`` and **without**
+``preload``. The old cookiecutter value (``max-age=60`` plus ``preload``) is
+gone. ``preload`` asks browsers to hard-code the domain and its subdomains as
+HTTPS-only; removal from the preload list takes months, and hstspreload.org
+requires ``max-age`` of at least one year anyway, so the token does nothing
+useful at 180 days. ``manage.py check --deploy`` reports ``security.W021``
+for this on purpose.
+
+The settings can be overridden from ``.env``:
+
+* ``DJANGO_SECURE_HSTS_SECONDS`` (default ``15552000``)
+* ``DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS`` (default ``True``)
+* ``DJANGO_SECURE_HSTS_PRELOAD`` (default ``False``)
+
+Upgrade path to preload (owner decision): confirm every subdomain of the domain
+serves HTTPS, set ``DJANGO_SECURE_HSTS_SECONDS=31536000`` and
+``DJANGO_SECURE_HSTS_PRELOAD=True``, raise ``stsSeconds`` in the Traefik
+middleware to match, then submit the domain at https://hstspreload.org/.
+Until then the ``stsPreload`` flag in the Traefik middleware should be dropped
+in ops-library so both layers agree.
+
 Static Files
 ~~~~~~~~~~~~
 

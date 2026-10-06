@@ -141,7 +141,15 @@ CACHES = {
         "LOCATION": env("DJANGO_CACHE_LOCATION"),
         "TIMEOUT": 600,
         "OPTIONS": {"MAX_ENTRIES": 10000},
-    }
+    },
+    # Throttle counters for api/api-token-auth/. A separate directory keeps
+    # page-cache traffic from culling them, and the high MAX_ENTRIES keeps
+    # junk usernames from evicting live counters.
+    "api_token_auth_throttle": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(env("DJANGO_CACHE_LOCATION"), "api-token-auth-throttle"),
+        "OPTIONS": {"MAX_ENTRIES": 100000},
+    },
 }
 CACHE_MIDDLEWARE_ALIAS = "default"
 CACHE_MIDDLEWARE_SECONDS = 600

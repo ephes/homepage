@@ -19,6 +19,7 @@ Contents:
    weeknote_links
    seo
    indieweb
+   api_token_auth
    deploy
    tests
 

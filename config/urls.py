@@ -4,13 +4,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
-from rest_framework.authtoken import views as authtokenviews
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from homepage.core import views as core_views
 from homepage.portfolio import views as portfolio_views
+from homepage.users import api_auth
 
 handler404 = default_views_cast.page_not_found
 handler500 = default_views_cast.server_error
@@ -47,7 +47,8 @@ urlpatterns = [
     # Micropub local interface (form for creating posts)
     path("indieweb/micropub-form/", include("homepage.micropub.urls")),
     # rest
-    path("api/api-token-auth/", authtokenviews.obtain_auth_token),
+    # Throttled: see docs/api_token_auth.rst
+    path("api/api-token-auth/", api_auth.obtain_auth_token, name="api-token-auth"),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     # re_path(r"^docs/", include_docs_urls(title="My Blog API service")),

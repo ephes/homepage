@@ -49,3 +49,19 @@ site's domain (``localhost:8000`` when the Django site domain is ``localhost``):
 
 Drafts, pages with view restrictions (or below restricted pages), and posts
 with the same slug in another blog are not valid targets.
+
+Displaying webmentions
+----------------------
+
+The templates in ``homepage/templates/indieweb/webmention_types/`` override
+django-indieweb's per-type templates (like, reply, repost, mention). Like the
+upstream templates, they must keep this policy for remote content:
+
+* Every link to a remote author or source URL carries
+  ``rel="nofollow noopener ugc"`` and ``referrerpolicy="no-referrer"``, so
+  visitors' post URLs are not sent to the remote site.
+* Every remote avatar ``<img>`` carries ``referrerpolicy="no-referrer"`` and
+  ``loading="lazy"``, so the avatar host does not learn which post is viewed.
+
+``homepage/tests/test_webmentions.py`` renders each override and fails if a
+remote link or avatar lacks these attributes.

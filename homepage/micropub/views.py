@@ -11,12 +11,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from indieweb.models import Token
 
 from .converters import ContentConverter
 from .forms import MicropubPostForm
-
-# Import handler after Token to avoid circular imports
 from .handler import (
     CastPostMicropubHandler,
     MicropubPermissionError,
@@ -90,22 +87,6 @@ def micropub_form_view(request):
     }
 
     return render(request, "micropub/form.html", context)
-
-
-def _get_or_create_local_token(user):
-    """Get or create a local token for the user."""
-    # Try to find an existing token with 'post' scope
-    me_url = getattr(settings, "INDIEWEB_ME_URL", "http://localhost:8000")
-    client_id = "local-micropub-form"
-    scope = "post"
-
-    token = Token.objects.filter(owner=user, me=me_url, client_id=client_id, scope=scope).first()
-
-    if not token:
-        # Create a new token for local posting
-        token = Token.objects.create(owner=user, me=me_url, client_id=client_id, scope=scope)
-
-    return token
 
 
 @login_required

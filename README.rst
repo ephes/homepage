@@ -32,6 +32,16 @@ GitHub Actions (``.github/workflows/ci.yml``) runs on every push and pull reques
 * ``test``: ``pytest`` against a PostgreSQL 17 service container (Python 3.14,
   ``uv sync --locked``), with dummy AWS settings; test settings keep uploads in memory
 
+User pages
+^^^^^^^^^^
+
+User pages under ``/users/`` are not a public member directory. The list at
+``/users/`` is for staff only: anonymous visitors are sent to the login page and
+logged-in non-staff users get a 403. A profile at ``/users/<username>/`` is shown
+to its owner and to staff. Anonymous visitors are sent to the login page; any
+other logged-in user gets a 404, so the page does not reveal whether a username
+exists.
+
 Docs
 ^^^^
 

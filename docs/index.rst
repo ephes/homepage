@@ -19,6 +19,7 @@ Contents:
    weeknote_links
    seo
    indieweb
+   fediverse
    deploy
    tests
 

@@ -2,6 +2,7 @@
 Database-backed tests for Micropub authorization, target-blog selection and safe output.
 """
 
+import json
 from unittest.mock import patch
 
 import pytest
@@ -375,3 +376,62 @@ def test_get_entry_returns_none_when_no_site_matches(existing_post, users):
     WagtailSite.objects.update(is_default_site=False)
 
     assert CastPostMicropubHandler().get_entry("http://unknown.example/blogs/alpha/existing/", users["admin"]) is None
+
+
+# Update, delete and undelete are not supported: the endpoint must say so instead of reporting success
+
+
+def micropub_action(client, user, data, *, as_json=False):
+    token = Token.objects.create(
+        owner=user,
+        me=f"http://{HOST}/",
+        client_id="https://client.example/",
+        scope="create update delete undelete",
+    )
+    kwargs = {"HTTP_AUTHORIZATION": f"Bearer {token.key}"}
+    if as_json:
+        return client.post(reverse("indieweb:micropub"), json.dumps(data), content_type="application/json", **kwargs)
+    return client.post(reverse("indieweb:micropub"), data, **kwargs)
+
+
+def test_endpoint_rejects_delete_and_keeps_post_live(client, existing_post, users):
+    url = f"http://{HOST}/blogs/alpha/existing/"
+
+    response = micropub_action(client, users["admin"], {"action": "delete", "url": url})
+
+    assert response.status_code == 400
+    existing_post.refresh_from_db()
+    assert existing_post.live
+
+
+def test_endpoint_rejects_update_without_server_error(client, existing_post, users):
+    url = f"http://{HOST}/blogs/alpha/existing/"
+    data = {"action": "update", "url": url, "replace": {"name": ["Changed"]}}
+
+    response = micropub_action(client, users["admin"], data, as_json=True)
+
+    assert response.status_code == 400
+    existing_post.refresh_from_db()
+    assert existing_post.title == "Existing"
+
+
+def test_endpoint_rejects_undelete(client, existing_post, users):
+    url = f"http://{HOST}/blogs/alpha/existing/"
+
+    response = micropub_action(client, users["admin"], {"action": "undelete", "url": url})
+
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda handler, url, user: handler.update_entry(url, {"replace": {"name": ["x"]}}, user),
+        lambda handler, url, user: handler.delete_entry(url, user),
+        lambda handler, url, user: handler.undelete_entry(url, user),
+    ],
+    ids=["update", "delete", "undelete"],
+)
+def test_handler_raises_for_unsupported_actions(existing_post, users, call):
+    with pytest.raises(ValueError, match="not supported"):
+        call(CastPostMicropubHandler(), f"http://{HOST}/blogs/alpha/existing/", users["admin"])

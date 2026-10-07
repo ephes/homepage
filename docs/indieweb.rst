@@ -34,6 +34,13 @@ Source queries
    Wagtail's hostname/port site selection and the percent-decoded path) and
    returns the post only when the token owner has Wagtail edit permission on it.
 
+Unsupported actions
+   Only creating posts and ``q=source`` lookups are supported. The Micropub
+   ``update``, ``delete`` and ``undelete`` actions are rejected with ``400
+   invalid_request`` and change nothing, so clients such as Quill no longer
+   report a deletion that did not happen. Edit or unpublish posts in the
+   Wagtail admin instead.
+
 Webmention targets
 ------------------
 

@@ -2,11 +2,15 @@
 Integration tests for webmentions functionality
 """
 
+from html.parser import HTMLParser
+
 import pytest
 from cast.models import Blog, Post
 from django.contrib.sites.models import Site
+from django.template.loader import render_to_string
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from indieweb.models import Webmention
 from wagtail.models import Locale, Page
 
@@ -222,3 +226,84 @@ class WebmentionIntegrationTest(TestCase):
 
         self.assertEqual(settings.INDIEWEB_URL_RESOLVER, "homepage.webmention_config.CastURLResolver")
         self.assertTrue(hasattr(settings, "INDIEWEB_SPAM_CHECKER"))
+
+
+class _RemoteLinkCollector(HTMLParser):
+    """Collect the attributes of every ``<a>`` and ``<img>`` in rendered HTML."""
+
+    def __init__(self):
+        super().__init__()
+        self.links: list[dict[str, str | None]] = []
+        self.images: list[dict[str, str | None]] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self.links.append(dict(attrs))
+        elif tag == "img":
+            self.images.append(dict(attrs))
+
+
+def _remote_webmention(mention_type: str) -> Webmention:
+    return Webmention(
+        source_url="https://remote.example/source",
+        target_url="https://wersdoerfer.de/blogs/ephes_blog/post/",
+        status="verified",
+        mention_type=mention_type,
+        author_name="Remote Author",
+        author_url="https://remote.example/author",
+        author_photo="https://avatars.example/photo.jpg",
+        content="Remote content",
+        published=timezone.now(),
+    )
+
+
+def _assert_remote_link_policy(rendered: str, expected_links: int) -> None:
+    collector = _RemoteLinkCollector()
+    collector.feed(rendered)
+    assert len(collector.links) == expected_links
+    for link in collector.links:
+        assert link["href"].startswith("https://remote.example/")
+        assert set((link.get("rel") or "").split()) >= {"nofollow", "noopener", "ugc"}
+        assert link.get("referrerpolicy") == "no-referrer"
+    assert len(collector.images) == 1
+    image = collector.images[0]
+    assert image["src"] == "https://avatars.example/photo.jpg"
+    assert image.get("referrerpolicy") == "no-referrer"
+    assert image.get("loading") == "lazy"
+
+
+@pytest.mark.parametrize(
+    ("mention_type", "marker", "expected_links"),
+    [
+        ("like", 'class="webmention-like"', 1),
+        ("reply", "webmention-content", 2),
+        ("repost", "reposted this", 2),
+        ("mention", "mentioned this post", 2),
+    ],
+)
+def test_webmention_type_templates_apply_remote_link_policy(mention_type, marker, expected_links):
+    """Every remote author/source link and avatar keeps the upstream link policy."""
+    rendered = render_to_string(
+        f"indieweb/webmention_types/{mention_type}.html",
+        {"webmention": _remote_webmention(mention_type)},
+    )
+
+    assert marker in rendered  # the homepage override, not the upstream template
+    _assert_remote_link_policy(rendered, expected_links)
+
+
+def test_webmentions_container_applies_remote_link_policy_to_all_types():
+    """The grouped list renders every type through the hardened overrides."""
+    webmentions = [_remote_webmention(t) for t in ("like", "reply", "repost", "mention")]
+    rendered = render_to_string("indieweb/webmentions.html", {"webmentions": webmentions})
+
+    collector = _RemoteLinkCollector()
+    collector.feed(rendered)
+    assert len(collector.links) == 7
+    assert len(collector.images) == 4
+    for link in collector.links:
+        assert set((link.get("rel") or "").split()) >= {"nofollow", "noopener", "ugc"}
+        assert link.get("referrerpolicy") == "no-referrer"
+    for image in collector.images:
+        assert image.get("referrerpolicy") == "no-referrer"
+        assert image.get("loading") == "lazy"

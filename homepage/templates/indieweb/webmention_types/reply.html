@@ -5,6 +5,8 @@
     <div class="d-flex align-items-start">
       {% if webmention.author_photo %}
         <img src="{{ webmention.author_photo }}"
+             referrerpolicy="no-referrer"
+             loading="lazy"
              alt="{{ webmention.author_name|default:'User avatar' }}"
              class="rounded-circle me-3"
              width="48"
@@ -18,7 +20,7 @@
       <div>
         <h5 class="mb-1">
           {% if webmention.author_url %}
-            <a href="{{ webmention.author_url }}" rel="nofollow">{{ webmention.author_name|default:"Anonymous" }}</a>
+            <a href="{{ webmention.author_url }}" rel="nofollow noopener ugc" referrerpolicy="no-referrer">{{ webmention.author_name|default:"Anonymous" }}</a>
           {% else %}
             {{ webmention.author_name|default:"Anonymous" }}
           {% endif %}
@@ -31,7 +33,7 @@
           {% endif %}
         </div>
         <small class="text-muted">
-          <a href="{{ webmention.source_url }}" rel="nofollow">
+          <a href="{{ webmention.source_url }}" rel="nofollow noopener ugc" referrerpolicy="no-referrer">
             {% if webmention.published %}
               {{ webmention.published|date:"F j, Y g:i A" }}
             {% else %}

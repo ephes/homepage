@@ -4,6 +4,8 @@
   <div class="d-flex align-items-center">
     {% if webmention.author_photo %}
       <img src="{{ webmention.author_photo }}"
+           referrerpolicy="no-referrer"
+           loading="lazy"
            alt="{{ webmention.author_name|default:'User avatar' }}"
            class="rounded-circle me-3"
            width="32"
@@ -17,13 +19,13 @@
     <div>
       <i class="bi bi-arrow-repeat me-1"></i>
       {% if webmention.author_url %}
-        <a href="{{ webmention.author_url }}" rel="nofollow">{{ webmention.author_name|default:"Someone" }}</a>
+        <a href="{{ webmention.author_url }}" rel="nofollow noopener ugc" referrerpolicy="no-referrer">{{ webmention.author_name|default:"Someone" }}</a>
       {% else %}
         {{ webmention.author_name|default:"Someone" }}
       {% endif %}
       {% trans "reposted this" %}
       <small class="text-muted ms-2">
-        <a href="{{ webmention.source_url }}" rel="nofollow">
+        <a href="{{ webmention.source_url }}" rel="nofollow noopener ugc" referrerpolicy="no-referrer">
           {% if webmention.published %}
             {{ webmention.published|date:"F j, Y" }}
           {% endif %}

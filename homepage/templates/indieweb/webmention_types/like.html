@@ -3,9 +3,12 @@
 <a href="{{ webmention.author_url|default:webmention.source_url }}"
    class="webmention-like"
    title="{{ webmention.author_name|default:'Someone' }} liked this"
-   rel="nofollow">
+   rel="nofollow noopener ugc"
+   referrerpolicy="no-referrer">
   {% if webmention.author_photo %}
     <img src="{{ webmention.author_photo }}"
+         referrerpolicy="no-referrer"
+         loading="lazy"
          alt="{{ webmention.author_name|default:'User avatar' }}"
          class="rounded-circle"
          width="48"

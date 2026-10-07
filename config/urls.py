@@ -2,15 +2,17 @@ from cast.views import defaults as default_views_cast
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import include, path
 from django.views.generic import TemplateView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.admin.views import account as wagtailadmin_account
 from wagtail.documents import urls as wagtaildocs_urls
 
 from homepage.core import views as core_views
 from homepage.portfolio import views as portfolio_views
-from homepage.users import api_auth
+from homepage.users import api_auth, login_throttle
 
 handler404 = default_views_cast.page_not_found
 handler500 = default_views_cast.server_error
@@ -35,6 +37,8 @@ urlpatterns = [
         name="katharina",
     ),
     # Django Admin, use {% url 'admin:index' %}
+    # Failed logins are throttled: see docs/admin_login_throttle.rst
+    path(f"{settings.ADMIN_URL}login/", login_throttle.throttle_failed_logins(admin.site.login)),
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("homepage.users.urls", namespace="users")),
@@ -50,6 +54,11 @@ urlpatterns = [
     # Throttled: see docs/api_token_auth.rst
     path("api/api-token-auth/", api_auth.obtain_auth_token, name="api-token-auth"),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
+    # Same view as rest_framework.urls' login, with failed logins throttled.
+    path(
+        "api-auth/login/",
+        login_throttle.throttle_failed_logins(auth_views.LoginView.as_view(template_name="rest_framework/login.html")),
+    ),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     # re_path(r"^docs/", include_docs_urls(title="My Blog API service")),
     # Cast Blog
@@ -61,6 +70,11 @@ urlpatterns = [
     # Explicit portfolio utility routes; Wagtail's page tree remains under /blogs/.
     path("portfolio/", include("homepage.portfolio.urls", namespace="portfolio")),
     # Wagtail
+    # Failed logins are throttled: see docs/admin_login_throttle.rst
+    path(
+        f"{settings.WAGTAILADMIN_BASE_URL}login/",
+        login_throttle.throttle_failed_logins(wagtailadmin_account.LoginView.as_view()),
+    ),
     path(settings.WAGTAILADMIN_BASE_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("blogs/", include(wagtail_urls)),  # default is wagtail

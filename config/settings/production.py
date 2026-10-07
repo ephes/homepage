@@ -144,7 +144,8 @@ CACHES = {
         "TIMEOUT": 600,
         "OPTIONS": {"MAX_ENTRIES": 10000},
     },
-    # Throttle counters for api/api-token-auth/. A separate directory keeps
+    # Throttle counters for api/api-token-auth/ and the admin logins
+    # (docs/admin_login_throttle.rst). A separate directory keeps
     # page-cache traffic from culling them, and the high MAX_ENTRIES keeps
     # junk usernames from evicting live counters.
     "api_token_auth_throttle": {

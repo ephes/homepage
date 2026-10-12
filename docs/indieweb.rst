@@ -98,13 +98,27 @@ Only public pages
    not.
 
 Only committed publications
-   Nothing is rendered or sent inside the publication. The delivery is
-   scheduled for the commit of the surrounding database transaction (the
-   request, with ``ATOMIC_REQUESTS``) and runs right after it in the same
-   process; no queue is involved. A publication that is rolled back announces
-   nothing. At delivery time the page is read again from the database and is
-   skipped when it was deleted, unpublished, restricted or replaced by a newer
-   live revision in the meantime (the newer publication has its own delivery).
+   Nothing is rendered or sent inside the ``page_published`` signal. The
+   delivery is registered with ``transaction.on_commit`` and runs in the same
+   process when the outermost database transaction that is open at that moment
+   commits; no queue is involved. Which transaction that is depends on the
+   caller, not on this module:
+
+   * a Micropub post is published inside the handler's own transaction, so its
+     webmentions leave after that transaction has committed;
+   * with ``ATOMIC_REQUESTS`` (the default in ``config/settings/base.py``, used
+     for local development and tests) it is the request;
+   * ``config/settings/production.py`` replaces the database setting and does
+     not set ``ATOMIC_REQUESTS``, so in production it is the transaction the
+     publishing code itself opened, and the delivery can run before the admin
+     request has finished;
+   * when no transaction is open at all, the delivery runs immediately, after
+     Wagtail has saved the page as live.
+
+   A publication that is rolled back announces nothing. At delivery time the
+   page is read again from the database and is skipped when it was deleted,
+   unpublished, restricted or replaced by a newer live revision in the
+   meantime (the newer publication has its own delivery).
 
 Delivery is best effort. A failure while rendering or sending does not fail or
 undo the publication: it is logged as

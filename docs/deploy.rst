@@ -53,6 +53,57 @@ for recovering from an interrupted restore.
 
     just postgres
 
+2026-10-12 security library refresh
+-----------------------------------
+
+``uv.lock`` moves django-indieweb ``develop`` from ``289ea25a`` to ``c7b8da62``,
+django-cast ``develop`` from ``95965b91`` to ``8205bc48`` (0.2.68 development),
+django-resume ``main`` from ``c9d5172f`` to ``6f7ae123``, cast-bootstrap5 ``main``
+from ``4ed370aa`` to ``d0ea6879`` and cast-vue ``main`` from ``a0db14fb`` to
+``0e1d408b``. No other locked package changed. None of the
+updates has a migration, and no settings change is needed.
+
+* django-indieweb parses fetched Webmention source and Vouch documents in a
+  short-lived child process, ``python -m indieweb.webmention_parse_worker``,
+  one per fetched document. The child limits itself to 512 MiB of address
+  space and 20 s of CPU time; the receiving process ends it after 30 s. Over a
+  limit the Webmention is marked ``failed`` and nothing from the document is
+  stored. The ``INDIEWEB_WEBMENTION_PARSE_*`` settings stay at these defaults.
+  The Webmention endpoint (``/indieweb/webmention/``) processes in the request,
+  so the child is started by a gunicorn worker with the interpreter of the
+  same virtualenv (``sys.executable``); the gunicorn timeout of 600 s is well
+  above the 30 s limit. The ``wagtail_deploy`` units (``NoNewPrivileges``,
+  ``PrivateTmp``, ``ProtectSystem=strict``) have no system call filter, memory
+  limit or task limit that would stop the child or its ``setrlimit`` calls,
+  and the child's temporary result files go to the private ``/tmp``. Each
+  concurrent receive can start one child of up to 512 MiB. On Linux the kernel
+  enforces the memory limit; the local macOS check is only a backstop, so
+  after deploying to staging send one Webmention and confirm that it is
+  verified and that the log has no ``source too expensive to process``
+  warning.
+* django-cast limits comment posting to ``CAST_COMMENTS_POST_RATE_LIMIT`` posts
+  (default 20) per ``CAST_COMMENTS_POST_RATE_WINDOW`` seconds (default 600) per
+  logged-in user or anonymous client address and answers further posts with
+  ``429`` and ``Retry-After``. Both settings stay at their defaults. The
+  client address comes from ``REST_FRAMEWORK["NUM_PROXIES"]``
+  (``DJANGO_NUM_PROXIES``, default ``1``), which matches Traefik as the only
+  reverse proxy; see :doc:`admin_login_throttle`. The counters live in the
+  ``default`` cache, not in ``api_token_auth_throttle``.
+* django-cast ``media_replace --yes`` and ``recalc_video_posters`` now exit
+  non-zero when at least one item failed, and ``media_backup`` has a new
+  ``--refresh-changed`` option. No deploy step or scheduled job here runs these
+  commands.
+* django-resume renders ``company_url``, project ``url`` and ``school_url`` only
+  as ``http``, ``https`` or ``mailto`` links, removes plugin data in one
+  transaction with row locks, and writes ``export_json_resume`` output
+  atomically with owner-only permissions (``0600``).
+* cast-bootstrap5 and cast-vue ship rebuilt bundles (gallery metadata and modal
+  focus fixes; comment drafts and list state fixes), so ``collectstatic`` picks
+  up new hashed assets.
+
+The 588 tests passed on Python 3.14.8 against PostgreSQL. ``makemigrations
+--check`` reported no changes.
+
 2026-10-12 cast-bootstrap5 refresh
 ----------------------------------
 

@@ -132,6 +132,20 @@ for that hostname (next to the main site's tree), with ``--port`` as the site's 
 (default 443, so Wagtail renders ``https://`` URLs); without it, it is created below the
 default site's root page. The command can also prefill a production page once.
 
+The command can run while somebody edits the page. For each page it takes the page's
+database row lock, reads the page again and only then decides what to do, so it always
+works on the current state:
+
+* A draft saved before the command reached the page is treated like any pending draft:
+  the entries are added to that draft and nothing is published.
+* Saving or publishing in the editor while the command works on the page waits until
+  the command has finished. That save then becomes the latest draft and is not
+  published by the command. As it was started from the page without the seeded entries,
+  run ``seed_portfolio`` again afterwards; it adds the missing entries to that draft.
+
+The command never publishes a revision that is based on an older state than the latest
+saved draft.
+
 To view the portfolio as its own site locally, run the command above, publish the page
 in the admin, start Django with ``DJANGO_PORTFOLIO_HOSTS=design.localhost`` (and the
 hostname in ``DJANGO_ALLOWED_HOSTS``) and open ``http://design.localhost:8000/``.

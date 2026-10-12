@@ -113,11 +113,18 @@ def _committed_public_post(page_id, live_revision_id):
     """
     from wagtail.models import Page
 
-    page = Page.objects.filter(pk=page_id, live=True).first()
-    if page is None or page.live_revision_id != live_revision_id:
+    page = Page.objects.filter(pk=page_id).first()
+    if page is None:
         return None
+    # Loading the specific page reads the database again. Every decision below is
+    # made on that one instance, which is also the one that gets rendered, so the
+    # checks cannot pass on an older read of the page than the content comes from.
     post = page.specific
-    if not isinstance(post, (Post, Episode)) or not _is_publicly_accessible(post):
+    if not isinstance(post, (Post, Episode)):
+        return None
+    if not post.live or post.live_revision_id != live_revision_id:
+        return None
+    if not _is_publicly_accessible(post):
         return None
     return post
 

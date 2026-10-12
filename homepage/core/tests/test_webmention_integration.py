@@ -266,6 +266,31 @@ class TestPublicVisibility:
 
         assert (outbound.rendered, outbound.sent) == ([], [])
 
+    @pytest.mark.parametrize("change", ["unpublish", "republish"])
+    def test_page_changed_while_the_delivery_loads_it_is_not_announced(
+        self, blog, outbound, django_capture_on_commit_callbacks, change
+    ):
+        """The delivery reads the page twice (base row, specific row); the second read decides."""
+        post = draft_post(blog)
+        load_specific = Page.specific.func
+
+        def changed_before_specific_is_loaded(page):
+            if change == "unpublish":
+                Page.objects.filter(pk=page.pk).update(live=False)
+            else:
+                Page.objects.filter(pk=page.pk).update(live_revision=newer)
+            return load_specific(page)
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            post.save_revision().publish()
+        (deliver,) = deliveries(callbacks)
+        newer = Post.objects.get(pk=post.pk).save_revision()
+
+        with patch.object(Page, "specific", property(changed_before_specific_is_loaded)):
+            deliver()
+
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
     def test_only_the_revision_that_is_live_at_commit_is_announced(
         self, blog, outbound, django_capture_on_commit_callbacks
     ):

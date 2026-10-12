@@ -24,6 +24,38 @@ Permissions
    Rejected requests create nothing; the endpoint answers ``400
    invalid_request`` and the form shows a generic error without exception text.
 
+Publication
+   A Micropub post is published the way the Wagtail admin publishes a page:
+   body and categories are applied first, **one** revision is saved, and that
+   revision goes live through Wagtail's revision API (``revision.publish()``).
+   The live revision therefore contains the tags, so restoring or republishing
+   it keeps them, and the usual publication effects run exactly once: the
+   ``wagtail.publish`` log entry, the ``page_published`` signal and with it
+   django-cast's media preparation and the outgoing webmentions of
+   ``homepage.core.webmention_integration``. Everything runs in one
+   transaction. If a category is not text, tags cannot be applied or the
+   publication is refused, nothing is created and the endpoint answers ``400
+   invalid_request`` (or ``500`` for an unexpected error).
+
+Logging
+   The endpoint is authenticated and receives private text, so property
+   **values** never reach the logs: no content, title, slug, category, photo URL
+   or channel value, and no exception text or traceback that could quote them.
+   The handler logs the names of the known properties it received (unknown
+   names only as a count), the number of categories and photos, the ids of the
+   created post and its blog, and for a failure the exception class
+   (``Micropub create failed: MicropubTargetError``). There is no setting that
+   turns payload logging on. The webmention sender prints each target reduced
+   to scheme, host and path, without query string, fragment or credentials.
+   Wagtail's own ``INFO`` line for a created page contains the page title, as
+   it does for pages created in the admin; production logs from ``WARNING`` up.
+
+Photos
+   ``photo`` values are URL strings. django-indieweb rejects anything else
+   (including ``{"value": ..., "alt": ...}`` objects) with ``400
+   invalid_request`` before the handler runs, so a photo is never dropped
+   silently.
+
 Content sanitization
    The content converter sanitizes every paragraph block with ``nh3`` (a
    runtime dependency) against its tag allow-list before storing it; there is

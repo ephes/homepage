@@ -52,10 +52,11 @@ def micropub_form_view(request):
                 logger.warning("Micropub form: user %s may not publish into the selected blog", request.user.pk)
                 messages.error(request, "You do not have permission to publish posts in the selected blog.")
             except MicropubTargetError:
-                logger.warning("Micropub form: target blog could not be resolved", exc_info=True)
+                logger.warning("Micropub form: target blog could not be resolved")
                 messages.error(request, "The selected blog is not available.")
-            except Exception:
-                logger.exception("Micropub form: error creating post")
+            except Exception as error:
+                # Exception text and tracebacks can quote the submission; log the type only.
+                logger.error("Micropub form: error creating post (%s)", type(error).__name__)
                 messages.error(request, "Error creating post. Details have been logged.")
             else:
                 # Try to build absolute URL
@@ -70,8 +71,7 @@ def micropub_form_view(request):
                         post_url,
                     ),
                 )
-                logger.info(f"Created post with URL: {entry.url}")
-                logger.info(f"Absolute URL: {post_url}")
+                logger.info("Micropub form: post created by user %s", request.user.pk)
 
                 # Redirect to create another post
                 return redirect("micropub-form")

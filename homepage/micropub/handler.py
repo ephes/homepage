@@ -13,13 +13,13 @@ from typing import Any
 from cast.models import Blog, Post
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from indieweb.handlers import MicropubContentHandler, MicropubEntry
 from wagtail.blocks import StreamValue
 from wagtail.log_actions import log as wagtail_log
-from wagtail.models import PageLogEntry
 
 from homepage.core.page_lookup import find_page_for_url
 
@@ -33,11 +33,40 @@ User = get_user_model()
 TARGET_BLOG_PROPERTY = "mp-channel"
 DEFAULT_MICROPUB_BLOG_SLUG = "ephes_blog"
 
+# Property names that may be named in logs. Property *values* are never logged.
+LOGGABLE_PROPERTY_NAMES = frozenset(
+    {
+        "name",
+        "content",
+        "summary",
+        "published",
+        "category",
+        "photo",
+        "location",
+        "in-reply-to",
+        "like-of",
+        "repost-of",
+        "bookmark-of",
+        "syndication",
+        "mp-slug",
+        "mp-syndicate-to",
+        TARGET_BLOG_PROPERTY,
+    }
+)
+
 
 class MicropubTargetError(ValueError):
     """The requested target blog does not exist or cannot be determined.
 
     Subclasses ``ValueError`` so django-indieweb answers with ``invalid_request``.
+    """
+
+
+class MicropubContentError(ValueError):
+    """A submitted property value cannot be turned into a post.
+
+    Subclasses ``ValueError`` so django-indieweb answers with ``invalid_request``.
+    Messages never quote the submitted value: django-indieweb logs them.
     """
 
 
@@ -97,18 +126,47 @@ class CastPostMicropubHandler(MicropubContentHandler):
         Returns:
             MicropubEntry with the created post's URL
         """
-        # Extract basic properties
-        title = self._get_title(properties)
-        content = self._get_content(properties)
-        published = self._get_published_date(properties)
-        categories = properties.get("category", [])
+        # Operational facts only. Property values (content, categories, photo URLs,
+        # titles and slugs derived from them) never go to the logs.
+        logger.info(
+            "Micropub create: properties=%s categories=%d photos=%d",
+            self._loggable_property_names(properties),
+            len(properties.get("category", [])),
+            len(properties.get("photo", [])),
+        )
 
-        # Debug logging for properties
-        logger.info(f"Received properties: {properties}")
-        logger.info(f"Categories/tags: {categories}")
+        try:
+            # Extract basic properties
+            title = self._get_title(properties)
+            content = self._get_content(properties)
+            published = self._get_published_date(properties)
+            categories = self._get_categories(properties)
 
-        with transaction.atomic():
-            return self._create_post(properties, user, title, content, published, categories)
+            with transaction.atomic():
+                return self._create_post(properties, user, title, content, published, categories)
+        except Exception as error:
+            logger.warning("Micropub create failed: %s", type(error).__name__)
+            raise
+
+    @staticmethod
+    def _loggable_property_names(properties: dict[str, list[Any]]) -> str:
+        """Return the known property names of a request plus a count of the others.
+
+        Unknown names are client-chosen text, so only their number is reported.
+        """
+        known = sorted(name for name in properties if name in LOGGABLE_PROPERTY_NAMES)
+        unknown = len(properties) - len(known)
+        return ",".join(known) + (f" (+{unknown} other)" if unknown else "")
+
+    def _get_categories(self, properties: dict[str, list[Any]]) -> list[str]:
+        """Return the category names, rejecting values that cannot become tags."""
+        categories = []
+        for category in properties.get("category", []):
+            if not isinstance(category, str):
+                raise MicropubContentError("Categories must be given as text")
+            if category.strip():
+                categories.append(category)
+        return categories
 
     def _create_post(
         self,
@@ -117,7 +175,7 @@ class CastPostMicropubHandler(MicropubContentHandler):
         title: str,
         content: str,
         published: datetime,
-        categories: list[Any],
+        categories: list[str],
     ) -> MicropubEntry:
         """Create and publish the post; runs inside a transaction so failures leave no partial post."""
         # Resolve the explicitly selected (or configured default) blog and make sure
@@ -138,73 +196,28 @@ class CastPostMicropubHandler(MicropubContentHandler):
         post.body = self._create_streamfield_content(content, properties)
 
         # Add the post as a child of the blog
-        try:
-            blog.add_child(instance=post)
-        except Exception as e:
-            logger.error(f"Error adding post as child of blog: {e}")
-            logger.error(f"Post data: title={title}, slug={post.slug}")
-            raise
+        blog.add_child(instance=post)
 
-        # Create a revision with the user
+        # Body and categories are complete before the one and only revision is
+        # saved, so the revision that goes live is the whole post. A failure here
+        # (or anywhere below) rolls the transaction back: nothing is published.
+        if categories:
+            post.tags.add(*categories)
         revision = post.save_revision(user=user)
 
-        # Publish the revision
-        post.live = True
-        post.has_unpublished_changes = False
-        post.first_published_at = post.first_published_at or timezone.now()
-        post.last_published_at = timezone.now()
-        post.latest_revision = revision
-        post.latest_revision_created_at = revision.created_at
-        post.live_revision = revision
-        post.save()
+        # The "edited" entry makes the post show up in the Wagtail admin's "Your
+        # most recent edits". Wagtail itself logs the creation (add_child above)
+        # and the publication (publish() below).
+        wagtail_log(instance=post, action="wagtail.edit", user=user, data={})
 
-        # Create PageLogEntry to make the post appear in "Your most recent edits"
-        # Using Wagtail's proper log function ensures correct metadata
+        # Publish through Wagtail's revision API, exactly like the CMS does: it
+        # sets the live/first-published fields and the live revision, writes the
+        # publish log entry and sends ``page_published`` once.
         try:
-            # Log creation
-            wagtail_log(instance=post, action="wagtail.create", user=user, data={})
-
-            # Log edit (this is what shows in "Your most recent edits")
-            wagtail_log(instance=post, action="wagtail.edit", user=user, data={})
-
-            # Log publish since we're publishing immediately
-            wagtail_log(instance=post, action="wagtail.publish", user=user, data={})
-
-            logger.info("Created log entries for post")
-
-            # Debug: verify entries were created
-            entries = PageLogEntry.objects.filter(page=post, user=user).order_by("-timestamp")
-            logger.debug(f"Log entries for post {post.id}: {[(e.action, e.timestamp) for e in entries]}")
-        except Exception as e:
-            logger.warning(f"Could not create log entries: {e}")
-            # Don't fail the whole request if log entry fails
-
-        # Handle tags/categories after publishing
-        if categories:
-            logger.info(f"Adding tags to post {post.id}: {categories}")
-            try:
-                post.tags.add(*categories)
-                logger.info(
-                    "Tags added successfully. Post now has tags: "
-                    f"{list(post.tags.all().values_list('name', flat=True))}"
-                )
-                # Create another revision to track the tag addition
-                new_revision = post.save_revision(user=user)
-                post.latest_revision = new_revision
-                post.latest_revision_created_at = new_revision.created_at
-                post.save()
-            except Exception as e:
-                logger.error(f"Error adding tags: {e}")
-        else:
-            logger.info("No categories/tags to add")
-
-        # Handle photos if present
-        photo_urls = properties.get("photo", [])
-        if photo_urls:
-            # For now, we'll add photo URLs to the content
-            # In the future, you might want to download and create Image objects
-            logger.info(f"Photo URLs received: {photo_urls}")
-            # TODO: Implement photo handling
+            revision.publish(user=user)
+        except ValidationError as error:
+            # Publication policy said no; answer as an invalid request, not a 500.
+            raise MicropubContentError("The post cannot be published") from error
 
         # Get the URL - need to refresh from DB to get the correct URL
         post.refresh_from_db()
@@ -213,9 +226,7 @@ class CastPostMicropubHandler(MicropubContentHandler):
         # The view will handle making it absolute with the correct domain
         post_path = post.get_url()
 
-        logger.info(f"Created post '{title}' with slug '{post.slug}'")
-        logger.info(f"Post path: {post_path}")
-        logger.info(f"Parent blog: {post.get_parent()}")
+        logger.info("Micropub create: published post id=%s in blog id=%s", post.pk, blog.pk)
 
         return MicropubEntry(url=post_path, properties=properties)  # Return path, not full URL
 
@@ -256,7 +267,7 @@ class CastPostMicropubHandler(MicropubContentHandler):
                 # Parse ISO format date
                 return datetime.fromisoformat(str(published[0]).replace("Z", "+00:00"))
             except (ValueError, AttributeError):
-                logger.warning(f"Could not parse published date: {published[0]}")
+                logger.warning("Micropub create: unparseable published date, using the current time")
 
         return timezone.now()
 
@@ -285,13 +296,13 @@ class CastPostMicropubHandler(MicropubContentHandler):
 
         blogs = list(Blog.objects.live().filter(slug=slug)[:2])
         if len(blogs) != 1:
-            raise MicropubTargetError(f"No unique live blog with slug {slug!r}")
+            # The slug is request data and this message is logged: keep it out.
+            raise MicropubTargetError("No unique live blog matches the selected target")
         blog = blogs[0]
 
         if not user_can_publish_into(blog, user):
             raise MicropubPermissionError(f"User {user.pk} may not publish posts in blog {blog.pk}")
 
-        logger.info(f"Using blog: {blog.title} (id: {blog.id}, slug: {blog.slug})")
         return blog
 
     def _create_streamfield_content(self, content: str, properties: dict[str, list[Any]]) -> StreamValue:

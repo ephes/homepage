@@ -99,4 +99,4 @@ class TestWebmentionIntegration(TestCase):
                             "Webmentions sent for https://example.com/post/1/: 1 successful, 1 failed"
                         )
                         mock_print.assert_any_call("  ✓ Sent webmention to https://success.com")
-                        mock_print.assert_any_call("  ✗ Failed to send to https://fail.com: Connection refused")
+                        mock_print.assert_any_call("  ✗ Failed to send to https://fail.com (error)")

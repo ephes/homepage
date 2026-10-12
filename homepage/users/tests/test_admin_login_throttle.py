@@ -57,6 +57,30 @@ def test_admin_login_urls_resolve_to_the_throttled_views(url_name):
     assert getattr(resolve(reverse(url_name)).func, "login_throttled", False)
 
 
+@override_settings(PORTFOLIO_HOSTS=["design.example.test"], ALLOWED_HOSTS=["*"])
+def test_wagtail_login_on_a_portfolio_host_resolves_to_the_throttled_view():
+    match = resolve(reverse("wagtailadmin_login", urlconf="config.urls_portfolio"), urlconf="config.urls_portfolio")
+
+    assert getattr(match.func, "login_throttled", False)
+
+
+@pytest.mark.django_db
+@override_settings(PORTFOLIO_HOSTS=["design.example.test"], ALLOWED_HOSTS=["*"])
+def test_wagtail_login_on_a_portfolio_host_is_throttled_with_the_shared_counters():
+    user = make_user(is_staff=True, is_superuser=True)
+    url = reverse("wagtailadmin_login", urlconf="config.urls_portfolio")
+
+    for _ in range(3):  # RATES["admin_login_username"]
+        response = post_login(url, user.username, "wrong", HTTP_HOST="design.example.test")
+        assert response.status_code == 200
+
+    blocked = post_login(url, user.username, "password", HTTP_HOST="design.example.test")
+    assert blocked.status_code == 429
+    assert "Retry-After" in blocked
+    # The main host's logins share the counters.
+    assert post_login(wagtail_login_url(), user.username, "password").status_code == 429
+
+
 @pytest.mark.django_db
 def test_staff_login_to_django_admin_still_works():
     user = make_user(is_staff=True, is_superuser=True)

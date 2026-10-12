@@ -13,7 +13,10 @@ Before October 2026 the last three were plain Django ``LoginView``\ s with no
 rate limit, so they accepted any number of password guesses.
 ``config/urls.py`` now routes all three through
 ``homepage.users.login_throttle.throttle_failed_logins``, which limits
-**failed** login attempts:
+**failed** login attempts. Portfolio hosts (``DJANGO_PORTFOLIO_HOSTS``) serve
+the Wagtail admin login as well; ``config/urls_portfolio.py`` routes it
+through the same wrapper, with the same counters. Every URL configuration
+that mounts a password login must do so:
 
 ``admin_login_client``
     Failed attempts per client address. The default is ``20/hour``. Override
@@ -67,3 +70,6 @@ Change history
 
 * 2026-10: the Django admin, Wagtail admin and browsable-API logins throttle
   failed attempts per client address and per username.
+* 2026-10: the Wagtail admin login on portfolio hosts
+  (``config/urls_portfolio.py``) is throttled too; it was served without the
+  wrapper there.

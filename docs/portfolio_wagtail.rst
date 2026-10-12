@@ -70,6 +70,8 @@ setting ``PORTFOLIO_HOSTS``) lists these hostnames, e.g. ``design.wersdoerfer.de
   ``/portfolio/admin-theme.css``, which redirects to the stylesheet on portfolio hosts and
   returns an empty stylesheet elsewhere. Sessions are per host, so editors log in
   separately on each domain.
+  The admin login (``/cms/login/``) is throttled as on the main host and shares its
+  counters, see :doc:`admin_login_throttle`.
 * Every other path is a 404; a path without trailing slash still redirects when the
   slashed path exists. Blog, accounts, fediverse and all other routes are only served on
   the main host. They are appended after that 404 fallback in

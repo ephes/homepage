@@ -136,6 +136,31 @@ Pages that already have unpublished changes are skipped in write mode so the
 command does not replace an editor's existing draft revision. The report records
 these rows with ``skipped: "has_unpublished_changes"``.
 
+Conversion limits
+~~~~~~~~~~~~~~~~~
+
+The converter never drops content it cannot represent. A heading and its list
+are converted together or not at all; a refused section stays in the surrounding
+rich-text paragraph exactly as written, in its original position, and the report
+gets a warning with the section heading. A section is refused when:
+
+* the heading is ambiguous (``Podcasts / Videos``) or the items fail block
+  validation (for example a relative link);
+* the list holds anything but list items as direct children: text, another
+  element such as a ``div`` or a link, or an HTML comment. Whitespace between
+  items is fine;
+* an item has no primary link, rich markup before its primary link, or a
+  description with markup other than ``a``, ``b``, ``strong``, ``i``, ``em`` and
+  ``code``;
+* the parenthesized source after the primary link is more than the ``source``
+  and ``source_url`` fields can hold. Plain text (``(LF Energy)``) and exactly
+  one link (``(<a href="...">Show</a>)``) are converted. Several links, text
+  next to a link (``(via <a ...>Show</a>)``) or other markup inside the
+  parentheses keep the section as HTML, so every source link stays clickable.
+
+Fix the source HTML in the Wagtail editor (or leave the section as rich text)
+and run the command again; it picks up the legacy sections that are left.
+
 Recommended workflow:
 
 1. Run a dry run and inspect the summary.

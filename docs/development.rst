@@ -203,6 +203,25 @@ command flags, including ``--title``, ``--alt-text``, ``--user`` and
 
     just manage update_blog_cover_image --help
 
+The image is uploaded through the image model, so django-cast strips EXIF GPS
+data from it like from any other upload. The command stores the image file
+first and then changes the database: it creates the image row and saves (or, by default, publishes a revision of) the
+blog page in one transaction. If that fails, for example because the user may
+not publish the page, nothing is left half done:
+
+* the image row and the blog change are rolled back, so the blog keeps its
+  previous cover image and alt text;
+* the file uploaded by this run is deleted from storage again. Only the name
+  that the storage returned for this upload is removed, and only if that name
+  was free before; the previous cover and any other existing file are never
+  deleted;
+* the original error is raised and the command exits non-zero. If the uploaded
+  file could not be removed, its storage name is printed so it can be deleted
+  by hand.
+
+The social rendition is generated after the change is committed. A failure
+there leaves the new cover in place and is reported as an error.
+
 Troubleshooting
 ~~~~~~~~~~~~~~~
 

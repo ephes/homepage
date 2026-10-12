@@ -1,16 +1,46 @@
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
 from cast.models import Blog
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 from wagtail.images import get_image_model
 
 SOCIAL_COVER_RENDITION_SPEC = "fill-1200x630|format-jpeg|jpegquality-75"
 
 
+@contextmanager
+def _record_saved_names(storage, saved_names: list[str]):
+    """Record the names ``storage.save()`` returns while the block runs.
+
+    A name is recorded only when it was free before the save: a storage that
+    overwrites returns the requested name even if an object with that name was
+    already there, and that object is not this run's to delete. The command is
+    a single-threaded one-off, so wrapping the shared storage's ``save`` for the
+    duration of the upload does not affect anything else.
+    """
+    original_save = storage.save
+
+    def recording_save(name, content, max_length=None):
+        name_was_taken = storage.exists(name)
+        saved_name = original_save(name, content, max_length=max_length)
+        if not (name_was_taken and saved_name == name):
+            saved_names.append(saved_name)
+        return saved_name
+
+    with patch.object(storage, "save", recording_save):
+        yield
+
+
 class Command(BaseCommand):
-    help = "Import an image file and set it as the cover image for a blog page."
+    help = (
+        "Import an image file and set it as the cover image for a blog page. "
+        "If saving the image or the blog page fails, the database changes are rolled back "
+        "and the newly uploaded file is removed again; existing files are never deleted."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument("image_path", type=Path)
@@ -53,20 +83,38 @@ class Command(BaseCommand):
             raise CommandError(f"Multiple users found with username={username!r}") from exc
 
         Image = get_image_model()
+        storage = Image._meta.get_field("file").storage
+        # Storage names returned by this run's own storage.save() calls. Only
+        # these may be removed again, and only when the name was free before:
+        # a requested or reused name could belong to an object that existed
+        # before this run.
+        saved_names: list[str] = []
 
-        with image_path.open("rb") as image_file:
-            image = Image(
-                title=options["title"],
-                file=File(image_file, name=image_path.name),
-            )
-            image.save()
+        try:
+            # The image row and the blog change belong together: either the blog
+            # points at the new image, or neither row changed.
+            with transaction.atomic():
+                # The upload goes through the model so its pre_save handlers run
+                # (django-cast strips GPS metadata there) before the file is
+                # written; the recorder only observes what the storage returns.
+                with image_path.open("rb") as image_file, _record_saved_names(storage, saved_names):
+                    image = Image(
+                        title=options["title"],
+                        file=File(image_file, name=image_path.name),
+                    )
+                    image.save()
 
-        blog.cover_image = image
-        blog.cover_alt_text = options["alt_text"]
-        if options["no_publish"]:
-            blog.save()
-        else:
-            blog.save_revision(user=user).publish(user=user)
+                blog.cover_image = image
+                blog.cover_alt_text = options["alt_text"]
+                if options["no_publish"]:
+                    blog.save()
+                else:
+                    blog.save_revision(user=user).publish(user=user)
+        except BaseException:
+            # The database changes were rolled back, so the uploaded file is not
+            # referenced by anything. Storage is not transactional: remove it.
+            self._remove_saved_files(storage, saved_names)
+            raise
 
         rendition = image.get_rendition(SOCIAL_COVER_RENDITION_SPEC)
         message = "Updated {} cover image to image {}; social rendition: {}".format(
@@ -75,3 +123,15 @@ class Command(BaseCommand):
             rendition.url,
         )
         self.stdout.write(self.style.SUCCESS(message))
+
+    def _remove_saved_files(self, storage, saved_names):
+        """Delete the files this run stored; report any that could not be removed."""
+        for name in saved_names:
+            try:
+                storage.delete(name)
+            except Exception as exc:  # the original failure must stay the reported error
+                self.stderr.write(
+                    self.style.ERROR(f"Could not remove the unreferenced upload {name!r} from storage: {exc}")
+                )
+            else:
+                self.stderr.write(f"Removed the unreferenced upload {name!r} from storage.")

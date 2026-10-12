@@ -45,6 +45,13 @@ expects only PostgreSQL to be running locally. Start PostgreSQL directly with
    $ just postgres
    $ just production-db-to-local
 
+If the local database already exists, the command refuses to run before it contacts
+the server. Replacing existing local data has to be confirmed explicitly:
+
+.. code-block:: console
+
+   $ just production-db-to-local homepage --replace-existing
+
 To keep the development database untouched, restore into a separate database
 instead, for example to inspect production data:
 
@@ -52,6 +59,35 @@ instead, for example to inspect production data:
 
    $ just production-db-to-local homepage_prod
    $ psql homepage_prod
+
+How the restore protects local data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The existing database is never dropped before its replacement is complete:
+
+1. The dump is saved to ``backups/`` and checked: it has to be a complete gzip file
+   that ends with the ``pg_dump`` completion marker.
+2. It is loaded into the staging database ``<name>_restore_staging`` with
+   ``psql -v ON_ERROR_STOP=1``, so the first SQL error aborts the load. A failed
+   load drops the staging database and leaves ``<name>`` untouched.
+3. Only after a complete load the existing database is renamed to
+   ``<name>_restore_previous``, the staging database is renamed to ``<name>`` and
+   the previous copy is dropped last. The renames need all connections to the
+   database to be closed; if one fails, the old database is put back under its name.
+
+Database names have to be lowercase letters, digits and underscores.
+
+If a restore is interrupted (for example the machine goes to sleep or the process is
+killed), the next run refuses to start and names the leftover database:
+
+* ``<name>_restore_staging`` only holds restored dump data. Remove it with
+  ``dropdb <name>_restore_staging`` and rerun.
+* ``<name>_restore_previous`` holds the previous local data. If ``<name>`` is
+  missing, bring it back with
+  ``psql -d postgres -c "ALTER DATABASE <name>_restore_previous RENAME TO <name>"``.
+  If ``<name>`` is fine, remove the copy with ``dropdb <name>_restore_previous``.
+
+The downloaded dump stays in ``backups/`` in every case.
 
 Do not use ``uvx honcho start postgres`` for this restore flow; the restore
 command intentionally exits when it sees a running ``honcho`` process.

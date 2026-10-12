@@ -42,8 +42,12 @@ To backup the production database and restore it locally::
 
     just production-db-to-local
 
-This replaces the local ``homepage`` database. Pass another name to restore into a
-separate database instead, e.g. ``just production-db-to-local homepage_prod``.
+If the local ``homepage`` database already exists, the command refuses to run. Confirm
+replacing it with ``just production-db-to-local homepage --replace-existing``, or pass
+another name to restore into a separate database instead, e.g.
+``just production-db-to-local homepage_prod``. The existing database is only replaced
+after the complete dump loaded without errors; see :doc:`install` for the details and
+for recovering from an interrupted restore.
 
 **Important**: Make sure only PostgreSQL is running locally (not the full development stack)::
 

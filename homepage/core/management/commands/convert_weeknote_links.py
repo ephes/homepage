@@ -9,6 +9,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 from homepage.core.weeknotes.converter import BodyConversion, convert_body
 
+# Report value for a page that changed between reading it and saving its conversion.
+CHANGED_SINCE_READ = "changed_since_read"
+
 
 class Command(BaseCommand):
     help = "Convert legacy weeknote h2+ul link sections into structured weeknote_links blocks."
@@ -43,20 +46,26 @@ class Command(BaseCommand):
         saved_count = 0
         published_count = 0
         skipped_count = 0
+        conflict_count = 0
 
         publish_context = self._suppress_webmentions() if options["suppress_webmentions"] else nullcontext()
         with publish_context:
             for post in queryset:
+                # What the conversion is computed from. It is compared with the page again
+                # before anything is written.
+                source = self._source_state(post)
                 conversion = convert_body(post.body.raw_data)
                 warning_count += len(conversion.warnings)
                 if conversion.changed:
                     changed_count += 1
                 entry = self._report_entry(post, conversion)
                 if conversion.changed and options["write"]:
-                    save_result = self._save_conversion(post, conversion, publish=options["publish"])
+                    save_result = self._save_conversion(post, conversion, publish=options["publish"], source=source)
                     entry.update(save_result)
                     if save_result["published"]:
                         published_count += 1
+                    if save_result["skipped"] == CHANGED_SINCE_READ:
+                        conflict_count += 1
                     if save_result["skipped"]:
                         skipped_count += 1
                     else:
@@ -72,6 +81,11 @@ class Command(BaseCommand):
             f"{action} {action_count} post(s), published {published_count}, "
             f"skipped {skipped_count}, warnings {warning_count}."
         )
+        if conflict_count:
+            self.stderr.write(
+                f"{conflict_count} post(s) changed while they were being converted and were left untouched; "
+                "run the command again to convert them from their current content."
+            )
         if warning_count and options["fail_on_warnings"]:
             raise CommandError(f"Conversion produced {warning_count} warning(s).")
 
@@ -86,23 +100,68 @@ class Command(BaseCommand):
             "skipped": "",
         }
 
-    def _save_conversion(self, post, conversion: BodyConversion, *, publish: bool) -> dict[str, Any]:
-        if post.has_unpublished_changes:
-            return {
-                "revision_id": None,
-                "published": False,
-                "skipped": "has_unpublished_changes",
-            }
-        should_publish = publish and post.live and not post.has_unpublished_changes
-        post.body = conversion.body
-        revision = post.save_revision(changed=True)
-        if should_publish:
-            revision.publish()
+    def _source_state(self, post) -> dict[str, Any]:
+        """Identify the page state a conversion is computed from."""
         return {
-            "revision_id": revision.id,
-            "published": should_publish,
-            "skipped": "",
+            "latest_revision_id": post.latest_revision_id,
+            "live_revision_id": post.live_revision_id,
+            "live": post.live,
+            # A copy: the conversion must not be able to alter what it is compared with.
+            "body": json.loads(json.dumps(list(post.body.raw_data))),
         }
+
+    def _save_conversion(
+        self, post, conversion: BodyConversion, *, publish: bool, source: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Save ``conversion`` as a new revision of ``post`` unless the page moved on.
+
+        ``source`` is the state the conversion was computed from (``_source_state``). The
+        page is locked and read again here; the conversion is only written when that
+        current page is still in the source state. Otherwise nothing is created or
+        published and the row is reported as ``changed_since_read``.
+        """
+        if source is None:
+            source = self._source_state(post)
+        with self._locked_current_post(post) as current:
+            if current is None or self._source_state(current) != source:
+                return {"revision_id": None, "published": False, "skipped": CHANGED_SINCE_READ}
+            if current.has_unpublished_changes:
+                return {
+                    "revision_id": None,
+                    "published": False,
+                    "skipped": "has_unpublished_changes",
+                }
+            should_publish = publish and current.live
+            # The revision is built from the page read under the lock, so no other
+            # field of an older in-memory copy ends up in it.
+            current.body = conversion.body
+            revision = current.save_revision(changed=True)
+            if should_publish:
+                revision.publish()
+            return {
+                "revision_id": revision.id,
+                "published": should_publish,
+                "skipped": "",
+            }
+
+    @contextmanager
+    def _locked_current_post(self, post):
+        """Yield the current database state of ``post`` while holding its row lock.
+
+        Saving a draft or publishing in the editor updates the page row. Holding the
+        lock until the block ends makes those wait, and reading the page again under
+        the lock sees every edit committed since the post list was loaded. Yields
+        ``None`` when the page has been deleted.
+        """
+        from cast.models import Post
+        from django.db import transaction
+        from wagtail.models import Page
+
+        with transaction.atomic():
+            if Page.objects.select_for_update().filter(pk=post.pk).first() is None:
+                yield None
+                return
+            yield Post.objects.filter(pk=post.pk).first()
 
     @contextmanager
     def _suppress_webmentions(self):

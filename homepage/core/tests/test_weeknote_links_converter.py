@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import re
+from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -464,9 +465,12 @@ class FakeRevision:
 
 class FakePost:
     def __init__(self, *, body, slug="weeknotes-2026-04-27", live=True, has_unpublished_changes=False):
+        self.pk = 7
         self.slug = slug
         self.body = SimpleNamespace(raw_data=body)
         self.live = live
+        self.latest_revision_id = 41
+        self.live_revision_id = 41 if live else None
         self.has_unpublished_changes = has_unpublished_changes
         self.saved_revision = None
         self.save_changed = None
@@ -576,9 +580,11 @@ def test_convert_weeknote_links_command_fail_on_warnings(monkeypatch):
         call_command("convert_weeknote_links", "--fail-on-warnings", stdout=io.StringIO())
 
 
-def test_save_conversion_skips_pages_with_existing_unpublished_changes():
+def test_save_conversion_skips_pages_with_existing_unpublished_changes(monkeypatch):
     post = FakePost(body=[], live=True, has_unpublished_changes=True)
     conversion = BodyConversion(body=[{"type": "overview", "value": []}], changed=True)
+
+    _patch_locked_current_post(monkeypatch)
 
     result = Command()._save_conversion(post, conversion, publish=True)
 
@@ -605,6 +611,17 @@ def _patch_post_model(monkeypatch, posts):
     import cast.models
 
     monkeypatch.setattr(cast.models, "Post", SimpleNamespace(objects=FakeQuerySet(posts)))
+    _patch_locked_current_post(monkeypatch)
+
+
+def _patch_locked_current_post(monkeypatch):
+    """Fake posts have no database row to lock: the current post is the fake itself."""
+
+    @contextmanager
+    def locked_current_post(self, post):
+        yield post
+
+    monkeypatch.setattr(Command, "_locked_current_post", locked_current_post)
 
 
 def _weeknote_post(*, slug, overview_html):
@@ -676,3 +693,125 @@ def test_convert_weeknote_links_command_writes_nothing_when_every_section_is_ref
     assert stored.revisions.count() == 0
     assert _overview_blocks(stored) == [("paragraph", html)]
     assert "converted 0 post(s), published 0, skipped 0, warnings 1." in stdout.getvalue()
+
+
+LEGACY_ARTICLES = '<h2>Articles</h2><ul><li><a href="https://example.test/a">A</a></li></ul>'
+
+
+def _editor_saves_during_conversion(monkeypatch, edit):
+    """Run ``edit`` after the command computed a conversion and before it saves it."""
+    from homepage.core.management.commands import convert_weeknote_links
+
+    def convert_then_edit(raw_data):
+        conversion = convert_body(raw_data)
+        edit()
+        return conversion
+
+    monkeypatch.setattr(convert_weeknote_links, "convert_body", convert_then_edit)
+
+
+def _editor_body(text):
+    return json.dumps([{"type": "overview", "value": [{"type": "paragraph", "value": text}]}])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("flags", [("--write",), ("--write", "--publish")])
+def test_convert_weeknote_links_command_keeps_editor_revision_saved_during_conversion(monkeypatch, tmp_path, flags):
+    from cast.models import Post
+
+    post = _weeknote_post(slug="weeknotes-2026-10-19", overview_html=LEGACY_ARTICLES)
+    post.save_revision().publish()
+    live_revision_id = Post.objects.get(pk=post.pk).live_revision_id
+    editor_revisions = []
+
+    def editor_saves_draft():
+        editor_copy = Post.objects.get(pk=post.pk)
+        editor_copy.title = "Edited title"
+        editor_copy.body = _editor_body("<p>Editor rewrite.</p>")
+        editor_revisions.append(editor_copy.save_revision())
+
+    _editor_saves_during_conversion(monkeypatch, editor_saves_draft)
+    report_path = tmp_path / "report.json"
+    stdout, stderr = io.StringIO(), io.StringIO()
+
+    call_command("convert_weeknote_links", *flags, "--report", str(report_path), stdout=stdout, stderr=stderr)
+
+    stored = Post.objects.get(pk=post.pk)
+    (editor_revision,) = editor_revisions
+    assert stored.latest_revision_id == editor_revision.pk
+    assert stored.revisions.count() == 2
+    assert stored.get_latest_revision_as_object().title == "Edited title"
+    assert _overview_blocks(stored.get_latest_revision_as_object()) == [("paragraph", "<p>Editor rewrite.</p>")]
+    # Nothing was published: the live page still shows the unconverted source.
+    assert stored.live_revision_id == live_revision_id
+    assert _overview_blocks(stored) == [("paragraph", LEGACY_ARTICLES)]
+    (entry,) = json.loads(report_path.read_text())
+    assert (entry["revision_id"], entry["published"], entry["skipped"]) == (None, False, "changed_since_read")
+    assert "converted 0 post(s), published 0, skipped 1" in stdout.getvalue()
+    assert "1 post(s) changed while they were being converted" in stderr.getvalue()
+
+
+@pytest.mark.django_db
+def test_convert_weeknote_links_command_refuses_page_republished_during_conversion(monkeypatch, tmp_path):
+    from cast.models import Post
+
+    post = _weeknote_post(slug="weeknotes-2026-10-26", overview_html=LEGACY_ARTICLES)
+    post.save_revision().publish()
+
+    def editor_publishes():
+        editor_copy = Post.objects.get(pk=post.pk)
+        editor_copy.body = _editor_body("<p>Published rewrite.</p>")
+        editor_copy.save_revision().publish()
+
+    _editor_saves_during_conversion(monkeypatch, editor_publishes)
+    report_path = tmp_path / "report.json"
+
+    call_command(
+        "convert_weeknote_links",
+        "--write",
+        "--publish",
+        "--report",
+        str(report_path),
+        stdout=io.StringIO(),
+        stderr=io.StringIO(),
+    )
+
+    stored = Post.objects.get(pk=post.pk)
+    assert stored.revisions.count() == 2
+    assert _overview_blocks(stored) == [("paragraph", "<p>Published rewrite.</p>")]
+    assert json.loads(report_path.read_text())[0]["skipped"] == "changed_since_read"
+
+
+@pytest.mark.django_db
+def test_convert_weeknote_links_command_reports_page_deleted_during_conversion(monkeypatch, tmp_path):
+    from cast.models import Post
+
+    post = _weeknote_post(slug="weeknotes-2026-11-02", overview_html=LEGACY_ARTICLES)
+    _editor_saves_during_conversion(monkeypatch, lambda: Post.objects.get(pk=post.pk).delete())
+    report_path = tmp_path / "report.json"
+
+    call_command(
+        "convert_weeknote_links", "--write", "--report", str(report_path), stdout=io.StringIO(), stderr=io.StringIO()
+    )
+
+    assert not Post.objects.filter(pk=post.pk).exists()
+    assert json.loads(report_path.read_text())[0]["skipped"] == "changed_since_read"
+
+
+@pytest.mark.django_db
+def test_convert_weeknote_links_command_converts_and_publishes_unchanged_page():
+    from cast.models import Post
+
+    post = _weeknote_post(slug="weeknotes-2026-11-09", overview_html=LEGACY_ARTICLES)
+    post.save_revision().publish()
+    stdout, stderr = io.StringIO(), io.StringIO()
+
+    call_command(
+        "convert_weeknote_links", "--write", "--publish", "--suppress-webmentions", stdout=stdout, stderr=stderr
+    )
+
+    stored = Post.objects.get(pk=post.pk)
+    assert stored.live_revision_id == stored.latest_revision_id
+    assert [block_type for block_type, _value in _overview_blocks(stored)] == ["weeknote_links"]
+    assert "converted 1 post(s), published 1, skipped 0" in stdout.getvalue()
+    assert stderr.getvalue() == ""

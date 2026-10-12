@@ -49,6 +49,31 @@ separate database instead, e.g. ``just production-db-to-local homepage_prod``.
 
     just postgres
 
+2026-10-12 library refresh
+--------------------------
+
+``uv.lock`` moves django-cast ``develop`` from ``0e55a47b`` to ``95965b91``,
+django-indieweb ``develop`` from ``5187311d`` to ``289ea25a`` and django-resume
+``main`` from ``bcdeb44b`` to ``c9d5172f``. No other locked package changed.
+cast-bootstrap5 stays at ``bcd0b513``: its ``main`` now pins django-cast to a
+fixed commit in ``tool.uv.sources``, which conflicts with tracking ``develop``
+here.
+
+* django-indieweb migration ``0029_reconcile_no_scope_grants`` deletes duplicate
+  no-scope tokens and auth codes before ``0030_scope_not_null`` makes the scope
+  column non-null. Take a database backup before deploying.
+* django-cast strips EXIF GPS from new image uploads. Existing originals are not
+  rewritten; ``python manage.py report_image_gps`` lists them read-only.
+* django-cast restricts the Wagtail images API to staff unless
+  ``CAST_PUBLIC_IMAGES_API`` is ``True``. The setting stays unset here.
+* django-resume no longer lets a resume owner install JSON Resume catalog themes
+  from the browser. ``DJANGO_RESUME_JSON_RESUME_ALLOW_CATALOG_THEME_INSTALL``
+  stays at its default ``False`` and the deploy does not run
+  ``install_json_resume_catalog_themes``: production has no theme cache, so no
+  installed theme is lost, and **Preview render** / **Use render theme** answer
+  403 until an operator installs themes with that command. The pinned
+  ``resumed`` 7 renderer needs Node.js 24 or newer.
+
 Transcript Worker
 -----------------
 

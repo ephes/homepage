@@ -70,6 +70,10 @@ here.
   ``0030`` fails, ``0029`` is already recorded and a plain rerun skips it:
   run ``migrate indieweb 0028`` (reversing ``0029`` is a no-op), then deploy
   again so ``0029`` reconciles the new rows before ``0030``.
+  A failed run can drop the pending restart, and the rerun may then see no
+  source or dependency change: confirm that ``homepage.service`` and the
+  transcript worker were restarted after the successful rerun, and restart them
+  if they still run the previous release.
 * django-cast strips EXIF GPS from new image uploads. Existing originals are not
   rewritten; ``python manage.py report_image_gps`` lists them read-only.
 * django-cast restricts the Wagtail images API to staff unless

@@ -3,16 +3,19 @@ from __future__ import annotations
 import io
 
 import pytest
+from cast.image_metadata import has_gps
 from cast.models import Blog
 from django.core.files.base import ContentFile
-from django.core.files.storage import InMemoryStorage
+from django.core.files.storage import InMemoryStorage, default_storage
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from PIL import Image as PILImage
 from wagtail.actions.publish_page_revision import PublishPagePermissionError
 from wagtail.images import get_image_model
 from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Collection, Locale, Page, Revision
 
+from homepage.core.management.commands import update_blog_cover_image as cover_command
 from homepage.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -84,7 +87,9 @@ def stored_names(storage):
 
 def run(path, *args):
     stdout, stderr = io.StringIO(), io.StringIO()
-    call_command(COMMAND, str(path), "--blog-slug", "cover_blog", "--user", "cover-editor", *args, stdout=stdout, stderr=stderr)
+    call_command(
+        COMMAND, str(path), "--blog-slug", "cover_blog", "--user", "cover-editor", *args, stdout=stdout, stderr=stderr
+    )
     return stdout.getvalue(), stderr.getvalue()
 
 
@@ -177,7 +182,9 @@ def test_user_without_publish_permission_leaves_no_image_or_file_behind(blog, ol
     before = stored_names(storage)
 
     with pytest.raises(PublishPagePermissionError):
-        call_command(COMMAND, str(new_cover_path), "--blog-slug", "cover_blog", "--user", "no-publisher", "--title", "x")
+        call_command(
+            COMMAND, str(new_cover_path), "--blog-slug", "cover_blog", "--user", "no-publisher", "--title", "x"
+        )
 
     assert Blog.objects.get(pk=blog.pk).cover_image_id == old_cover.pk
     assert not get_image_model().objects.filter(title="x").exists()
@@ -281,3 +288,63 @@ def test_missing_image_file_is_rejected_before_anything_is_stored(blog, tmp_path
         run(tmp_path / "missing.png")
 
     assert stored_names(storage) == before
+
+
+def _jpeg_with_gps(path):
+    image = PILImage.new("RGB", (64, 48), "navy")
+    exif = PILImage.Exif()
+    exif[0x8825] = {1: "N", 2: (52.0, 31.0, 12.0), 3: "E", 4: (13.0, 24.0, 18.0)}
+    image.save(path, format="JPEG", exif=exif)
+    with PILImage.open(path) as written:
+        assert has_gps(written)
+
+
+def test_gps_metadata_is_stripped_from_the_imported_cover(blog, tmp_path, storage):
+    # The upload must keep going through the model so django-cast sanitizes it.
+    path = tmp_path / "geotagged.jpg"
+    _jpeg_with_gps(path)
+
+    run(path, "--title", "geotagged cover")
+
+    new_image = get_image_model().objects.get(title="geotagged cover")
+    with storage.open(new_image.file.name) as stored, PILImage.open(stored) as stored_image:
+        assert not has_gps(stored_image)
+        assert stored_image.size == (64, 48)
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == new_image.pk
+
+
+def test_failed_geotagged_import_removes_the_sanitized_upload(blog, tmp_path, storage, monkeypatch):
+    path = tmp_path / "geotagged.jpg"
+    _jpeg_with_gps(path)
+    before = stored_names(storage)
+    monkeypatch.setattr(Blog, "save_revision", lambda self, *a, **kw: (_ for _ in ()).throw(RuntimeError("boom")))
+
+    with pytest.raises(RuntimeError):
+        run(path)
+
+    assert stored_names(storage) == before
+
+
+def test_storage_save_is_restored_after_the_command(blog, new_cover_path, storage):
+    save_before = storage.save
+
+    run(new_cover_path)
+
+    assert storage.save == save_before
+    assert "save" not in vars(storage)
+
+
+def test_recorder_wraps_and_restores_the_lazy_default_storage():
+    # Production uses Django's lazily configured default storage object.
+    names: list[str] = []
+
+    with cover_command._record_saved_names(default_storage, names):
+        saved = default_storage.save("cover-recorder/probe.txt", ContentFile(b"probe"))
+    try:
+        assert names == [saved]
+        assert "save" not in vars(default_storage._wrapped)
+        default_storage.save("cover-recorder/other.txt", ContentFile(b"later"))
+        assert names == [saved]
+    finally:
+        default_storage.delete(saved)
+        default_storage.delete("cover-recorder/other.txt")

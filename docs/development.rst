@@ -203,8 +203,9 @@ command flags, including ``--title``, ``--alt-text``, ``--user`` and
 
     just manage update_blog_cover_image --help
 
-The command stores the image file first and then changes the database: it
-creates the image row and saves (or, by default, publishes a revision of) the
+The image is uploaded through the image model, so django-cast strips EXIF GPS
+data from it like from any other upload. The command stores the image file
+first and then changes the database: it creates the image row and saves (or, by default, publishes a revision of) the
 blog page in one transaction. If that fails, for example because the user may
 not publish the page, nothing is left half done:
 

@@ -39,8 +39,12 @@ never through a shell. Quotes, spaces, ``$(...)`` and backticks are therefore pl
 and a value starting with ``-`` is still the input. Use a path or URL you trust anyway:
 ffprobe opens whatever it names.
 
-The input is never printed, and ffprobe's own output (which repeats it) is parsed but not
-shown, so a signed URL does not end up in the terminal scrollback or in logs. Errors go to
-stderr without the input and the exit status is 1: ffprobe missing, ffprobe failing, no
-video size in its output, or no answer within 60 seconds. Exactly one argument is
-expected (exit status 2 otherwise).
+Only the first video stream's width, height and display aspect ratio are requested from
+ffprobe, as JSON. A file without a video stream has no size, whatever its name looks
+like.
+
+The input is never printed and ffprobe's own messages (which repeat it) are discarded, so
+a signed URL does not end up in the terminal scrollback or in logs. Errors go to stderr
+without the input and the exit status is 1: ffprobe missing, ffprobe failing, no video
+stream with a size, or no answer within 60 seconds. Exactly one argument is expected
+(exit status 2 otherwise).

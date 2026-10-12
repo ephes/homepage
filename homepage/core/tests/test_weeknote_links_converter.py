@@ -358,6 +358,100 @@ def test_realistic_weeknote_round_trip_keeps_every_link_and_word():
     assert "<code>uuidv7()</code>" in _weeknote_values(conversion.blocks[1])[0]["description"]
 
 
+@pytest.mark.parametrize(
+    "heading_html",
+    [
+        '<h2><img alt="" src="https://example.test/icon.png"/>Articles</h2>',
+        '<h2><a href="https://example.test/all-articles">Articles</a></h2>',
+        "<h2><em>Articles</em></h2>",
+        "<h3>Articles<!-- curated --></h3>",
+    ],
+)
+def test_convert_paragraph_html_preserves_section_whose_heading_has_markup(heading_html):
+    section = heading_html + '<ul><li><a href="https://example.test/a">A</a> (Source) | Notes</li></ul>'
+    videos = '<h2>Videos</h2><ul><li><a href="https://example.test/v">V</a></li></ul>'
+
+    conversion = convert_paragraph_html("<p>Intro.</p>" + section + videos)
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    # The refused section round-trips byte for byte, markup included ...
+    assert conversion.blocks[0]["value"] == "<p>Intro.</p>" + section
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Articles", "Link heading has markup that the category heading cannot keep.")
+    ]
+    # ... and the plain section next to it is still converted.
+    assert [item["title"] for item in _weeknote_values(conversion.blocks[1])] == ["V"]
+    assert conversion.converted_sections == 1
+
+
+@pytest.mark.parametrize(
+    "link_html",
+    [
+        '<a href="https://example.test/a"><img alt="Logo" src="https://example.test/logo.png"/> Project</a>',
+        '<a href="https://example.test/a"><code>uv</code> 1.0</a>',
+        '<a href="https://example.test/a">An <em>important</em> release</a>',
+        '<a href="https://example.test/a">Release<!-- draft --></a>',
+    ],
+)
+def test_convert_paragraph_html_preserves_section_whose_primary_link_has_markup(link_html):
+    section = (
+        "<h2>Software</h2><ul>"
+        f"<li>{link_html} (Source) | Notes</li>"
+        '<li><a href="https://example.test/plain">Plain</a></li>'
+        "</ul>"
+    )
+
+    conversion = convert_paragraph_html(section)
+
+    assert conversion.changed is False
+    assert conversion.blocks == []
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Software", "List item primary link has markup that the title field cannot keep.")
+    ]
+    # Unchanged conversions leave the stored paragraph alone, so nothing is lost.
+    body = _overview(_paragraph(section))
+    assert convert_body(body).body == body
+
+
+def test_convert_paragraph_html_keeps_plain_heading_and_title_text_exactly():
+    conversion = convert_paragraph_html(
+        "<h2> Open Source </h2><ul>"
+        '<li><a href="https://example.test/a">Tom &amp; Jerry &lt;3 Python</a></li>'
+        "</ul>"
+    )
+
+    assert conversion.warnings == []
+    [item] = _weeknote_values(conversion.blocks[0])
+    assert (item["category"], item["title"]) == ("software", "Tom & Jerry <3 Python")
+
+
+def test_round_trip_with_heading_and_title_markup_keeps_every_link_image_and_word():
+    source = (
+        "<p>Intro.</p>"
+        '<h2><img alt="Icon" src="https://example.test/icon.png"/>Articles</h2>'
+        '<ul><li><a href="https://example.test/one">One</a> (Source) | First</li></ul>'
+        "<h2>Software</h2>"
+        '<ul><li><a href="https://example.test/two"><code>two</code> tool</a> | Second</li></ul>'
+        "<h2>Videos</h2>"
+        '<ul><li><a href="https://example.test/three">Three</a> (Channel) | Third</li></ul>'
+    )
+
+    conversion = convert_paragraph_html(source)
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    assert conversion.converted_sections == 1
+    preserved = BeautifulSoup(conversion.blocks[0]["value"], "html.parser")
+    source_soup = BeautifulSoup(source, "html.parser")
+    assert [str(img) for img in preserved.find_all("img")] == [str(img) for img in source_soup.find_all("img")]
+    assert [str(code) for code in preserved.find_all("code")] == ["<code>two</code>"]
+    assert _links_in_order(conversion.blocks) == [a["href"] for a in source_soup.find_all("a")]
+    for heading in source_soup.find_all("h2"):
+        if heading.get_text() == "Videos":
+            heading.decompose()  # the only converted heading becomes the category
+    expected_text = re.sub(r"[\s()|]+", " ", source_soup.get_text(" ")).strip()
+    assert _text_in_order(conversion.blocks) == expected_text
+
+
 class FakeRevision:
     id = 42
 

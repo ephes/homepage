@@ -146,9 +146,15 @@ gets a warning with the section heading. A section is refused when:
 
 * the heading is ambiguous (``Podcasts / Videos``) or the items fail block
   validation (for example a relative link);
+* the heading holds anything but plain text, for example an image, a link,
+  emphasis or an HTML comment (``<h2><img ...>Articles</h2>``). The block
+  renders its category heading from a fixed label, so that markup could not be
+  kept;
 * the list holds anything but list items as direct children: text, another
   element such as a ``div`` or a link, or an HTML comment. Whitespace between
   items is fine;
+* an item's primary link holds anything but plain text (an image, ``code``,
+  emphasis, a comment): ``title`` is a plain-text field;
 * an item has no primary link, rich markup before its primary link, or a
   description with markup other than ``a``, ``b``, ``strong``, ``i``, ``em`` and
   ``code``;

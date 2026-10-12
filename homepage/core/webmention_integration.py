@@ -5,6 +5,8 @@ This module handles automatic sending of webmentions when blog posts are publish
 through Wagtail's publishing workflow.
 """
 
+from urllib.parse import urlsplit, urlunsplit
+
 from django.dispatch import receiver
 from wagtail.signals import page_published
 
@@ -78,12 +80,31 @@ def send_webmentions_on_publish(sender, **kwargs):
     fail_count = len(results) - success_count
 
     if results:
-        print(f"Webmentions sent for {full_url}: {success_count} successful, {fail_count} failed")
+        # The page is named by id: its URL holds a slug taken from the title/content.
+        print(f"Webmentions sent for page {post.pk}: {success_count} successful, {fail_count} failed")
 
-        # Log individual results for debugging
+        # Individual results for debugging. Targets come from the post content, so
+        # only scheme, host and path are printed: no query string, fragment or
+        # credentials, and no free-form error text (it can quote the full URL).
         for result in results:
+            target = _loggable_url(result["target"])
             if result["success"]:
-                print(f"  ✓ Sent webmention to {result['target']}")
+                print(f"  ✓ Sent webmention to {target}")
             else:
-                error_msg = result.get("error", result.get("response", "Unknown error"))
-                print(f"  ✗ Failed to send to {result['target']}: {error_msg}")
+                reason = "error" if "error" in result else "rejected"
+                print(f"  ✗ Failed to send to {target} ({reason})")
+
+
+def _loggable_url(url) -> str:
+    """Return ``url`` reduced to scheme, host, port and path."""
+    try:
+        parts = urlsplit(str(url))
+        host = parts.hostname or ""
+        port = parts.port
+    except ValueError:
+        return "<unparseable URL>"
+    if ":" in host:
+        host = f"[{host}]"
+    if port is not None:
+        host = f"{host}:{port}"
+    return urlunsplit((parts.scheme, host, parts.path, "", ""))

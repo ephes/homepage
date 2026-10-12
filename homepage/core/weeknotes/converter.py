@@ -161,6 +161,20 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 index += 1
                 continue
 
+            if _has_markup(node):
+                # The block renders its category heading from a fixed label, so an
+                # image, link or emphasis inside the heading has nowhere to go.
+                flush_links()
+                pending_html.append(str(node))
+                pending_html.append(str(next_node))
+                warnings.append(
+                    ConversionWarning(
+                        "Link heading has markup that the category heading cannot keep.", heading=heading
+                    )
+                )
+                index = next_index + 1
+                continue
+
             section = _convert_list(next_node, category=category, heading=heading)
             if section.warnings:
                 flush_links()
@@ -251,6 +265,12 @@ def _convert_list_item(li: Tag, *, category: str, heading: str) -> dict[str, Any
     primary_link = li.find("a")
     if primary_link is None or not primary_link.get("href"):
         return ConversionWarning("List item has no primary link.", heading=heading)
+
+    if _has_markup(primary_link):
+        # ``title`` is plain text: an image, <code> or emphasis in the link would be lost.
+        return ConversionWarning(
+            "List item primary link has markup that the title field cannot keep.", heading=heading
+        )
 
     prefix_html, after_html = _split_around_primary_link(li, primary_link)
     prefix_text = BeautifulSoup(prefix_html, "html.parser").get_text(" ", strip=True)
@@ -394,6 +414,11 @@ def _block(block_type: str, value: Any) -> dict[str, Any]:
 
 def _is_heading(node: Any) -> bool:
     return isinstance(node, Tag) and node.name in {"h2", "h3"}
+
+
+def _has_markup(node: Tag) -> bool:
+    """Whether ``node`` holds anything but plain text (elements, comments, ...)."""
+    return any(type(descendant) is not NavigableString for descendant in node.descendants)
 
 
 def _is_blank_text(node: Any) -> bool:

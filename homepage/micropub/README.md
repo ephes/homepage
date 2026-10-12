@@ -89,9 +89,15 @@ The `CastPostMicropubHandler` class:
 - Creates posts in the blog selected via `mp-channel`, or `MICROPUB_DEFAULT_BLOG_SLUG`
 - Enforces Wagtail add + publish page permissions on the target blog
 - Converts micropub properties to Post model fields
-- Handles categories/tags
-- Creates proper Wagtail revisions and log entries
-- Publishes posts immediately
+- Applies categories/tags before saving the post's single revision; a category
+  that is not text rejects the request
+- Publishes that revision immediately through Wagtail's revision API
+  (`revision.publish()`), so the live revision holds the tags and the
+  `page_published` signal (webmentions, django-cast media preparation) fires
+  once, exactly as for a post published in the Wagtail admin
+- Runs in one transaction: a failure while tagging or publishing creates nothing
+- Never logs property values (content, titles, categories, photo URLs); it logs
+  property names, counts, ids and exception class names only
 - Rejects `update`, `delete` and `undelete` with `ValueError` (not supported)
 
 ## Content Conversion
@@ -101,7 +107,8 @@ Supports:
 - Plain text with automatic paragraph breaks
 - Markdown-style code blocks (```language)
 - Headings (# syntax in plain text)
-- Photo URLs (converted to image HTML)
+- Photo URLs (converted to image HTML); the Micropub endpoint only accepts URL
+  strings for `photo` and rejects structured photo objects with `400`
 - Location data (formatted with OpenStreetMap links)
 
 All paragraph HTML (from HTML input, plain text, photos and locations) is

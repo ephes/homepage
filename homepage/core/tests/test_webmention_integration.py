@@ -12,6 +12,7 @@ def mock_page_with_post():
     # Create the Post mock
     post = Mock(spec=Post)
     post.get_full_url.return_value = "https://example.com/post/test-post"
+    post.pk = 23
 
     # Mock the get_description method
     post.get_description.return_value = "<p>This is a test post with a <a href='https://external.com'>link</a>.</p>"
@@ -114,7 +115,8 @@ class TestWebmentionIntegration:
         # Check summary message
         summary_call = print_calls[0]
         assert "2 successful, 1 failed" in summary_call
-        assert "https://example.com/post/test-post" in summary_call
+        assert "page 23:" in summary_call
+        assert "https://example.com/post/test-post" not in summary_call
 
         # Check individual messages
         assert any("✓ Sent webmention to https://external1.com" in call for call in print_calls)

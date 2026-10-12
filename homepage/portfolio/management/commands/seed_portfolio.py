@@ -143,7 +143,7 @@ class Command(BaseCommand):
         if not pages:
             raise CommandError("No portfolio page exists. Create one in the Wagtail admin or pass --create.")
 
-        for page in pages:
+        for page in sorted(pages, key=lambda page: page.pk):
             self.seed_page(page)
             self.stdout.write(f"Seeded {page.title} ({page.url_path})")
 
@@ -165,11 +165,17 @@ class Command(BaseCommand):
     def seed_page(self, page):
         """Add default child records through a new revision, so Wagtail's editor keeps them."""
 
+        # Saving a draft or publishing in the editor updates the page row. Holding its row
+        # lock until this command commits makes those wait, and reading the page again
+        # under the lock sees every edit committed since the page list was loaded.
+        Page.objects.select_for_update().get(pk=page.pk)
+        page = PortfolioIndexPage.objects.get(pk=page.pk)
+
         # A live page without pending changes: the database is authoritative and may hold
         # records that no revision contains, so start from it and publish the result.
         # Otherwise build on the editor's latest draft and leave publishing to the editor.
         publish = page.live and not page.has_unpublished_changes
-        draft = page.specific if publish else page.get_latest_revision_as_object()
+        draft = page if publish else page.get_latest_revision_as_object()
         changed = False
         if not draft.homepage_services.all():
             draft.homepage_services = [

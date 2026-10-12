@@ -331,6 +331,33 @@ Best Practices
 4. Keep line length under 119 characters (enforced by Black)
 
 
+Work on Local Package Checkouts
+-------------------------------
+
+``django-cast``, ``cast-bootstrap5``, ``cast-vue``, ``django-indieweb`` and
+``django-resume`` are installed from Git by default. Two commands rewrite their
+entries in ``[tool.uv.sources]`` of ``pyproject.toml`` and then run ``uv sync``::
+
+    uv run commands.py switch-to-dev-environment   # editable ../<package> checkouts
+    uv run commands.py switch-to-git-sources       # back to the Git sources
+
+``switch-to-dev-environment`` only switches packages whose checkout exists next to
+this repository.
+
+If ``uv sync`` exits with an error or cannot be started, the command exits with
+status 1 and does not report success. ``pyproject.toml`` is **not** rolled back: it
+keeps the new source entries while the installed environment is still the old one.
+Fix the cause (a missing checkout, an unreachable Git remote, an incompatible
+dependency) and run the same command again, or run the opposite switch command to go
+back.
+
+``uv run`` syncs the environment from ``pyproject.toml`` before it starts
+``commands.py``. With sources that cannot be installed it fails in the same way and the
+command never starts. Recover with ``--no-sync``, which runs the command in the
+environment as it is::
+
+    uv run --no-sync commands.py switch-to-git-sources
+
 Add Dependencies to be Editable by Claude
 -----------------------------------------
 

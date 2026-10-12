@@ -458,6 +458,25 @@ def production_db_to_local(
     print(backup_path)
 
 
+def _sync_environment(args: list[str], pyproject_path: Path) -> None:
+    """Run ``uv sync`` and exit with status 1 when it fails; ``pyproject.toml`` is not rolled back."""
+    try:
+        returncode = subprocess.run(args).returncode
+    except OSError as error:
+        returncode = 1
+        detail = f"could not be started ({error})"
+    else:
+        detail = f"exited with status {returncode}"
+    if returncode != 0:
+        print(
+            f"source switch failed: `{' '.join(args)}` {detail}, so the installed environment was NOT updated. "
+            f"{pyproject_path} keeps the new source entries; fix the problem and rerun this command, "
+            "or run the opposite switch command to go back. Start it with `uv run --no-sync commands.py ...`: "
+            "a plain `uv run` syncs first and fails the same way."
+        )
+        raise typer.Exit(1)
+
+
 @cli.command()
 def switch_to_dev_environment():
     """
@@ -492,7 +511,7 @@ def switch_to_dev_environment():
         _replace_uv_sources(pyproject_path, updates)
 
         print("\nRunning uv sync to apply changes...")
-        subprocess.call(["uv", "sync"])
+        _sync_environment(["uv", "sync"], pyproject_path)
 
         print("\nDevelopment environment activated!")
         print("Local packages are now installed in editable mode.")
@@ -526,7 +545,7 @@ def switch_to_git_sources():
         print(f"✓ {package_name} -> {git_source}")
 
     print("\nRunning uv sync to apply changes...")
-    subprocess.call(["uv", "sync", "--reinstall"])
+    _sync_environment(["uv", "sync", "--reinstall"], pyproject_path)
 
     print("\nSwitched back to git sources!")
     print("All packages are now installed from their git repositories.")

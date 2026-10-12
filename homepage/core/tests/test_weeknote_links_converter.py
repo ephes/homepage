@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import io
+import json
+import re
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.management import call_command
 from django.core.management.base import CommandError as DjangoCommandError
 
@@ -150,6 +153,209 @@ def test_convert_body_only_rewrites_overview_paragraphs():
     overview_value = conversion.body[0]["value"]
     assert [block["type"] for block in overview_value] == ["paragraph", "weeknote_links", "image"]
     assert _weeknote_values(overview_value[1])[0]["category"] == "weeknotes"
+
+
+ARTICLE_ITEM = '<li><a href="https://example.test/a">A</a> (Example Blog) | Worth reading</li>'
+
+
+@pytest.mark.parametrize(
+    ("stray", "message"),
+    [
+        ("KEEP THIS", "List section has text outside list items."),
+        ("<div>KEEP THIS</div>", "List section has a <div> element outside list items."),
+        ('<a href="https://example.test/stray">KEEP THIS</a>', "List section has a <a> element outside list items."),
+        ("<p>KEEP THIS</p>", "List section has a <p> element outside list items."),
+        ("<!-- KEEP THIS -->", "List section has a comment outside list items."),
+    ],
+)
+@pytest.mark.parametrize("position", ["before", "between", "after"])
+def test_convert_paragraph_html_preserves_list_with_stray_direct_content(stray, message, position):
+    second_item = '<li><a href="https://example.test/b">B</a></li>'
+    inner = {
+        "before": stray + ARTICLE_ITEM + second_item,
+        "between": ARTICLE_ITEM + stray + second_item,
+        "after": ARTICLE_ITEM + second_item + stray,
+    }[position]
+    source = f"<p>Intro.</p><h2>Articles</h2><ul>{inner}</ul><p>Outro.</p>"
+
+    conversion = convert_paragraph_html(source)
+
+    # Nothing converted: the caller keeps the original paragraph block as is.
+    assert conversion.changed is False
+    assert conversion.blocks == []
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [("Articles", message)]
+
+
+def test_convert_paragraph_html_keeps_stray_list_content_next_to_converted_sections():
+    stray_section = (
+        "<h2>Articles</h2><ul>KEEP THIS"
+        '<li><a href="https://example.test/a">A</a></li>'
+        "<div>AND THIS</div><!-- and this --></ul>"
+    )
+    source = (
+        "<p>Intro.</p>"
+        + stray_section
+        + '<h2>Software</h2><ul><li><a href="https://example.test/tool">Tool</a></li></ul>'
+        + "<p>Outro.</p>"
+    )
+
+    conversion = convert_paragraph_html(source)
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links", "paragraph"]
+    assert conversion.blocks[0]["value"] == "<p>Intro.</p>" + stray_section
+    assert [item["title"] for item in _weeknote_values(conversion.blocks[1])] == ["Tool"]
+    assert conversion.blocks[2]["value"] == "<p>Outro.</p>"
+    assert conversion.converted_sections == 1
+
+
+def test_convert_paragraph_html_allows_whitespace_between_list_items():
+    conversion = convert_paragraph_html(
+        "<h2>Articles</h2>\n<ul>\n  "
+        '<li><a href="https://example.test/a">A</a></li>\n\t&nbsp;'
+        '<li><a href="https://example.test/b">B</a></li>\n</ul>'
+    )
+
+    assert conversion.changed is True
+    assert conversion.warnings == []
+    assert [item["title"] for item in _weeknote_values(conversion.blocks[0])] == ["A", "B"]
+
+
+@pytest.mark.parametrize(
+    "source_markup",
+    [
+        '<a href="https://example.test/a-src">A</a> / <a href="https://example.test/b-src">B</a>',
+        '<a href="https://example.test/a-src">A</a><a href="https://example.test/b-src">B</a>',
+        'via <a href="https://example.test/show">Show</a>',
+        '<a href="https://example.test/show">Show</a>, Episode 12',
+        "<em>Example</em> Blog",
+        '<a href="https://example.test/show"><strong>Show</strong></a>',
+        '<a href="https://example.test/show">Show</a><!-- sponsored -->',
+    ],
+)
+def test_convert_paragraph_html_preserves_section_with_unrepresentable_source(source_markup):
+    section = (
+        "<h2>Podcasts</h2><ul>"
+        f'<li><a href="https://example.test/episode">Episode</a> ({source_markup}) description</li>'
+        '<li><a href="https://example.test/other">Other</a> (Plain Source)</li>'
+        "</ul>"
+    )
+
+    conversion = convert_paragraph_html("<p>Intro.</p>" + section)
+
+    assert conversion.changed is False
+    assert conversion.blocks == []
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Podcasts", "List item source has several links or rich markup that the source fields cannot keep.")
+    ]
+
+
+def test_convert_paragraph_html_still_converts_plain_and_single_link_sources():
+    conversion = convert_paragraph_html(
+        "<h2>Podcasts</h2><ul>"
+        '<li><a href="https://example.test/one">One</a> (<a href="https://example.test/show">Show</a>) | Listen</li>'
+        '<li><a href="https://example.test/two">Two</a> ( <a href="https://example.test/show2">Show 2</a> )</li>'
+        '<li><a href="https://example.test/three">Three</a> (Plain &amp; Simple) - Notes</li>'
+        '<li><a href="https://example.test/four">Four</a> | No source</li>'
+        "</ul>"
+    )
+
+    assert conversion.warnings == []
+    items = _weeknote_values(conversion.blocks[0])
+    assert [(item["title"], item["source"], item["source_url"], item["description"]) for item in items] == [
+        ("One", "Show", "https://example.test/show", "<p>Listen</p>"),
+        ("Two", "Show 2", "https://example.test/show2", ""),
+        ("Three", "Plain & Simple", "", "<p>Notes</p>"),
+        ("Four", "", "", "<p>No source</p>"),
+    ]
+
+
+REALISTIC_WEEKNOTE_OVERVIEW = (
+    '<p>Diese Woche ging es vor allem um den <a href="https://example.test/umzug">Umzug</a> der Infrastruktur.</p>'
+    "<h2>Articles</h2>"
+    "<ul>"
+    '<li><a href="https://example.test/postgres">Postgres 18 Released</a> (PostgreSQL News) | '
+    "Asynchrones I/O und <code>uuidv7()</code></li>"
+    '<li><a href="https://example.test/django">Django 6.0 Tasks</a> '
+    '(<a href="https://example.test/djangoproject">Django Weblog</a>)</li>'
+    "</ul>"
+    "<h2>Podcasts</h2>"
+    "<ul>"
+    '<li><a href="https://example.test/episode">Lokale Modelle</a> '
+    '(<a href="https://example.test/show-a">Show A</a> / <a href="https://example.test/show-b">Show B</a>) '
+    "| Crossover-Folge</li>"
+    "</ul>"
+    "<h2>Software</h2>"
+    "<ul>Notiz an mich: sortieren"
+    '<li><a href="https://example.test/uv">uv</a> | schneller Paketmanager</li>'
+    "</ul>"
+    "<h2>Videos</h2>"
+    "<ul>"
+    '<li><a href="https://example.test/talk">Keynote</a> (DjangoCon) | Sehr sehenswert</li>'
+    "</ul>"
+    "<p>Bis nächste Woche.</p>"
+)
+
+
+def _links_in_order(blocks):
+    """Every link a reader can click after conversion, in document order."""
+    links = []
+    for block in blocks:
+        if block["type"] == "paragraph":
+            soup = BeautifulSoup(block["value"], "html.parser")
+            links.extend(a["href"] for a in soup.find_all("a"))
+            continue
+        for item in _weeknote_values(block):
+            links.append(item["url"])
+            if item["source_url"]:
+                links.append(item["source_url"])
+            soup = BeautifulSoup(item["description"], "html.parser")
+            links.extend(a["href"] for a in soup.find_all("a"))
+    return links
+
+
+def _text_in_order(blocks):
+    """The words a reader can see after conversion, without category headings."""
+    words = []
+    for block in blocks:
+        if block["type"] == "paragraph":
+            words.append(BeautifulSoup(block["value"], "html.parser").get_text(" "))
+            continue
+        for item in _weeknote_values(block):
+            description = BeautifulSoup(item["description"], "html.parser").get_text(" ")
+            words.append(" ".join([item["title"], item["source"], description]))
+    return re.sub(r"[\s()|]+", " ", " ".join(words)).strip()
+
+
+def test_realistic_weeknote_round_trip_keeps_every_link_and_word():
+    conversion = convert_paragraph_html(REALISTIC_WEEKNOTE_OVERVIEW)
+
+    assert [block["type"] for block in conversion.blocks] == [
+        "paragraph",  # intro
+        "weeknote_links",  # Articles
+        "paragraph",  # Podcasts (two source links) + Software (stray text), unchanged
+        "weeknote_links",  # Videos
+        "paragraph",  # outro
+    ]
+    assert conversion.converted_sections == 2
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Podcasts", "List item source has several links or rich markup that the source fields cannot keep."),
+        ("Software", "List section has text outside list items."),
+    ]
+    preserved = conversion.blocks[2]["value"]
+    assert preserved.startswith("<h2>Podcasts</h2><ul>")
+    assert '(<a href="https://example.test/show-a">Show A</a> / <a href="https://example.test/show-b">Show B</a>)' in (
+        preserved
+    )
+    assert "<ul>Notiz an mich: sortieren<li>" in preserved
+
+    source_soup = BeautifulSoup(REALISTIC_WEEKNOTE_OVERVIEW, "html.parser")
+    assert _links_in_order(conversion.blocks) == [a["href"] for a in source_soup.find_all("a")]
+    for heading in source_soup.find_all("h2"):
+        if heading.get_text() in {"Articles", "Videos"}:
+            heading.decompose()  # converted headings become the category
+    expected_text = re.sub(r"[\s()|]+", " ", source_soup.get_text(" ")).strip()
+    assert _text_in_order(conversion.blocks) == expected_text
+    assert "<code>uuidv7()</code>" in _weeknote_values(conversion.blocks[1])[0]["description"]
 
 
 class FakeRevision:
@@ -305,3 +511,74 @@ def _patch_post_model(monkeypatch, posts):
     import cast.models
 
     monkeypatch.setattr(cast.models, "Post", SimpleNamespace(objects=FakeQuerySet(posts)))
+
+
+def _weeknote_post(*, slug, overview_html):
+    from cast.models import Blog, Post
+    from wagtail.models import Locale, Page
+
+    root = Page.get_first_root_node()
+    if root is None:
+        Locale.objects.get_or_create(language_code="en")
+        root = Page.add_root(instance=Page(title="Root", slug="root"))
+    blog = root.add_child(instance=Blog(title="Weeknote blog", slug=f"blog-{slug}"))
+    body = json.dumps([{"type": "overview", "value": [{"type": "paragraph", "value": overview_html}]}])
+    return blog.add_child(instance=Post(title=slug, slug=slug, body=body))
+
+
+def _overview_blocks(page):
+    return [(child["type"], child["value"]) for child in page.body.raw_data[0]["value"]]
+
+
+@pytest.mark.django_db
+def test_convert_weeknote_links_command_persists_unconvertible_sections_unchanged(tmp_path):
+    from cast.models import Post
+
+    post = _weeknote_post(slug="weeknotes-2026-10-05", overview_html=REALISTIC_WEEKNOTE_OVERVIEW)
+    report_path = tmp_path / "report.json"
+
+    call_command("convert_weeknote_links", "--write", "--report", str(report_path), stdout=io.StringIO())
+
+    revised = Post.objects.get(pk=post.pk).get_latest_revision_as_object()
+    blocks = _overview_blocks(revised)
+    assert [block_type for block_type, _value in blocks] == [
+        "paragraph",
+        "weeknote_links",
+        "paragraph",
+        "weeknote_links",
+        "paragraph",
+    ]
+    # The persisted HTML of the two refused sections is the source HTML.
+    assert blocks[2][1] == (
+        "<h2>Podcasts</h2>"
+        "<ul>"
+        '<li><a href="https://example.test/episode">Lokale Modelle</a> '
+        '(<a href="https://example.test/show-a">Show A</a> / <a href="https://example.test/show-b">Show B</a>) '
+        "| Crossover-Folge</li>"
+        "</ul>"
+        "<h2>Software</h2>"
+        "<ul>Notiz an mich: sortieren"
+        '<li><a href="https://example.test/uv">uv</a> | schneller Paketmanager</li>'
+        "</ul>"
+    )
+    assert blocks[0][1].startswith("<p>Diese Woche")
+    assert blocks[4][1] == "<p>Bis nächste Woche.</p>"
+    report = json.loads(report_path.read_text())
+    assert report[0]["converted_sections"] == 2
+    assert [warning["heading"] for warning in report[0]["warnings"]] == ["Podcasts", "Software"]
+
+
+@pytest.mark.django_db
+def test_convert_weeknote_links_command_writes_nothing_when_every_section_is_refused():
+    from cast.models import Post
+
+    html = '<h2>Articles</h2><ul>KEEP THIS<li><a href="https://example.test">A</a></li></ul>'
+    post = _weeknote_post(slug="weeknotes-2026-10-12", overview_html=html)
+    stdout = io.StringIO()
+
+    call_command("convert_weeknote_links", "--write", stdout=stdout)
+
+    stored = Post.objects.get(pk=post.pk)
+    assert stored.revisions.count() == 0
+    assert _overview_blocks(stored) == [("paragraph", html)]
+    assert "converted 0 post(s), published 0, skipped 0, warnings 1." in stdout.getvalue()

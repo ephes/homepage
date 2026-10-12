@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4.element import PreformattedString
 from django.core.exceptions import ValidationError
 
 from .blocks import WeeknoteLinksBlock
@@ -210,6 +211,29 @@ class _ListConversion:
 def _convert_list(ul: Tag, *, category: str, heading: str) -> _ListConversion:
     items: list[dict[str, Any]] = []
     warnings: list[ConversionWarning] = []
+    # Only <li> children become link items. Anything else directly inside the
+    # list (text, another element, a comment) has no structured field, so the
+    # whole section is preserved instead of dropping that content.
+    for child in ul.children:
+        if isinstance(child, PreformattedString):
+            return _ListConversion(
+                warnings=[ConversionWarning("List section has a comment outside list items.", heading=heading)]
+            )
+        if isinstance(child, NavigableString):
+            if _is_blank_text(child):
+                continue
+            return _ListConversion(
+                warnings=[ConversionWarning("List section has text outside list items.", heading=heading)]
+            )
+        if isinstance(child, Tag) and child.name != "li":
+            return _ListConversion(
+                warnings=[
+                    ConversionWarning(
+                        f"List section has a <{child.name}> element outside list items.", heading=heading
+                    )
+                ]
+            )
+
     list_items = [li for li in ul.find_all("li", recursive=False)]
     if not list_items:
         return _ListConversion(warnings=[ConversionWarning("List section has no direct list items.", heading=heading)])
@@ -236,7 +260,13 @@ def _convert_list_item(li: Tag, *, category: str, heading: str) -> dict[str, Any
             return ConversionWarning("List item has rich prefix before primary link.", heading=heading)
         title = f"{prefix_text} {title}".strip()
 
-    source, source_url, rest_html = _extract_source(after_html)
+    extracted_source = _extract_source(after_html)
+    if extracted_source is None:
+        return ConversionWarning(
+            "List item source has several links or rich markup that the source fields cannot keep.",
+            heading=heading,
+        )
+    source, source_url, rest_html = extracted_source
     description = _extract_description(rest_html)
     if description is None:
         return ConversionWarning("List item description uses unsupported rich markup.", heading=heading)
@@ -267,7 +297,16 @@ def _split_around_primary_link(li: Tag, primary_link: Tag) -> tuple[str, str]:
     return "".join(before), "".join(after)
 
 
-def _extract_source(after_html: str) -> tuple[str, str, str]:
+def _extract_source(after_html: str) -> tuple[str, str, str] | None:
+    """Split a leading ``(source)`` off the text that follows the primary link.
+
+    Returns ``(source, source_url, rest_html)``; ``source`` is empty when there
+    is no leading parenthesized source. The structured item stores one plain
+    source label and at most one source URL, so a source is only extracted when
+    it is plain text or exactly one link. ``None`` means the source holds more
+    than that (several links, text next to a link, other markup) and must not be
+    flattened.
+    """
     soup = BeautifulSoup(after_html, "html.parser")
     contents = list(soup.contents)
     first_index = _first_nonblank_index(contents)
@@ -275,7 +314,7 @@ def _extract_source(after_html: str) -> tuple[str, str, str]:
         return "", "", after_html
 
     first = contents[first_index]
-    if not isinstance(first, NavigableString) or "(" not in str(first):
+    if type(first) is not NavigableString or "(" not in str(first):
         return "", "", after_html
 
     before_open, source_text = str(first).split("(", 1)
@@ -294,7 +333,7 @@ def _extract_source(after_html: str) -> tuple[str, str, str]:
         source_parts.append(source_text)
         closed = False
         for node in contents[source_end_search_start:]:
-            if not closed and isinstance(node, NavigableString) and ")" in str(node):
+            if not closed and type(node) is NavigableString and ")" in str(node):
                 source_before_close, rest_after_close = str(node).split(")", 1)
                 source_parts.append(source_before_close)
                 rest_parts.append(rest_after_close)
@@ -310,10 +349,19 @@ def _extract_source(after_html: str) -> tuple[str, str, str]:
     source_html = "".join(source_parts)
     rest_html = "".join(rest_parts)
     source_soup = BeautifulSoup(source_html, "html.parser")
-    links = source_soup.find_all("a")
-    if len(links) == 1 and source_soup.get_text(" ", strip=True) == links[0].get_text(" ", strip=True):
-        return links[0].get_text(" ", strip=True), links[0].get("href", ""), rest_html
-    return source_soup.get_text(" ", strip=True), "", rest_html
+    meaningful = [node for node in source_soup.contents if not _is_blank_text(node)]
+    if all(type(node) is NavigableString for node in meaningful):
+        return source_soup.get_text(" ", strip=True), "", rest_html
+    if len(meaningful) == 1:
+        link = meaningful[0]
+        if (
+            isinstance(link, Tag)
+            and link.name == "a"
+            and link.get("href")
+            and all(type(node) is NavigableString for node in link.descendants)
+        ):
+            return link.get_text(" ", strip=True), link["href"], rest_html
+    return None
 
 
 def _extract_description(rest_html: str) -> str | None:

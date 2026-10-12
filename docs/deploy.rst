@@ -93,6 +93,22 @@ host and renders it into ``.env`` via the ``wagtail_deploy`` role
 (``wagtail_django_sentry_environment``), so staging deploys report
 ``environment=staging``.
 
+.. _sentry-privacy:
+
+Sentry Privacy
+~~~~~~~~~~~~~~
+
+Error reports sent to Sentry do not identify visitors or users:
+``config.settings.production`` calls ``sentry_sdk.init`` with
+``send_default_pii=False`` and ``max_request_body_size="never"``. Events keep
+the stack trace (including local variables) and the request URL, method and
+non-sensitive headers, but not client IP addresses, the logged-in user,
+cookies or request bodies (form posts, JSON payloads, uploads).
+
+These are fixed defaults, not ``.env`` settings; change them in the settings
+module only after an owner decision. ``homepage/tests/test_production_sentry.py``
+guards them.
+
 .. _hsts:
 
 HSTS

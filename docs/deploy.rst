@@ -49,6 +49,43 @@ separate database instead, e.g. ``just production-db-to-local homepage_prod``.
 
     just postgres
 
+2026-10-12 library refresh
+--------------------------
+
+``uv.lock`` moves django-cast ``develop`` from ``0e55a47b`` to ``95965b91``,
+django-indieweb ``develop`` from ``5187311d`` to ``289ea25a`` and django-resume
+``main`` from ``bcdeb44b`` to ``c9d5172f``. No other locked package changed.
+cast-bootstrap5 stays at ``bcd0b513``: its ``main`` now pins django-cast to a
+fixed commit in ``tool.uv.sources``, which conflicts with tracking ``develop``
+here.
+
+* django-indieweb migration ``0029_reconcile_no_scope_grants`` deletes duplicate
+  no-scope tokens and auth codes before ``0030_scope_not_null`` makes the scope
+  column non-null. Take a database backup before deploying.
+  The ops-control deploy migrates while the previous release is still serving
+  and restarts the service afterwards. The previous pin stores a no-scope grant
+  as ``NULL``, so an IndieAuth authorization issued without a scope during that
+  window can recreate a duplicate and make ``0030`` fail, or fail itself once
+  ``0030`` has run. Do not authorize IndieAuth clients while deploying. If
+  ``0030`` fails, ``0029`` is already recorded and a plain rerun skips it:
+  run ``migrate indieweb 0028`` (reversing ``0029`` is a no-op), then deploy
+  again so ``0029`` reconciles the new rows before ``0030``.
+  A failed run can drop the pending restart, and the rerun may then see no
+  source or dependency change: confirm that ``homepage.service`` and the
+  transcript worker were restarted after the successful rerun, and restart them
+  if they still run the previous release.
+* django-cast strips EXIF GPS from new image uploads. Existing originals are not
+  rewritten; ``python manage.py report_image_gps`` lists them read-only.
+* django-cast restricts the Wagtail images API to staff unless
+  ``CAST_PUBLIC_IMAGES_API`` is ``True``. The setting stays unset here.
+* django-resume no longer lets a resume owner install JSON Resume catalog themes
+  from the browser. ``DJANGO_RESUME_JSON_RESUME_ALLOW_CATALOG_THEME_INSTALL``
+  stays at its default ``False`` and the deploy does not run
+  ``install_json_resume_catalog_themes``: production has no theme cache, so no
+  installed theme is lost, and **Preview render** / **Use render theme** answer
+  403 until an operator installs themes with that command. The pinned
+  ``resumed`` 7 renderer needs Node.js 24 or newer.
+
 Transcript Worker
 -----------------
 

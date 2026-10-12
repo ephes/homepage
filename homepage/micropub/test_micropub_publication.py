@@ -8,6 +8,7 @@ Publication and logging of the Micropub handler.
 
 import json
 import logging
+import traceback
 from unittest.mock import patch
 
 import pytest
@@ -18,7 +19,7 @@ from indieweb.models import Token
 from wagtail.models import PageLogEntry, Revision
 from wagtail.signals import page_published
 
-from .handler import CastPostMicropubHandler, MicropubContentError
+from .handler import CastPostMicropubHandler, MicropubContentError, MicropubInternalError
 from .test_micropub_permissions import HOST, blogs, create, micropub_post, users  # noqa: F401
 
 pytestmark = pytest.mark.django_db
@@ -196,7 +197,8 @@ def application_log_text(caplog):
     level (root logger: WARNING).
     """
     return "\n".join(
-        f"{record.name} {record.getMessage()} {record.exc_text or ''}"
+        f"{record.name} {record.getMessage()} "
+        + ("".join(traceback.format_exception(*record.exc_info)) if record.exc_info else "")
         for record in caplog.records
         if record.levelno >= logging.WARNING or record.name.split(".")[0] in {"homepage", "indieweb"}
     )
@@ -228,8 +230,8 @@ def test_successful_publication_logs_no_submitted_values(
     assert "✓ Sent webmention to https://example.test:8443/doc\n" in output.out
     assert "✗ Failed to send to https://example.test:8443/doc (error)\n" in output.out
     assert "✗ Failed to send to https://example.test:8443/doc (rejected)\n" in output.out
-    for name in ("content", "category", "photo", "link", "property", "published"):
-        assert SECRETS[name] not in output.out + output.err, f"{name} leaked to stdout/stderr"
+    assert_no_secret(output.out + output.err)
+    assert f"Webmentions sent for page {post.pk}: 1 successful, 2 failed\n" in output.out
     assert "pw@" not in output.out
     # Useful operational facts remain.
     messages = handler_messages(caplog)
@@ -279,6 +281,55 @@ def test_unexpected_failure_logs_only_the_error_type(blogs, users, caplog, capsy
     assert "Micropub create failed: RuntimeError" in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("error_class", "status", "raised"),
+    [(RuntimeError, 500, "MicropubInternalError"), (ValueError, 400, "MicropubContentError")],
+)
+def test_endpoint_failure_logs_no_submitted_values(
+    client, blogs, users, caplog, capsys, error_class, status, raised  # noqa: F811
+):
+    """django-indieweb logs what the handler raises: message, or message plus traceback."""
+    caplog.set_level(logging.DEBUG)
+    properties = secret_properties()
+    del properties[SECRETS["property"]]
+    cause = KeyError(f"cause {SECRETS['category']}")
+    error = error_class(f"cannot store {SECRETS['content']}")
+    error.__cause__ = cause
+
+    with patch.object(Post, "save_revision", side_effect=error):
+        response = micropub_json(client, users["publisher"], properties)
+
+    assert response.status_code == status
+    assert not Post.objects.exists()
+    output = capsys.readouterr()
+    assert_no_secret(application_log_text(caplog) + output.out + output.err)
+    assert f"Micropub create failed: {error_class.__name__}" in handler_messages(caplog)
+    # django-indieweb did log the failure, with the stand-in error.
+    indieweb_records = [record for record in caplog.records if record.name == "indieweb.views"]
+    assert indieweb_records
+    if status == 500:
+        [record] = [record for record in indieweb_records if record.exc_info]
+        logged = record.exc_info[1]
+        assert type(logged).__name__ == raised and str(logged) == "Micropub create failed (RuntimeError)"
+        assert logged.__cause__ is None and logged.__context__ is None
+
+
+def test_handler_replaces_unexpected_errors(blogs, users):  # noqa: F811
+    with patch.object(Post, "save_revision", side_effect=TypeError(f"bad {SECRETS['content']}")):
+        with pytest.raises(MicropubInternalError) as raised:
+            create(users["publisher"], **{"mp-channel": ["alpha"]})
+
+    assert str(raised.value) == "Micropub create failed (TypeError)"
+    assert raised.value.__cause__ is None and raised.value.__context__ is None
+    with patch.object(Post, "save_revision", side_effect=ValueError(f"bad {SECRETS['content']}")):
+        with pytest.raises(MicropubContentError) as rejected:
+            create(users["publisher"], **{"mp-channel": ["alpha"]})
+
+    assert str(rejected.value) == "The request could not be processed"
+    assert rejected.value.__cause__ is None and rejected.value.__context__ is None
+    assert not Post.objects.exists()
+
+
 def test_form_logs_no_submitted_values(client, blogs, users, caplog, capsys):  # noqa: F811
     caplog.set_level(logging.DEBUG)
     client.force_login(users["publisher"])
@@ -299,5 +350,6 @@ def test_form_logs_no_submitted_values(client, blogs, users, caplog, capsys):  #
 
     output = capsys.readouterr()
     assert_no_secret(application_log_text(caplog) + output.out + output.err)
-    assert "Micropub form: error creating post (RuntimeError)" in caplog.text
+    assert "Micropub create failed: RuntimeError" in caplog.text
+    assert "Micropub form: error creating post (MicropubInternalError)" in caplog.text
     assert f"Micropub form: post created by user {users['publisher'].pk}" in caplog.text

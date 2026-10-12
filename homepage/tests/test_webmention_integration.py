@@ -67,6 +67,7 @@ class TestWebmentionIntegration(TestCase):
         mock_post = Mock()
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
+        mock_post.pk = 17
 
         # Mock the get_description method
         mock_post.get_description = Mock(
@@ -95,8 +96,6 @@ class TestWebmentionIntegration(TestCase):
                         webmention_integration.send_webmentions_on_publish(None, instance=mock_page)
 
                         # Verify logging output
-                        mock_print.assert_any_call(
-                            "Webmentions sent for https://example.com/post/1/: 1 successful, 1 failed"
-                        )
+                        mock_print.assert_any_call("Webmentions sent for page 17: 1 successful, 1 failed")
                         mock_print.assert_any_call("  ✓ Sent webmention to https://success.com")
                         mock_print.assert_any_call("  ✗ Failed to send to https://fail.com (error)")

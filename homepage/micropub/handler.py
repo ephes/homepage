@@ -78,6 +78,18 @@ class MicropubPermissionError(ValueError):
     """
 
 
+class MicropubInternalError(RuntimeError):
+    """An unexpected failure while creating a post, with the details removed.
+
+    Stands in for the original exception, whose message or traceback could quote
+    the submission; it names the original exception class only.
+    """
+
+
+# Errors whose messages are fixed text written in this module.
+SAFE_ERRORS = (MicropubTargetError, MicropubContentError, MicropubPermissionError)
+
+
 def get_default_blog_slug() -> str:
     """Return the slug of the blog used when a request does not select one."""
     return getattr(settings, "MICROPUB_DEFAULT_BLOG_SLUG", DEFAULT_MICROPUB_BLOG_SLUG)
@@ -135,6 +147,13 @@ class CastPostMicropubHandler(MicropubContentHandler):
             len(properties.get("photo", [])),
         )
 
+        # django-indieweb logs the message of a ``ValueError`` and the traceback of
+        # anything else. Exceptions raised below (by Wagtail, the database, the
+        # converter, ...) can quote the submission, so only this module's own
+        # errors, whose messages are fixed text, leave unchanged. Everything else
+        # is replaced, outside the ``except`` block, by an error without message
+        # details, cause or context.
+        failure: Exception
         try:
             # Extract basic properties
             title = self._get_title(properties)
@@ -144,9 +163,16 @@ class CastPostMicropubHandler(MicropubContentHandler):
 
             with transaction.atomic():
                 return self._create_post(properties, user, title, content, published, categories)
-        except Exception as error:
+        except SAFE_ERRORS as error:
             logger.warning("Micropub create failed: %s", type(error).__name__)
             raise
+        except ValueError as error:
+            logger.warning("Micropub create failed: %s", type(error).__name__)
+            failure = MicropubContentError("The request could not be processed")
+        except Exception as error:
+            logger.warning("Micropub create failed: %s", type(error).__name__)
+            failure = MicropubInternalError(f"Micropub create failed ({type(error).__name__})")
+        raise failure
 
     @staticmethod
     def _loggable_property_names(properties: dict[str, list[Any]]) -> str:
@@ -215,9 +241,9 @@ class CastPostMicropubHandler(MicropubContentHandler):
         # publish log entry and sends ``page_published`` once.
         try:
             revision.publish(user=user)
-        except ValidationError as error:
+        except ValidationError:
             # Publication policy said no; answer as an invalid request, not a 500.
-            raise MicropubContentError("The post cannot be published") from error
+            raise MicropubContentError("The post cannot be published") from None
 
         # Get the URL - need to refresh from DB to get the correct URL
         post.refresh_from_db()

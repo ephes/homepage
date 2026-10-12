@@ -80,7 +80,8 @@ def send_webmentions_on_publish(sender, **kwargs):
     fail_count = len(results) - success_count
 
     if results:
-        print(f"Webmentions sent for {full_url}: {success_count} successful, {fail_count} failed")
+        # The page is named by id: its URL holds a slug taken from the title/content.
+        print(f"Webmentions sent for page {post.pk}: {success_count} successful, {fail_count} failed")
 
         # Individual results for debugging. Targets come from the post content, so
         # only scheme, host and path are printed: no query string, fragment or

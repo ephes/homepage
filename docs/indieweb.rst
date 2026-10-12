@@ -44,11 +44,17 @@ Logging
    The handler logs the names of the known properties it received (unknown
    names only as a count), the number of categories and photos, the ids of the
    created post and its blog, and for a failure the exception class
-   (``Micropub create failed: MicropubTargetError``). There is no setting that
-   turns payload logging on. The webmention sender prints each target reduced
-   to scheme, host and path, without query string, fragment or credentials.
-   Wagtail's own ``INFO`` line for a created page contains the page title, as
-   it does for pages created in the admin; production logs from ``WARNING`` up.
+   (``Micropub create failed: MicropubTargetError``). django-indieweb logs the
+   message of a rejected request and the traceback of an unexpected error, so
+   the handler lets only its own errors (fixed messages) through and replaces
+   every other exception with one that names the original class and carries no
+   message, cause or context: ``MicropubContentError`` for a ``ValueError``
+   (``400``), ``MicropubInternalError`` otherwise (``500``). There is no
+   setting that turns payload logging on. The webmention diagnostics name the
+   published page by id and each target reduced to scheme, host and path,
+   without query string, fragment, credentials or error text. Wagtail's own
+   ``INFO`` lines for a created or published page contain the page title, as
+   they do for pages handled in the admin; production logs from ``WARNING`` up.
 
 Photos
    ``photo`` values are URL strings. django-indieweb rejects anything else

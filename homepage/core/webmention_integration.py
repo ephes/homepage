@@ -10,8 +10,9 @@ publication has been committed:
 * a page with a Wagtail view restriction (its own or one inherited from an
   ancestor) is neither rendered nor announced, because a webmention tells
   third-party endpoints the source URL and which links the page contains;
-* the outbound work runs in an ``on_commit`` callback, so a publication that is
-  rolled back announces nothing;
+* the outbound work runs in an ``on_commit`` callback, so a publication inside
+  a transaction that is rolled back announces nothing. Without an open
+  transaction Django calls the callback at once, inside the signal receiver;
 * delivery is best effort: a failure is logged and never undoes or fails the
   committed publication.
 """
@@ -43,7 +44,8 @@ def send_webmentions_on_publish(sender, **kwargs):
     3. Ignores pages that are not publicly accessible
     4. Schedules the delivery for after the surrounding transaction commits
 
-    Nothing is rendered and no request leaves the process inside the signal.
+    Inside a transaction nothing is rendered and no request leaves the process
+    before the commit. Without one, ``on_commit`` runs the delivery immediately.
     """
     page = kwargs["instance"]
 

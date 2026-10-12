@@ -42,12 +42,29 @@ To backup the production database and restore it locally::
 
     just production-db-to-local
 
-This replaces the local ``homepage`` database. Pass another name to restore into a
-separate database instead, e.g. ``just production-db-to-local homepage_prod``.
+If the local ``homepage`` database already exists, the command refuses to run. Confirm
+replacing it with ``just production-db-to-local homepage --replace-existing``, or pass
+another name to restore into a separate database instead, e.g.
+``just production-db-to-local homepage_prod``. The existing database is only replaced
+after the complete dump loaded without errors; see :doc:`install` for the details and
+for recovering from an interrupted restore.
 
 **Important**: Make sure only PostgreSQL is running locally (not the full development stack)::
 
     just postgres
+
+2026-10-12 cast-bootstrap5 refresh
+----------------------------------
+
+``uv.lock`` moves cast-bootstrap5 ``main`` from ``bcd0b513`` to ``4ed370aa``. No
+other locked package changed. The source conflict that kept it at ``bcd0b513``
+(see the refresh note below) is resolved: cast-bootstrap5 ``main`` now takes
+django-cast from the ``develop`` branch, as this project does.
+
+The update brings the search suggestion input fixes (text composition and
+modified clicks are respected) with a rebuilt search modal bundle, so
+``collectstatic`` picks up a new hashed asset. It has no migrations and needs no
+settings change.
 
 2026-10-12 library refresh
 --------------------------

@@ -137,9 +137,10 @@ db-migrate:
 db-shell:
     @just manage dbshell
 
-# Restore a production dump into a local database (default: homepage, the dev database)
-production-db-to-local db="homepage":
-    uv run python commands.py production-db-to-local --local-db-name {{db}}
+# Restore a production dump into a local database (default: homepage, the dev database).
+# An existing database is only replaced with: just production-db-to-local homepage --replace-existing
+production-db-to-local db="homepage" *ARGS:
+    uv run python commands.py production-db-to-local --local-db-name {{db}} {{ARGS}}
 
 # Shell access
 shell:

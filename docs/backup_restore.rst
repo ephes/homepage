@@ -15,5 +15,5 @@ Restore
 =======
 
 How to restore the production backup to the local database:
- * scp homepage:site/backups/backup_2017_09_12T11_39_22.sql.gz backups
- * Use pg_restore or psql to restore the backup to your local PostgreSQL database
+ * just production-db-to-local (see :doc:`install`; an existing local database is only
+   replaced with ``--replace-existing`` and only after the complete dump loaded)

@@ -32,9 +32,10 @@ Publication
    it keeps them, and the usual publication effects run exactly once: the
    ``wagtail.publish`` log entry, the ``page_published`` signal and with it
    django-cast's media preparation and the outgoing webmentions of
-   ``homepage.core.webmention_integration``. Everything runs in one
-   transaction. If a category is not text, tags cannot be applied or the
-   publication is refused, nothing is created and the endpoint answers ``400
+   ``homepage.core.webmention_integration`` (see `Outgoing webmentions`_).
+   Everything except the webmention delivery runs in one transaction. If a
+   category is not text, tags cannot be applied or the publication is refused,
+   nothing is created, no webmention is sent and the endpoint answers ``400
    invalid_request`` (or ``500`` for an unexpected error).
 
 Logging
@@ -78,6 +79,53 @@ Unsupported actions
    invalid_request`` and change nothing, so clients such as Quill no longer
    report a deletion that did not happen. Edit or unpublish posts in the
    Wagtail admin instead.
+
+Outgoing webmentions
+--------------------
+
+Publishing a django-cast ``Post`` or ``Episode`` sends webmentions to the
+external URLs its content links to
+(``homepage.core.webmention_integration``, on Wagtail's ``page_published``
+signal). A webmention tells a third-party endpoint the URL of the page and that
+the page links to it, so two rules apply:
+
+Only public pages
+   A page with a Wagtail view restriction (login, password or group) is never
+   announced. The restriction can sit on the page itself or on any ancestor,
+   for example a private blog. Such a page is not rendered for link discovery
+   and no request leaves the server. Publishing it again after the restriction
+   has been removed sends its webmentions; removing the restriction alone does
+   not.
+
+Only committed publications
+   The ``page_published`` receiver does not render or send anything itself. It
+   registers the delivery with ``transaction.on_commit``, and the delivery runs
+   in the same process when the outermost database transaction that is open at
+   that moment commits; no queue is involved. For a publication inside a
+   transaction this means that nothing is rendered or sent before the commit.
+   Which transaction that is depends on the caller, not on this module:
+
+   * a Micropub post is published inside the handler's own transaction, so its
+     webmentions leave after that transaction has committed;
+   * with ``ATOMIC_REQUESTS`` (the default in ``config/settings/base.py``, used
+     for local development and tests) it is the request;
+   * ``config/settings/production.py`` replaces the database setting and does
+     not set ``ATOMIC_REQUESTS``, so in production it is the transaction the
+     publishing code itself opened, and the delivery can run before the admin
+     request has finished;
+   * when no transaction is open at all (autocommit), ``on_commit`` calls the
+     delivery at once, so it runs inside the signal receiver, after Wagtail has
+     saved the page as live. There is nothing left to roll back in that case.
+
+   A publication that is rolled back announces nothing. At delivery time the
+   page is read again from the database and is skipped when it was deleted,
+   unpublished, restricted or replaced by a newer live revision in the
+   meantime (the newer publication has its own delivery).
+
+Delivery is best effort. A failure while rendering or sending does not fail or
+undo the publication: it is logged as
+``Webmention delivery failed for page <id>: <exception class>`` at ``WARNING``
+and there is no automatic retry. Publish the page again to resend.
 
 Webmention targets
 ------------------

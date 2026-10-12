@@ -1,9 +1,17 @@
+import json
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
-from cast.models import Post
+from cast.models import Blog, Post
+from django.db import transaction
+from wagtail.models import Locale, Page, PageViewRestriction, Site
 
-from homepage.core.webmention_integration import send_webmentions_on_publish
+from homepage.core.webmention_integration import (
+    _deliver_webmentions,
+    _send_webmentions_for,
+    send_webmentions_on_publish,
+)
 
 
 @pytest.fixture
@@ -38,9 +46,8 @@ def mock_webmention_sender():
 
 class TestWebmentionIntegration:
     def test_send_webmentions_on_publish_success(self, mock_page_with_post, mock_webmention_sender):
-        """Test successful webmention sending when a post is published."""
-        # Call the signal handler
-        send_webmentions_on_publish(sender=Post, instance=mock_page_with_post, revision=None)
+        """Test successful webmention sending for a published post."""
+        _send_webmentions_for(mock_page_with_post.specific)
 
         # Get the post from the page
         post = mock_page_with_post.specific
@@ -86,8 +93,7 @@ class TestWebmentionIntegration:
         mock_instance = mock_webmention_sender.return_value
         mock_instance.send_webmentions.return_value = []
 
-        # Call the signal handler
-        send_webmentions_on_publish(sender=Post, instance=mock_page_with_post, revision=None)
+        _send_webmentions_for(post)
 
         # Verify the process completed without errors
         mock_instance.send_webmentions.assert_called_once()
@@ -103,8 +109,7 @@ class TestWebmentionIntegration:
             {"target": "https://external3.com", "success": True, "response": "Success"},
         ]
 
-        # Call the signal handler
-        send_webmentions_on_publish(sender=Post, instance=mock_page_with_post, revision=None)
+        _send_webmentions_for(mock_page_with_post.specific)
 
         # Verify logging
         mock_print.assert_called()
@@ -129,4 +134,232 @@ class TestWebmentionIntegration:
         with patch("homepage.core.webmention_integration.WebmentionSender", None):
             with patch("builtins.__import__", side_effect=ImportError("No module named 'indieweb'")):
                 # Should not raise an exception
-                send_webmentions_on_publish(sender=Post, instance=mock_page_with_post, revision=None)
+                _send_webmentions_for(mock_page_with_post.specific)
+
+
+# Publication through Wagtail, with real pages
+
+
+HOST = "webmention.test"
+LINKING_BODY = json.dumps(
+    [
+        {
+            "type": "overview",
+            "value": [{"type": "paragraph", "value": '<p>See <a href="https://external.test/article">this</a>.</p>'}],
+        }
+    ]
+)
+
+
+@pytest.fixture
+def blog(db):
+    root = Page.get_first_root_node()
+    if root is None:
+        Locale.objects.get_or_create(language_code="en")
+        root = Page.add_root(instance=Page(title="Root", slug="root"))
+    home = root.add_child(instance=Page(title="Home", slug="webmention-home"))
+    Site.objects.all().delete()
+    Site.objects.create(hostname=HOST, port=80, root_page=home, is_default_site=True)
+    return home.add_child(instance=Blog(title="Blog", slug="blog"))
+
+
+@pytest.fixture
+def outbound():
+    """Record rendering and sending; nothing reaches the network."""
+    calls = SimpleNamespace(rendered=[], sent=[], error=None)
+    render = Post.get_description
+
+    def get_description(self, *args, **kwargs):
+        calls.rendered.append(self.pk)
+        return render(self, *args, **kwargs)
+
+    def send_webmentions(self, source_url, html_content):
+        calls.sent.append((source_url, html_content))
+        if calls.error is not None:
+            raise calls.error
+        return []
+
+    with (
+        patch.object(Post, "get_description", get_description),
+        patch("indieweb.senders.WebmentionSender.send_webmentions", send_webmentions),
+        patch("homepage.core.webmention_integration.WebmentionSender", None),
+    ):
+        yield calls
+
+
+def draft_post(blog, slug="linking-post"):
+    return blog.add_child(instance=Post(title=slug, slug=slug, body=LINKING_BODY, live=False))
+
+
+def restrict(page):
+    return PageViewRestriction.objects.create(page=page, restriction_type=PageViewRestriction.LOGIN)
+
+
+def deliveries(callbacks):
+    """The scheduled webmention deliveries among the captured on-commit callbacks."""
+    return [callback for callback in callbacks if getattr(callback, "func", None) is _deliver_webmentions]
+
+
+class TestPublicVisibility:
+    def test_public_post_sends_once_after_commit(self, blog, outbound, django_capture_on_commit_callbacks):
+        post = draft_post(blog)
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            post.save_revision().publish()
+            # Nothing is rendered or sent inside the publication itself.
+            assert (outbound.rendered, outbound.sent) == ([], [])
+
+        assert len(deliveries(callbacks)) == 1
+        assert outbound.rendered == [post.pk]
+        ((source_url, html_content),) = outbound.sent
+        assert source_url == f"http://{HOST}/blogs/blog/linking-post/"
+        assert "https://external.test/article" in html_content
+
+    @pytest.mark.parametrize("restricted", ["post", "blog"])
+    def test_restricted_post_is_neither_rendered_nor_announced(
+        self, blog, outbound, django_capture_on_commit_callbacks, restricted
+    ):
+        post = draft_post(blog)
+        restrict(post if restricted == "post" else blog)
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            post.save_revision().publish()
+
+        assert Post.objects.get(pk=post.pk).live is True
+        assert deliveries(callbacks) == []
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
+    @pytest.mark.parametrize("restricted", ["post", "blog"])
+    def test_publishing_after_the_restriction_is_removed_sends_once(
+        self, blog, outbound, django_capture_on_commit_callbacks, restricted
+    ):
+        post = draft_post(blog)
+        restriction = restrict(post if restricted == "post" else blog)
+        with django_capture_on_commit_callbacks(execute=True):
+            post.save_revision().publish()
+        restriction.delete()
+
+        with django_capture_on_commit_callbacks(execute=True):
+            Post.objects.get(pk=post.pk).save_revision().publish()
+
+        assert outbound.rendered == [post.pk]
+        assert len(outbound.sent) == 1
+
+    def test_restriction_added_before_commit_stops_the_delivery(
+        self, blog, outbound, django_capture_on_commit_callbacks
+    ):
+        post = draft_post(blog)
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            post.save_revision().publish()
+            restrict(blog)
+
+        assert len(deliveries(callbacks)) == 1
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
+    def test_post_unpublished_before_commit_is_not_announced(self, blog, outbound, django_capture_on_commit_callbacks):
+        post = draft_post(blog)
+
+        with django_capture_on_commit_callbacks(execute=True):
+            post.save_revision().publish()
+            Post.objects.get(pk=post.pk).unpublish()
+
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
+    @pytest.mark.parametrize("change", ["unpublish", "republish"])
+    def test_page_changed_while_the_delivery_loads_it_is_not_announced(
+        self, blog, outbound, django_capture_on_commit_callbacks, change
+    ):
+        """The delivery reads the page twice (base row, specific row); the second read decides."""
+        post = draft_post(blog)
+        load_specific = Page.specific.func
+
+        def changed_before_specific_is_loaded(page):
+            if change == "unpublish":
+                Page.objects.filter(pk=page.pk).update(live=False)
+            else:
+                Page.objects.filter(pk=page.pk).update(live_revision=newer)
+            return load_specific(page)
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            post.save_revision().publish()
+        (deliver,) = deliveries(callbacks)
+        newer = Post.objects.get(pk=post.pk).save_revision()
+
+        with patch.object(Page, "specific", property(changed_before_specific_is_loaded)):
+            deliver()
+
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
+    def test_only_the_revision_that_is_live_at_commit_is_announced(
+        self, blog, outbound, django_capture_on_commit_callbacks
+    ):
+        post = draft_post(blog)
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            post.save_revision().publish()
+            Post.objects.get(pk=post.pk).save_revision().publish()
+
+        assert len(deliveries(callbacks)) == 2
+        assert len(outbound.sent) == 1
+
+
+@pytest.mark.django_db(transaction=True)
+class TestCommitBoundary:
+    """These tests really commit and roll back; no test transaction wraps them."""
+
+    def test_rolled_back_publication_sends_nothing(self, blog, outbound):
+        post = draft_post(blog)
+
+        with pytest.raises(RuntimeError, match="abort"):
+            with transaction.atomic():
+                post.save_revision().publish()
+                assert Post.objects.get(pk=post.pk).live is True
+                raise RuntimeError("abort")
+
+        assert Post.objects.get(pk=post.pk).live is False
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
+    def test_committed_publication_sends_once(self, blog, outbound):
+        post = draft_post(blog)
+
+        with transaction.atomic():
+            with transaction.atomic():
+                post.save_revision().publish()
+            assert outbound.sent == []
+
+        assert Post.objects.get(pk=post.pk).live is True
+        assert outbound.rendered == [post.pk]
+        assert len(outbound.sent) == 1
+
+    def test_restricted_publication_sends_nothing_after_commit(self, blog, outbound):
+        post = draft_post(blog)
+        restrict(blog)
+
+        with transaction.atomic():
+            post.save_revision().publish()
+
+        assert Post.objects.get(pk=post.pk).live is True
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
+    def test_sender_failure_keeps_the_committed_publication(self, blog, outbound, caplog):
+        post = draft_post(blog)
+        outbound.error = RuntimeError("cannot reach https://external.test/article?token=SECRET-MARKER")
+
+        with transaction.atomic():
+            post.save_revision().publish()
+
+        assert len(outbound.sent) == 1
+        assert Post.objects.get(pk=post.pk).live is True
+        messages = [record.getMessage() for record in caplog.records if record.name.startswith("homepage")]
+        assert messages == [f"Webmention delivery failed for page {post.pk}: RuntimeError"]
+        assert "SECRET-MARKER" not in caplog.text
+
+    def test_publication_outside_a_transaction_survives_a_sender_failure(self, blog, outbound):
+        post = draft_post(blog)
+        outbound.error = RuntimeError("down")
+
+        post.save_revision().publish()
+
+        assert len(outbound.sent) == 1
+        assert Post.objects.get(pk=post.pk).live is True

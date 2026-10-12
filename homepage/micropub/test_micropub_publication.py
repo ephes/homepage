@@ -215,11 +215,14 @@ def assert_no_secret(text):
 
 
 def test_successful_publication_logs_no_submitted_values(
-    blogs, users, caplog, capsys, webmention_results  # noqa: F811
+    blogs, users, caplog, capsys, webmention_results, django_capture_on_commit_callbacks  # noqa: F811
 ):
     caplog.set_level(logging.DEBUG)
 
-    CastPostMicropubHandler().create_entry(secret_properties(), users["publisher"])
+    # Webmentions leave after the publishing transaction has committed.
+    with django_capture_on_commit_callbacks(execute=True):
+        CastPostMicropubHandler().create_entry(secret_properties(), users["publisher"])
+        assert webmention_results.call_count == 0
 
     post = Post.objects.get()
     assert SECRETS["content"] in body_html(post)  # the content itself is stored untouched

@@ -40,8 +40,8 @@ class TestWebmentionIntegration(TestCase):
                     mock_sender.send_webmentions.return_value = [{"target": "https://external.com", "success": True}]
                     MockSender.return_value = mock_sender
 
-                    # Call the handler directly
-                    webmention_integration.send_webmentions_on_publish(None, instance=mock_page)
+                    # Send for the published post directly
+                    webmention_integration._send_webmentions_for(mock_page.specific)
 
                     # Verify that get_description was called with correct parameters
                     mock_post.get_description.assert_called_once()
@@ -92,8 +92,8 @@ class TestWebmentionIntegration(TestCase):
 
                     # Capture print output
                     with patch("builtins.print") as mock_print:
-                        # Call the handler directly
-                        webmention_integration.send_webmentions_on_publish(None, instance=mock_page)
+                        # Send for the published post directly
+                        webmention_integration._send_webmentions_for(mock_page.specific)
 
                         # Verify logging output
                         mock_print.assert_any_call("Webmentions sent for page 17: 1 successful, 1 failed")

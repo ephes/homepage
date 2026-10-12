@@ -11,6 +11,8 @@ from homepage.core.weeknotes.converter import BodyConversion, convert_body
 
 # Report value for a page that changed between reading it and saving its conversion.
 CHANGED_SINCE_READ = "changed_since_read"
+# PostgreSQL's SQLSTATE for a row lock that NOWAIT could not get.
+LOCK_NOT_AVAILABLE = "55P03"
 
 
 class Command(BaseCommand):
@@ -83,7 +85,8 @@ class Command(BaseCommand):
         )
         if conflict_count:
             self.stderr.write(
-                f"{conflict_count} post(s) changed while they were being converted and were left untouched; "
+                f"{conflict_count} post(s) changed or were being saved while they were being converted "
+                "and were left untouched; "
                 "run the command again to convert them from their current content."
             )
         if warning_count and options["fail_on_warnings"]:
@@ -117,8 +120,9 @@ class Command(BaseCommand):
 
         ``source`` is the state the conversion was computed from (``_source_state``). The
         page is locked and read again here; the conversion is only written when that
-        current page is still in the source state. Otherwise nothing is created or
-        published and the row is reported as ``changed_since_read``.
+        current page is still in the source state. Otherwise, or when the page is being
+        saved by somebody else at this moment, nothing is created or published and the
+        row is reported as ``changed_since_read``.
         """
         if source is None:
             source = self._source_state(post)
@@ -146,22 +150,62 @@ class Command(BaseCommand):
 
     @contextmanager
     def _locked_current_post(self, post):
-        """Yield the current database state of ``post`` while holding its row lock.
+        """Yield the current database state of ``post`` while holding its row locks.
 
-        Saving a draft or publishing in the editor updates the page row. Holding the
-        lock until the block ends makes those wait, and reading the page again under
-        the lock sees every edit committed since the post list was loaded. Yields
-        ``None`` when the page has been deleted.
+        Saving a draft or publishing in the editor updates the page row and rows of
+        the page's revisions. Holding their locks until the block ends makes those
+        wait, and reading the page again under the locks sees every edit committed
+        since the post list was loaded. Yields ``None`` when the page has been
+        deleted or is being saved by somebody else right now.
         """
         from cast.models import Post
         from django.db import transaction
-        from wagtail.models import Page
 
         with transaction.atomic():
-            if Page.objects.select_for_update().filter(pk=post.pk).first() is None:
+            if not self._lock_rows(post):
                 yield None
                 return
             yield Post.objects.filter(pk=post.pk).first()
+
+    @staticmethod
+    def _lock_rows(post) -> bool:
+        """Lock the page's revisions and its page row without waiting; ``False`` when busy.
+
+        Wagtail takes these locks in no single order: overwriting a draft updates the
+        revision and then the page, saving and publishing in one request updates the
+        page and then every revision. Waiting for either while holding the other can
+        therefore deadlock with an editor, and PostgreSQL would resolve that by
+        aborting one side, possibly the editor's save. So nothing is waited for: all
+        rows are requested with NOWAIT, and a row that somebody else holds means the
+        page is being saved right now. Once every row is held, this transaction only
+        touches these rows and rows it inserts itself, so it cannot block on an
+        editor later.
+
+        ``no_key`` asks for the lock an UPDATE takes, so only real changes to the
+        rows count as busy, not a foreign key check that merely references them.
+        """
+        from django.db import OperationalError, transaction
+        from wagtail.models import Page
+
+        try:
+            # A refused lock fails the statement; the savepoint keeps the surrounding
+            # transaction usable.
+            with transaction.atomic():
+                list(
+                    post.revisions.select_for_update(nowait=True, no_key=True)
+                    .order_by("pk")
+                    .values_list("pk", flat=True)
+                )
+                list(
+                    Page.objects.select_for_update(nowait=True, no_key=True)
+                    .filter(pk=post.pk)
+                    .values_list("pk", flat=True)
+                )
+        except OperationalError as exc:
+            if getattr(exc.__cause__, "sqlstate", None) != LOCK_NOT_AVAILABLE:
+                raise
+            return False
+        return True
 
     @contextmanager
     def _suppress_webmentions(self):

@@ -269,7 +269,7 @@ def test_failed_recovery_cleanup_still_reports_a_finished_restore(fake_postgres,
     commands._restore_dump_into_local_database(write_dump(tmp_path / "dump.sql.gz"), "homepage", True)
 
     assert fake.databases == {"homepage", "homepage_restore_previous"}
-    assert "dropdb homepage_restore_previous" in capsys.readouterr().out.replace("\n", " ")
+    assert "dropdb homepage_restore_previous" in " ".join(capsys.readouterr().out.split())
 
 
 # --- real PostgreSQL -----------------------------------------------------------------

@@ -138,17 +138,29 @@ these rows with ``skipped: "has_unpublished_changes"``.
 
 The command also never writes over a page that changed while it was running.
 The conversion of a post is computed from the page as it was read. Before the
-revision is saved the command locks the page row, reads the page again and
-compares its latest revision, its live revision, its live state and its body
-with what the conversion was computed from. If an editor saved a draft,
-published, unpublished or deleted the page in between, nothing is created or
-published for that post: the report records ``skipped:
-"changed_since_read"``, the summary counts it as skipped and a note on stderr
-names the number of such posts. The revision that is saved is built from the
-page read under the lock, so the editor's other fields are never replaced by
-older values. Running the command again is safe: it starts from the current
-content and converts the post, or skips it as ``has_unpublished_changes`` when
-the editor left a draft.
+revision is saved the command locks the page row and the rows of the page's
+revisions, reads the page again and compares its latest revision, its live
+revision, its live state and its body with what the conversion was computed
+from. If an editor saved a draft, published, unpublished or deleted the page in
+between, nothing is created or published for that post: the report records
+``skipped: "changed_since_read"``, the summary counts it as skipped and a note
+on stderr names the number of such posts. The revision that is saved is built
+from the page read under the lock, so the editor's other fields are never
+replaced by older values. Running the command again is safe: it starts from the
+current content and converts the post, or skips it as
+``has_unpublished_changes`` when the editor left a draft.
+
+The command never waits for these locks. Wagtail locks the page row and its
+revision rows in different orders depending on the action (overwriting a draft:
+revision, then page; save and publish: page, then revisions), so a command that
+waited for one while holding the other could deadlock with an editor and
+PostgreSQL could abort the editor's save. The locks are requested with
+``NOWAIT`` instead: a page that somebody is saving at that moment is reported
+as ``changed_since_read`` too, and nothing is written for it. An editor save
+that starts while the command holds the locks waits for the short moment in
+which the revision is written and then completes. A new revision that another
+database transaction has inserted but not committed yet cannot be seen; that
+save completes afterwards and remains the latest revision.
 
 Conversion limits
 ~~~~~~~~~~~~~~~~~

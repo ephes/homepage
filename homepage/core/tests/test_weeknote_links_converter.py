@@ -3,9 +3,10 @@ from __future__ import annotations
 import io
 import json
 import re
+import threading
 from contextlib import contextmanager
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from bs4 import BeautifulSoup
@@ -748,7 +749,7 @@ def test_convert_weeknote_links_command_keeps_editor_revision_saved_during_conve
     (entry,) = json.loads(report_path.read_text())
     assert (entry["revision_id"], entry["published"], entry["skipped"]) == (None, False, "changed_since_read")
     assert "converted 0 post(s), published 0, skipped 1" in stdout.getvalue()
-    assert "1 post(s) changed while they were being converted" in stderr.getvalue()
+    assert "1 post(s) changed or were being saved while they were being converted" in stderr.getvalue()
 
 
 @pytest.mark.django_db
@@ -815,3 +816,102 @@ def test_convert_weeknote_links_command_converts_and_publishes_unchanged_page():
     assert [block_type for block_type, _value in _overview_blocks(stored)] == ["weeknote_links"]
     assert "converted 1 post(s), published 1, skipped 0" in stdout.getvalue()
     assert stderr.getvalue() == ""
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("flags", [("--write",), ("--write", "--publish", "--suppress-webmentions")])
+def test_convert_weeknote_links_command_does_not_block_or_roll_back_an_editor_overwrite(tmp_path, flags):
+    """Two real transactions: the command must not wait for the editor's revision lock.
+
+    The editor overwrites the latest draft revision (an autosave): it writes the
+    revision row first and the page row second. While it sits between the two,
+    the command runs.
+    """
+    from cast.models import Post
+    from django.db import connection, transaction
+
+    post = _weeknote_post(slug="weeknotes-2026-11-16", overview_html=LEGACY_ARTICLES)
+    post.save_revision().publish()
+    latest_revision_id = Post.objects.get(pk=post.pk).latest_revision_id
+    revision_locked, release, errors = threading.Event(), threading.Event(), []
+    save_page = Post.save
+
+    def pause_after_the_revision_is_written(self, *args, **kwargs):
+        if threading.current_thread() is editor:
+            revision_locked.set()
+            release.wait(timeout=5)
+        return save_page(self, *args, **kwargs)
+
+    def editor_overwrites_latest_revision():
+        try:
+            with patch.object(Post, "save", pause_after_the_revision_is_written):
+                with transaction.atomic():
+                    stored = Post.objects.get(pk=post.pk)
+                    stored.title = "Editor autosave"
+                    stored.save_revision(overwrite_revision=stored.latest_revision, clean=False)
+        except Exception as exc:  # noqa: BLE001 - reported to the test
+            errors.append(exc)
+        finally:
+            revision_locked.set()
+            connection.close()
+
+    editor = threading.Thread(target=editor_overwrites_latest_revision)
+    report_path = tmp_path / "report.json"
+    editor.start()
+    try:
+        assert revision_locked.wait(timeout=10)
+        assert errors == []
+
+        call_command(
+            "convert_weeknote_links", *flags, "--report", str(report_path), stdout=io.StringIO(), stderr=io.StringIO()
+        )
+    finally:
+        release.set()
+        editor.join(timeout=20)
+
+    assert not editor.is_alive()
+    # The editor's save went through: no deadlock victim, no lost edit.
+    assert errors == []
+    stored = Post.objects.get(pk=post.pk)
+    assert stored.revisions.count() == 1
+    assert stored.latest_revision_id == latest_revision_id
+    assert stored.get_latest_revision_as_object().title == "Editor autosave"
+    # The command wrote nothing and published nothing.
+    assert _overview_blocks(stored) == [("paragraph", LEGACY_ARTICLES)]
+    (entry,) = json.loads(report_path.read_text())
+    assert (entry["revision_id"], entry["published"], entry["skipped"]) == (None, False, "changed_since_read")
+
+
+@pytest.mark.django_db(transaction=True)
+def test_editor_save_waits_for_the_weeknote_conversion_and_then_completes():
+    """The other direction: the command holds the locks, an editor save arrives meanwhile."""
+    from cast.models import Post
+    from django.db import connection
+
+    post = _weeknote_post(slug="weeknotes-2026-11-23", overview_html=LEGACY_ARTICLES)
+    errors, started = [], threading.Event()
+
+    def editor_saves_draft():
+        try:
+            started.set()
+            draft = Post.objects.get(pk=post.pk)
+            draft.title = "Saved after the conversion"
+            draft.save_revision(clean=False)
+        except Exception as exc:  # noqa: BLE001 - reported to the test
+            errors.append(exc)
+        finally:
+            connection.close()
+
+    editor = threading.Thread(target=editor_saves_draft)
+    with Command()._locked_current_post(post) as current:
+        assert current is not None
+        editor.start()
+        assert started.wait(timeout=10)
+        editor.join(timeout=1)
+        # The editor's page update is waiting for the lock held here.
+        assert editor.is_alive()
+    editor.join(timeout=20)
+
+    assert not editor.is_alive()
+    assert errors == []
+    assert Post.objects.get(pk=post.pk).get_latest_revision_as_object().title == "Saved after the conversion"

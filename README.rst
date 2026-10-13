@@ -16,6 +16,20 @@ Running Tests
 
     $ pytest
 
+Developer quality commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Run ``uv run python commands.py test``, ``mypy``, or ``coverage`` (Mypy must be
+installed separately). These commands exit zero on success, preserve nonzero
+tool exit statuses (signals become 128 + signal number), and exit 1 with a diagnostic if a tool cannot start.
+Coverage generates a report only after its tests pass, and opens it on macOS/WSL
+only after report generation succeeds. Report failures and macOS opener failures
+also fail the command. WSL Explorer return codes are best-effort because Explorer
+can return nonzero after successfully opening; failure to start it still exits 1.
+``just test`` and ``just coverage`` use these same commands. The committed coverage
+configuration requires the separately installed ``django-coverage-plugin``;
+without it, coverage fails before running tests (see ``docs/tests.rst``).
+
 Lint
 ^^^^
 

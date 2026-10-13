@@ -27,8 +27,10 @@ only after report generation succeeds. Report failures and macOS opener failures
 also fail the command. WSL Explorer return codes are best-effort because Explorer
 can return nonzero after successfully opening; failure to start it still exits 1.
 ``just test`` and ``just coverage`` use these same commands. The committed coverage
-configuration requires the separately installed ``django-coverage-plugin``;
-without it, coverage fails before running tests (see ``docs/tests.rst``).
+configuration uses ``django-coverage-plugin``, included in the locked development
+dependencies. ``uv sync --locked`` installs it (see ``docs/tests.rst``).
+Template coverage remains unavailable with the current test settings; coverage
+can warn and continue with Python coverage only (see ``docs/tests.rst``).
 
 Lint
 ^^^^

@@ -36,9 +36,9 @@ Explorer may return nonzero after opening successfully; failure to start Explore
 still exits 1.
 
 The committed ``.coveragerc`` takes precedence over the coverage configuration in
-``pyproject.toml`` and requires ``django-coverage-plugin``, which is not included
-in the locked development dependencies. Install that plugin separately to use
-this configuration. Without it, ``coverage`` fails with exit 1 before tests run.
+``pyproject.toml`` and requires ``django-coverage-plugin``, which is included
+in the locked development dependencies. ``uv sync --locked`` installs the plugin;
+no separate installation is needed.
 
 Using Justfile
 ~~~~~~~~~~~~~~
@@ -95,9 +95,17 @@ The effective configuration is the committed ``.coveragerc``:
         django_coverage_plugin
 
 This records executed files under ``homepage`` while excluding migrations and
-tests, and uses the separately installed Django coverage plugin. The coverage
+tests, and loads the Django coverage plugin from the development dependencies. The coverage
 settings in ``pyproject.toml`` are not used by the default command while
 ``.coveragerc`` is present.
+
+Installing the plugin fixes coverage startup, but does not enable template
+coverage with the current test settings. Python 3.14's default coverage core
+(``sysmon``) does not support plugin file tracers and emits a warning. With
+``COVERAGE_CORE=ctrace``, the plugin requires template debugging, which
+``config.settings.test`` disables. Coverage can warn, disable the plugin, and
+continue successfully with Python coverage only; a successful command does not
+guarantee template coverage.
 
 Test Organization
 -----------------

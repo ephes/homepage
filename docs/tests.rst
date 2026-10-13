@@ -23,6 +23,23 @@ The coverage command will:
 * Generate an HTML coverage report
 * Automatically open the report in your browser (macOS/WSL)
 
+``test``, ``mypy`` and ``coverage`` exit zero on success and preserve nonzero
+subprocess exit statuses (signal termination becomes 128 + signal number). If a tool cannot start (for example, an executable is
+missing), the command prints a diagnostic and exits 1. Install Mypy separately
+before using ``uv run python commands.py mypy``.
+
+Coverage stops at the first failed step: failed tests prevent report generation
+and opening, and a failed HTML report prevents opening. Stopping before opening
+after either failure avoids showing a stale report from a previous run.
+A macOS opener failure also makes the command fail. WSL Explorer return codes are best-effort because
+Explorer may return nonzero after opening successfully; failure to start Explorer
+still exits 1.
+
+The committed ``.coveragerc`` takes precedence over the coverage configuration in
+``pyproject.toml`` and requires ``django-coverage-plugin``, which is not included
+in the locked development dependencies. Install that plugin separately to use
+this configuration. Without it, ``coverage`` fails with exit 1 before tests run.
+
 Using Justfile
 ~~~~~~~~~~~~~~
 
@@ -67,21 +84,20 @@ guards this: it fails if any configured storage backend uses S3.
 Coverage Configuration
 ----------------------
 
-Coverage is configured in ``pyproject.toml``:
+The effective configuration is the committed ``.coveragerc``:
 
-.. code-block:: toml
+.. code-block:: ini
 
-    [tool.coverage.run]
-    branch = true
-    source = ["apps"]
-    omit = ["apps/*/tests/*", "apps/*/migrations/*"]
-    command_line = "-m pytest"
+    [run]
+    include = homepage/*
+    omit = *migrations*, *tests*
+    plugins =
+        django_coverage_plugin
 
-This configuration:
-
-* Tracks branch coverage for more detailed analysis
-* Focuses on the ``apps`` directory
-* Excludes test files and migrations from coverage
+This records executed files under ``homepage`` while excluding migrations and
+tests, and uses the separately installed Django coverage plugin. The coverage
+settings in ``pyproject.toml`` are not used by the default command while
+``.coveragerc`` is present.
 
 Test Organization
 -----------------

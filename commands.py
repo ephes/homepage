@@ -125,28 +125,44 @@ def env_with_pythonpath():
     return env
 
 
+def _run_quality_command(args: list[str], *, env: dict[str, str] | None = None) -> None:
+    """Run a quality tool and stop the CLI on failure."""
+    try:
+        returncode = subprocess.call(args, **({"env": env} if env is not None else {}))
+    except OSError as error:
+        typer.echo(f"{args[0]} could not be started: {error}", err=True)
+        raise typer.Exit(1) from error
+    if returncode:
+        raise typer.Exit(returncode if returncode > 0 else 128 - returncode)
+
+
 @cli.command()
 def mypy():
     """Run Mypy (configured in pyproject.toml)"""
-    subprocess.call(["mypy", "."])
+    _run_quality_command(["mypy", "."])
 
 
 @cli.command()
 def test():
-    subprocess.call(["python", "-m", "pytest"], env=env_with_pythonpath())
+    _run_quality_command(["python", "-m", "pytest"], env=env_with_pythonpath())
 
 
 @cli.command()
 def coverage():
     """
-    Run and show coverage.
+    Run and show coverage, stopping at the first failed step.
     """
-    subprocess.call(["coverage", "run", "-m", "pytest"], env=env_with_pythonpath())
-    subprocess.call(["coverage", "html"])
+    _run_quality_command(["coverage", "run", "-m", "pytest"], env=env_with_pythonpath())
+    _run_quality_command(["coverage", "html"])
     if platform.system() == "Darwin":
-        subprocess.call(["open", "htmlcov/index.html"])
+        _run_quality_command(["open", "htmlcov/index.html"])
     elif platform.system() == "Linux" and "Microsoft" in platform.release():  # on WSL
-        subprocess.call(["explorer.exe", r"htmlcov\index.html"])
+        # Explorer can return 1 after opening successfully (microsoft/WSL#6565).
+        try:
+            subprocess.call(["explorer.exe", r"htmlcov\index.html"])
+        except OSError as error:
+            typer.echo(f"explorer.exe could not be started: {error}", err=True)
+            raise typer.Exit(1) from error
 
 
 @cli.command()

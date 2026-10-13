@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 import nh3
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from django.utils.html import escape
 
 URL_SCHEMES = {"http", "https", "mailto"}
@@ -85,7 +85,13 @@ class ContentConverter:
 
         # Process main content
         if content:
-            blocks.extend(self._process_content(content))
+            # Keep the explicit Micropub discriminator from the original properties.
+            submitted = properties.get("content", [content])
+            value = submitted[0] if submitted else content
+            content_format = None
+            if isinstance(value, dict):
+                content_format = "html" if "html" in value else "text"
+            blocks.extend(self._process_content(content, content_format))
 
         # Handle location if present
         location = properties.get("location", [])
@@ -103,12 +109,12 @@ class ContentConverter:
             for block_type, value in blocks
         ]
 
-    def _process_content(self, content: str) -> list[tuple[str, Any]]:
+    def _process_content(self, content: str, content_format: str | None = None) -> list[tuple[str, Any]]:
         """Process content and convert to appropriate blocks."""
         blocks = []
 
         # Detect if content is HTML
-        if self._is_html(content):
+        if content_format == "html" or (content_format is None and self._is_html(content)):
             blocks.extend(self._convert_html_to_blocks(content))
         else:
             # Handle plain text with potential markdown-style code blocks
@@ -118,7 +124,7 @@ class ContentConverter:
 
     def _is_html(self, content: str) -> bool:
         """Check if content appears to be HTML."""
-        html_indicators = ["<p>", "<br", "<div", "<h", "<ul", "<ol", "<blockquote"]
+        html_indicators = ["<p>", "<br", "<div", "<h", "<ul", "<ol", "<blockquote", "<pre"]
         return any(indicator in content.lower() for indicator in html_indicators)
 
     def _convert_html_to_blocks(self, html: str) -> list[tuple[str, Any]]:
@@ -128,15 +134,27 @@ class ContentConverter:
         clean_html = self.sanitize_html(html, self.ALLOWED_TAGS, self.ALLOWED_ATTRIBUTES)
         soup = BeautifulSoup(clean_html, "html.parser")
 
-        # Process top-level elements
+        # Inline siblings belong to one paragraph; structural blocks flush it.
+        inline_parts: list[str] = []
+
+        def flush_inline():
+            html = "".join(inline_parts)
+            if html.strip():
+                blocks.append(("paragraph", f"<p>{html}</p>"))
+            inline_parts.clear()
+
         for element in soup.children:
-            if hasattr(element, "name"):
+            if isinstance(element, Tag):
                 block = self._element_to_block(element)
                 if block:
+                    flush_inline()
                     blocks.append(block)
-            elif element.strip():
-                # Plain text node
-                blocks.append(("paragraph", f"<p>{element.strip()}</p>"))
+                else:
+                    inline_parts.append(str(element))
+            else:
+                # BeautifulSoup has decoded entities: escape text before serializing.
+                inline_parts.append(str(escape(str(element))))
+        flush_inline()
 
         return blocks
 
@@ -161,7 +179,7 @@ class ContentConverter:
         elif element.name in ["blockquote", "h2", "h3", "h4"]:
             # Convert block-level rich text elements preserving their markup
             return ("paragraph", str(element))
-        elif element.name in ["p", "ul", "ol"]:
+        elif element.name in ["p", "ul", "ol", "li", "hr"]:
             # Rich text blocks
             return ("paragraph", str(element))
 
@@ -211,7 +229,7 @@ class ContentConverter:
 
                         # Regular paragraph
                         # Convert line breaks to <br>
-                        formatted_para = para.strip().replace("\n", "<br>")
+                        formatted_para = escape(para.strip()).replace("\n", "<br>")
                         blocks.append(("paragraph", f"<p>{formatted_para}</p>"))
 
         return blocks

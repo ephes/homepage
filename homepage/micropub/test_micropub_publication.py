@@ -356,3 +356,53 @@ def test_form_logs_no_submitted_values(client, blogs, users, caplog, capsys):  #
     assert "Micropub create failed: RuntimeError" in caplog.text
     assert "Micropub form: error creating post (MicropubInternalError)" in caplog.text
     assert f"Micropub form: post created by user {users['publisher'].pk}" in caplog.text
+
+
+@pytest.mark.parametrize("property_name", ["name", "category"])
+@pytest.mark.parametrize("invalid", ["overlong", "nul", "surrogate"])
+def test_invalid_storage_text_returns_400_without_writes(client, blogs, users, property_name, invalid):  # noqa: F811
+    from .validation import TAG_NAME_FIELD, TITLE_FIELD
+
+    field = TITLE_FIELD if property_name == "name" else TAG_NAME_FIELD
+    value = {"overlong": "x" * (field.max_length + 1), "nul": "hello\x00world", "surrogate": "hello\ud800"}[invalid]
+    tag_model = Post._meta.get_field("tags").remote_field.model
+    counts = (Revision.objects.count(), PageLogEntry.objects.count(), tag_model.objects.count())
+    response = micropub_json(
+        client,
+        users["publisher"],
+        {"mp-channel": ["alpha"], "name": ["Title"], "content": ["Body"], property_name: [value]},
+    )
+    assert response.status_code == 400
+    assert not Post.objects.exists()
+    assert (Revision.objects.count(), PageLogEntry.objects.count(), tag_model.objects.count()) == counts
+
+
+def test_boundary_title_and_tag_publish(client, blogs, users):  # noqa: F811
+    from .validation import TAG_NAME_FIELD, TITLE_FIELD
+
+    title = "ä" * TITLE_FIELD.max_length
+    category = "猫" * TAG_NAME_FIELD.max_length
+    response = micropub_json(
+        client,
+        users["publisher"],
+        {"mp-channel": ["alpha"], "name": [title], "content": ["Body"], "category": [category]},
+    )
+    assert response.status_code == 201
+    post = Post.objects.get()
+    assert post.live and post.title == title
+    assert list(post.tags.names()) == [category]
+
+
+@pytest.mark.parametrize("kind", ["text", "html"])
+def test_explicit_content_format_survives_publication(client, blogs, users, kind):  # noqa: F811
+    response = micropub_json(
+        client,
+        users["publisher"],
+        {"mp-channel": ["alpha"], "name": ["Title"], "content": [{kind: "<p>literal &amp; text</p>"}]},
+    )
+    assert response.status_code == 201
+    html = body_html(Post.objects.get())
+    if kind == "text":
+        assert "&lt;p&gt;literal &amp;amp; text&lt;/p&gt;" in html
+    else:
+        assert "<p>literal &amp; text</p>" in html

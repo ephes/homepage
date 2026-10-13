@@ -38,6 +38,21 @@ Publication
    nothing is created, no webmention is sent and the endpoint answers ``400
    invalid_request`` (or ``500`` for an unexpected error).
 
+Content
+   ``content: [{"html": ...}]`` is sanitized HTML and ``content: [{"text":
+   ...}]`` is literal text. A bare string (form-encoded request or the local
+   form) counts as HTML only if it contains ``<p>``, ``<br``, ``<div``, ``<h``,
+   ``<ul``, ``<ol``, ``<blockquote`` or ``<pre``; otherwise it is plain text
+   and angle brackets and ampersands are shown literally, including inline
+   tags such as ``<a>`` or ``<em>``. In HTML, text and inline tags outside a
+   block element are kept in order as their own paragraphs instead of being
+   dropped. A title longer than 255 characters, a category longer than 100
+   characters, or either containing NUL or an unpaired surrogate is rejected
+   with ``400 invalid_request`` (a field error in the form) before anything is
+   written; nothing is truncated. This applies to posts created from now on;
+   stored posts are not converted again. Details are in
+   ``homepage/micropub/README.md``.
+
 Logging
    The endpoint is authenticated and receives private text, so property
    **values** never reach the logs: no content, title, slug, category, photo URL

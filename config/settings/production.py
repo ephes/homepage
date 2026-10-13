@@ -158,6 +158,12 @@ CACHE_MIDDLEWARE_ALIAS = "default"
 CACHE_MIDDLEWARE_SECONDS = 600
 CACHE_MIDDLEWARE_KEY_PREFIX = "homepage"
 
+# django-indieweb rate-limit client keys. Traefik is the only reverse proxy and
+# appends the client address, so the last X-Forwarded-For entry is the client;
+# earlier entries are client-controlled. Same knob as REST_FRAMEWORK["NUM_PROXIES"].
+# Local and test settings keep the library default 0 (REMOTE_ADDR).
+INDIEWEB_RATE_LIMIT_TRUSTED_PROXY_HOPS = env.int("DJANGO_NUM_PROXIES", default=1)
+
 # Sentry Configuration
 SENTRY_DSN = env("DJANGO_SENTRY_DSN")
 # Staging runs this same settings module. Without an explicit environment the

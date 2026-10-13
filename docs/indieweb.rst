@@ -176,17 +176,22 @@ Rate limit
    ``X-Forwarded-For`` entry appended by Traefik
    (``INDIEWEB_RATE_LIMIT_TRUSTED_PROXY_HOPS``). The counters live in the
    ``default`` cache. In production that is the file cache in
-   ``DJANGO_CACHE_LOCATION``, which all gunicorn workers share, with three
-   consequences:
+   ``DJANGO_CACHE_LOCATION``, which all gunicorn workers share.
 
-   * The configured window is 300 s, but the file cache restarts a counter's
-     lifetime at the cache ``TIMEOUT`` (600 s) on every counted request. A
-     client is therefore limited to 60 requests until it has sent nothing for
-     600 s, not to 60 per 300 s, and ``Retry-After`` can be too short.
-   * The file cache does not count atomically, so simultaneous requests of one
-     client can be counted as one.
+   The window is fixed: it starts with a client's first request and ends 300 s
+   later, whatever the cache ``TIMEOUT`` (600 s) is. Further requests,
+   including rejected ones, do not move its end, so a client that keeps
+   sending is admitted again once the 300 s are over. ``Retry-After`` is the
+   time left to that end, rounded up to whole seconds and at least 1. Two
+   limits of the file cache remain:
+
+   * It does not count atomically, so simultaneous requests of one client can
+     be counted as one.
    * Page-cache entries share the cache. When it reaches ``MAX_ENTRIES``
      (10000) a random third is removed, which can reset a counter early.
+
+   If the cache cannot store a counter at all, the request is rejected with
+   ``429``.
 
    With ``DJANGO_NUM_PROXIES=0`` every request is counted under Traefik's
    address.

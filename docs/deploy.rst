@@ -61,6 +61,13 @@ django-cast ``develop`` from ``8205bc48`` to ``5ac84fbd`` (0.2.68 development),
 django-resume ``main`` from ``6f7ae123`` to ``195865ad``, cast-bootstrap5 ``main`` from ``d0ea6879`` to ``88134d96``.
 No other locked package changed. None of the updates has a migration.
 
+A follow-up on the same day moves django-indieweb ``develop`` from ``4022366f``
+to ``9726be2d``; no other locked package changed and there is no migration or
+settings change. The webmention rate limit now has a fixed window that no
+longer extends while a client keeps sending (see :doc:`indieweb`, *Receiving
+webmentions*). The counters use a new cache key namespace, so every client
+starts with a fresh allowance after the deploy.
+
 One setting is new: ``config.settings.production`` sets
 ``INDIEWEB_RATE_LIMIT_TRUSTED_PROXY_HOPS`` from ``DJANGO_NUM_PROXIES`` (default
 ``1``), so django-indieweb rate limits count the client address that Traefik

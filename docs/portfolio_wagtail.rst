@@ -86,6 +86,10 @@ identity on a site without a portfolio root.
 A portfolio host needs a Wagtail site with that hostname whose root page is the
 portfolio page, the hostname in ``DJANGO_ALLOWED_HOSTS`` and ``DJANGO_PORTFOLIO_HOSTS``,
 and a reverse-proxy rule that routes it to the homepage application.
+Use the hostname without a terminal DNS dot in ``DJANGO_ALLOWED_HOSTS`` and the
+Wagtail site. Portfolio comparisons ignore case and a single terminal DNS dot
+on both ``PORTFOLIO_HOSTS`` entries and request hostnames, including requests
+with a port. Django's ``ALLOWED_HOSTS`` validation still applies.
 
 Navigation and home links use Wagtail's request-aware ``pageurl`` tag, so they resolve
 against the site of the current request.

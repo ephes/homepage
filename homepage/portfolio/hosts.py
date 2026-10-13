@@ -13,7 +13,9 @@ PORTFOLIO_URLCONF = "config.urls_portfolio"
 
 
 def is_portfolio_host(hostname):
-    return bool(hostname) and hostname.lower() in {host.lower() for host in settings.PORTFOLIO_HOSTS}
+    return bool(hostname) and hostname.lower().removesuffix(".") in {
+        host.lower().removesuffix(".") for host in settings.PORTFOLIO_HOSTS
+    }
 
 
 def portfolio_page_path(root_url, page_path):

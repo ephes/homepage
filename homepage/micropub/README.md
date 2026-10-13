@@ -129,10 +129,19 @@ Text entities remain text, including escaped tag-looking literals.
 JSON `content: [{"text": "..."}]` explicitly selects plain text: angle brackets
 and ampersands are escaped before generated paragraph/line-break markup is
 added. `content: [{"html": "..."}]` explicitly selects sanitized HTML, including
-inline-only HTML. If both keys are present, `html` takes precedence. Bare strings
-(including the local form) retain legacy HTML detection; use the JSON `text`
-form for literal text containing HTML-looking tags. Plain text still supports
-fenced code and Markdown-style headings.
+inline-only HTML. If both keys are present, `html` takes precedence.
+
+Bare strings (form-encoded requests and the local form) are treated as HTML only
+when they contain a block-level marker: `<p>`, `<br`, `<div`, `<h`, `<ul`,
+`<ol`, `<blockquote` or `<pre`. Any other bare string is plain text and is
+stored literally, so `see <a href="...">this</a>` or `<em>word</em>` without
+such a marker shows the tags as text instead of a link or emphasis. Wrap the
+content in `<p>...</p>` (or send JSON `html`) for inline markup, and use the
+JSON `text` form for literal text that contains one of the markers. Plain text
+still supports fenced code and Markdown-style headings.
+
+Only posts created from now on are converted this way. Stored posts are not
+re-converted or migrated.
 
 Titles and each category name must fit the underlying model fields (currently
 255 characters for a title and 100 for a tag name). NUL and unpaired Unicode

@@ -61,3 +61,13 @@ def test_bare_preformatted_html_still_converts_to_code():
     assert ContentConverter().convert_content('<pre><code class="language-python">x &lt; y</code></pre>', {}) == [
         ("code", {"language": "python", "code": "x < y"})
     ]
+
+
+def test_bare_string_with_only_inline_tags_is_literal_text():
+    text = 'see <a href="https://example.com/">this</a> and <em>that</em>'
+    blocks = ContentConverter().convert_content(text, {"content": [text]})
+    soup = BeautifulSoup(blocks[0][1], "html.parser")
+    assert soup.get_text() == text
+    assert not soup.find(["a", "em"])
+    wrapped = f"<p>{text}</p>"
+    assert ContentConverter().convert_content(wrapped, {"content": [wrapped]}) == [("paragraph", wrapped)]

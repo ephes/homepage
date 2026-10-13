@@ -44,7 +44,7 @@ class MicropubPostForm(forms.Form):
             }
         ),
         label="Content",
-        help_text="You can use HTML tags or plain text",
+        help_text="Plain text is stored literally. For HTML, start with a block tag such as &lt;p&gt;.",
     )
 
     category = forms.CharField(

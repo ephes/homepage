@@ -38,15 +38,16 @@ def test_seed_creates_the_portfolio_as_root_page_of_its_own_site(portfolio_site)
     assert not site.is_default_site
 
 
-def test_portfolio_pages_are_served_below_root_on_the_portfolio_host(client, portfolio_site):
+@pytest.mark.parametrize("request_host", [PORTFOLIO_HOST, f"{PORTFOLIO_HOST}.", f"{PORTFOLIO_HOST}.:8000"])
+def test_portfolio_pages_are_served_below_root_on_the_portfolio_host(client, portfolio_site, request_host):
     project = add_project(portfolio_site)
 
     assert portfolio_site.get_url_parts()[2] == "/"
     assert portfolio_site.full_url == f"https://{PORTFOLIO_HOST}/"
     assert project.full_url == f"https://{PORTFOLIO_HOST}/{project.slug}/"
-    assert client.get("/", HTTP_HOST=PORTFOLIO_HOST).status_code == 200
-    assert client.get(f"/{project.slug}/", HTTP_HOST=PORTFOLIO_HOST).status_code == 200
-    assert client.get("/blogs/", HTTP_HOST=PORTFOLIO_HOST).status_code == 404
+    assert client.get("/", HTTP_HOST=request_host).status_code == 200
+    assert client.get(f"/{project.slug}/", HTTP_HOST=request_host).status_code == 200
+    assert client.get("/blogs/", HTTP_HOST=request_host).status_code == 404
 
 
 def test_legal_and_error_pages_work_on_the_portfolio_host(client, portfolio_site):

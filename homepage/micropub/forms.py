@@ -7,6 +7,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django import forms
 
+from .validation import TITLE_FIELD, validate_category, validate_title
+
 
 class MicropubPostForm(forms.Form):
     """Form for creating micropub posts locally."""
@@ -28,6 +30,8 @@ class MicropubPostForm(forms.Form):
     name = forms.CharField(
         required=False,
         label="Title",
+        max_length=TITLE_FIELD.max_length,
+        validators=[validate_title],
         help_text="Leave empty for a note",
         widget=forms.TextInput(attrs={"placeholder": "Post Title"}),
     )
@@ -88,7 +92,10 @@ class MicropubPostForm(forms.Form):
         """Convert comma-separated categories to list."""
         categories = self.cleaned_data.get("category", "")
         if categories:
-            return [cat.strip() for cat in categories.split(",") if cat.strip()]
+            values = [cat.strip() for cat in categories.split(",") if cat.strip()]
+            for value in values:
+                validate_category(value)
+            return values
         return []
 
     def to_micropub_properties(self):

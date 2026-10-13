@@ -24,6 +24,7 @@ from wagtail.log_actions import log as wagtail_log
 from homepage.core.page_lookup import find_page_for_url
 
 from .converters import ContentConverter
+from .validation import validate_category, validate_title
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -157,6 +158,10 @@ class CastPostMicropubHandler(MicropubContentHandler):
         try:
             # Extract basic properties
             title = self._get_title(properties)
+            try:
+                validate_title(title)
+            except ValidationError:
+                raise MicropubContentError("Title is not valid") from None
             content = self._get_content(properties)
             published = self._get_published_date(properties)
             categories = self._get_categories(properties)
@@ -190,8 +195,13 @@ class CastPostMicropubHandler(MicropubContentHandler):
         for category in properties.get("category", []):
             if not isinstance(category, str):
                 raise MicropubContentError("Categories must be given as text")
-            if category.strip():
-                categories.append(category)
+            if not category.strip():
+                continue
+            try:
+                validate_category(category)
+            except ValidationError:
+                raise MicropubContentError("Category is not valid") from None
+            categories.append(category)
         return categories
 
     def _create_post(

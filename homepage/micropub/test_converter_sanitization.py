@@ -11,6 +11,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
+from bs4 import BeautifulSoup
 
 from homepage.micropub import converters
 
@@ -36,12 +37,12 @@ def converter_without_bleach(monkeypatch):
 
 def assert_no_active_content(blocks):
     html = " ".join(str(value) for block_type, value in blocks if block_type == "paragraph")
-    lowered = html.lower()
-    assert "<script" not in lowered
-    assert "onerror" not in lowered
-    assert "onclick" not in lowered
-    assert "onmouseover" not in lowered
-    assert "javascript:" not in lowered
+    soup = BeautifulSoup(html, "html.parser")
+    assert not soup.find("script")
+    for tag in soup.find_all():
+        assert not any(name.startswith("on") for name in tag.attrs)
+        for name in ("href", "src"):
+            assert not tag.get(name, "").lower().startswith("javascript:")
 
 
 @pytest.mark.parametrize("name", PAYLOADS)

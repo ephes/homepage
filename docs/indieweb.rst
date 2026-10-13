@@ -127,6 +127,55 @@ undo the publication: it is logged as
 ``Webmention delivery failed for page <id>: <exception class>`` at ``WARNING``
 and there is no automatic retry. Publish the page again to resend.
 
+Receiving webmentions
+---------------------
+
+``POST /indieweb/webmention/`` does not fetch the source page. It validates the
+request, stores the webmention as ``pending``, queues
+``homepage.core.webmention_tasks.process_webmention`` and answers ``202
+Accepted`` with a ``Location`` header for the status page
+(``INDIEWEB_WEBMENTION_ENQUEUE`` in ``config/settings/base.py``). The task
+fetches the source, checks that it links to the target and stores the result.
+
+Shared worker
+   The task runs on the ``cast_transcripts`` Django Tasks backend, so the
+   transcript worker (see :doc:`deploy`) processes it. There is one worker and
+   it runs one task at a time: a webmention waits behind a running transcript
+   job, which can take hours for a long episode, and stays ``pending`` until
+   then. Without a running worker nothing is processed; in local development
+   start one with ``uv run python manage.py db_worker --backend
+   cast_transcripts``.
+
+Failed tasks
+   A source that cannot be fetched or does not link to the target marks the
+   webmention ``failed``. If the task itself fails (for example the database is
+   unavailable, or no parse slot became free within the wait), the task result
+   is ``FAILED`` in the Django admin under ``Tasks Database Backend``,
+   the webmention stays ``pending`` and nothing retries it. A sender that
+   submits the same source and target again queues it again.
+
+Rate limit
+   ``INDIEWEB_RATE_LIMITS`` allows 60 requests per client address and HTTP
+   method to ``/indieweb/webmention/``; further requests get ``429`` with
+   ``Retry-After`` and queue nothing. In production the client address is the
+   ``X-Forwarded-For`` entry appended by Traefik
+   (``INDIEWEB_RATE_LIMIT_TRUSTED_PROXY_HOPS``). The counters live in the
+   ``default`` cache. In production that is the file cache in
+   ``DJANGO_CACHE_LOCATION``, which all gunicorn workers share, with three
+   consequences:
+
+   * The configured window is 300 s, but the file cache restarts a counter's
+     lifetime at the cache ``TIMEOUT`` (600 s) on every counted request. A
+     client is therefore limited to 60 requests until it has sent nothing for
+     600 s, not to 60 per 300 s, and ``Retry-After`` can be too short.
+   * The file cache does not count atomically, so simultaneous requests of one
+     client can be counted as one.
+   * Page-cache entries share the cache. When it reaches ``MAX_ENTRIES``
+     (10000) a random third is removed, which can reset a counter early.
+
+   With ``DJANGO_NUM_PROXIES=0`` every request is counted under Traefik's
+   address.
+
 Webmention targets
 ------------------
 

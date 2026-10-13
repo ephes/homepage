@@ -1,5 +1,7 @@
 """Quality commands report failures without running dependent coverage steps."""
 
+import subprocess
+import sys
 from unittest.mock import Mock, call
 
 import pytest
@@ -13,6 +15,27 @@ FIRST_COMMAND = {
     "test": ["python", "-m", "pytest"],
     "coverage": ["coverage", "run", "-m", "pytest"],
 }
+
+
+def test_coverage_configuration_runs_with_dev_dependencies(tmp_path):
+    """Coverage starts with the installed plugin and generates a Python report."""
+    env = commands.env_with_pythonpath()
+    env["COVERAGE_FILE"] = str(tmp_path / ".coverage")
+    env.pop("PYTEST_ADDOPTS", None)
+    for args in (
+        ["run", "-m", "pytest", f"{__file__}::test_quality_success", "-p", "no:sugar", "-p", "no:cacheprovider"],
+        ["html", "-d", str(tmp_path / "htmlcov")],
+    ):
+        result = subprocess.run(
+            [sys.executable, "-m", "coverage", *args],
+            cwd=commands.get_project_root(),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+    assert (tmp_path / "htmlcov" / "index.html").is_file()
 
 
 @pytest.fixture

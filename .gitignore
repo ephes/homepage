@@ -328,5 +328,8 @@ backups/
 
 # vscode
 .vscode
+# django-resume JSON Resume theme cache (npm packages)
+.django-resume-jsonresume-themes/
+
 # Added by specsync
 specs

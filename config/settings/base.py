@@ -551,3 +551,9 @@ INDIEWEB_URL_RESOLVER = "homepage.webmention_config.CastURLResolver"
 INDIEWEB_SPAM_CHECKER = "indieweb.interfaces.NoOpSpamChecker"  # Or implement your own spam checker
 # Optional: Comment adapter to convert webmentions to comments
 # INDIEWEB_COMMENT_ADAPTER = "homepage.webmention_config.WebmentionToCommentAdapter"
+# Received Webmentions are stored and answered with 202; the source page is
+# fetched and parsed by the cast_transcripts worker (docs/indieweb.rst).
+INDIEWEB_WEBMENTION_ENQUEUE = "homepage.core.webmention_tasks.enqueue_webmention"
+# Requests per client address and method to /indieweb/webmention/, counted in
+# the default cache.
+INDIEWEB_RATE_LIMITS = {"webmention": {"limit": 60, "window": 300}}

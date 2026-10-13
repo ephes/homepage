@@ -240,6 +240,13 @@ The worker service uses the ``cast_transcripts`` backend alias and the stable
 ``homepage-transcripts`` worker id. The worker requires the ``django_tasks_db``
 migrations to have been applied before it starts processing jobs.
 
+The same worker processes received webmentions, one task at a time; see
+*Receiving webmentions* in :doc:`indieweb`. Since 2026-10-13 the Webmention
+endpoint answers ``202`` and leaves the fetch to this worker, so a stopped
+worker means that received webmentions stay ``pending``. Deploy the web process
+and the worker from the same commit: a worker running older code fails the
+queued task because it cannot import it.
+
 Configuration
 -------------
 

@@ -557,3 +557,14 @@ INDIEWEB_WEBMENTION_ENQUEUE = "homepage.core.webmention_tasks.enqueue_webmention
 # Requests per client address and method to /indieweb/webmention/, counted in
 # the default cache.
 INDIEWEB_RATE_LIMITS = {"webmention": {"limit": 60, "window": 300}}
+
+# django-resume JSON Resume render themes
+# ------------------------------------------------------------------------------
+# Theme cache: the pinned catalog themes and the ``resumed`` renderer as npm
+# packages. The deploy fills it with ``manage.py
+# install_json_resume_catalog_themes`` and keeps it across rsync deploys
+# (docs/deploy.rst). Resume owners cannot make the server run ``npm install``:
+# DJANGO_RESUME_JSON_RESUME_ALLOW_CATALOG_THEME_INSTALL stays at its default.
+DJANGO_RESUME_JSON_RESUME_THEME_DIR = env(
+    "DJANGO_RESUME_JSON_RESUME_THEME_DIR", default=str(ROOT_DIR.path(".django-resume-jsonresume-themes"))
+)

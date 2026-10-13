@@ -53,6 +53,30 @@ for recovering from an interrupted restore.
 
     just postgres
 
+JSON Resume render themes
+-------------------------
+
+django-resume renders a resume with JSON Resume themes from a pinned catalog
+(``/resume/<slug>/json-resume/themes/``). A theme is an npm package that the
+``resumed`` renderer executes with Node.js; ``resumed`` 7 needs Node.js 24.
+
+* ``DJANGO_RESUME_JSON_RESUME_THEME_DIR`` is the theme cache. It defaults to
+  ``.django-resume-jsonresume-themes`` in the project root and can be set
+  through the environment variable of the same name.
+* Resume owners cannot make the server run ``npm install``
+  (``DJANGO_RESUME_JSON_RESUME_ALLOW_CATALOG_THEME_INSTALL`` stays ``False``).
+  **Preview render** and **Use render theme** work for themes in the cache and
+  answer 403 with "... is not installed on this site ..." otherwise.
+* Production: the ops-control playbook installs Node.js 24 (NodeSource, role
+  ``nodejs_install``) and runs
+  ``python manage.py install_json_resume_catalog_themes`` on every deploy,
+  where ``homepage_resume_themes_enabled`` is set for the host. The cache
+  directory is excluded from the rsync, so it survives deploys. Staging has
+  the switch off: themes answer 403 there.
+* Locally, with Node.js 24 and npm on ``PATH``::
+
+    uv run python manage.py install_json_resume_catalog_themes
+
 2026-10-13 library refresh
 --------------------------
 

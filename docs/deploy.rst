@@ -77,6 +77,38 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-14 library refresh
+--------------------------
+
+``uv.lock`` moves django-cast ``develop`` from ``5ac84fbd`` to ``704a60aa``,
+django-indieweb ``develop`` from ``9726be2d`` to ``dc6365af``, cast-bootstrap5
+``main`` from ``88134d96`` to ``9fba4b2d`` and django-resume ``main`` from
+``195865ad`` to ``7e2fb3e8``. No other locked package changed. None of the
+updates has a migration or needs a settings change.
+
+* django-cast writes internal page links in feed item descriptions as absolute
+  URLs, keeps polling a Voxhelm job through lost connections, and names a guest
+  without a voice reference from the leftover diarization label.
+  ``media_stale`` now skips files younger than 7 days
+  (``CAST_MEDIA_STALE_MIN_AGE_DAYS``) or of unknown age and re-checks age and
+  references before each deletion. Nothing here runs it on a schedule.
+* django-indieweb falls back to ``GET`` when outbound Webmention discovery gets
+  an error answer to ``HEAD``. Behaviour changes: a ``multipart/form-data``
+  Micropub POST needs the ``create`` (or ``post``) scope and gets ``403``
+  otherwise; rejected WebSub callback ``GET`` requests answer ``404``; an
+  unknown ``INDIEWEB_LOG_REDACTION`` value fails closed to ``redact`` and
+  passthrough logs keep 4 instead of 8 token characters. None of this affects
+  this site: the Micropub handler supports only creates (``update``,
+  ``delete`` and ``undelete`` are already rejected), the local Micropub form
+  calls the handler directly, no WebSub subscription is configured and
+  ``INDIEWEB_LOG_REDACTION`` is not set.
+* cast-bootstrap5 ships a compiled German catalog and sets ``<html lang>`` from
+  the active language. This site's ``cast/bootstrap5/base.html`` extends the
+  theme's template, so its pages now declare the active language (``en-us``
+  with the default ``LANGUAGE_CODE``) instead of ``en``.
+* django-resume keeps the stored avatar on admin saves of simple plugins and
+  treats an empty timeline or project item position as ``0``.
+
 2026-10-13 library refresh
 --------------------------
 

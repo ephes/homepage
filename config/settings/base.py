@@ -554,9 +554,12 @@ INDIEWEB_SPAM_CHECKER = "indieweb.interfaces.NoOpSpamChecker"  # Or implement yo
 # Received Webmentions are stored and answered with 202; the source page is
 # fetched and parsed by the cast_transcripts worker (docs/indieweb.rst).
 INDIEWEB_WEBMENTION_ENQUEUE = "homepage.core.webmention_tasks.enqueue_webmention"
-# Requests per client address and method to /indieweb/webmention/, counted in
-# the default cache.
-INDIEWEB_RATE_LIMITS = {"webmention": {"limit": 60, "window": 300}}
+# Requests per client address and method for receiving and status polling,
+# counted in the default cache.
+INDIEWEB_RATE_LIMITS = {
+    "webmention": {"limit": 60, "window": 300},
+    "webmention_status": {"limit": 120, "window": 300},
+}
 
 # django-resume JSON Resume render themes
 # ------------------------------------------------------------------------------

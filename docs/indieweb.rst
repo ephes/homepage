@@ -178,6 +178,11 @@ Rate limit
    ``default`` cache. In production that is the file cache in
    ``DJANGO_CACHE_LOCATION``, which all gunicorn workers share.
 
+   Status polling at ``/indieweb/webmention/<status_token>/`` uses the
+   ``webmention_status`` limit: 120 requests per client address and HTTP
+   method (GET and HEAD separately) per 300 s; excess requests get ``429``
+   with ``Retry-After``.
+
    The window is fixed: it starts with a client's first request and ends 300 s
    later, whatever the cache ``TIMEOUT`` (600 s) is. Further requests,
    including rejected ones, do not move its end, so a client that keeps

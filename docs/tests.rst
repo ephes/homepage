@@ -100,7 +100,7 @@ settings in ``pyproject.toml`` are not used by the default command while
 ``.coveragerc`` is present.
 
 Installing the plugin fixes coverage startup, but does not enable template
-coverage with the current test settings. Python 3.14's default coverage core
+coverage with the current test settings. The default coverage core on Python 3.14 and later
 (``sysmon``) does not support plugin file tracers and emits a warning. With
 ``COVERAGE_CORE=ctrace``, the plugin requires template debugging, which
 ``config.settings.test`` disables. Coverage can warn, disable the plugin, and

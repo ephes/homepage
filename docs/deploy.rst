@@ -77,6 +77,42 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-15 Python 3.15
+----------------------
+
+Production moves from Python 3.14.8 to 3.15.0. The interpreter is set in
+ops-control (``wagtail_python_version`` in ``playbooks/deploy-homepage.yml``);
+the ops-library ``wagtail_deploy`` role installs it with uv, rebuilds the
+virtualenv when the version differs and runs ``uv sync --frozen``. Expect a
+short outage while the virtualenv is rebuilt.
+
+* ``pyproject.toml`` drops the ``brotli`` extra of ``whitenoise``. ``brotli``
+  has no Python 3.15 wheel, so it would be compiled on the host. WhiteNoise
+  keeps writing ``.gz`` files and serves gzip; no setting needs brotli. The
+  ops-control playbook deletes the ``.br`` files left in ``staticfiles/``
+  before ``collectstatic``, because WhiteNoise serves an existing ``.br``
+  file without checking that it still matches the original.
+* ``uv.lock`` moves pydantic to 2.14.1, pydantic-core to 2.50.1 and
+  markupsafe to 3.0.4, which ship Python 3.15 wheels, and django-indieweb
+  ``develop`` from ``dc6365af`` to ``c1918dc6``. No migration.
+* django-indieweb answers ``413`` on the IndieAuth authorization and token
+  endpoints (``/indieweb/auth/``, ``/indieweb/token/``) for bodies above
+  64 KiB (``INDIEWEB_INDIEAUTH_MAX_BODY_BYTES``), for a malformed
+  ``Content-Length`` and for any ``Transfer-Encoding``. Normal IndieAuth
+  form posts are far below the limit. No middleware of this site reads the
+  request body before those views.
+* PyYAML (a development dependency through Jupyter) has no 3.15 wheel yet and
+  is built from source during ``uv sync`` on the host; the host has a C
+  compiler.
+* CI tests on Python 3.14 and 3.15 with uv 0.13.1 (3.15.0 needs uv 0.13.0 or
+  later); lint runs on 3.15.
+* Django 6.1 and Wagtail 8.0 do not list Python 3.15 as supported yet. The
+  699 tests pass on 3.14.8 and 3.15.0 against PostgreSQL 17.
+
+Rollback: set ``wagtail_python_version`` back to ``"3.14.8"`` in ops-control
+and deploy again; the role rebuilds the virtualenv on 3.14. The lock works on
+both versions.
+
 2026-10-14 library refresh
 --------------------------
 

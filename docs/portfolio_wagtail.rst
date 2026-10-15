@@ -32,7 +32,9 @@ Site settings (``Settings`` in the Wagtail admin, one set per site):
     block always renders the contact address from ``PortfolioSiteSettings``. The default
     sections contain placeholders instead of the postal address (``[Name]``,
     ``[Straße und Hausnummer]``, ``[PLZ Ort]``); enter the real address in the Wagtail
-    admin before the portfolio goes live.
+    admin before the portfolio goes live. Opening the settings form saves these defaults
+    for the site. Paragraph and address blocks accept stored ``<br>`` line breaks and
+    hand them to the editor as ``<br/>``.
 
 ``ErrorPageSettings``
     Copy of the 501 placeholder page.

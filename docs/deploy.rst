@@ -78,6 +78,20 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-15 portfolio legal settings form
+----------------------------------------
+
+The Wagtail form for the portfolio's legal pages (Einstellungen → Portfolio-Rechtsseiten)
+answered with a server error: its address block held ``<br>``, but Wagtail's rich-text
+editor only reads the self-closing ``<br/>``. Opening a settings form creates the settings
+row from the defaults, so a site whose editor tried the form already stores ``<br>``.
+
+* The default address placeholders use ``<br/>``.
+* Paragraph and address blocks of the legal copy hand stored ``<br>`` to the editor as
+  ``<br/>``, so existing rows open without a data change. Saving the form stores ``<br/>``.
+* Migration ``portfolio.0002_legal_copy_line_breaks`` only records the new block class;
+  it runs no SQL.
+
 2026-10-15 Python 3.15
 ----------------------
 

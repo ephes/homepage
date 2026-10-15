@@ -5,6 +5,8 @@ templates can therefore reproduce the approved prototype without allowing editor
 to create arbitrary markup that breaks its grid or heading hierarchy.
 """
 
+import re
+
 from django.core.exceptions import ValidationError
 from wagtail import blocks
 from wagtail.blocks import StructBlockValidationError
@@ -12,6 +14,17 @@ from wagtail.images.blocks import ImageBlock
 
 INLINE_RICH_TEXT_FEATURES = ["bold", "italic", "link", "no-break"]
 BODY_RICH_TEXT_FEATURES = ["bold", "italic", "ol", "ul", "link", "no-break"]
+
+
+class LineBreakRichTextBlock(blocks.RichTextBlock):
+    """Rich text that also opens stored HTML5 line breaks (``<br>``) in the editor.
+
+    Wagtail's Draftail converter only accepts the self-closing ``<br/>`` it writes itself;
+    an unclosed ``<br>`` makes the edit form fail with a server error.
+    """
+
+    def value_for_form(self, value):
+        return re.sub(r"<br\s*>", "<br/>", super().value_for_form(value))
 
 
 class LegalContactBlock(blocks.StructBlock):
@@ -44,11 +57,11 @@ class LegalContactBlock(blocks.StructBlock):
 class LegalCopyBlock(blocks.StreamBlock):
     """Semantic copy fragments used inside one legal section."""
 
-    paragraph = blocks.RichTextBlock(
+    paragraph = LineBreakRichTextBlock(
         features=INLINE_RICH_TEXT_FEATURES,
         label="Absatz",
     )
-    address = blocks.RichTextBlock(
+    address = LineBreakRichTextBlock(
         features=INLINE_RICH_TEXT_FEATURES,
         label="Adresse",
     )

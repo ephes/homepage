@@ -8,7 +8,7 @@ from django.urls import reverse
 from wagtail.models import GroupPagePermission
 from wagtail.rich_text.feature_registry import FeatureRegistry
 
-from homepage.portfolio.models import ProjectCategory, ProjectPage
+from homepage.portfolio.models import LegalPageSettings, ProjectCategory, ProjectPage
 from homepage.portfolio.wagtail_hooks import (
     PortfolioHomepageMenuItem,
     PortfolioProjectsMenuItem,
@@ -207,3 +207,31 @@ def test_project_editor_exposes_the_homepage_hero_choice():
     assert form.fields["homepage_is_hero"].required is False
     assert "Desktop-Raster" in form.fields["homepage_is_hero"].help_text
     assert "Mobil" in form.fields["homepage_is_hero"].help_text
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("setting", ["portfoliositesettings", "legalpagesettings", "errorpagesettings"])
+def test_unsaved_portfolio_settings_open_in_the_admin(client, setting):
+    """A site whose settings were never saved edits the code defaults; Draftail must load them."""
+    site = make_portfolio_tree().get_site()
+    client.force_login(make_admin_request().user)
+
+    response = client.get(reverse("wagtailsettings:edit", args=("portfolio", setting, site.pk)))
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_legal_settings_with_stored_html5_line_breaks_open_in_the_admin(client):
+    """Rows saved before the defaults used ``<br/>`` still hold ``<br>`` and must stay editable."""
+    site = make_portfolio_tree().get_site()
+    legal = LegalPageSettings.for_site(site)
+    legal.imprint_sections = [
+        ("section", {"heading": "Anbieterin", "copy": [("address", "<p>A<br>B<br >C</p>")]}),
+    ]
+    legal.save()
+    client.force_login(make_admin_request().user)
+
+    response = client.get(reverse("wagtailsettings:edit", args=("portfolio", "legalpagesettings", site.pk)))
+
+    assert response.status_code == 200

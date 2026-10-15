@@ -48,7 +48,7 @@ def default_imprint_sections():
                     ),
                     (
                         "address",
-                        "<p>[Name]<br>[Straße und Hausnummer]<br>[PLZ Ort]<br>Deutschland</p>",
+                        "<p>[Name]<br/>[Straße und Hausnummer]<br/>[PLZ Ort]<br/>Deutschland</p>",
                     ),
                 ],
             },
@@ -79,7 +79,7 @@ def default_privacy_sections():
                 "copy": [
                     (
                         "address",
-                        "<p>[Name]<br>[Straße und Hausnummer]<br>[PLZ Ort]<br>Deutschland</p>",
+                        "<p>[Name]<br/>[Straße und Hausnummer]<br/>[PLZ Ort]<br/>Deutschland</p>",
                     ),
                     (
                         "contact",

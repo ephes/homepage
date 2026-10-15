@@ -81,6 +81,35 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 - Follow Django best practices and conventions
 - Keep security in mind (never commit secrets)
 
+## Katharina's Portfolio, CV and Cover Letter: Where Content, Images and Code Live
+Scope: this applies **only** to Katharina's design portfolio (`homepage.portfolio`) and to her
+CV and cover letter built with the django-resume `editorial` theme. It does not apply to the
+blog, podcast, IndieWeb, fediverse, other resume themes or any other part of this repository
+or of django-resume.
+
+Portfolio:
+
+| Where | What |
+|---|---|
+| Database (Wagtail) | All portfolio texts; every text must be editable in Wagtail |
+| Object store (Wagtail images) | All portfolio images; every image must be replaceable in Wagtail |
+| This repository | All portfolio code and fixed design elements: the animated handwriting (e.g. "Let's talk about", "that's me", "together"), "Moin", fonts, linen texture, line icons |
+
+- Field defaults in models stay neutral or empty: no personal data or editorial copy (e-mail,
+  social links, profile text). Plain interface labels ("Zur Startseite") may keep a default.
+- Moving content between databases (e.g. staging → production) must not require retyping it;
+  it is transferred from the database, not kept as text in code.
+
+CV and cover letter (`editorial` theme):
+
+| Where | What |
+|---|---|
+| Database | All personal text: cover-letter text, address, positions, skills and every other CV content |
+| Object store | Katharina's portrait photo |
+| django-resume repository | Theme code and its public design elements: rotated section headings, handwritten headlines, drawn background illustrations |
+
+- Both repositories are public on purpose; anyone may use the theme's background illustrations.
+
 ## Git Workflow
 - Create feature branches for new work
 - Write clear, descriptive commit messages

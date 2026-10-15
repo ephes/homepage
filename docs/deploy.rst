@@ -91,6 +91,10 @@ row from the defaults, so a site whose editor tried the form already stores ``<b
   ``<br/>``, so existing rows open without a data change. Saving the form stores ``<br/>``.
 * Migration ``portfolio.0002_legal_copy_line_breaks`` only records the new block class;
   it runs no SQL.
+* The default Datenschutz section "Cookies & Tracking" no longer claims that nothing is
+  stored on the visitor's device; it now says that no third-party cookies or tracking
+  services are used and only technically required data is stored (§ 25 Abs. 2 TDDDG).
+  Sites that already saved their legal settings keep their own text.
 
 2026-10-15 Python 3.15
 ----------------------

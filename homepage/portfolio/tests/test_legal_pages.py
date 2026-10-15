@@ -48,7 +48,7 @@ def test_legal_routes_render_the_complete_canonical_server_content(client):
     assert 'data-portfolio-shell data-project="legal"' in privacy_content
     assert "Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)" in imprint_content
     assert "[Straße und Hausnummer]" in imprint_content
-    assert "Diese Website setzt keine Cookies ein" in privacy_content
+    assert "Diese Website setzt keine Cookies von Drittanbietern ein" in privacy_content
     assert "Stand: September 2026" in privacy_content
     assert 'href="https://www.ldi.nrw.de/"' in privacy_content
     assert 'href="#seitenanfang" aria-label="Zurück nach oben"' in imprint_content

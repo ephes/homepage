@@ -163,10 +163,10 @@ def default_privacy_sections():
                 "copy": [
                     (
                         "paragraph",
-                        "<p>Diese Website setzt keine Cookies ein, speichert keine "
-                        "Informationen in Ihrem Endgerät und greift nicht auf dort "
-                        "gespeicherte Informationen zu. Es werden keine Analyse-, "
-                        "Reichweitenmessungs-, Werbe- oder Profilingdienste verwendet.</p>",
+                        "<p>Diese Website setzt keine Cookies von Drittanbietern ein und "
+                        "verwendet keine Analyse-, Werbe- oder Trackingdienste. Gespeichert "
+                        "wird nur, was für die Bereitstellung der Website technisch "
+                        "erforderlich ist (§ 25 Abs. 2 TDDDG).</p>",
                     ),
                     (
                         "paragraph",

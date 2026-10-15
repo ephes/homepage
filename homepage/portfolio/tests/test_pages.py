@@ -176,6 +176,9 @@ def test_index_is_fully_server_rendered_before_progressive_enhancement(client):
     index = make_portfolio_tree()
     project = add_project(index)
     draft = add_project(index, title="Noch nicht veröffentlicht", publish=False)
+    shell = PortfolioSiteSettings.for_site(index.get_site())
+    shell.contact_email = "kontakt@example.com"
+    shell.save()
 
     assert index.url == "/blogs/"
     response = client.get(index.url)
@@ -206,13 +209,12 @@ def test_index_is_fully_server_rendered_before_progressive_enhancement(client):
     assert "/static/portfolio/prototype/handwriting-glyphs.js" in content
     assert "foundation.css" not in content
     assert "/static/portfolio/501.css" not in content
-    assert "15+ years in branding." in content
-    assert "Web &amp; Digital Design ist mein Zuhause" in content
-    assert "Ich denke über Medien hinweg" in content
+    assert "[Erfahrungsvermerk]" in content
+    assert "[Hervorgehobener Einstieg]" in content
     assert project.title in content
     assert draft.title not in content
     assert f'href="{project.url}"' in content
-    assert "katharina@wersdoerfer.de" in content
+    assert "kontakt@example.com" in content
     assert "Zum Hauptinhalt" in content
     assert '<nav aria-label="Seitennavigation">' in content
     assert 'class="stage" id="stage"' in content
@@ -658,6 +660,9 @@ def test_project_teaser_renders_bold_inline_link_without_markup_in_metadata(clie
 )
 def test_project_core_content_and_optional_live_link_are_server_rendered(live_url, expected_link):
     index = make_portfolio_tree()
+    shell = PortfolioSiteSettings.for_site(index.get_site())
+    shell.contact_email = "kontakt@example.com"
+    shell.save()
     project = add_project(index, live_url=live_url)
 
     response = project.serve(RequestFactory().get(project.url))
@@ -671,7 +676,7 @@ def test_project_core_content_and_optional_live_link_are_server_rendered(live_ur
     assert "/static/portfolio/prototype/projekte/projekt.js" not in content
     assert project.teaser_text in content
     assert "Ein vollständiger, serverseitiger Projekttext." in content
-    assert "katharina@wersdoerfer.de" in content
+    assert "kontakt@example.com" in content
     assert ("Website ansehen" in content) is expected_link
 
 

@@ -78,6 +78,22 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-15 portfolio content out of the code
+--------------------------------------------
+
+The portfolio's editorial content now lives only in the database.
+
+* Personal data and editorial copy are removed from the portfolio's field defaults
+  (``PortfolioSiteSettings``, ``PortfolioIndexPage``, ``ErrorPageSettings``) and from the
+  template fallbacks; the defaults are neutral placeholders such as ``[Name]`` or empty
+  values. Migration ``portfolio.0003_neutral_defaults`` only records the new defaults; it
+  runs no SQL.
+* ``seed_portfolio`` no longer fills services, about items and clients; it creates the
+  categories and, with ``--create``, an empty portfolio page.
+* Before deploying, every portfolio site must have saved ``Portfolio-Site``,
+  ``Portfolio-Rechtsseiten`` and ``501-Seite`` settings. A site without saved settings
+  shows the placeholders after the deploy. Saved pages and settings are unchanged.
+
 2026-10-15 portfolio legal settings form
 ----------------------------------------
 

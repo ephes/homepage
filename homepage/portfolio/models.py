@@ -302,17 +302,14 @@ class ErrorPageSettings(BaseSiteSetting):
     headline = models.CharField(
         "Überschrift",
         max_length=120,
-        default="Ablage P.",
+        default="[Überschrift]",
         validators=[validate_max_three_words],
         help_text="Kurze Überschrift mit höchstens drei Wörtern.",
     )
     sentence = models.CharField(
         "Satz",
         max_length=240,
-        default=(
-            "Diese Idee hat es leider nicht weiter geschafft. Also zurück ans Zeichenbrett. "
-            "Du könntest dir so lange diese Projekte anschauen."
-        ),
+        default="[Satz]",
     )
     code_label = models.CharField(
         "Fehlerkennung",
@@ -351,7 +348,7 @@ class PortfolioSiteSettings(BaseSiteSetting):
     a particular landing-page revision.
     """
 
-    brand_name = models.CharField("Name", max_length=120, default="Katharina Wersdörfer")
+    brand_name = models.CharField("Name", max_length=120, default="[Name]")
     availability_text = models.CharField(
         "Verfügbarkeitstext",
         max_length=120,
@@ -361,11 +358,11 @@ class PortfolioSiteSettings(BaseSiteSetting):
     profile_text = models.CharField(
         "Kurzprofil",
         max_length=240,
-        default="Web & Digital Design, Illustration und Print — aus Düsseldorf.",
+        default="[Kurzprofil]",
     )
     contact_email = models.EmailField(
         "Kontaktadresse",
-        default="katharina@wersdoerfer.de",
+        default="",
         help_text=(
             "Einzige öffentliche E-Mail-Quelle für Header, Menü, Startseite, " "Projektseiten und Rechtstexte."
         ),
@@ -373,27 +370,27 @@ class PortfolioSiteSettings(BaseSiteSetting):
     linkedin_url = models.URLField(
         "LinkedIn",
         blank=True,
-        default="https://www.linkedin.com/in/katharina-wersd%C3%B6rfer-7a41181a2",
+        default="",
     )
     github_url = models.URLField(
         "GitHub",
         blank=True,
-        default="https://github.com/federfuxx",
+        default="",
     )
     mastodon_url = models.URLField(
         "Mastodon",
         blank=True,
-        default="https://fedi.wersdoerfer.de/@katharina",
+        default="",
     )
     copyright_text = models.CharField(
         "Copyright",
         max_length=160,
-        default="© 2026 Katharina Wersdörfer",
+        default="[Copyright]",
     )
     location_text = models.CharField(
         "Ortszeile",
         max_length=160,
-        default="Designed in Düsseldorf",
+        default="[Ortszeile]",
     )
     contact_label = models.CharField(
         "Kontakt",
@@ -686,7 +683,7 @@ class PortfolioContextMixin:
 
 
 class PortfolioIndexPage(PortfolioContextMixin, Page):
-    """Landing page and parent for Katharina's project pages."""
+    """Landing page and parent for the portfolio's project pages."""
 
     template = "portfolio/portfolio_index_page.html"
     admin_default_ordering = "ord"
@@ -708,37 +705,37 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
     hero_intro_emphasis = models.CharField(
         "Hervorgehobener Einstieg",
         max_length=200,
-        default="Web & Digital Design ist mein Zuhause",
+        default="[Hervorgehobener Einstieg]",
     )
     hero_intro = models.TextField(blank=True)
     hero_intro_secondary = models.TextField(
         "Zweiter Einstiegsabsatz",
         blank=True,
-        default=("Ich denke über Medien hinweg – damit Gestaltung genau dort funktioniert, " "wo sie gebraucht wird."),
+        default="",
     )
     hero_note_heading = models.CharField(
         "Erfahrungsvermerk",
         max_length=120,
-        default="15+ years in branding.",
+        default="[Erfahrungsvermerk]",
     )
     hero_note_text = models.CharField(
         "Text zum Erfahrungsvermerk",
         max_length=200,
-        default="Zwischen Kopfkino, Konzept\u00a0und\u00a0Feinschliff.",
+        default="[Text zum Erfahrungsvermerk]",
     )
-    projects_eyebrow = models.CharField(max_length=120, default="Ein kleiner Einblick")
+    projects_eyebrow = models.CharField(max_length=120, default="[Einleitung]")
     projects_heading = models.CharField(max_length=120, default="Projekte")
     projects_annotation = models.CharField(max_length=120, default="recent work", editable=False)
     project_inquiry_label = models.CharField(max_length=120, default="Projekt anfragen")
-    services_eyebrow = models.CharField(max_length=120, default="Was ich anbiete")
+    services_eyebrow = models.CharField(max_length=120, default="[Einleitung]")
     services_heading = models.CharField(max_length=120, default="Leistungen")
     services_annotation = models.CharField(max_length=120, default="let's talk about", editable=False)
-    about_eyebrow = models.CharField(max_length=120, default="Wie ich arbeite")
-    about_statement_intro = models.CharField(max_length=120, default="Ich bin")
-    about_name = models.CharField(max_length=120, default="Katharina")
-    about_statement_outro = models.CharField(max_length=160, default="und bleibe gern neugierig.")
+    about_eyebrow = models.CharField(max_length=120, default="[Einleitung]")
+    about_statement_intro = models.CharField(max_length=120, default="[Satzanfang]")
+    about_name = models.CharField(max_length=120, default="[Name]")
+    about_statement_outro = models.CharField(max_length=160, default="[Satzende]")
     about_annotation = models.CharField(max_length=120, default="that's me", editable=False)
-    about_claim = models.CharField(max_length=160, default="Digital Creative · Based in Düsseldorf")
+    about_claim = models.CharField(max_length=160, default="[Claim]")
     about_portrait_image = models.ForeignKey(
         "wagtailimages.Image",
         null=True,
@@ -758,14 +755,14 @@ class PortfolioIndexPage(PortfolioContextMixin, Page):
         help_text="Beschreibt den Bildinhalt knapp für Menschen, die das Bild nicht sehen können.",
     )
     resume_label = models.CharField(max_length=120, default="Lebenslauf anfragen")
-    clients_eyebrow = models.CharField(max_length=120, default="Über die Jahre")
-    clients_heading = models.CharField(max_length=160, default="Mit diesen Marken")
-    clients_heading_secondary = models.CharField(max_length=160, default="& Menschen")
+    clients_eyebrow = models.CharField(max_length=120, default="[Einleitung]")
+    clients_heading = models.CharField(max_length=160, default="[Überschrift]")
+    clients_heading_secondary = models.CharField(max_length=160, default="[Überschrift, zweite Zeile]")
     clients_annotation = models.CharField(max_length=120, default="together", editable=False)
-    contact_eyebrow = models.CharField(max_length=120, default="Auf ein Wort")
-    contact_heading_primary = models.CharField(max_length=160, default="Ein Projekt im Kopf?")
-    contact_heading_secondary = models.CharField(max_length=160, default="Schreib")
-    contact_heading_emphasis = models.CharField(max_length=80, default="mir.")
+    contact_eyebrow = models.CharField(max_length=120, default="[Einleitung]")
+    contact_heading_primary = models.CharField(max_length=160, default="[Überschrift]")
+    contact_heading_secondary = models.CharField(max_length=160, default="[Zweite Zeile]")
+    contact_heading_emphasis = models.CharField(max_length=80, default="[Betonung]")
     contact_annotation = models.CharField(max_length=120, default="tell me more", editable=False)
     contact_cta_label = models.CharField(max_length=120, default="E-Mail schreiben")
 

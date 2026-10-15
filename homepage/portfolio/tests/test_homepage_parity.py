@@ -10,7 +10,7 @@ from django.contrib.staticfiles import finders
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
-from homepage.portfolio.models import PortfolioAboutItem, PortfolioClient, PortfolioService
+from homepage.portfolio.models import PortfolioAboutItem, PortfolioClient, PortfolioService, PortfolioSiteSettings
 
 from .test_pages import add_project, make_portfolio_tree
 from .test_styles import contrast_ratio, declarations_for, layer_body
@@ -75,6 +75,9 @@ def test_homepage_renders_the_canonical_prototype_composition_from_wagtail(clien
         text="Serverseitig gerenderter Akkordeontext.",
     )
     PortfolioClient.objects.create(page=index, name="Editierbarer Kunde")
+    shell = PortfolioSiteSettings.for_site(index.get_site())
+    shell.contact_email = "kontakt@example.com"
+    shell.save()
 
     response = client.get(index.url)
     content = response.content.decode()
@@ -94,7 +97,7 @@ def test_homepage_renders_the_canonical_prototype_composition_from_wagtail(clien
         "Serverseitig gerenderter Akkordeontext."
     )
     assert document.select_one("#kunden .marquee-primary .item").get_text(strip=True) == ("Editierbarer Kunde")
-    assert 'href="mailto:katharina@wersdoerfer.de"' in content
+    assert 'href="mailto:kontakt@example.com"' in content
     assert "projekte/studio-website-relaunch.html" not in content
 
     stylesheet_urls = [node["href"] for node in document.select("link[rel='stylesheet']")]

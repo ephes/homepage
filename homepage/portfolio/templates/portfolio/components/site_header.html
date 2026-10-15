@@ -3,9 +3,9 @@
   {% pageurl portfolio_index as portfolio_home_url %}
   <header class="site site-header" lang="de">
     {% if page and page.pk == portfolio_index.pk %}
-      <span class="brand site-header__brand">{{ shell.brand_name|default:"Katharina Wersdörfer" }}</span>
+      <span class="brand site-header__brand">{{ shell.brand_name }}</span>
     {% else %}
-      <a class="brand site-header__brand" href="{{ portfolio_home_url }}">{{ shell.brand_name|default:"Katharina Wersdörfer" }}</a>
+      <a class="brand site-header__brand" href="{{ portfolio_home_url }}">{{ shell.brand_name }}</a>
     {% endif %}
 
     {% if shell.show_availability %}<span class="avail">{{ shell.availability_text }}</span>{% endif %}

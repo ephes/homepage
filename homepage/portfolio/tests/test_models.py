@@ -143,13 +143,13 @@ def test_nine_projects_are_independent_editable_children_of_the_portfolio_index(
     }
 
 
-def test_portfolio_hero_copy_defaults_match_the_approved_current_prototype():
+def test_portfolio_hero_copy_defaults_are_neutral_placeholders():
     index = make_portfolio_tree()
 
-    assert index.hero_intro_emphasis == "Web & Digital Design ist mein Zuhause"
-    assert index.hero_intro_secondary.startswith("Ich denke über Medien hinweg")
-    assert index.hero_note_heading == "15+ years in branding."
-    assert index.hero_note_text == "Zwischen Kopfkino, Konzept\u00a0und\u00a0Feinschliff."
+    assert index.hero_intro_emphasis == "[Hervorgehobener Einstieg]"
+    assert index.hero_intro_secondary == ""
+    assert index.hero_note_heading == "[Erfahrungsvermerk]"
+    assert index.hero_note_text == "[Text zum Erfahrungsvermerk]"
 
 
 def test_project_categories_are_central_editable_records():
@@ -173,12 +173,12 @@ def test_homepage_parity_copy_is_semantic_and_editor_sortable():
 
     assert index.projects_heading == "Projekte"
     assert index.services_annotation == "let's talk about"
-    assert index.about_statement_intro == "Ich bin"
-    assert index.about_name == "Katharina"
-    assert index.clients_heading_secondary == "& Menschen"
-    assert index.contact_heading_primary == "Ein Projekt im Kopf?"
-    assert index.contact_heading_secondary == "Schreib"
-    assert index.contact_heading_emphasis == "mir."
+    assert index.about_statement_intro == "[Satzanfang]"
+    assert index.about_name == "[Name]"
+    assert index.clients_heading_secondary == "[Überschrift, zweite Zeile]"
+    assert index.contact_heading_primary == "[Überschrift]"
+    assert index.contact_heading_secondary == "[Zweite Zeile]"
+    assert index.contact_heading_emphasis == "[Betonung]"
 
     PortfolioService.objects.create(
         page=index,
@@ -484,16 +484,16 @@ def test_portfolio_shell_settings_keep_shared_content_per_site():
 
     assert index.get_site() == site
     assert settings.pk is not None
-    assert settings.brand_name == "Katharina Wersdörfer"
+    assert settings.brand_name == "[Name]"
     assert settings.availability_text == "Verfügbar für Projekte"
     assert settings.show_availability is True
-    assert settings.profile_text == "Web & Digital Design, Illustration und Print — aus Düsseldorf."
-    assert settings.contact_email == "katharina@wersdoerfer.de"
-    assert settings.linkedin_url.startswith("https://www.linkedin.com/")
-    assert settings.github_url == "https://github.com/federfuxx"
-    assert settings.mastodon_url == "https://fedi.wersdoerfer.de/@katharina"
-    assert settings.copyright_text == "© 2026 Katharina Wersdörfer"
-    assert settings.location_text == "Designed in Düsseldorf"
+    assert settings.profile_text == "[Kurzprofil]"
+    assert settings.contact_email == ""
+    assert settings.linkedin_url == ""
+    assert settings.github_url == ""
+    assert settings.mastodon_url == ""
+    assert settings.copyright_text == "[Copyright]"
+    assert settings.location_text == "[Ortszeile]"
 
     settings.brand_name = "Eigenständige Portfolio-Site"
     settings.save()
@@ -509,7 +509,7 @@ def test_portfolio_shell_settings_keep_shared_content_per_site():
     second_settings = PortfolioSiteSettings.for_site(second_site)
 
     assert second_settings.pk != settings.pk
-    assert second_settings.brand_name == "Katharina Wersdörfer"
+    assert second_settings.brand_name == "[Name]"
 
 
 def test_portfolio_site_settings_do_not_own_project_specific_placeholder_copy():

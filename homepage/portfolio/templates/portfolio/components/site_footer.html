@@ -6,8 +6,8 @@
   <footer class="site on-dark" lang="de">
     <div class="foot-cols pad">
       <section class="foot-col foot-profile" aria-label="Profil">
-        <span class="brand">{{ shell.brand_name|default:"Katharina Wersdörfer" }}</span>
-        <p>{{ shell.profile_text|default:"Web & Digital Design, Illustration und Print — aus Düsseldorf." }}</p>
+        <span class="brand">{{ shell.brand_name }}</span>
+        <p>{{ shell.profile_text }}</p>
         {% if shell.show_availability %}<span class="avail">{{ shell.availability_text }}</span>{% endif %}
       </section>
       <nav class="foot-col foot-pages" aria-labelledby="ft-seite">
@@ -42,8 +42,8 @@
       {% endif %}
     </div>
     <div class="foot-bar pad">
-      <span>{{ shell.copyright_text|default:"© 2026 Katharina Wersdörfer" }}</span>
-      <span>{{ shell.location_text|default:"Designed in Düsseldorf" }}</span>
+      <span>{{ shell.copyright_text }}</span>
+      <span>{{ shell.location_text }}</span>
       {% if top_anchor %}
         <a class="to-top" href="#{{ top_anchor }}" aria-label="Zurück nach oben"><span class="tile-arrow" aria-hidden="true">→</span></a>
       {% elif page and page.pk == portfolio_index.pk %}

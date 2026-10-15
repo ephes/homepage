@@ -85,11 +85,8 @@ def test_response_has_real_status_and_server_rendered_default_content():
     assert document.select_one('.pagegrid[aria-hidden="true"]') is not None
     assert document.select_one('.linen[aria-hidden="true"]') is not None
     assert "Fehler 501" in content
-    assert "Ablage P." in content
-    assert (
-        "Diese Idee hat es leider nicht weiter geschafft. Also zurück ans Zeichenbrett. "
-        "Du könntest dir so lange diese Projekte anschauen."
-    ) in content
+    assert "[Überschrift]" in content
+    assert "[Satz]" in content
     assert '<meta name="robots" content="noindex,follow">' in content
     assert "/static/portfolio/prototype/project-teasers.js" in content
     assert "/static/portfolio/prototype/site-shell.js" in content
@@ -256,8 +253,8 @@ def test_missing_site_uses_defaults_without_broken_navigation():
     content = response.content.decode()
 
     assert response.status_code == 501
-    assert "Ablage P." in content
-    assert "Katharina Wersdörfer" not in content
+    assert "[Überschrift]" in content
+    assert "[Name]" not in content
     assert 'class="site site-header"' not in content
     assert '<footer class="site on-dark"' not in content
     assert "data-portfolio-shell" not in content
@@ -366,7 +363,7 @@ def test_https_multisite_links_are_relative_to_the_request_site():
 
     content = error_501(request).content.decode()
 
-    assert 'href="/blogs/">Katharina Wersdörfer</a>' in content
+    assert 'href="/blogs/">[Name]</a>' in content
     assert 'href="/blogs/#projekte">Projekte</a>' in content
     assert 'href="/blogs/#about">Über mich</a>' in content
     assert 'href="/blogs/#kontakt">Kontakt</a>' in content
@@ -390,7 +387,7 @@ def test_https_multisite_index_uses_its_own_request_relative_navigation(client, 
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert '<span class="brand site-header__brand">Katharina Wersdörfer</span>' in content
+    assert '<span class="brand site-header__brand">[Name]</span>' in content
     assert 'href="/blogs/#projekte">Projekte</a>' in content
     assert 'href="/blogs/#about">Über mich</a>' in content
     assert 'href="/blogs/#kontakt">Kontakt</a>' in content

@@ -16,6 +16,37 @@ INLINE_RICH_TEXT_FEATURES = ["bold", "italic", "link", "no-break"]
 BODY_RICH_TEXT_FEATURES = ["bold", "italic", "ol", "ul", "link", "no-break"]
 
 
+PLACEHOLDER_PATTERN = re.compile(r"\A\[[^\[\]]*\]\Z", re.S)
+
+
+def is_filled(value):
+    """Whether an editorial text is really filled in.
+
+    Empty text and the bracketed starter placeholders of new projects ("[Name]",
+    "[Optionales Kundenstatement zum Projekt.]") count as not filled, so their block
+    is not rendered.
+    """
+    source = getattr(value, "source", value)
+    text = re.sub(r"<[^>]*>", " ", str(source or ""))
+    text = " ".join(text.replace("\xa0", " ").split())
+    return bool(text) and not PLACEHOLDER_PATTERN.match(text)
+
+
+def block_is_filled(block):
+    """Whether a project content block has anything to show."""
+
+    value = block.value
+    if block.block_type == "statement":
+        return is_filled(value["text"])
+    if block.block_type == "challenge_solution":
+        return is_filled(value["challenge"]) or is_filled(value["solution"])
+    if block.block_type == "stats":
+        return any(is_filled(item["label"]) for item in value["items"])
+    if block.block_type == "testimonial":
+        return is_filled(value["quote"])
+    return True
+
+
 class LineBreakRichTextBlock(blocks.RichTextBlock):
     """Rich text that also opens stored HTML5 line breaks (``<br>``) in the editor.
 
@@ -234,8 +265,10 @@ class GalleryBlock(blocks.StructBlock):
 
 class StatementBlock(blocks.StructBlock):
     text = blocks.RichTextBlock(
+        required=False,
         features=INLINE_RICH_TEXT_FEATURES,
         label="Text",
+        help_text="Leer lassen, um das Statement nicht anzuzeigen.",
     )
 
     class Meta:
@@ -246,12 +279,16 @@ class StatementBlock(blocks.StructBlock):
 
 class ChallengeSolutionBlock(blocks.StructBlock):
     challenge = blocks.RichTextBlock(
+        required=False,
         features=BODY_RICH_TEXT_FEATURES,
         label="Aufgabe",
+        help_text="Leer lassen, um die Aufgabe nicht anzuzeigen.",
     )
     solution = blocks.RichTextBlock(
+        required=False,
         features=BODY_RICH_TEXT_FEATURES,
         label="Lösung",
+        help_text="Leer lassen, um die Lösung nicht anzuzeigen.",
     )
 
     class Meta:
@@ -283,8 +320,12 @@ class StatsBlock(blocks.StructBlock):
 
 
 class TestimonialBlock(blocks.StructBlock):
-    quote = blocks.TextBlock(label="Zitat")
-    name = blocks.CharBlock(max_length=120, label="Name")
+    quote = blocks.TextBlock(
+        required=False,
+        label="Zitat",
+        help_text="Leer lassen, um keine Kundenstimme anzuzeigen.",
+    )
+    name = blocks.CharBlock(required=False, max_length=120, label="Name")
     role = blocks.CharBlock(required=False, max_length=160, label="Rolle")
 
     class Meta:

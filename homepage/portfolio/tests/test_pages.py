@@ -29,6 +29,17 @@ from .test_styles import declarations_for, layer_body
 pytestmark = pytest.mark.django_db
 
 
+
+def filled_project_content():
+    """A case study whose texts are all filled in (unlike the starter placeholders)."""
+
+    return [
+        ("statement", {"text": "<p>Ein Statement zum Projekt.</p>"}),
+        ("challenge_solution", {"challenge": "<p>Die Ausgangslage.</p>", "solution": "<p>Die Umsetzung.</p>"}),
+        ("stats", {"items": [{"value": f"0{number}", "label": f"Ergebnis {number}"} for number in range(1, 5)]}),
+        ("testimonial", {"quote": "Ein Kundenstatement.", "name": "Kundin", "role": "Leitung"}),
+    ]
+
 def make_portfolio_tree():
     Locale.objects.get_or_create(language_code="en")
     root = Page.get_first_root_node()
@@ -422,7 +433,7 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
     index = make_portfolio_tree()
     project = add_project(index, live_url="https://example.com/live")
     project.client = "Beispielkunde"
-    project.content = default_project_content()
+    project.content = filled_project_content()
     project.save_revision().publish()
     add_project(index, title="Weiteres Projekt")
     shell = PortfolioSiteSettings.for_site(index.get_site())
@@ -542,7 +553,7 @@ def test_homepage_project_teaser_is_derived_from_the_project_page(client, settin
     assert mobile_image["sizes"] == ("calc(100vw - 2 * clamp(1.25rem, 4vw, 4rem))")
 
 
-def test_non_lead_hero_teaser_uses_an_explicit_small_mobile_fallback(client, settings, tmp_path):
+def test_every_hero_teaser_leads_the_narrow_layout_with_its_16_9_rendition(client, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
     index = make_portfolio_tree()
     add_project(index, title="Erstes Projekt")
@@ -556,11 +567,12 @@ def test_non_lead_hero_teaser_uses_an_explicit_small_mobile_fallback(client, set
     image = homepage.select_one(f'a.tile[href="{project.url}"] picture img')
 
     assert image is not None
-    assert "fill-480x320" in image["src"]
-    mobile_fallback = project.teaser_image.get_rendition("fill-480x320")
+    assert homepage.select_one(f'.lead > a.tile[href="{project.url}"]') is not None
+    assert "fill-400x225" in image["src"]
+    mobile_fallback = project.teaser_image.get_rendition("fill-400x225")
     assert image["width"] == str(mobile_fallback.width)
     assert image["height"] == str(mobile_fallback.height)
-    assert "fill-1440x960" in image["srcset"]
+    assert "fill-1200x675" in image["srcset"]
     project_card_template = (
         Path(__file__).parents[1] / "templates" / "portfolio" / "components" / "project_card.html"
     ).read_text()
@@ -778,10 +790,9 @@ def test_project_and_index_render_their_distinct_explicit_image_alt_text(client,
     assert 'class="frame related-project-card__frame frame--image"' in related_card
     assert 'class="frame related-project-card__frame frame--image"' in error_card
     assert "srcset=" in index_teaser
-    assert "fill-1200x675" in index_teaser
-    assert index_picture.select_one("source")["sizes"] == "25vw"
-    assert "fill-1440x960" in index_picture.select_one("source")["srcset"]
-    assert 'sizes="calc(100vw - 2 * clamp(1.25rem, 4vw, 4rem))"' in index_teaser
+    assert "fill-1440x960" in index_teaser
+    assert index_picture is None
+    assert 'sizes="(min-width: 52.001rem) 25vw, 82vw"' in index_teaser
     assert "fill-1440x960" in related_homepage_teaser["srcset"]
     assert related_homepage_teaser["sizes"] == ("(min-width: 52.001rem) 25vw, 82vw")
     assert 'loading="lazy"' in index_teaser
@@ -807,7 +818,7 @@ def test_project_and_index_render_their_distinct_explicit_image_alt_text(client,
     assert "Teaseransicht des Folgeprojekts" not in related_card
     assert "Teaseransicht des Projekts" not in error_card
     assert 'alt="Teaseransicht des Projekts"' not in project_content
-    for filter_spec in ("fill-1200x675", "fill-1440x960"):
+    for filter_spec in ("fill-480x320", "fill-1440x960"):
         expected_focal_key = Filter(spec=filter_spec).get_cache_key(teaser_image)
         assert expected_focal_key
         assert teaser_image.renditions.filter(
@@ -949,3 +960,40 @@ def test_all_structured_project_blocks_are_server_rendered(settings, tmp_path):
     assert result.select_one(".result-label").get_text(strip=True) == "Mehr Anfragen"
     assert "<figcaption>Ada · Kundin</figcaption>" in content
     assert "<blockquote><p>„Die Zusammenarbeit war großartig.“</p></blockquote>" in content
+
+
+def test_unchanged_template_placeholders_are_not_rendered(client):
+    index = make_portfolio_tree()
+    project = add_project(index, title="Platzhalterprojekt")
+    project.content = default_project_content()
+    project.save_revision().publish()
+
+    content = client.get(project.url).content.decode()
+    document = BeautifulSoup(content, "html.parser")
+
+    text = document.select_one("main").get_text()
+    for placeholder in ("[Ein prägnanter", "[Ausgangslage", "[Konzept", "[Ergebnis", "[Optionales", "[Rolle]"):
+        assert placeholder not in text
+    assert document.select_one(".project-testimonial") is None
+    assert document.select_one(".project-results") is None
+    assert document.select_one("#case-study") is None
+
+
+def test_empty_case_texts_hide_only_their_own_rows(client):
+    index = make_portfolio_tree()
+    project = add_project(index, title="Teilweise ausgefüllt")
+    project.content = [
+        ("statement", {"text": ""}),
+        ("challenge_solution", {"challenge": "<p>Die Ausgangslage.</p>", "solution": ""}),
+        ("stats", {"items": [{"value": "3", "label": "Kampagnen"}, {"value": "04", "label": "[Ergebnis]"}]}),
+        ("testimonial", {"quote": "Sehr gern wieder.", "name": "", "role": "[Rolle]"}),
+    ]
+    project.save_revision().publish()
+
+    document = BeautifulSoup(client.get(project.url).content, "html.parser")
+
+    labels = [label.get_text(strip=True) for label in document.select("#case-study .case-label")]
+    assert labels == ["Die Aufgabe"]
+    assert [item.get_text(" ", strip=True) for item in document.select(".result")] == ["3 Kampagnen"]
+    assert document.select_one(".project-testimonial blockquote").get_text(strip=True) == "„Sehr gern wieder.“"
+    assert document.select_one(".project-testimonial figcaption") is None

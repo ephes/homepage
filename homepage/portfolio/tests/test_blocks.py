@@ -279,12 +279,10 @@ def test_singleton_case_study_sections_are_enforced_by_stream_validation():
     assert any("Statement" in message for message in messages)
 
 
-def test_required_structured_copy_reports_field_level_errors():
+def test_case_texts_may_be_left_empty_to_hide_their_row():
     block = ChallengeSolutionBlock()
     value = block.to_python({"challenge": "", "solution": "<p>Gelöst.</p>"})
 
-    with pytest.raises(ValidationError) as error:
-        block.clean(value)
+    cleaned = block.clean(value)
 
-    assert isinstance(error.value, StructBlockValidationError)
-    assert "challenge" in error.value.block_errors
+    assert cleaned["challenge"].source == ""

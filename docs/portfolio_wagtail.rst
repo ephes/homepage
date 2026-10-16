@@ -16,7 +16,12 @@ Content model
 ``ProjectPage``
     One project below the index. Teaser, hero image, metadata, category and a
     ``content`` StreamField (statement, challenge/solution, images, gallery, stats,
-    testimonial). ``homepage_is_hero`` makes a project a large tile on the landing page.
+    testimonial). ``homepage_is_hero`` makes a project a large tile on the landing page:
+    two of four columns on a wide grid, the full width on the two-column grid of a
+    medium-width projects area. When two tiles no longer fit side by side, all hero
+    projects stand on top of each other and the other projects move into the reel below.
+    The switch follows the width of the projects area (container queries), not the
+    screen; the order is always the order of the pages in Wagtail.
 
 ``ProjectCategory``
     Snippet with the categories shown on project tiles.
@@ -38,6 +43,12 @@ Site settings (``Settings`` in the Wagtail admin, one set per site):
 
 ``ErrorPageSettings``
     Copy of the 501 placeholder page.
+
+Statement, challenge, solution, the stats entries and the testimonial quote, name and
+role may be left empty. A text that is empty or consists only of a bracketed starter
+placeholder (``[Name]``, ``[Optionales Kundenstatement zum Projekt.]`` …) is not
+rendered, together with its row or section; the case-study section disappears when none
+of its blocks is filled.
 
 Fixed presentation elements such as ``Moin`` and the handwritten phrases are not
 editable, because their SVG path data is generated for exactly those words
@@ -115,6 +126,14 @@ tag for stylesheets, which appends the file's modification time in ``DEBUG``), s
 hashed ``collectstatic`` output works in production. Page stylesheets go into the
 ``extra_styles`` block of ``portfolio/base.html``, deferred scripts into
 ``extra_scripts``.
+
+The hero's horizontal grid lines follow one rule without media queries
+(``--hero-row1``/``--hero-row2`` in ``portfolio-startseite.css``): the top row is a
+quarter of the screen height, the middle row is at least half of it and grows with
+``Moin``, whose height depends only on the page width, so the word always sits between
+the lines. The lead below shrinks the bottom row down to its own height; if that is not
+enough, the hero becomes taller than the screen. Narrow and very low screens keep their
+own layout with the lead below ``Moin``.
 
 The landing-page hero draws its reveal image into a WebGL texture and requests it with
 ``crossorigin="anonymous"``. The media storage (S3/CloudFront) must therefore answer

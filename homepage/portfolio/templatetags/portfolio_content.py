@@ -8,7 +8,7 @@ from wagtail.images.models import Filter
 from wagtail.images.rect import Rect
 from wagtail.rich_text import get_text_for_indexing
 
-from homepage.portfolio.blocks import get_project_block_region
+from homepage.portfolio.blocks import get_project_block_region, is_filled
 
 register = template.Library()
 
@@ -33,6 +33,20 @@ def richtext_plaintext(value):
     """Return RichText as decoded plain text for Django to escape once."""
 
     return get_text_for_indexing(str(value or ""))
+
+
+@register.filter
+def filled(value):
+    """Whether an editorial text is filled in (not empty, not a "[…]" placeholder)."""
+
+    return is_filled(value)
+
+
+@register.filter
+def filled_stats(items):
+    """The stats entries whose label is filled in."""
+
+    return [item for item in items if is_filled(item["label"])]
 
 
 @register.filter

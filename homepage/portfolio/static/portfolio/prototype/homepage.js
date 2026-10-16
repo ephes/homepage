@@ -119,6 +119,13 @@
   // damit die Buchstaben deckungsgleich sind — es wird nur das Bild dahinter freigelegt.
   // MOIN wird INK-GENAU am Grid verankert: die schwarzen Buchstaben-Ränder liegen exakt
   // mit dem Gap --hero-inset innerhalb der Zelle — links, rechts und oben identisch.
+  // Lage einer waagerechten Hero-Rasterlinie relativ zur Stage. Die Linien setzt das CSS
+  // (--hero-row1/--hero-row2); ist eine ausgeblendet, gilt der alte Anteil der Höhe.
+  function heroLineTop(index, fallback){
+    var line = document.querySelectorAll('#stage .grid .rows > b')[index];
+    if (!line || !line.offsetParent) return fallback * stage.clientHeight;
+    return line.getBoundingClientRect().top - stage.getBoundingClientRect().top;
+  }
   function moinGeom(ctx, W, H){
     var clientW = stage.clientWidth, clientH = stage.clientHeight;
     var sx = W / clientW, sy = H / clientH;
@@ -127,7 +134,7 @@
     // Ziel-Ink-Box in Canvas-px:
     var inkLeft = (padPx + inset) * sx;
     var inkW    = (clientW - 2 * padPx - 2 * inset) * sx;
-    var inkTop  = (0.25 * clientH + inset) * sy;                  // ab der 25%-Gridlinie
+    var inkTop  = (heroLineTop(0, 0.25) + inset) * sy;            // ab der oberen Rasterlinie
     ctx.font = '800 300px Saira';
     var m0 = ctx.measureText('MOIN');
     var ink0 = m0.actualBoundingBoxRight + m0.actualBoundingBoxLeft;
@@ -256,16 +263,8 @@
     var s = document.querySelector('.sub');
     if (s) {
       var st = stage.getBoundingClientRect();
-      // Der Lead gehört immer vollständig in EINE Rasterzeile. Passt er ins untere
-      // Viertel, beginnt er an der 75-%-Linie. Ist er höher, endet er stattdessen exakt
-      // dort und sitzt geschlossen in der Zeile darüber — niemals mit einer Linie im Text.
-      // getBoundingClientRect statt offsetHeight vermeidet einen Sub-Pixel-Überstand.
-      var subHeight = s.getBoundingClientRect().height;
-      var isAbsoluteSub = getComputedStyle(s).position === 'absolute';
-      var lowerLine = 0.75 * stage.clientHeight;
-      var subIsUpper = isAbsoluteSub && subHeight > stage.clientHeight - lowerLine;
-      stage.classList.toggle('sub-is-upper', subIsUpper);
-      r.setProperty('--sub-top', (subIsUpper ? lowerLine - subHeight : lowerLine) + 'px');
+      // Der Lead steht per CSS im Fluss unter der unteren Rasterlinie; die Stage wächst
+      // mit ihm. Gemessen wird nur noch seine Unterkante für die Abschlusslinie.
       var sb = s.getBoundingClientRect();
       var relBottom = sb.bottom - st.top;          // stage-relativ, für die Hero-Unterlinie
       var docTop = st.top + window.scrollY;        // Stage-Oberkante dokument-absolut
@@ -274,7 +273,7 @@
       // Grenzen der Lücke, die die durchgehende 1/4-Linie um die Subline-Zelle macht.
       // Beide Werte gehören zur lokalen y-Achse des Linien-Layers. Das ist auch dann
       // korrekt, wenn dessen absoluter Body-Ursprung nicht bei Dokument-y=0 liegt.
-      r.setProperty('--gap-start', (docTop + 0.75 * stage.clientHeight - gridTop) + 'px');
+      r.setProperty('--gap-start', (docTop + heroLineTop(1, 0.75) - gridTop) + 'px');
       r.setProperty('--gap-end',   (docTop + relBottom - gridTop) + 'px');
     }
     buildLineGradients();
@@ -644,6 +643,15 @@
       resize(); render();
       simulationReady=true;
       addEventListener('resize',resizeSimulation,{passive:true});
+      // Die Stage kann auch ohne Fensteränderung höher werden (Lead im Fluss, Webfont).
+      if('ResizeObserver' in window){
+        var stageSize=stage.clientWidth+'x'+stage.clientHeight;
+        new ResizeObserver(function(){
+          var next=stage.clientWidth+'x'+stage.clientHeight;
+          if(next===stageSize)return;
+          stageSize=next; resizeSimulation(); updateGridVars();
+        }).observe(stage);
+      }
       syncSimulation();
     } catch (error) {
       disableSimulation();

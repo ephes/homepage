@@ -247,6 +247,56 @@
   .tile.tile--hero { grid-column: span 2; }
   .tile .frame { aspect-ratio: 3 / 2; }
   .tile.tile--hero .frame { aspect-ratio: 21 / 9; }
+  /* Im HTML stehen die Heroes vorn (schmaler Stack), die übrigen im Reel. Im Raster
+     stellt die Position aus Wagtail die redaktionelle Reihenfolge wieder her; die
+     Projektanfrage schließt immer ab. */
+  .tilegrid .tile { order: var(--tile-order, 0); }
+  .tilegrid > .project-inquiry { order: 1000; }
+
+  /* Every Layout „Container": Ob Raster oder Reel, entscheidet der reale Platz des
+     Projektbereichs, nicht die Bildschirmklasse. Das Raster bleibt bei 4 oder 2 Spalten,
+     damit die Kacheln auf den Linien des Seitenrasters liegen (auto-fit könnte 3 bilden). */
+  section.block#projekte { container: projects / inline-size; }
+
+  /* Mittel: 1-2-Muster. Heroes über die volle Breite, die übrigen zu zweit. */
+  @container projects (width < 48rem) {
+    .tilegrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile.tile--hero { grid-column: 1 / -1; }
+  }
+
+  /* Schmal: Heroes als Stack untereinander, alle übrigen im Reel darunter. */
+  @container projects (width < 30rem) {
+    .tilegrid { display: block; border: none; container-type: inline-size; }
+    .lead { display: block; }
+    .lead > .tile { border-block-end: 1px solid var(--rule); border-inline: none; }
+    .lead > .tile:first-child { border-block-start: 1px solid var(--rule); }
+    .lead > .tile .frame { aspect-ratio: 16 / 9; }
+    .tilegrid > .reel {
+      --reel-item-width:
+        max(62.5%, min(82%, max(13rem, calc(24.375rem - 50vw))));
+      display: flex;
+      overflow-x: auto; overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+    }
+    .tilegrid > .reel::-webkit-scrollbar { display: none; }
+    html:not(.has-js) .tilegrid > .reel {
+      display: grid;
+      grid-template-columns: 1fr;
+      overflow: visible;
+    }
+    .tilegrid > .reel > * {
+      flex: 0 0 var(--reel-item-width);
+      scroll-snap-align: start;
+    }
+    .tilegrid > .reel > .tile .frame { aspect-ratio: 3 / 2; }
+    .tilegrid > .reelbar.is-scrollable {
+      display: block;
+      padding-inline: var(--hero-inset);
+      padding-block: 0.85rem 2.5rem;
+    }
+  }
 
   .frame {
     /* DECKEND: Creme-Grund + Tonung darüber. Als halbtransparente Fläche (nur var(--ph))
@@ -274,8 +324,13 @@
   .frame span { position: relative; background: var(--bg); padding: 0.1rem 0.45rem; }
 
   .meta { display: flex; flex-direction: column; gap: 0.15rem; margin-top: auto; }
-  .meta .row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
-  .meta h3 { font-size: var(--type-subline); font-weight: 600; margin: 0; line-height: 1.2; }
+  /* Der Pfeil sitzt immer mittig zur LETZTEN Titelzeile: unten ausgerichtet und um die
+     halbe Zeilenhöhe minus halbe Pfeilhöhe (.65rem) angehoben. Der Titel darf schrumpfen
+     und trennt lange Wörter, statt den Pfeil aus der Kachel zu schieben. */
+  .meta .row1 { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; }
+  .meta h3 { font-size: var(--type-subline); font-weight: 600; margin: 0; line-height: 1.2;
+    min-inline-size: 0; hyphens: auto; overflow-wrap: break-word; }
+  .meta .row1 > .tile-arrow { margin-block-end: calc(var(--type-subline) * .6 - .325rem); }
   .meta .row2 { font-size: var(--type-eyebrow); color: var(--muted); letter-spacing: 0.04em; }
 
   /* Dieselbe Fläche wie die dunklen Sections, nicht Pine: die CTA-Kachel soll als
@@ -864,6 +919,8 @@
     --rule:rgba(23,20,16,0.2);
     --rule-soft:rgba(23,20,16,0.09);
     --rule-strong:var(--warm-black); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante */
+    /* Stärke aller Rasterlinien; geht auch in Höhenrechnungen ein (mobiler Hero). */
+    --rule-width:1px;
     --ph:rgba(23,20,16,0.06);
     --ph-ink:rgba(23,20,16,0.45);
     --accent:var(--tangerine);
@@ -1087,8 +1144,22 @@
      sonst käme der Hero-Canvas nicht unter das seitenweite Liniengerüst (s. u.). */
   /* Ein sichtbarer Bildschirm ist die Mindesthöhe, niemals eine Inhaltsgrenze. Auf
      niedrigen oder schmalen Viewports darf der Hero mit seinem Inhalt weiterwachsen. */
+  /* Rasterzeilen des Heros, als eine Regel ohne Media Query: Die obere Zeile ist ein
+     Viertel der Bildschirmhöhe. Die mittlere Zeile ist mindestens die halbe
+     Bildschirmhöhe und wächst mit, sobald MOIN höher wird — MOIN hängt nur an der
+     Breite (Tintenhöhe = 0,2798 × Tintenbreite in Saira 800) und liegt so immer mit
+     --hero-inset Abstand zwischen beiden Linien. Die untere Zeile ist der Rest, aber nie
+     niedriger als der Lead: Der steht im normalen Fluss unter --hero-row2, darum wird
+     die Stage höher als ein Bildschirm, wenn beides nicht mehr hineinpasst.
+     100vw statt Stagebreite: Mit klassischer Scrollleiste überschätzt das MOIN um
+     wenige Pixel, nie unterschätzt es. */
   .stage{position:relative;
-    min-height:max(var(--hero-floor), calc(100svh - var(--header-h)));
+    --hero-h0:max(var(--hero-floor), calc(100svh - var(--header-h)));
+    --hero-moin-h:calc((100vw - 2*var(--pad) - 2*var(--hero-inset)) * .2798);
+    --hero-row1:calc(var(--hero-h0) * .25);
+    --hero-row2:calc(var(--hero-row1) + max(var(--hero-h0) * .5, var(--hero-moin-h) + 2*var(--hero-inset)));
+    min-height:var(--hero-h0);
+    padding-block-start:var(--hero-row2);
     overflow:hidden;
     /* Vertikales Wischen gehört dem nativen Seitenscroll. Erst eine im Skript klar
        horizontal erkannte Touch-Geste steuert den Fluid-Reveal. */
@@ -1121,20 +1192,15 @@
   .grid .under{position:absolute;left:0;right:50%;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
   .grid .rows{position:absolute;inset:0;}
   .grid .rows>b{position:absolute;left:0;right:0;border-top:1px solid var(--rule);}
-  .grid .rows>b:nth-child(1){top:25%;} .grid .rows>b:nth-child(2){top:75%;}
-  /* Passt der Lead nicht vollständig in die untere Rasterzeile, setzt ihn die Messung
-     geschlossen in die Zeile darüber. Dort ersetzt die vorhandene 75-%-Linie bereits
-     seine Unterkante; die zusätzliche kurze Abschlusslinie würde sich nur doppeln. */
-  .stage.sub-is-upper .grid .under{display:none;}
+  .grid .rows>b:nth-child(1){top:var(--hero-row1);} .grid .rows>b:nth-child(2){top:var(--hero-row2);}
   /* Subtext im unteren Viertel: links UND oben derselbe Gap zur Gridzelle wie beim MOIN. */
   /* Subline = randlose Milchglas-Fläche, füllt die verbundene Doppelzelle (2 Spalten × unteres
      Viertel). Kein Kästchen, KEINE Outline. Text links+oben um --hero-inset eingerückt. */
   /* z-index MUSS auto bleiben: sonst macht .sub einen eigenen Stacking-Kontext auf und
      die Fläche im ::before käme nicht unter das Liniengerüst. */
-  /* Beginnt an der 75-%-Linie (--sub-top). Reicht der Platz darunter nicht — kurzer
-     Viewport oder längerer Text —, setzt das Skript den Wert so weit nach oben, dass
-     nichts unten aus der Stage geschnitten wird. */
-  .sub{position:absolute;left:var(--pad);top:var(--sub-top,75%);width:calc(50vw - var(--pad)); /* Höhe = Inhalt → Unterkante wird gemessen */
+  /* Steht im Fluss direkt unter der unteren Rasterlinie (Padding der Stage). Ist er höher
+     als der Rest des Bildschirms, wächst die Stage mit, statt ihn abzuschneiden. */
+  .sub{position:relative;margin-inline-start:var(--pad);width:calc(50% - var(--pad)); /* Höhe = Inhalt → Unterkante wird gemessen */
     padding:var(--hero-inset);}
   /* Die Milchglas-Fläche ist eine FLÄCHE und liegt darum unter den Linien (-2), genau wie
      die dunklen Sektionsflächen — sonst deckte sie die Außenlinien ab. Der Text darin
@@ -1153,8 +1219,12 @@
     .stage{
       display:flex;
       flex-direction:column;
-      min-height:max(var(--hero-floor),calc(100svh - var(--header-h) - var(--availability-strip-h)));
+      /* Kopfleiste + Verfügbarkeitszeile + Hero + Abschlusslinie = ein Bildschirm: Die Linie
+         unter dem Lead (Oberkante der Projekte) liegt beim Aufruf noch im View. */
+      min-height:max(var(--hero-floor),calc(100svh - var(--header-h) - var(--availability-strip-h) - var(--rule-width)));
       padding-block-start:max(15rem,60vw);
+      /* Hier steht der Lead unter MOIN; die obere Linie bleibt beim Viertel der Stage. */
+      --hero-row1:25%;
     }
     .sub{
       position:relative;
@@ -1170,6 +1240,9 @@
     }
     .grid .under,
     .grid .rows>b:nth-child(2){display:none;}
+    /* Oben schließt eine Linie die Kopfleiste ab, damit das Raster auf dem Telefon nicht
+       offen beginnt. Als Innenschatten, damit die gemessene Headerhöhe gleich bleibt. */
+    header.site{box-shadow:inset 0 var(--rule-width) 0 var(--rule-strong);}
     .sub::after{
       content:"";
       position:absolute;
@@ -1186,9 +1259,9 @@
      abgezogen und darf deshalb nicht ein zweites Mal unter dem LIDI reserviert werden. */
   @media (max-width:36rem) and (orientation:portrait){
     .stage{
-      min-height:max(var(--hero-floor),calc(100vh - var(--header-h) - var(--availability-strip-h)));
-      min-height:max(var(--hero-floor),calc(100svh - var(--header-h) - var(--availability-strip-h)));
-      min-height:max(var(--hero-floor),calc(100dvh - var(--header-h) - var(--availability-strip-h)));
+      min-height:max(var(--hero-floor),calc(100vh - var(--header-h) - var(--availability-strip-h) - var(--rule-width)));
+      min-height:max(var(--hero-floor),calc(100svh - var(--header-h) - var(--availability-strip-h) - var(--rule-width)));
+      min-height:max(var(--hero-floor),calc(100dvh - var(--header-h) - var(--availability-strip-h) - var(--rule-width)));
       /* Unter 400 px folgt auch der Schutzraum vor dem breiten MOIN wieder seiner
          tatsächlich breitenabhängigen Zeichnung. So gleicht die Anchor-Reserve bei
          320 px nicht durch unnötigen Leerraum oberhalb des LIDI aus. */
@@ -1210,7 +1283,7 @@
   .hero-note{position:absolute;
     left:calc(var(--pad) + 3*(100% - 2*var(--pad))/4 + var(--hero-inset));
     right:calc(var(--pad) + var(--hero-inset));
-    bottom:calc(75% + var(--hero-inset));
+    bottom:calc(100% - var(--hero-row1) + var(--hero-inset));
     margin:0;font-size:var(--type-subline);line-height:1.35;color:var(--ink);text-wrap:pretty;}
   .hero-note strong{font-weight:700;}
   /* ── Scroll-Hinweis ──────────────────────────────────────────────────────
@@ -1643,19 +1716,13 @@
   .reelbar-thumb:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
   @media (max-width: 52rem) {
-    /* Projekte: erste Kachel als Hero, alle weiteren als Reel darunter. */
-    .tilegrid { display: block; border: none; }
-    .lead { display: block; }
-    .lead > .tile { border-block: 1px solid var(--rule); border-inline: none; }
-    .lead > .tile .frame { aspect-ratio: 16 / 9; }
-
     /* Die Selektoren müssen mindestens so spezifisch sein wie die Desktop-Regel
        `.tilegrid > .reel { display: contents }`, sonst bleibt der Reel aufgelöst. */
     /* Die Umschaltung richtet sich nach dem realen Platz im jeweiligen Raster, nicht nach
        der Geräteklasse. So wechseln Projekte und Leistungen genau dann in den dichteren
        Zustand, wenn zwei lesbare Kacheln plus Anschnitt hineinpassen. */
-    .tilegrid, section.block#leistungen { container-type: inline-size; }
-    .tilegrid > .reel, .svc-grid.reel {
+    section.block#leistungen { container-type: inline-size; }
+    .svc-grid.reel {
       --reel-item-width:
         max(62.5%, min(82%, max(13rem, calc(24.375rem - 50vw))));
       overflow-x: auto; overflow-y: hidden;
@@ -1663,7 +1730,6 @@
       overscroll-behavior-x: contain;
       scrollbar-width: none;         /* der eigene Indicator übernimmt */
     }
-    .tilegrid > .reel { display: flex; }
     .svc-grid.reel {
       display: grid;
       grid-template-columns: none;
@@ -1675,14 +1741,6 @@
     /* Ohne JavaScript gibt es keinen zuverlässigen Overflow-Test und damit auch
        keinen bedienbaren eigenen Indicator. Dann zeigen wir alle Inhalte intrinsisch
        untereinander; mit JavaScript bleibt das freigegebene Reel-Layout unverändert. */
-    html:not(.has-js) .tilegrid > .reel {
-      display: grid;
-      grid-template-columns: 1fr;
-      grid-template-rows: none;
-      grid-auto-flow: row;
-      grid-auto-columns: auto;
-      overflow: visible;
-    }
     html:not(.has-js) .svc-grid.reel {
       grid-template-columns: 1fr;
       grid-template-rows: none;
@@ -1700,7 +1758,6 @@
       flex: 0 0 var(--reel-item-width);
       scroll-snap-align: start;
     }
-    .reel > .tile .frame, .reel > .tile.tile--hero .frame { aspect-ratio: 3 / 2; }
     .svc-grid.reel { border-top: 1px solid var(--rule); border-left: none; }
     .svc-grid.reel > .svc {
       border-bottom: 1px solid var(--rule);
@@ -1710,7 +1767,7 @@
     }
 
     @container (min-width: 29rem) {
-      .tilegrid > .reel, .svc-grid.reel { --reel-item-width: 45%; }
+      .svc-grid.reel { --reel-item-width: 45%; }
     }
     @container (max-width: 8rem) {
       .project-inquiry .k { display: none; }

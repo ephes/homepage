@@ -78,6 +78,23 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-15 portfolio layout and typography
+------------------------------------------
+
+* Hero: the middle grid row grows with ``Moin`` on wide screens; the lead follows below,
+  the hero may become taller than the screen.
+* Project tiles: four columns, a two-column 1-2 pattern, or the hero projects stacked
+  with the other projects in a reel — chosen by container queries on the projects area.
+* Project pages: hyphenated, smaller project titles on phones, calmer wrapping of lead
+  and case texts (no ``text-wrap: pretty``, limited hyphenation), optical left
+  alignment of headline lines, no visible frame around the mobile back-to-top link.
+* Empty texts and unchanged ``[…]`` starter placeholders in statement, challenge,
+  solution, stats and testimonial are no longer rendered. This removes the placeholder
+  testimonials currently visible on the live project pages.
+* Migrations ``portfolio.0004_hero_tile_help_text`` and
+  ``portfolio.0005_optional_case_texts`` only change help texts and block definitions;
+  they run no SQL.
+
 2026-10-15 portfolio content out of the code
 --------------------------------------------
 

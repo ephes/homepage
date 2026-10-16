@@ -1165,9 +1165,9 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
     inset-block-end: env(safe-area-inset-bottom, 0px);
     inline-size: 2.75rem;
     block-size: 2.75rem;
-    border: 1px solid currentColor;
-    border-inline-end: 0;
-    border-block-end: 0;
+    /* Die 44-px-Trefferfläche ist breiter als der mobile Seitenrand. Eine sichtbare
+       Kante läge deshalb im Inhalt und kreuzte den Rahmen; sichtbar bleibt nur der Pfeil. */
+    border: 0;
     background: transparent;
   }
   /* Der gedrehte Pfeil ist sichtbar etwa 10.4 × 24 px groß. Sein Mittelpunkt sitzt

@@ -175,6 +175,121 @@
 
   startHeadlineReveal();
 
+  /* Optischer Randausgleich der Headlines: Das CSS zieht jede Headline pauschal um die
+     linke Vorbreite eines geraden Versalstamms (Saira: .082em) nach links. Schräge und
+     runde Glyphen (A, T, V, Y, Z, O …) haben eine kleinere Vorbreite und stünden dann
+     vor. Das Skript misst für den ersten Buchstaben JEDER Zeile die Vorbreite in der
+     echten Schrift und rückt die Zeile um die Differenz zum Stamm (H) ein. Ohne Skript
+     bleibt der pauschale Ausgleich. */
+  function alignHeadingInk() {
+    var headings = [].slice.call(document.querySelectorAll(".motion-heading"));
+    if (!headings.length || !document.createRange) return;
+    var context = document.createElement("canvas").getContext("2d");
+    if (!context) return;
+
+    function sideBearing(style, character) {
+      context.font = style.fontStyle + " " + style.fontWeight + " 1000px " + style.fontFamily;
+      return -context.measureText(character).actualBoundingBoxLeft / 1000;
+    }
+
+    function unwrap(heading) {
+      [].forEach.call(heading.querySelectorAll(".ink-start"), function (span) {
+        span.replaceWith(span.firstChild);
+      });
+      heading.normalize();
+    }
+
+    function lineStarts(heading) {
+      var walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+          return node.parentNode.closest("svg, .sr-only")
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var starts = [], lastTop = null, range = document.createRange();
+      while (walker.nextNode()) {
+        var node = walker.currentNode;
+        for (var i = 0; i < node.length; i++) {
+          if (/\s/.test(node.data[i])) continue;
+          range.setStart(node, i);
+          range.setEnd(node, i + 1);
+          // Nach einer Silbentrennung liefert das erste Zeichen der neuen Zeile zwei
+          // Rechtecke (Trennstrich am Zeilenende + Zeichen); maßgeblich ist das letzte.
+          var rects = range.getClientRects();
+          var rect = rects[rects.length - 1];
+          if (!rect) continue;
+          if (lastTop === null || rect.top > lastTop + rect.height / 2) {
+            starts.push({ node: node, offset: i });
+          }
+          lastTop = rect.top;
+        }
+      }
+      return starts;
+    }
+
+    function shiftFor(style, character) {
+      var upper = style.textTransform === "uppercase";
+      var glyph = upper ? character.toUpperCase() : character;
+      return (sideBearing(style, "H") - sideBearing(style, glyph)) * parseFloat(style.fontSize);
+    }
+
+    // Das Einrücken kann den (ausgeglichenen) Zeilenfall verschieben. Deshalb wird so lange
+    // nachkorrigiert, bis jede Zeile genau dann mit einem Ausgleich beginnt, wenn sie einen
+    // braucht — höchstens viermal.
+    function align(heading) {
+      unwrap(heading);
+      var style = getComputedStyle(heading);
+      for (var pass = 0; pass < 4; pass++) {
+        var starts = lineStarts(heading);
+        var changed = false;
+        var keep = [];
+        for (var i = starts.length - 1; i >= 0; i--) {
+          var start = starts[i];
+          var wrapper = start.node.parentNode;
+          if (wrapper.classList && wrapper.classList.contains("ink-start")) {
+            keep.push(wrapper);
+            continue;
+          }
+          var shift = shiftFor(style, start.node.data[start.offset]);
+          if (Math.abs(shift) < .5) continue;
+          var glyph = start.node.splitText(start.offset);
+          glyph.splitText(1);
+          var span = document.createElement("span");
+          span.className = "ink-start";
+          span.style.marginInlineStart = shift.toFixed(2) + "px";
+          glyph.replaceWith(span);
+          span.appendChild(glyph);
+          keep.push(span);
+          changed = true;
+        }
+        [].forEach.call(heading.querySelectorAll(".ink-start"), function (span) {
+          if (keep.indexOf(span) === -1) {
+            span.replaceWith(span.firstChild);
+            changed = true;
+          }
+        });
+        heading.normalize();
+        if (!changed) break;
+      }
+    }
+
+    var frame = 0;
+    function alignAll() {
+      frame = 0;
+      headings.forEach(align);
+    }
+    function requestAlign() {
+      if (!frame) frame = requestAnimationFrame(alignAll);
+    }
+    var fontsReady = document.fonts && document.fonts.ready;
+    if (fontsReady) fontsReady.then(requestAlign, requestAlign);
+    else requestAlign();
+    addEventListener("resize", requestAlign, { passive: true });
+  }
+
+  alignHeadingInk();
+
   /* Die Leistungsinhalte laufen zeitbasiert, damit ein schneller Scrollsprung ihre
      Bewegung nicht vorspult. Beim Herunterscrollen startet die normale Leistungen-Headline
      dieselbe Welle; die Astagina-Handschrift gehört ausdrücklich nicht zu diesem Gate. */

@@ -391,7 +391,7 @@ def test_https_multisite_index_uses_its_own_request_relative_navigation(client, 
     assert 'href="/blogs/#projekte">Projekte</a>' in content
     assert 'href="/blogs/#about">Über mich</a>' in content
     assert 'href="/blogs/#kontakt">Kontakt</a>' in content
-    assert '<a class="tile" href="/blogs/sicheres-projekt/">' in content
+    assert '<a class="tile" href="/blogs/sicheres-projekt/" style="--tile-order: 1">' in content
     assert "default-portfolio" not in content
 
     project_response = client.get(

@@ -68,18 +68,18 @@
       <span class="count">[{{ portfolio_projects|length }}]</span>
     </div>
     <div class="tilegrid">
-      <!-- Auf dem Smartphone: erste Kachel als Hero, der Rest als Reel darunter.
-           Auf dem Desktop lösen sich .lead und .reel per display:contents auf, damit
-           alle Kacheln wieder direkte Grid-Elemente im Wechselrhythmus sind. -->
+      <!-- Schmal: die als Hero markierten Projekte als Stack untereinander, alle übrigen
+           im Reel darunter. Im 4er- und 2er-Raster lösen sich .lead und .reel per
+           display:contents auf; --tile-order stellt dort die Wagtail-Reihenfolge wieder her. -->
       <div class="lead">
-        {% with first_project=portfolio_projects|first %}
-          {% if first_project %}{% include "portfolio/components/project_card.html" with project=first_project request=request mobile_lead=True only %}{% endif %}
-        {% endwith %}
+        {% for project in portfolio_projects %}{% if project.homepage_is_hero %}
+          {% include "portfolio/components/project_card.html" with project=project request=request mobile_lead=True order=forloop.counter only %}
+        {% endif %}{% endfor %}
       </div>
       <div class="reel" id="project-reel" tabindex="-1" role="group" aria-labelledby="projects-title">
-        {% for project in portfolio_projects|slice:"1:" %}
-          {% include "portfolio/components/project_card.html" with project=project request=request only %}
-        {% endfor %}
+        {% for project in portfolio_projects %}{% if not project.homepage_is_hero %}
+          {% include "portfolio/components/project_card.html" with project=project request=request order=forloop.counter only %}
+        {% endif %}{% endfor %}
       </div>
       <div class="reelbar"><div class="reelbar-track"><div class="reelbar-thumb" role="scrollbar"
                                                            tabindex="0" aria-label="Durch die Projekte blättern" aria-controls="project-reel" aria-orientation="horizontal"

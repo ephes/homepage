@@ -390,7 +390,7 @@ def test_content_elements_keep_semantic_lists_and_neutral_browser_margins():
     assert declarations_for(base, {"[data-no-break]"})["white-space"] == "nowrap"
 
 
-def test_project_display_headline_uses_available_columns_without_word_hyphenation():
+def test_project_display_headline_hyphenates_words_wider_than_the_line():
     stylesheet_path = finders.find("portfolio/prototype/projekte/projekt.css")
 
     assert stylesheet_path is not None
@@ -399,8 +399,10 @@ def test_project_display_headline_uses_available_columns_without_word_hyphenatio
 
     assert headline["max-inline-size"] == "min(18ch, 100%)"
     assert headline["line-height"] == "1.03"
-    assert headline["-webkit-hyphens"] == "manual"
-    assert headline["hyphens"] == "manual"
+    assert headline["-webkit-hyphens"] == "auto"
+    assert headline["hyphens"] == "auto"
+    assert headline["hyphenate-limit-chars"] == "8 5 4"
+    assert headline["overflow-wrap"] == "break-word"
 
 
 def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():

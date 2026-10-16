@@ -31,6 +31,11 @@
   /* Gemeinsame hervorgehobene Lesestufe: Hero-Subline, Projekt-Lead und Prio-CTA. */
   --type-lead: clamp(1.2rem, calc(1.1rem + .3vw), 1.5rem);
   --type-case-large: clamp(1.6rem, 3.5vw, 3rem);
+  /* Projekttitel: auf Telefonen kleiner als --headline-xl (11.5vw ≈ 45px bei 393px),
+     damit lange Titel seltener getrennt werden; ab rund 490px gilt --headline-xl. */
+  --headline-project: min(var(--headline-xl), 11.5vw);
+  /* Lesetext der Fallstudie: --type-subline, aber auf Telefonen nie unter 16px. */
+  --type-copy: max(1rem, var(--type-subline));
   --scr-size: clamp(1rem, min(max(calc(1.54rem + 3.88vw), min(2.8rem, 11.5vw)), calc(12.25vw - .1375rem)), 8.4rem);
   /* Gemeinsamer vertikaler Headline-Rhythmus: Section, Eyebrow→Headline,
      Headline→Inhalt. Mehr Abstandsstufen braucht dieser Aufbau nicht. */
@@ -318,15 +323,23 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   max-inline-size: 18ch;
   max-inline-size: min(18ch, 100%);
   margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 var(--space-title-content) calc(var(--inset) - .082em);
-  font-size: var(--headline-xl);
+  font-size: var(--headline-project);
   font-weight: 600;
   line-height: 1.03;
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
   text-wrap: balance;
-  -webkit-hyphens: manual;
-  hyphens: manual;
-  overflow-wrap: normal;
+  /* Projekttitel kommen aus Wagtail und können Wörter enthalten, die breiter sind als
+     die Zeile. Deutsche Silbentrennung ab acht Zeichen mit mindestens fünf Zeichen vor
+     und vier nach der Trennstelle: keine Reste wie „-TÄT“, und kurze Wörter wie Vor- und
+     Nachnamen („MA-RINA“) bleiben ganz. Safari kennt nur die Präfix-Grenzen;
+     break-word fängt Wörter ab, die allein breiter sind als die Zeile. */
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 8 5 4;
+  -webkit-hyphenate-limit-before: 5;
+  -webkit-hyphenate-limit-after: 4;
+  overflow-wrap: break-word;
 }
 .case-row, .result-grid, .more-grid, .footer-grid {
   display: grid;
@@ -352,8 +365,21 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   margin: 0;
   font-size: var(--type-lead);
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  /* Deutsche Silbentrennung nur für lange Wörter (ab 14 Zeichen, Bruchstücke ab 6):
+     In echtem Chrome und WebKit gemessen ergibt das rund ein Drittel weniger Trennstriche
+     als ab 8 Zeichen, bei kaum mehr Flatterrand. Früher stand hier `overflow-wrap:
+     anywhere`; damit durfte der Browser auch ohne Trennstrich mitten im Wort umbrechen. */
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 14 6 6;
+  /* Safari kennt `hyphenate-limit-chars` nicht, wohl aber die älteren Präfix-Grenzen. */
+  -webkit-hyphenate-limit-before: 6;
+  -webkit-hyphenate-limit-after: 6;
+  overflow-wrap: break-word;
 }
+/* Kein `pretty` im Lead: Zusammen mit der Silbentrennung glich es die Zeilenlängen über
+   viele Trennstriche aus. Der normale Zeilenfall trennt nur, wo ein Wort nicht mehr passt. */
+.project-lead p { text-wrap: wrap; }
 .project-summary {
   display: flex;
   flex-direction: column;
@@ -481,8 +507,21 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
-.case-copy { grid-column: 2 / 4; margin: 0; padding-inline: var(--inset); max-inline-size: 52rem; font-size: var(--type-subline); line-height: 1.5; }
+.case-copy { grid-column: 2 / 4; margin: 0; padding-inline: var(--inset); max-inline-size: 52rem; font-size: var(--type-copy); line-height: 1.5; }
 .case-copy.large { font-size: var(--type-case-large); line-height: 1.15; }
+/* Fließtexte der Fallstudie: normaler Zeilenfall statt `pretty` (das glich über viele
+   Trennstriche aus) und Silbentrennung ab acht Zeichen mit Bruchstücken ab vier — auf dem
+   Telefon abgestimmt als Ausgleich zwischen Trennstrichen und Lücken am Zeilenende.
+   Safari kennt nur die Präfix-Grenzen. */
+.case-copy, .case-copy p, .case-copy li {
+  text-wrap: wrap;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 8 4 4;
+  -webkit-hyphenate-limit-before: 4;
+  -webkit-hyphenate-limit-after: 4;
+  overflow-wrap: break-word;
+}
 .gallery {
   display: flex;
   flex-wrap: wrap;

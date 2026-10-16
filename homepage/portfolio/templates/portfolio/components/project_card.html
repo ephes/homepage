@@ -1,5 +1,5 @@
 {% load portfolio_content wagtailcore_tags wagtailimages_tags %}
-<a class="tile{% if project.homepage_is_hero %} tile--hero{% endif %}" href="{% pageurl project %}">
+<a class="tile{% if project.homepage_is_hero %} tile--hero{% endif %}" href="{% pageurl project %}"{% if order %} style="--tile-order: {{ order }}"{% endif %}>
   <div class="tile-depth">
     <div class="frame{% if project.teaser_image %} frame--image{% endif %}">
       {% if project.teaser_image %}

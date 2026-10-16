@@ -4,7 +4,7 @@ import pytest
 from django.contrib.staticfiles import finders
 from django.test import RequestFactory
 
-from homepage.portfolio.models import default_project_content
+from .test_pages import filled_project_content
 
 from .test_pages import add_project, make_portfolio_tree
 from .test_styles import declarations_for, layer_body
@@ -15,7 +15,7 @@ pytestmark = pytest.mark.django_db
 def test_project_uses_canonical_prototype_assets_without_the_destructive_prototype_renderer():
     index = make_portfolio_tree()
     project = add_project(index)
-    project.content = default_project_content()
+    project.content = filled_project_content()
     project.save_revision().publish()
     add_project(index, title="Zweites Projekt")
 
@@ -51,7 +51,7 @@ def test_project_uses_canonical_prototype_assets_without_the_destructive_prototy
     assert 'class="block project-testimonial"' in content
     assert ">Mehrwert</p>" in content
     assert ">Kundenstimmen</p>" in content
-    assert "Optionales Kundenstatement zum Projekt." in content
+    assert "Ein Kundenstatement." in content
     assert 'id="other-projects-title">Weiterse\u00adhen.</h2>' in content
     assert 'class="block contact" id="kontakt"' in content
     assert "<text>tell me more</text>" in content

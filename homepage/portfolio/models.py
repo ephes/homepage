@@ -11,6 +11,7 @@ from wagtail.models import Orderable, Page, Site
 from wagtail.rich_text import RichTextMaxLengthValidator
 
 from .blocks import (
+    block_is_filled,
     PROJECT_BLOCK_REGION_CASE_STUDY,
     PROJECT_BLOCK_REGION_MEDIA,
     LegalSectionsBlock,
@@ -961,9 +962,9 @@ class ProjectPage(PortfolioContextMixin, Page):
         "Hero-Kachel auf der Startseite",
         default=False,
         help_text=(
-            "Stellt das Projekt im Desktop-Raster groß und quer im Format 21:9 dar. "
-            "Mobil bleibt das erste Projekt der sortierten Reihenfolge der große "
-            "16:9-Einstieg; alle weiteren Projekte laufen im einheitlichen Reel."
+            "Stellt das Projekt groß und quer im Format 21:9 dar: im Desktop-Raster über "
+            "zwei Spalten, im schmaleren Raster über die volle Breite. Mobil stehen alle "
+            "Hero-Projekte im Format 16:9 untereinander; alle übrigen laufen im Reel darunter."
         ),
     )
     client = models.CharField("Kunde", max_length=160, blank=True)
@@ -1120,7 +1121,8 @@ class ProjectPage(PortfolioContextMixin, Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
         context["other_projects"] = self.get_other_projects(context["portfolio_projects"])
-        project_block_types = {block.block_type for block in self.content}
+        # Leere Blöcke und unveränderte Platzhalter der Projektvorlage zählen nicht.
+        project_block_types = {block.block_type for block in self.content if block_is_filled(block)}
         numbered_projects = list(context["portfolio_projects"])
         try:
             project_number = next(

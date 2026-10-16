@@ -459,6 +459,11 @@ class PortfolioSiteSettings(BaseSiteSetting):
         max_length=80,
         default="Kunde",
     )
+    project_meta_focus_label = models.CharField(
+        "Projekt: Fokus",
+        max_length=80,
+        default="Fokus",
+    )
     project_meta_services_label = models.CharField(
         "Projekt: Leistungen",
         max_length=80,
@@ -543,6 +548,7 @@ class PortfolioSiteSettings(BaseSiteSetting):
                 FieldPanel("project_meta_category_label"),
                 FieldPanel("project_meta_year_label"),
                 FieldPanel("project_meta_client_label"),
+                FieldPanel("project_meta_focus_label"),
                 FieldPanel("project_meta_services_label"),
                 FieldPanel("project_live_link_label"),
                 FieldPanel("project_statement_heading"),
@@ -972,6 +978,12 @@ class ProjectPage(PortfolioContextMixin, Page):
         ),
     )
     client = models.CharField("Kunde", max_length=160, blank=True)
+    focus = models.CharField(
+        "Fokus",
+        max_length=160,
+        blank=True,
+        help_text="Worauf das Projekt den Schwerpunkt legt. Leer: Der Punkt erscheint nicht.",
+    )
     live_url = models.URLField(blank=True)
     live_link_label = models.CharField(
         "Text des Website-Buttons",
@@ -1071,6 +1083,7 @@ class ProjectPage(PortfolioContextMixin, Page):
                 FieldPanel("end_year"),
                 FieldPanel("homepage_is_hero"),
                 FieldPanel("client"),
+                FieldPanel("focus"),
                 FieldPanel("live_url"),
                 FieldPanel("live_link_label"),
                 FieldPanel("teaser_image"),

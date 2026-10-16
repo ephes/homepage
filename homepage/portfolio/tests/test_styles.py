@@ -432,7 +432,8 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
     assert metadata["flex-wrap"] == "wrap"
     assert metadata_columns["flex-basis"] == ("calc((var(--meta-threshold) - 100%) * 999)")
     assert metadata_labels["translate"] == "0 -.0625rem"
-    assert facts["flex-direction"] == "column"
+    assert metadata_columns["flex-direction"] == "column"
+    assert facts["justify-content"] == "space-between"
     assert services["flex-direction"] == "column"
     assert services["list-style"] == "none"
     assert ".project-service-arrow" not in stylesheet

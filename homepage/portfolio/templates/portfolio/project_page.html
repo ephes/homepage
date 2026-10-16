@@ -40,6 +40,7 @@
           <div><dt>{{ portfolio_site_settings.project_meta_category_label }}</dt><dd>{{ page.get_category_display }}</dd></div>
           {% if page.client %}<div><dt>{{ portfolio_site_settings.project_meta_client_label }}</dt><dd>{{ page.client }}</dd></div>{% endif %}
           <div><dt>{{ portfolio_site_settings.project_meta_year_label }}</dt><dd>{{ page.year_display }}</dd></div>
+          {% if page.focus %}<div><dt>{{ portfolio_site_settings.project_meta_focus_label }}</dt><dd>{{ page.focus }}</dd></div>{% endif %}
         </dl>
         <dl class="project-meta__services">
           <div>

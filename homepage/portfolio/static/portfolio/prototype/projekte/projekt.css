@@ -28,6 +28,9 @@
   --headline-m: clamp(1rem, min(max(4vw, min(2.5rem, 10.625vw)), calc(11.25vw - .125rem)), 7rem);
   --headline-s: clamp(.75rem, min(max(1.9vw, min(1.5rem, 6.875vw)), calc(7.5vw - .125rem)), 3rem);
   --type-eyebrow: clamp(.59rem, min(calc(.69rem + .12vw), calc(.409rem + 1.554vw)), .82rem);
+  /* Labels der Projektdetails (Bereich, Kunde, Jahr, Fokus, Leistungen): eine Stufe unter
+     --type-eyebrow, rund 11px am Laptop und 10px auf dem Telefon. */
+  --type-meta-label: clamp(.55rem, min(calc(.6rem + .1vw), calc(.356rem + 1.35vw)), .72rem);
   /* Kleine Lesestufe: Projektdetails, Kacheltitel, Beschriftungen, Footer. Rund 15px am
      Laptop, 14px auf dem Telefon. */
   --type-subline: clamp(.75rem, min(calc(.84rem + .1vw), calc(.465rem + 1.8vw)), .95rem);
@@ -476,12 +479,17 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   display: flex;
   min-inline-size: 0;
   flex-wrap: wrap;
+  align-items: stretch;
   margin: 0;
 }
 .project-meta > dl {
   min-inline-size: 0;
   flex-basis: calc((var(--meta-threshold) - 100%) * 999);
   flex-grow: 1;
+  /* Nebeneinander sind beide Spalten gleich hoch (die höhere bestimmt): Fakten und
+     Leistungen verteilen sich darin, sodass beide oben und unten bündig abschließen. */
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding-inline: var(--inset);
 }
@@ -491,17 +499,51 @@ dl.project-meta {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
-.project-meta__facts { display: flex; flex-direction: column; gap: 1.2rem; }
+/* Zwischen Label und Wert steht immer weniger Abstand (enger Label-Zeilenfall, dd ohne
+   Außenabstand) als zwischen einem Wert und dem nächsten Label (mindestens .55rem, mehr,
+   wenn die Spalte gestreckt wird). */
+.project-meta__facts { justify-content: space-between; gap: .55rem; }
+.project-meta__services > div,
+.project-meta__services dd { display: flex; flex: 1; flex-direction: column; }
+.project-meta__services .project-service-list { flex: 1; justify-content: space-between; }
+/* Die eingerückte Bullet-Liste braucht etwas mehr Luft unter ihrem Label als ein einzelner
+   Wert; die Bullets rücken dafür enger zusammen. */
+.project-service-list > li:first-child { margin-block-start: .3rem; }
+.project-meta__services .project-service-list { gap: .2rem; }
 .project-meta dt {
   color: var(--muted);
-  font-size: var(--type-eyebrow);
+  font-size: var(--type-meta-label);
   font-weight: 600;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
+  line-height: 1.2;
   /* Match the visible cap edge of the larger lead, not merely its line box. */
   translate: 0 -.0625rem;
 }
-.project-meta dd { margin: .35rem 0 0; font-size: var(--type-subline); font-weight: 600; line-height: 1.3; }
+/* Mini-Asterisk in Tangerine vor dem Label, dieselbe Marke wie bei den Eyebrows (Maske
+   in motion.css), auf .75em der Labelschrift. */
+.project-meta dt {
+  display: flex;
+  align-items: center;
+  gap: .5625em;
+}
+.project-meta dt::before {
+  content: "";
+  flex: none;
+  inline-size: .75em;
+  block-size: .75em;
+  background-color: var(--tangerine);
+  -webkit-mask: var(--asterisk-mark) center / contain no-repeat;
+  mask: var(--asterisk-mark) center / contain no-repeat;
+}
+.project-meta dd {
+  margin: 0;
+  /* Bündig mit dem Labeltext: Asterisk (.75em) plus Abstand (.5625em) in Labelgröße. */
+  padding-inline-start: calc(1.3125 * var(--type-meta-label));
+  font-size: var(--type-subline);
+  font-weight: 600;
+  line-height: 1.3;
+}
 .marker-list,
 .rich-text ul {
   display: flex;

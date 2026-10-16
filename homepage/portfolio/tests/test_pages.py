@@ -433,6 +433,7 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
     index = make_portfolio_tree()
     project = add_project(index, live_url="https://example.com/live")
     project.client = "Beispielkunde"
+    project.focus = "Beispielfokus"
     project.content = filled_project_content()
     project.save_revision().publish()
     add_project(index, title="Weiteres Projekt")
@@ -451,6 +452,7 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
         "project_meta_category_label": "Sentinel Bereich",
         "project_meta_year_label": "Sentinel Jahr",
         "project_meta_client_label": "Sentinel Kunde",
+        "project_meta_focus_label": "Sentinel Fokus",
         "project_meta_services_label": "Sentinel Projektleistungen",
         "project_live_link_label": "Sentinel Website",
         "project_statement_heading": "Sentinel Projektstatement",
@@ -472,6 +474,22 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
 
     for field_name, sentinel in sentinels.items():
         assert sentinel in rendered_text, field_name
+
+
+def test_project_focus_renders_after_the_year_only_when_filled(client):
+    index = make_portfolio_tree()
+    project = add_project(index)
+
+    empty = BeautifulSoup(client.get(project.url).content, "html.parser")
+    assert "Fokus" not in [dt.get_text(strip=True) for dt in empty.select(".project-meta__facts dt")]
+
+    project.focus = "Markenauftritt"
+    project.save_revision().publish()
+    filled = BeautifulSoup(client.get(project.url).content, "html.parser")
+    facts = [(row.dt.get_text(strip=True), row.dd.get_text(strip=True)) for row in filled.select(".project-meta__facts > div")]
+
+    assert facts[-1] == ("Fokus", "Markenauftritt")
+    assert [label for label, _ in facts].index("Jahr") == len(facts) - 2
 
 
 def test_homepage_renders_fixed_moin_instead_of_the_legacy_hero_field(client):

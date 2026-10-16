@@ -76,11 +76,11 @@
     border-radius: 100px;
     padding: 0.5rem 1.2rem;
     font-size: var(--type-subline);
-    font-weight: 600;
+    font-weight: var(--pill-secondary-weight);
     letter-spacing: var(--tracking-action);
     text-decoration: none;
   }
-  .pill.ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+  .pill.ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink); font-weight: var(--pill-ghost-weight); }
   /* ── Prio 1 ───────────────────────────────────────────────────────────────
      Dritte Stufe über den bestehenden zwei: `.pill` (warmes Schwarz — Navigation,
      CTA-Kachel) ist
@@ -960,6 +960,11 @@
     /* Gemeinsame hervorgehobene Lesestufe: Hero-Subline, Projekt-Lead und Prio-CTA.
        1.2rem Untergrenze hält Creme auf Tangerine bei 700 sicher in der Großtext-Stufe. */
     --type-lead: clamp(1.2rem, calc(1.1rem + .3vw), 1.5rem);
+    /* Button-Schnitte: Prio 1 (orange) 700; gefüllte Secondary-Buttons einen Schnitt feiner;
+       umrandeter Prio-3-Button etwas kräftiger, weil dunkle Schrift auf Hell leichter wirkt.
+       Beim Überfahren steht er hell auf dunkel und nimmt den Secondary-Schnitt an. */
+    --pill-secondary-weight: 500;
+    --pill-ghost-weight: 550;
     /* Drei gemeinsame vertikale Rhythmusstufen für Start- und Projektseiten. */
     --space-section: clamp(3rem, 7vw, 6rem);
     --space-eyebrow-title: .086em;
@@ -1020,7 +1025,7 @@
   header.site > .avail { color: #4B4F48; }
   .avail::before{content:"";inline-size:0.5rem;block-size:0.5rem;border-radius:50%;background:var(--smaragd);}
   .availability-strip { display: none; }
-  .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:var(--type-subline);font-weight:600;text-decoration:none;}
+  .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:var(--type-subline);font-weight:var(--pill-secondary-weight);text-decoration:none;}
   /* Kontakt bleibt der direkte Hauptweg; das eingeklappte Ankermenü sitzt als zweite
      Aktion daneben. Native details/summary hält es ohne Menü-Framework bedienbar. */
   .header-actions { display: flex; align-items: center; gap: clamp(.25rem, calc(-1.25rem + 10vw), 2rem); }

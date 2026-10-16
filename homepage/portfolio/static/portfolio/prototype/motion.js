@@ -134,7 +134,10 @@
 
   function startHeadlineReveal() {
     if (reduce.matches) return;
-    var headings = [].slice.call(document.querySelectorAll(".motion-heading"));
+    /* `.motion-reveal` bewegt Texte wie den Projekt-Anleser genauso wie die Headlines,
+       ohne den optischen Randausgleich, der an `.motion-heading` hängt. */
+    var headings = [].slice.call(document.querySelectorAll(".motion-heading, .motion-reveal"))
+      .filter(function (node) { return !node.parentElement.closest(".motion-reveal"); });
     if (!headings.length) return;
     var frame = 0;
     var ENTER = 12;
@@ -156,10 +159,7 @@
         var entered = bottom >= viewTop + enterInset && top <= viewBottom - enterInset;
         if (entered) {
           if (!heading.classList.contains("is-visible")) {
-            heading.style.setProperty(
-              "--headline-enter-y",
-              top < viewTop ? "-.42em" : ".42em"
-            );
+            heading.style.setProperty("--motion-enter-direction", top < viewTop ? "-1" : "1");
             heading.classList.add("is-visible");
           }
         } else if (bottom < viewTop - EXIT || top > viewBottom + EXIT) {

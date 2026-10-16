@@ -333,20 +333,29 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 /* JavaScript setzt ausschließlich den Eintrittsstatus; Form, Timing und Bewegung bleiben
    CSS. Die Grunddarstellung bleibt absichtlich sichtbar (fail-open): Bleibt ein Observer-
    Signal aus, fehlt höchstens die Animation, niemals die Headline. */
-.motion-heading { transform-origin: left bottom; }
-.motion-heading.is-visible {
+.motion-heading,
+.motion-reveal { transform-origin: left bottom; }
+.motion-heading.is-visible,
+.motion-reveal.is-visible {
   animation: headline-reveal 1040ms cubic-bezier(.22, 1, .36, 1) both;
 }
+/* Strecke: .42em der jeweiligen Schrift, oder fest über --motion-enter-distance. Die
+   Richtung setzt das Skript (1 = von unten, -1 = von oben). */
 @keyframes headline-reveal {
-  from { transform: translateY(var(--headline-enter-y, .42em)); }
+  from {
+    transform: translateY(calc(var(--motion-enter-direction, 1) * var(--motion-enter-distance, .42em)));
+  }
   to { transform: none; }
 }
+/* Eine Headline innerhalb eines bewegten Blocks bewegt sich nur mit ihm. */
+html:not(.has-js) .motion-reveal .motion-heading { animation: none; }
 
 /* Ohne JavaScript übernimmt eine native View-Timeline denselben Richtungswechsel:
    Eintritt unten = von unten nach oben, Eintritt oben = von oben nach unten. Die lange
    ruhige Mitte verhindert, dass die Headline beim Durchscrollen ständig weiterwandert. */
 @supports (animation-timeline: view()) {
   html:not(.has-js) .motion-heading,
+  html:not(.has-js) .motion-reveal,
   html:not(.has-js) .no-js-content h1 {
     animation: headline-view-in linear forwards,
                headline-view-out linear forwards;
@@ -355,19 +364,18 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   }
 }
 @keyframes headline-view-in {
-  from { transform: translateY(.42em); }
+  from { transform: translateY(var(--motion-enter-distance, .42em)); }
   to { transform: none; }
 }
 @keyframes headline-view-out {
   from { transform: none; }
-  to { transform: translateY(-.42em); }
+  to { transform: translateY(calc(-1 * var(--motion-enter-distance, .42em))); }
 }
 
 /* Fließtexte auf den Projektseiten sortieren sich von rechts an ihrer Satzkante ein.
    Das Raster bleibt stehen; weder Deckkraft noch Buchstabenform werden verändert. Ohne
    View-Timeline-Support ist alles sichtbar. */
 @supports (animation-timeline: view()) {
-  .project-lead,
   .case-copy,
   .quote p {
     animation: body-copy-settle linear both;
@@ -671,9 +679,10 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
      Erst am Anschlag wechselt die Schrift auf Creme über dem dunklen Untergrund. */
   animation: ghost-fold-ink 760ms linear both;
 }
+/* Mit der Schriftfarbe wechselt auch der Schnitt (Tokens in den Seiten-Stylesheets). */
 @keyframes ghost-fold-ink {
-  0%, 54% { color: var(--fold-face-ink); }
-  62%, 100% { color: var(--fold-ink); }
+  0%, 54% { color: var(--fold-face-ink); font-weight: var(--pill-ghost-weight, 550); }
+  62%, 100% { color: var(--fold-ink); font-weight: var(--pill-secondary-weight, 500); }
 }
 .pill.prio {
   --fold-face: var(--tangerine);
@@ -1214,7 +1223,9 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .motion-heading,
+  .motion-reveal,
   html:not(.has-js) .motion-heading,
+  html:not(.has-js) .motion-reveal,
   html:not(.has-js) .no-js-content h1,
   .project-lead, .case-copy, .quote p,
   .svc > .ico, .svc > h3, .svc > p,
@@ -1240,6 +1251,7 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   .pill.ghost:hover, .pill.ghost:focus-visible {
     animation: none;
     color: var(--fold-ink);
+    font-weight: var(--pill-secondary-weight, 500);
   }
   .tile:not(.cta):hover .tile-depth,
   .tile:not(.cta):focus-visible .tile-depth,

@@ -38,6 +38,11 @@
   --type-menu-project: clamp(.75rem, min(calc(.9rem + .2vw), calc(.534rem + 2.077vw)), 1.1rem);
   /* Gemeinsame hervorgehobene Lesestufe: Hero-Subline, Projekt-Lead und Prio-CTA. */
   --type-lead: clamp(1.2rem, calc(1.1rem + .3vw), 1.5rem);
+  /* Button-Schnitte: Prio 1 (orange) 700; gefüllte Secondary-Buttons einen Schnitt feiner;
+     umrandeter Prio-3-Button etwas kräftiger, weil dunkle Schrift auf Hell leichter wirkt.
+     Beim Überfahren steht er hell auf dunkel und nimmt den Secondary-Schnitt an. */
+  --pill-secondary-weight: 500;
+  --pill-ghost-weight: 550;
   --type-case-large: clamp(1.6rem, 3.5vw, 3rem);
   /* Projekttitel: auf Telefonen kleiner als --headline-xl (11.5vw ≈ 45px bei 393px),
      damit lange Titel seltener getrennt werden; ab rund 490px gilt --headline-xl. */
@@ -198,7 +203,7 @@ p { text-wrap: pretty; }
   letter-spacing: var(--tracking-action);
   font: inherit;
   font-size: var(--type-subline);
-  font-weight: 600;
+  font-weight: var(--pill-secondary-weight);
   text-decoration: none;
 }
 .header-actions { display: flex; align-items: center; gap: clamp(.25rem, calc(-1.25rem + 10vw), 2rem); }
@@ -369,20 +374,22 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .project-intro {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "head" "lead" "media" "meta" "link";
+  grid-template-areas: "head" "media" "meta" "link";
   justify-items: start;
 }
 /* Headline und Anleser gehören zusammen und stehen eng; Bild und Button setzen sich mit
    dem Abschnittsabstand davon ab. Schmal schließen die Projektdetails ohne Abstand an das
    Bild an: ihre obere Linie ist die Unterkante des Bildes. */
-.project-intro > .project-lead { margin-block-start: var(--s1); }
+.project-intro__head > .project-lead { margin-block-start: var(--s1); }
 .project-intro > .project-hero-media,
 .project-intro > .hero-media,
 .project-intro > .project-live-link { margin-block-start: var(--space-title-content); }
 .project-intro__head { grid-area: head; }
 .project-intro__head > .eyebrow,
 .project-intro__head > h1 { margin-block-end: 0; }
-.project-intro > .project-lead { grid-area: lead; padding-inline: var(--inset); }
+.project-intro__head > .project-lead { padding-inline: var(--inset); }
+/* Kopf und Anleser gleiten gemeinsam und mit fester Strecke herein (motion.css). */
+.project-intro__head { --motion-enter-distance: 2rem; }
 .project-intro > .project-hero-media,
 .project-intro > .hero-media {
   grid-area: media;
@@ -408,15 +415,14 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   @container project (width >= 60rem) {
     .project-intro {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: minmax(0, 1fr) repeat(4, auto) minmax(0, 1fr);
-      grid-template-areas: ". media" "head media" "lead media" "meta media" "link media" ". media";
+      grid-template-rows: minmax(0, 1fr) repeat(3, auto) minmax(0, 1fr);
+      grid-template-areas: ". media" "head media" "meta media" "link media" ". media";
       min-block-size: calc(100svh - var(--header-h));
       padding-block: 0;
     }
     /* Kopf und Anleser halten Abstand zum Bild; die Projektdetails reichen bis zur
        Mittellinie, damit ihre zwei Spalten auf den Linien des Seitenrasters stehen. */
     .project-intro__head,
-    .project-intro > .project-lead,
     .project-intro > .project-live-link { margin-inline-end: var(--s2); }
     .project-intro > .project-meta { margin-block-start: var(--space-title-content); }
     .project-intro h1 { font-size: var(--headline-m); }

@@ -369,7 +369,7 @@
     color: var(--bg);
     background: var(--ink);
     font-size: min(var(--type-subline), calc(0.15rem + 4vw));
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: var(--tracking-action);
     text-decoration: none;
     white-space: nowrap;
@@ -810,7 +810,7 @@
     border-radius: 100vmax;
     color: var(--portfolio-bg);
     background: var(--portfolio-text);
-    font-weight: 700;
+    font-weight: 500;
     text-decoration: none;
   }
 }

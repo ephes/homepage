@@ -18,11 +18,12 @@
   <article class="project">
     <header class="project-hero project-intro" id="projektstart">
       <a class="project-index-link sr-only" href="{{ portfolio_home_url }}#projekte">Zurück zu allen Projekten</a>
-      <div class="project-intro__head">
+      {# Headline und Anleser bewegen sich als ein Block (motion-reveal); die Headline behält über motion-heading nur ihren optischen Randausgleich. #}
+      <div class="project-intro__head motion-reveal">
         <p class="eyebrow">{{ portfolio_site_settings.project_kicker }} {{ project_number|stringformat:"02d" }} / {{ project_total|stringformat:"02d" }}</p>
         <h1 class="motion-heading">{{ page.title }}</h1>
+        <div class="project-lead">{{ page.teaser_text|richtext }}</div>
       </div>
-      <div class="project-lead">{{ page.teaser_text|richtext }}</div>
       {% if page.hero_image or page.hero_surface_style or page.hero_background_image %}
         {# Titelbild in zwei Ebenen: Fläche (Farbe, Verlauf, Bild) füllt den Bereich, das Motiv liegt eingepasst darauf und wird nie beschnitten. #}
         {% if page.hero_background_image %}{% image page.hero_background_image width-2200 as hero_background %}{% endif %}

@@ -426,7 +426,7 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
 
     assert article["container"] == "project / inline-size"
     assert intro["display"] == "grid"
-    assert intro["grid-template-areas"] == '"head" "lead" "media" "meta" "link"'
+    assert intro["grid-template-areas"] == '"head" "media" "meta" "link"'
     assert "@container project (width >= 60rem)" in stylesheet
     assert metadata["display"] == "flex"
     assert metadata["flex-wrap"] == "wrap"

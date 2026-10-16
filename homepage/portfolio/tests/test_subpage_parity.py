@@ -38,7 +38,7 @@ def test_project_uses_canonical_prototype_assets_without_the_destructive_prototy
     assert 'class="project-index-link sr-only"' in content
     assert content.count('document.documentElement.classList.add("has-js")') == 1
     assert 'class="motion-heading"' in content
-    assert 'class="project-intro__head"' in content
+    assert 'class="project-intro__head motion-reveal"' in content
     assert 'class="project-meta__facts"' in content
     assert 'class="project-meta__services"' in content
     assert '<aside class="project-meta" aria-label="Projektdetails">' in content

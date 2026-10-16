@@ -88,18 +88,22 @@ body[data-project] .pagegrid .pagegrid__cols > i:last-child {
 }
 
 .project-hero-media {
-  inline-size: 100%;
-  aspect-ratio: 21 / 9;
+  margin: 0;
   overflow: hidden;
   border-block: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--warm-black) 6%, var(--bg));
+  /* Fläche aus Wagtail: Bild über Verlauf über Farbe; ohne Angaben die neutrale Fläche. */
+  background-color: var(--hero-bg-color, color-mix(in srgb, var(--warm-black) 6%, var(--bg)));
+  background-image: var(--hero-bg-image, none), var(--hero-bg-gradient, none);
+  background-position: center;
+  background-size: cover;
 }
 
+/* Das Motiv wird eingepasst statt beschnitten, damit es bei jeder Flächenform ganz bleibt. */
 .project-hero-media img {
   display: block;
   inline-size: 100%;
   block-size: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .project-image {

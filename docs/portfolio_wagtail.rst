@@ -23,6 +23,18 @@ Content model
     The switch follows the width of the projects area (container queries), not the
     screen; the order is always the order of the pages in Wagtail.
 
+    The project header ("Titelbild" panel) is drawn in two layers. The surface fills the
+    whole image area: a background colour (``#RRGGBB``), optionally a second colour with
+    a direction for a gradient, and optionally a background image on top that is
+    cropped to the area. The motif (``hero_image``, ideally a transparent PNG) lies on
+    that surface and is always shown whole, never cropped. Without any of them a
+    neutral placeholder is shown. When the article is at least 60rem wide (container
+    query) and the window is clearly landscape, at least 5:4 (media query), text and
+    image stand side by side, the image from the header to the bottom of the screen.
+    Otherwise, including tablets in portrait, nearly square windows and phones in
+    landscape, headline and lead come first, then the image, the project details and
+    the live link.
+
 ``ProjectCategory``
     Snippet with the categories shown on project tiles.
 

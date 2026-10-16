@@ -418,17 +418,16 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
         {".marker-list > li::before", ".rich-text ul > li::before"},
     )
     live_link = declarations_for(stylesheet, {".project-live-link"})
-    summary = declarations_for(stylesheet, {".project-summary"})
     lead = declarations_for(stylesheet, {".project-lead"})
-    intro = declarations_for(stylesheet, {".intro-grid"})
-    intro_children = declarations_for(stylesheet, {".intro-grid > *"})
+    article = declarations_for(stylesheet, {".project"})
+    intro = declarations_for(stylesheet, {".project-intro"})
     metadata_columns = declarations_for(stylesheet, {".project-meta > dl"})
     metadata_labels = declarations_for(stylesheet, {".project-meta dt"})
 
-    assert intro["display"] == "flex"
-    assert intro["flex-wrap"] == "wrap"
-    assert intro["container-type"] == "inline-size"
-    assert intro_children["flex-basis"] == ("calc((var(--intro-threshold) - 100%) * 999)")
+    assert article["container"] == "project / inline-size"
+    assert intro["display"] == "grid"
+    assert intro["grid-template-areas"] == '"head" "lead" "media" "meta" "link"'
+    assert "@container project (width >= 60rem)" in stylesheet
     assert metadata["display"] == "flex"
     assert metadata["flex-wrap"] == "wrap"
     assert metadata_columns["flex-basis"] == ("calc((var(--meta-threshold) - 100%) * 999)")
@@ -441,14 +440,10 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
     assert arrowhead["border-inline-start"] == ".34rem solid var(--ink)"
     assert live_link["display"] == "inline-flex"
     assert live_link["gap"] == ".7rem"
-    assert live_link["margin-block-start"] == "auto"
     assert live_link["padding-block"] == ".425rem"
     assert live_link["font-size"] == "1.2rem"
     assert live_link["font-weight"] == "700"
-    assert summary["display"] == "flex"
-    assert summary["flex-direction"] == "column"
-    assert summary["gap"] == "1.875rem"
-    assert lead["max-inline-size"] == ("calc(100% - clamp(0rem, calc((100cqi - var(--intro-threshold)) * 999), 2rem))")
+    assert lead["max-inline-size"] == "100%"
 
 
 def test_project_case_rows_align_labels_and_copy_without_rich_text_margin_drift():

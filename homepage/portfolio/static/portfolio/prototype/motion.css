@@ -281,7 +281,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   gap: calc(clamp(.7rem, 1.2vw, 1rem) + .0823 * var(--headline-m) - .0916em);
   min-inline-size: 0;
   color: var(--ink);
-  font-size: var(--type-subline);
+  font-size: var(--type-menu-project);
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: var(--tracking-action);

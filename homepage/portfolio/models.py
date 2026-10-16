@@ -1,7 +1,8 @@
+import re
 from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
@@ -913,6 +914,15 @@ class ProjectCategory(models.Model):
         return self.name
 
 
+HEX_COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
+hex_color_validator = RegexValidator(HEX_COLOR_PATTERN, "Bitte einen Farbwert im Format #RRGGBB angeben.")
+HERO_GRADIENT_DIRECTIONS = [
+    ("to bottom", "Nach unten"),
+    ("to right", "Nach rechts"),
+    ("135deg", "Diagonal"),
+]
+
+
 class ProjectPage(PortfolioContextMixin, Page):
     """A server-rendered portfolio case study."""
 
@@ -992,14 +1002,49 @@ class ProjectPage(PortfolioContextMixin, Page):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
-        verbose_name="Projekt-Hero",
-        help_text="Während der Datenmigration noch optional; vor dem finalen Launch erforderlich machen.",
+        verbose_name="Motiv des Titelbilds",
+        help_text=(
+            "Am besten ein PNG mit Transparenz. Das Motiv liegt auf der Hintergrundfläche und wird "
+            "immer vollständig gezeigt, nie beschnitten."
+        ),
     )
     hero_image_alt = models.CharField(
-        "Alternativtext des Projekt-Heros",
+        "Alternativtext des Motivs",
         max_length=240,
         blank=True,
         help_text="Beschreibt den Bildinhalt knapp für Menschen, die das Bild nicht sehen können.",
+    )
+    hero_background_color = models.CharField(
+        "Hintergrundfarbe des Titelbilds",
+        max_length=7,
+        blank=True,
+        validators=[hex_color_validator],
+        help_text="Farbe der Fläche hinter dem Motiv im Format #RRGGBB, z. B. #E8DCC8.",
+    )
+    hero_background_color_end = models.CharField(
+        "Zweite Farbe für einen Verlauf",
+        max_length=7,
+        blank=True,
+        validators=[hex_color_validator],
+        help_text="Optional. Dann verläuft die Fläche von der Hintergrundfarbe zu dieser Farbe.",
+    )
+    hero_background_gradient_direction = models.CharField(
+        "Verlaufsrichtung",
+        max_length=10,
+        choices=HERO_GRADIENT_DIRECTIONS,
+        default="to bottom",
+    )
+    hero_background_image = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Hintergrundbild des Titelbilds",
+        help_text=(
+            "Optional. Füllt die Fläche hinter dem Motiv, liegt über Farbe und Verlauf und wird bei "
+            "Bedarf beschnitten."
+        ),
     )
     content = StreamField(
         ProjectBodyBlock(),
@@ -1030,10 +1075,19 @@ class ProjectPage(PortfolioContextMixin, Page):
                 FieldPanel("live_link_label"),
                 FieldPanel("teaser_image"),
                 FieldPanel("teaser_image_alt"),
+            ],
+            heading="Projektübersicht",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("hero_background_color"),
+                FieldPanel("hero_background_color_end"),
+                FieldPanel("hero_background_gradient_direction"),
+                FieldPanel("hero_background_image"),
                 FieldPanel("hero_image"),
                 FieldPanel("hero_image_alt"),
             ],
-            heading="Projektübersicht",
+            heading="Titelbild",
         ),
         InlinePanel(
             "service_items",
@@ -1069,13 +1123,34 @@ class ProjectPage(PortfolioContextMixin, Page):
         errors = {}
         if self.teaser_image_id and not (self.teaser_image_alt or "").strip():
             errors["teaser_image_alt"] = "Bitte ergänze einen Alternativtext für das Teaserbild."
+        if self.hero_background_color_end and not self.hero_background_color:
+            errors["hero_background_color"] = "Für einen Verlauf bitte auch die Hintergrundfarbe angeben."
         if self.hero_image_id and not (self.hero_image_alt or "").strip():
-            errors["hero_image_alt"] = "Bitte ergänze einen Alternativtext für den Projekt-Hero."
+            errors["hero_image_alt"] = "Bitte ergänze einen Alternativtext für das Motiv."
         if self.end_year is not None and self.year is not None:
             if self.end_year < self.year:
                 errors["end_year"] = "Das Endjahr darf nicht vor dem Jahr / Startjahr liegen."
         if errors:
             raise ValidationError(errors)
+
+    @property
+    def hero_surface_style(self):
+        """Return the CSS custom properties for the colour or gradient behind the hero motif.
+
+        Only validated #RRGGBB values reach the inline style, so editors cannot inject CSS.
+        """
+
+        start = self.hero_background_color
+        if not start or not re.fullmatch(HEX_COLOR_PATTERN, start):
+            return ""
+        style = f"--hero-bg-color: {start};"
+        end = self.hero_background_color_end
+        direction = dict(HERO_GRADIENT_DIRECTIONS).get(self.hero_background_gradient_direction) and (
+            self.hero_background_gradient_direction
+        )
+        if end and re.fullmatch(HEX_COLOR_PATTERN, end) and direction:
+            style += f" --hero-bg-gradient: linear-gradient({direction}, {start}, {end});"
+        return style
 
     @property
     def year_display(self):

@@ -747,6 +747,41 @@ def test_project_renders_the_optional_client_in_its_metadata():
     assert "<dt>Kunde</dt><dd>Studio Beispiel</dd>" in content
 
 
+def test_project_hero_renders_its_surface_behind_an_uncropped_motif(client, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    index = make_portfolio_tree()
+    project = add_project(index)
+    project.hero_background_color = "#E8DCC8"
+    project.hero_background_color_end = "#C7F03C"
+    project.hero_background_gradient_direction = "to right"
+    project.hero_background_image = make_image("Flaeche")
+    project.hero_image = make_image("Motiv")
+    project.hero_image_alt = "Motiv des Projekts"
+    project.save_revision().publish()
+
+    document = BeautifulSoup(client.get(project.url).content, "html.parser")
+    media = document.select_one(".project-intro > figure.project-hero-media")
+    adapter = Path(finders.find("portfolio/project-wagtail.css")).read_text()
+
+    assert media is not None
+    assert "--hero-bg-color: #E8DCC8;" in media["style"]
+    assert "--hero-bg-gradient: linear-gradient(to right, #E8DCC8, #C7F03C);" in media["style"]
+    assert "--hero-bg-image: url(" in media["style"] and "Flaeche" in media["style"]
+    assert media.select_one('img[alt="Motiv des Projekts"]') is not None
+    assert declarations_for(adapter, {".project-hero-media img"})["object-fit"] == "contain"
+    assert document.select_one(".project-intro > .hero-media") is None
+
+
+def test_project_hero_without_surface_or_motif_keeps_the_placeholder(client):
+    index = make_portfolio_tree()
+    project = add_project(index)
+
+    document = BeautifulSoup(client.get(project.url).content, "html.parser")
+
+    assert document.select_one(".project-intro > .media-placeholder.hero-media") is not None
+    assert document.select_one(".project-hero-media") is None
+
+
 def test_project_and_index_render_their_distinct_explicit_image_alt_text(client, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
     index = make_portfolio_tree()
@@ -799,8 +834,8 @@ def test_project_and_index_render_their_distinct_explicit_image_alt_text(client,
     assert "width=" in index_teaser and "height=" in index_teaser
     assert 'alt="Große Detailansicht des Projekts"' not in index_content
     assert "srcset=" in project_hero
-    assert "fill-2100x900" in project_hero
-    assert 'sizes="100vw"' in project_hero
+    assert "width-1600" in project_hero
+    assert 'sizes="(min-width: 60rem) and (min-aspect-ratio: 5 / 4) 50vw, 100vw"' in project_hero
     assert 'loading="eager"' in project_hero
     assert 'fetchpriority="high"' in project_hero
     assert "width=" in project_hero and "height=" in project_hero

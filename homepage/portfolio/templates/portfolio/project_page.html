@@ -15,47 +15,48 @@
 
 {% block content %}
   {% pageurl portfolio_index as portfolio_home_url %}
-  <article>
-    <header class="project-hero" id="projektstart">
+  <article class="project">
+    <header class="project-hero project-intro" id="projektstart">
       <a class="project-index-link sr-only" href="{{ portfolio_home_url }}#projekte">Zurück zu allen Projekten</a>
-      <p class="eyebrow">{{ portfolio_site_settings.project_kicker }} {{ project_number|stringformat:"02d" }} / {{ project_total|stringformat:"02d" }}</p>
-      <h1 class="motion-heading">{{ page.title }}</h1>
-      <div class="intro-grid">
-        <div class="project-summary">
-          <div class="project-lead">{{ page.teaser_text|richtext }}</div>
-          {% if page.live_url %}
-            <a class="pill prio project-live-link" href="{{ page.live_url }}"><span class="pill-label">{{ page.live_link_label|default:portfolio_site_settings.project_live_link_label }} <span class="ar" aria-hidden="true">→</span></span></a>
-          {% endif %}
-        </div>
-        <aside class="project-meta" aria-label="Projektdetails">
-          <dl class="project-meta__facts">
-            <div><dt>{{ portfolio_site_settings.project_meta_category_label }}</dt><dd>{{ page.get_category_display }}</dd></div>
-            {% if page.client %}<div><dt>{{ portfolio_site_settings.project_meta_client_label }}</dt><dd>{{ page.client }}</dd></div>{% endif %}
-            <div><dt>{{ portfolio_site_settings.project_meta_year_label }}</dt><dd>{{ page.year_display }}</dd></div>
-          </dl>
-          <dl class="project-meta__services">
-            <div>
-              <dt>{{ portfolio_site_settings.project_meta_services_label }}</dt>
-              <dd>
-                <ul class="marker-list project-service-list">
-                  {% for service in page.get_service_names %}
-                    <li>{{ service }}</li>
-                  {% endfor %}
-                </ul>
-              </dd>
-            </div>
-          </dl>
-        </aside>
+      <div class="project-intro__head">
+        <p class="eyebrow">{{ portfolio_site_settings.project_kicker }} {{ project_number|stringformat:"02d" }} / {{ project_total|stringformat:"02d" }}</p>
+        <h1 class="motion-heading">{{ page.title }}</h1>
       </div>
+      <div class="project-lead">{{ page.teaser_text|richtext }}</div>
+      {% if page.hero_image or page.hero_surface_style or page.hero_background_image %}
+        {# Titelbild in zwei Ebenen: Fläche (Farbe, Verlauf, Bild) füllt den Bereich, das Motiv liegt eingepasst darauf und wird nie beschnitten. #}
+        {% if page.hero_background_image %}{% image page.hero_background_image width-2200 as hero_background %}{% endif %}
+        <figure class="project-hero-media" style="{{ page.hero_surface_style }}{% if hero_background %} --hero-bg-image: url('{{ hero_background.url }}');{% endif %}">
+          {% if page.hero_image %}
+            {% srcset_image page.hero_image width-{700,1100,1600,2200} sizes="(min-width: 60rem) and (min-aspect-ratio: 5 / 4) 50vw, 100vw" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
+          {% endif %}
+        </figure>
+      {% else %}
+        <div class="media-placeholder hero-media" role="img" aria-label="Platzhalter für das Projekt-Titelbild">Projekt-Titelbild</div>
+      {% endif %}
+      <aside class="project-meta" aria-label="Projektdetails">
+        <dl class="project-meta__facts">
+          <div><dt>{{ portfolio_site_settings.project_meta_category_label }}</dt><dd>{{ page.get_category_display }}</dd></div>
+          {% if page.client %}<div><dt>{{ portfolio_site_settings.project_meta_client_label }}</dt><dd>{{ page.client }}</dd></div>{% endif %}
+          <div><dt>{{ portfolio_site_settings.project_meta_year_label }}</dt><dd>{{ page.year_display }}</dd></div>
+        </dl>
+        <dl class="project-meta__services">
+          <div>
+            <dt>{{ portfolio_site_settings.project_meta_services_label }}</dt>
+            <dd>
+              <ul class="marker-list project-service-list">
+                {% for service in page.get_service_names %}
+                  <li>{{ service }}</li>
+                {% endfor %}
+              </ul>
+            </dd>
+          </div>
+        </dl>
+      </aside>
+      {% if page.live_url %}
+        <a class="pill prio project-live-link" href="{{ page.live_url }}"><span class="pill-label">{{ page.live_link_label|default:portfolio_site_settings.project_live_link_label }} <span class="ar" aria-hidden="true">→</span></span></a>
+      {% endif %}
     </header>
-
-    {% if page.hero_image %}
-      <figure class="project-hero-media">
-        {% srcset_image page.hero_image fill-{2100x900,700x300,1400x600} sizes="100vw" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
-      </figure>
-    {% else %}
-      <div class="media-placeholder hero-media" role="img" aria-label="Platzhalter für das Projekt-Titelbild">Projekt-Titelbild · 21:9</div>
-    {% endif %}
 
     {% if project_has_case_study %}
       <section id="case-study" class="block project-content" aria-label="{{ portfolio_site_settings.case_study_label }}">

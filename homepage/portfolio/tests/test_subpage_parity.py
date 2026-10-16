@@ -34,12 +34,11 @@ def test_project_uses_canonical_prototype_assets_without_the_destructive_prototy
     assert "/static/portfolio/prototype/portfolio-startseite.css" not in content
     assert "/static/portfolio/prototype/homepage.js" not in content
     assert "/static/portfolio/homepage.css" not in content
-    assert 'class="project-hero" id="projektstart"' in content
+    assert 'class="project-hero project-intro" id="projektstart"' in content
     assert 'class="project-index-link sr-only"' in content
     assert content.count('document.documentElement.classList.add("has-js")') == 1
     assert 'class="motion-heading"' in content
-    assert 'class="intro-grid"' in content
-    assert 'class="project-summary"' in content
+    assert 'class="project-intro__head"' in content
     assert 'class="project-meta__facts"' in content
     assert 'class="project-meta__services"' in content
     assert '<aside class="project-meta" aria-label="Projektdetails">' in content

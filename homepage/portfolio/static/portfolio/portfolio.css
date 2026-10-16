@@ -63,7 +63,9 @@
     --headline-m: clamp(1rem, min(max(4vw, min(2.5rem, 10.625vw)), calc(11.25vw - 0.125rem)), 7rem);
     --headline-s: clamp(0.75rem, min(max(1.9vw, min(1.5rem, 6.875vw)), calc(7.5vw - 0.125rem)), 3rem);
     --type-eyebrow: clamp(0.59rem, min(calc(0.69rem + 0.12vw), calc(0.409rem + 1.554vw)), 0.82rem);
-    --type-subline: clamp(0.75rem, min(calc(0.9rem + 0.2vw), calc(0.534rem + 2.077vw)), 1.1rem);
+    --type-subline: clamp(0.75rem, min(calc(0.84rem + 0.1vw), calc(0.465rem + 1.8vw)), 0.95rem);
+    /* Projekttitel in der aufgeklappten Menü-Projektliste. Wert der früheren --type-subline. */
+    --type-menu-project: clamp(0.75rem, min(calc(0.9rem + 0.2vw), calc(0.534rem + 2.077vw)), 1.1rem);
     --type-lead: clamp(1.2rem, calc(1.1rem + 0.3vw), 1.5rem);
     --type-case-large: clamp(1.6rem, 3.5vw, 3rem);
     --scr-size: clamp(
@@ -517,7 +519,7 @@
 
   .project-menu-links a {
     color: var(--ink);
-    font-size: var(--type-subline);
+    font-size: var(--type-menu-project);
     font-weight: 500;
     letter-spacing: var(--tracking-action);
     text-decoration: none;

@@ -563,3 +563,48 @@ def test_project_images_need_explicit_alt_text_when_selected():
     project.teaser_image_alt = "Plakatentwurf auf orangefarbenem Grund"
     project.hero_image_alt = "Detailansicht des gestalteten Plakats"
     project.full_clean()
+
+
+def test_project_hero_surface_style_supports_colour_and_gradient():
+    project = ProjectPage(title="Fläche", slug="flaeche")
+
+    assert project.hero_surface_style == ""
+
+    project.hero_background_color = "#E8DCC8"
+    assert project.hero_surface_style == "--hero-bg-color: #E8DCC8;"
+
+    project.hero_background_color_end = "#C7F03C"
+    project.hero_background_gradient_direction = "135deg"
+    assert project.hero_surface_style == (
+        "--hero-bg-color: #E8DCC8; --hero-bg-gradient: linear-gradient(135deg, #E8DCC8, #C7F03C);"
+    )
+
+
+def test_project_hero_surface_style_never_emits_unvalidated_css():
+    project = ProjectPage(
+        title="Fläche",
+        slug="flaeche",
+        hero_background_color="red; background: url(x)",
+        hero_background_color_end="#C7F03C",
+    )
+    assert project.hero_surface_style == ""
+
+    project.hero_background_color = "#E8DCC8"
+    project.hero_background_gradient_direction = "to top; color: red"
+    assert project.hero_surface_style == "--hero-bg-color: #E8DCC8;"
+
+
+def test_project_hero_colours_are_validated_and_a_gradient_needs_its_start_colour():
+    index = make_portfolio_tree()
+    project = add_project(index, "Fläche")
+
+    project.hero_background_color = "E8DCC8"
+    with pytest.raises(ValidationError) as invalid:
+        project.full_clean()
+    assert "hero_background_color" in invalid.value.message_dict
+
+    project.hero_background_color = ""
+    project.hero_background_color_end = "#C7F03C"
+    with pytest.raises(ValidationError) as missing_start:
+        project.full_clean()
+    assert "hero_background_color" in missing_start.value.message_dict

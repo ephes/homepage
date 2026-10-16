@@ -949,7 +949,14 @@
     --headline-m: clamp(1rem, min(max(4vw, min(2.5rem, 10.625vw)), calc(11.25vw - .125rem)), 7rem);
     --headline-s: clamp(.75rem, min(max(1.9vw, min(1.5rem, 6.875vw)), calc(7.5vw - .125rem)), 3rem);
     --type-eyebrow: clamp(.59rem, min(calc(.69rem + .12vw), calc(.409rem + 1.554vw)), .82rem);
-    --type-subline: clamp(.75rem, min(calc(.9rem + .2vw), calc(.534rem + 2.077vw)), 1.1rem);
+    /* Kleine Lesestufe: Projektdetails, Kacheltitel, Beschriftungen, Footer. Rund 15px am
+       Laptop, 14px auf dem Telefon. */
+    --type-subline: clamp(.75rem, min(calc(.84rem + .1vw), calc(.465rem + 1.8vw)), .95rem);
+    /* Name in der Kopfleiste: eigene Stufe, später für das Logo. Wert der früheren --type-subline,
+       schmal begrenzt, damit Name, Kontakt und Menü in eine Zeile passen. */
+    --type-brand: min(clamp(.75rem, min(calc(.9rem + .2vw), calc(.534rem + 2.077vw)), 1.1rem), calc(.15rem + 4vw));
+    /* Projekttitel in der aufgeklappten Menü-Projektliste. Wert der früheren --type-subline. */
+    --type-menu-project: clamp(.75rem, min(calc(.9rem + .2vw), calc(.534rem + 2.077vw)), 1.1rem);
     /* Gemeinsame hervorgehobene Lesestufe: Hero-Subline, Projekt-Lead und Prio-CTA.
        1.2rem Untergrenze hält Creme auf Tangerine bei 700 sicher in der Großtext-Stufe. */
     --type-lead: clamp(1.2rem, calc(1.1rem + .3vw), 1.5rem);
@@ -1008,7 +1015,7 @@
     opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
   }
   .brand{font-weight:700;font-size:var(--type-subline);}
-  header.site > .brand { font-size: min(var(--type-subline), calc(.15rem + 4vw)); }
+  header.site > .brand { font-size: var(--type-brand); }
   .avail{display:flex;align-items:center;gap:0.45rem;font-size:var(--type-eyebrow);font-weight:600;letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--muted);}
   header.site > .avail { color: #4B4F48; }
   .avail::before{content:"";inline-size:0.5rem;block-size:0.5rem;border-radius:50%;background:var(--smaragd);}
@@ -1017,7 +1024,7 @@
   /* Kontakt bleibt der direkte Hauptweg; das eingeklappte Ankermenü sitzt als zweite
      Aktion daneben. Native details/summary hält es ohne Menü-Framework bedienbar. */
   .header-actions { display: flex; align-items: center; gap: clamp(.25rem, calc(-1.25rem + 10vw), 2rem); }
-  header.site .pill { font-size: min(var(--type-subline), calc(.15rem + 4vw)); }
+  header.site .pill { font-size: var(--type-brand); }
   header.site .pill { padding-inline: clamp(.5rem, calc(-.523rem + 8.615vw), 1.2rem); }
   .site-nav { position: relative; z-index: 2; margin: 0; }
   .site-nav summary { list-style: none; cursor: pointer; }

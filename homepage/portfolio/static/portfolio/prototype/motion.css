@@ -143,7 +143,9 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   justify-content: stretch;
   justify-items: stretch;
   gap: 0;
-  padding: 0;
+  /* Ersetzt die frühere 1-px-Oberkante, damit Raster und Social-Linie unverändert sitzen.
+     Als Kante gäbe sie mit der Headerlinie eine Doppellinie. */
+  padding: 1px 0 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-block: contain;

@@ -1060,7 +1060,9 @@
      sichtbar. Dadurch läuft nicht nur das Öffnen, sondern auch der Rückweg sauber. */
   .site-nav::details-content { transition: content-visibility .45s allow-discrete; }
   .site-nav nav {
-    border-block-start: 1px solid var(--ink);
+    /* Keine eigene Oberkante (auch nicht die aus portfolio.css): die Headerlinie schließt das
+       Panel ab, motion.css hält den Pixel als Innenabstand. */
+    border-block-start: 0;
     border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
     background: var(--creme);
     display: grid;

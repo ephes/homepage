@@ -240,7 +240,9 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .site-nav nav {
   display: grid;
   grid-auto-rows: min-content;
-  border-block-start: 1px solid var(--ink);
+  /* Keine eigene Oberkante (auch nicht die aus portfolio.css): die Headerlinie schließt das
+     Panel ab, motion.css hält den Pixel als Innenabstand. */
+  border-block-start: 0;
   border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
   background: var(--creme);
   box-shadow:

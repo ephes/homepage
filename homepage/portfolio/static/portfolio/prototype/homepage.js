@@ -710,7 +710,9 @@ runPortfolioEnhancement('navigation', function () {
     return document.getElementById(decodeURIComponent(url.hash.slice(1)));
   }
   function flyTo(link, keepOpen) {
-    var target = localTarget(link);
+    var target = link.dataset.hoverTarget
+      ? document.getElementById(link.dataset.hoverTarget)
+      : localTarget(link);
     if (!target) return false;
     clearTimeout(flightTimer);
     anchorFlight = true;
@@ -742,6 +744,13 @@ runPortfolioEnhancement('navigation', function () {
     });
     link.addEventListener('pointerenter', function () {
       if (desktopHover.matches) flyTo(link, true);
+    });
+  });
+  // Der Projektindex ist ein Aufklapp-Schalter statt Link; beim Überfahren fliegt die Seite
+  // trotzdem wie bei den übrigen Punkten zu ihrem Abschnitt.
+  [].slice.call(menu.querySelectorAll('nav summary[data-hover-target]')).forEach(function (summary) {
+    summary.addEventListener('pointerenter', function () {
+      if (desktopHover.matches) flyTo(summary, true);
     });
   });
   function insidePanel(target) {

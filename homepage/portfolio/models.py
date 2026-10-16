@@ -403,11 +403,6 @@ class PortfolioSiteSettings(BaseSiteSetting):
         max_length=80,
         default="Projekte",
     )
-    all_projects_label = models.CharField(
-        "Alle Projekte",
-        max_length=120,
-        default="Alle Projekte",
-    )
     services_label = models.CharField(
         "Leistungen",
         max_length=80,
@@ -532,7 +527,6 @@ class PortfolioSiteSettings(BaseSiteSetting):
             [
                 FieldPanel("contact_label"),
                 FieldPanel("projects_label"),
-                FieldPanel("all_projects_label"),
                 FieldPanel("services_label"),
                 FieldPanel("about_label"),
                 FieldPanel("clients_label"),

@@ -1030,13 +1030,12 @@
     border-block-end: 1px solid transparent;
   }
   /* Offen überdeckt die cremefarbene Unterkante Headerlinie und Panel-Oberkante: Iconfeld
-     und Panel lesen sich dadurch als ein zusammenhängender Reiter. Oben trennt eine Linie
-     das Iconfeld vom Seitenrand. */
+     und Panel lesen sich dadurch als ein zusammenhängender Reiter. Oben trennt die
+     Oberkante der Kopfleiste (portfolio.css) das Iconfeld vom Seitenrand. */
   .site-nav[open] .menu-toggle {
     position: relative; z-index: 1;
     background: var(--creme);
     border-block-end-color: var(--creme);
-    box-shadow: inset 0 1px 0 var(--rule-strong);
   }
   .site-nav[open] .menu-toggle::after {
     content: ""; position: absolute; z-index: 2;
@@ -1244,9 +1243,6 @@
     }
     .grid .under,
     .grid .rows>b:nth-child(2){display:none;}
-    /* Oben schließt eine Linie die Kopfleiste ab, damit das Raster auf dem Telefon nicht
-       offen beginnt. Als Innenschatten, damit die gemessene Headerhöhe gleich bleibt. */
-    header.site{box-shadow:inset 0 var(--rule-width) 0 var(--rule-strong);}
     .sub::after{
       content:"";
       position:absolute;

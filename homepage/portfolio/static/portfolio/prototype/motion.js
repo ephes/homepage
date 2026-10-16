@@ -15,13 +15,12 @@
      nach unten schiebt. Bei offenem Index wird dessen Summary statt des gesamten Details
      vermessen. So bleibt die geschlossene Basishöhe auch bei einem Viewportwechsel korrekt.
 
-     Die zentrale Auto-Spalte behält zugleich immer die intrinsische Breite dieser
-     geschlossenen Hauptnavigation. Der sichtbare Projektindex darf deshalb nur vertikal
-     wachsen und seine Zeilen innerhalb dieser Breite umbrechen. Native details-Inhalte
-     würden sonst beim Öffnen den Track verbreitern und am Ende ihrer diskreten
-     content-visibility-Schließtransition wieder freigeben. Eine unsichtbare, nur während
-     der synchronen Messung angehängte geschlossene Kopie liefert die Basisbreite, ohne den
-     echten Disclosure-Zustand oder die Fokus-/Scrollposition anzutasten. */
+     Die zentrale Auto-Spalte ist dagegen von Anfang an so breit wie die Hauptnavigation
+     mit aufgeklapptem Projektindex, damit jeder Projekttitel einzeilig bleibt. Native
+     details-Inhalte würden sonst beim Öffnen den Track verbreitern und am Ende ihrer
+     diskreten content-visibility-Schließtransition wieder freigeben. Eine unsichtbare, nur
+     während der synchronen Messung angehängte Kopie liefert beide Maße, ohne den echten
+     Disclosure-Zustand oder die Fokus-/Scrollposition anzutasten. */
   var menuGeometryFrame = 0;
   function closedPrimaryGeometry(primary) {
     var shell = document.createElement("details");
@@ -58,6 +57,10 @@
     document.body.appendChild(shell);
     var rect = measuringPrimary.getBoundingClientRect();
     var geometry = { width: rect.width, height: rect.height };
+    if (measuringDisclosure) {
+      measuringDisclosure.open = true;
+      geometry.width = Math.max(geometry.width, measuringPrimary.getBoundingClientRect().width);
+    }
     shell.remove();
     return geometry;
   }

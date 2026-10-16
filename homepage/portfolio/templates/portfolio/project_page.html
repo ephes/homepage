@@ -110,8 +110,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
-  <script src="{% static 'portfolio/prototype/motion.js' %}" data-handwriting-contact-src="{% static 'portfolio/prototype/handwriting-contact.js' %}" defer></script>
-  <script src="{% static 'portfolio/prototype/project-teasers.js' %}" defer></script>
-  <script src="{% static 'portfolio/project-wagtail.js' %}" defer></script>
-  <script src="{% static 'portfolio/prototype/site-shell.js' %}" defer></script>
+  <script src="{% versioned_static 'portfolio/prototype/motion.js' %}" data-handwriting-contact-src="{% versioned_static 'portfolio/prototype/handwriting-contact.js' %}" defer></script>
+  <script src="{% versioned_static 'portfolio/prototype/project-teasers.js' %}" defer></script>
+  <script src="{% versioned_static 'portfolio/project-wagtail.js' %}" defer></script>
+  <script src="{% versioned_static 'portfolio/prototype/site-shell.js' %}" defer></script>
 {% endblock %}

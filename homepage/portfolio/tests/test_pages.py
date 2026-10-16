@@ -440,7 +440,6 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
     sentinels = {
         "contact_label": "Sentinel Kontakt",
         "projects_label": "Sentinel Projekte",
-        "all_projects_label": "Sentinel Alle Projekte",
         "services_label": "Sentinel Leistungen",
         "about_label": "Sentinel Ueber Mich",
         "clients_label": "Sentinel Kunden",
@@ -504,8 +503,9 @@ def test_unpublished_project_disappears_from_every_public_project_collection(cli
     project_page = BeautifulSoup(client.get(current.url).content, "html.parser")
     homepage_tiles = {heading.get_text(strip=True) for heading in homepage.select("a.tile h3")}
     menu_projects = {
-        link.get_text(strip=True) for link in homepage.select(".project-menu-links a:not(.project-overview-link)")
+        link.get_text(strip=True) for link in homepage.select(".project-menu-links a")
     }
+    assert not homepage.select(".project-overview-link")
     footer_projects = {link.get_text(strip=True) for link in homepage.select(".foot-projects li a")}
     related_projects = {
         heading.get_text(strip=True) for heading in project_page.select(".more-projects .related-project-card h3")

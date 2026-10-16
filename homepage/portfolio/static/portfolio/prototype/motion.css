@@ -14,7 +14,6 @@
    die jeweilige Tangerine-/Cremefarbe; die leere Pseudoelement-Box bleibt rein dekorativ
    und erzeugt keinen vorlesbaren Stern. Der WebKit-Präfix deckt Safari/iOS ab. */
 .project-menu > summary::before,
-.project-menu-links::before,
 .site-nav nav .menu-primary > a::before,
 .sec-label::before,
 .eyebrow::before,
@@ -117,7 +116,9 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .site-nav nav {
   --menu-panel-inline-size: 50vw;
   position: fixed;
-  inset-block-start: var(--header-h, 4.6rem);
+  /* Bezugsrahmen ist die Innenkante der Kopfleiste (backdrop-filter): minus deren obere
+     Linie (portfolio.css) setzt das Panel direkt an der Unterkante an. */
+  inset-block-start: calc(var(--header-h, 4.6rem) - 1px);
   inset-inline-end: 0;
   inline-size: var(--menu-panel-inline-size);
   block-size: calc(100vh - var(--header-h, 4.6rem) + 1px);
@@ -149,6 +150,9 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-block: contain;
+  /* Menüzeilen sind kurz: Umbrüche fallen zwischen Wörter statt in Silben. */
+  -webkit-hyphens: manual;
+  hyphens: manual;
   scrollbar-gutter: stable;
   scroll-padding-block: 2rem;
   --menu-social-size: clamp(2.75rem, 3.25vw, 3.15rem);
@@ -171,22 +175,22 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   justify-items: start;
   gap: var(--menu-row-gap);
   /* Der mittlere Auto-Track behält über den gesamten Akkordeonzyklus die intrinsische
-     Breite der geschlossenen Hauptnavigation. Andernfalls würde der Projektindex ihn
-     beim Öffnen verbreitern und am Ende der diskreten details-content-Schließtransition
-     wieder freigeben; Linkblock und Social-Icons sprängen dann gemeinsam seitlich. */
+     Breite der Hauptnavigation mit aufgeklapptem Projektindex (motion.js). Andernfalls
+     würde der Index ihn beim Öffnen verbreitern und am Ende der diskreten
+     details-content-Schließtransition wieder freigeben; Linkblock und Social-Icons
+     sprängen dann gemeinsam seitlich. Die Maximalbreite hält rechts den Randabstand;
+     reicht sie nicht, brechen die Projekttitel um. */
   inline-size: var(--menu-primary-measured-inline-size, max-content);
   min-inline-size: var(--menu-social-row-min-size);
-  max-inline-size: calc(var(--menu-panel-inline-size) - 2 * clamp(2rem, 6vw, 6rem));
+  /* Panelbreite abzüglich Tangerine-Kante und beidseitig --pad: Rechts bleibt auf jeder
+     Panelbreite mindestens der Seitenrand frei, sonst brechen die Projekttitel um. */
+  max-inline-size: calc(var(--menu-panel-inline-size) - clamp(.7rem, 1.2vw, 1.1rem) - 2 * var(--pad));
   padding-block: 2rem clamp(.6rem, 1.8vh, 1.15rem);
 }
 
 /* Projektindex innerhalb des bestehenden Menüs. Native details/summary statt Hover:
    dieselbe Bedienung auf Desktop, Touch und Tastatur, ohne zweite seitliche Ebene. */
 .site-nav nav .menu-primary > .project-menu {
-  /* Sichtbarer linker Glyphenrand: Saira gibt dem großen P mehr Vorraum als der
-     kleinen 0. Der fluide Ausgleich folgt exakt den beiden vorhandenen Typostufen. */
-  --project-number-optical-offset:
-    calc(.0823 * var(--headline-m) - .0691 * var(--type-subline));
   inline-size: 100%;
   margin: 0;
   font-size: var(--headline-m);
@@ -225,7 +229,9 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   margin-inline-start: auto;
   padding-inline-start: 1rem;
   color: var(--tangerine);
-  font-size: .78em;
+  /* Bis 2.5rem so groß wie die Menüzeile, damit das Aufklappen auch auf kleinen Schriftstufen
+     deutlich lesbar bleibt; bei großen Stufen nie unter 78 % der Zeile. */
+  font-size: max(.78em, min(1em, 2.5rem));
   font-weight: 500;
   line-height: 1;
 }
@@ -255,30 +261,24 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   max-block-size: 40rem;
   opacity: 1;
 }
+/* Die Messkopie in motion.js braucht den aufgeklappten Index sofort, nicht erst nach der
+   diskreten content-visibility-Transition. */
+.site-nav.is-measuring .project-menu::details-content { transition: none; }
 .project-menu-links {
   display: grid;
-  grid-template-columns: max-content repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(5, auto);
-  grid-auto-flow: column;
-  gap: 1rem clamp(.7rem, 1.2vw, 1rem);
+  justify-items: start;
+  row-gap: 1rem;
   padding: 1rem 0 1.15rem;
   counter-reset: project-menu-item;
-}
-/* Unsichtbare Kopie derselben festen Markerbox: Ihre `.75em`-Breite bildet zusammen mit
-   demselben Spaltenabstand den exakten P-Anschlag. */
-.project-menu-links::before {
-  content: "";
-  grid-column: 1;
-  grid-row: 1 / 6;
-  visibility: hidden;
-  font-size: min(.7em, var(--headline-s));
-  line-height: 1;
-  letter-spacing: 0;
 }
 .site-nav nav .project-menu-links a {
   display: flex;
   align-items: baseline;
-  gap: calc(.4em + var(--project-number-optical-offset));
+  /* Die Nummern stehen in der Asterisk-Spalte der Hauptpunkte, die Titel auf dem
+     P-Anschlag: gleicher Abstand wie zwischen Asterisk und Menütext, plus der Unterschied
+     der Saira-Vorbreiten (großes P 600: .0823em, gerade Versalien 500: .0916em), damit
+     die sichtbare Textkante auf der des P steht. */
+  gap: calc(clamp(.7rem, 1.2vw, 1rem) + .0823 * var(--headline-m) - .0916em);
   min-inline-size: 0;
   color: var(--ink);
   font-size: var(--type-subline);
@@ -299,26 +299,17 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   font-weight: 500;
   line-height: 1;
   letter-spacing: var(--tracking-action);
-  transform: translateX(var(--project-number-optical-offset));
-}
-.site-nav nav .project-menu-links .project-overview-link::before {
-  content: "00";
-  counter-increment: none;
-  visibility: hidden;
+  /* Breite der Asterisk-Fassung (.75em bei min(.7em, --headline-s) auf --headline-m);
+     gleich breite Tabellenziffern stehen darin mittig unter dem Asterisk. */
+  flex: none;
+  display: flex;
+  justify-content: center;
+  inline-size: calc(.75 * min(.7 * var(--headline-m), var(--headline-s)));
+  font-variant-numeric: tabular-nums;
 }
 .site-nav nav .project-menu-links a:hover,
 .site-nav nav .project-menu-links a:focus-visible { color: var(--tangerine); }
 
-@media (max-width: 52rem) {
-  .project-menu-links {
-    grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: repeat(10, auto);
-  }
-  .project-menu-links::before {
-    grid-row: 1 / 11;
-  }
-  .site-nav nav .menu-primary > .project-menu { inline-size: 100%; }
-}
 
 /* Tablet hochkant: vom ersten inneren Rasterteiler bis zum rechten Viewportrand.
    Das sind exakt drei der vier optischen Inhaltsspalten zuzüglich des rechten Randes. */
@@ -892,17 +883,19 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 @supports (grid-template-columns: subgrid) {
   .menu-socials { grid-template-columns: subgrid; }
 }
-/* Die Linie wird separat gezeichnet und darf um mehr als eine klassische
-   Scrollbarbreite über die Scrollportkante hinauslaufen. overflow-x:hidden am Panel
-   kappt sie erst an dessen echter rechter Viewportkante, ohne horizontales Scrollen. */
+/* Die Linie wird separat gezeichnet und läuft um mehr als eine klassische
+   Scrollbarbreite über die Scrollportkante hinaus. Das Überstück ist ein Schatten: Er
+   zählt nicht zur scrollbaren Fläche, sonst scrollt WebKit das Panel beim Aufklappen des
+   Projektindex seitlich. overflow-x:hidden kappt ihn an der rechten Viewportkante. */
 .menu-socials::before {
   content: "";
   position: absolute;
   inset-block-start: 0;
   inset-inline-start: 0;
-  inline-size: calc(100% + 2rem);
+  inline-size: 100%;
   block-size: 1px;
   background: var(--rule-strong, var(--ink));
+  box-shadow: 2rem 0 0 var(--rule-strong, var(--ink));
   pointer-events: none;
 }
 .menu-social-links {
@@ -1028,7 +1021,6 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
     block-size: calc(100dvh - var(--header-h, 4.6rem));
     box-shadow: 0 1.25rem 2.5rem rgba(23, 20, 16, .22);
   }
-  .menu-primary { max-inline-size: calc(100vw - 2 * var(--pad)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

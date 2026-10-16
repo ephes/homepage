@@ -26,10 +26,10 @@
               <a href="{{ portfolio_home_url }}#stage">Moin</a>
             {% endif %}
             <details class="project-menu">
-              <summary><span class="project-overview">{{ shell.projects_label }}</span></summary>
+              {# data-hover-target: Beim Überfahren scrollt die Startseite wie bei den übrigen Punkten mit; der Klick klappt nur auf. #}
+              <summary data-hover-target="projekte"><span class="project-overview">{{ shell.projects_label }}</span></summary>
               <div class="project-menu-links">
                 {% for project in portfolio_projects %}<a href="{% pageurl project %}">{{ project.title }}</a>{% endfor %}
-                <a class="project-overview-link" href="{{ portfolio_home_url }}#projekte">{{ shell.all_projects_label }}</a>
               </div>
             </details>
             {% if page and page.pk == portfolio_index.pk %}

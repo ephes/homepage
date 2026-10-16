@@ -315,6 +315,9 @@
       calc(-1.75rem + 15vw),
       var(--pad, clamp(1.25rem, 4vw, 4rem))
     );
+    /* Oben schließt eine Linie die Kopfleiste zum Seitenrand ab. Die Startseite misst die
+       Headerhöhe, die Unterseiten tragen beide Linien in --header-h (projekt.css). */
+    border-block-start: var(--border-thin) solid var(--rule-strong);
     border-block-end: var(--border-thin) solid var(--rule-strong);
     background: color-mix(in srgb, var(--creme) 80%, transparent);
     backdrop-filter: blur(20px) saturate(0.7);

@@ -377,21 +377,25 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .project-intro {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "head" "media" "meta" "link";
+  grid-template-areas: "head" "media" "meta";
   justify-items: start;
+  /* Schmal schließt der nächste Abschnitt mit seiner Linie direkt an die Projektdetails an. */
+  padding-block-end: 0;
 }
-/* Headline und Anleser gehören zusammen und stehen eng; Bild und Button setzen sich mit
+/* Headline, Anleser und Live-Link gehören zusammen und stehen eng; das Bild setzt sich mit
    dem Abschnittsabstand davon ab. Schmal schließen die Projektdetails ohne Abstand an das
    Bild an: ihre obere Linie ist die Unterkante des Bildes. */
 .project-intro__head > .project-lead { margin-block-start: var(--s1); }
+/* Der Button setzt sich etwas deutlicher vom Anleser ab als der Anleser von der Headline. */
+.project-intro__head > .project-live-link { margin-block-start: var(--s2); }
 .project-intro > .project-hero-media,
-.project-intro > .hero-media,
-.project-intro > .project-live-link { margin-block-start: var(--space-title-content); }
+.project-intro > .hero-media { margin-block-start: var(--space-title-content); }
 .project-intro__head { grid-area: head; }
 .project-intro__head > .eyebrow,
 .project-intro__head > h1 { margin-block-end: 0; }
 .project-intro__head > .project-lead { padding-inline: var(--inset); }
-/* Kopf und Anleser gleiten gemeinsam und mit fester Strecke herein (motion.css). */
+.project-intro__head > .project-live-link { margin-inline-start: var(--inset); }
+/* Kopf, Anleser und Live-Link gleiten gemeinsam und mit fester Strecke herein (motion.css). */
 .project-intro__head { --motion-enter-distance: 2rem; }
 .project-intro > .project-hero-media,
 .project-intro > .hero-media {
@@ -405,29 +409,37 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 .project-intro > .project-meta {
   grid-area: meta;
   justify-self: stretch;
-  /* Die Projektdetails sind ein eigener Bereich zwischen Anleser und Button, oben und
-     unten mit der üblichen Abschnittslinie abgetrennt. */
+  /* Die Projektdetails sind ein eigener Bereich, oben mit der üblichen Abschnittslinie
+     abgetrennt. */
   padding-block: var(--s1);
-  border-block: 1px solid var(--rule);
+  border-block-start: 1px solid var(--rule);
 }
-.project-intro > .project-live-link { grid-area: link; margin-inline-start: var(--inset); }
 /* Nebeneinander nur in deutlich querformatigen Fenstern (mindestens 5:4, etwa Laptop oder
    Tablet quer): Hochkant oder fast quadratisch rutscht der Kopf auch bei ausreichender
-   Breite untereinander. */
+   Breite untereinander. Als Richtwert gehören zwei Drittel der Höhe Kopf und Anleser (darin
+   mittig), ein Drittel den Projektdetails (oben am Übergang). Beide Zeilen wachsen mit
+   ihrem Inhalt; dazwischen bleibt mindestens der Abschnittsabstand. */
 @media (min-aspect-ratio: 5 / 4) {
   @container project (width >= 60rem) {
     .project-intro {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: minmax(0, 1fr) repeat(3, auto) minmax(0, 1fr);
-      grid-template-areas: ". media" "head media" "meta media" "link media" ". media";
+      grid-template-rows: minmax(min-content, 2fr) minmax(min-content, 1fr);
+      grid-template-areas: "head media" "meta media";
+      row-gap: var(--space-title-content);
       min-block-size: calc(100svh - var(--header-h));
       padding-block: 0;
     }
     /* Kopf und Anleser halten Abstand zum Bild; die Projektdetails reichen bis zur
        Mittellinie, damit ihre zwei Spalten auf den Linien des Seitenrasters stehen. */
-    .project-intro__head,
-    .project-intro > .project-live-link { margin-inline-end: var(--s2); }
-    .project-intro > .project-meta { margin-block-start: var(--space-title-content); }
+    .project-intro__head { align-self: center; margin-inline-end: var(--s2); }
+    /* Der Button wiegt optisch weniger als Headline und Anleser: Zentriert werden Eyebrow,
+       Headline und Anleser, der Button hängt darunter. Dafür bekommt der Kopf oben so viel
+       Innenabstand wie Button-Abstand (--s2) plus Buttonhöhe (Zeile 1.5, Innenabstand
+       2 × .5rem, Rahmen 2px) zusammen. */
+    .project-intro__head:has(> .project-live-link) {
+      padding-block-start: calc(var(--s2) + 1.5 * var(--type-subline) + 1rem + 2px);
+    }
+    .project-intro > .project-meta { align-self: start; }
     .project-intro h1 { font-size: var(--headline-m); }
     .project-intro > .project-hero-media,
     .project-intro > .hero-media {
@@ -460,15 +472,13 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
 /* Kein `pretty` im Lead: Zusammen mit der Silbentrennung glich es die Zeilenlängen über
    viele Trennstriche aus. Der normale Zeilenfall trennt nur, wo ein Wort nicht mehr passt. */
 .project-lead p { text-wrap: wrap; }
+/* Der Live-Link ist ein Prio-3-Button (.pill.ghost): Er bietet das Original an, ohne die
+   Besucher von der Seite wegzuziehen. Größe und Schnitt kommen von .pill. */
 .project-live-link {
   display: inline-flex;
   max-inline-size: 100%;
   align-items: center;
   gap: .7rem;
-  padding-block: .425rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  line-height: 1.5;
 }
 .project-live-link .pill-label {
   min-inline-size: 0;
@@ -509,6 +519,15 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
 /* Die eingerückte Bullet-Liste braucht etwas mehr Luft unter ihrem Label als ein einzelner
    Wert; die Bullets rücken dafür enger zusammen. */
 .project-service-list > li:first-child { margin-block-start: .3rem; }
+/* Leistungen: Punkte mittig unter dem Asterisk des Labels, Text bündig mit dem Labeltext.
+   Asterisk A = .75 und Abstand G = .5625 der Labelgröße, Punkt D = --marker-size:
+   Punkt um (A − D) / 2 einrücken, danach (A − D) / 2 + G Abstand. */
+.project-meta__services > div > dd { padding-inline-start: 0; }
+.project-meta__services .project-service-list > li {
+  --marker-offset: calc((.75 * var(--type-meta-label) - var(--marker-size, .25em)) / 2);
+  gap: calc(var(--marker-offset) + .5625 * var(--type-meta-label));
+}
+.project-meta__services .project-service-list > li::before { margin-inline-start: var(--marker-offset); }
 .project-meta__services .project-service-list { gap: .2rem; }
 .project-meta dt {
   color: var(--muted);
@@ -533,8 +552,11 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
   inline-size: .75em;
   block-size: .75em;
   background-color: var(--tangerine);
-  -webkit-mask: var(--asterisk-mark) center / contain no-repeat;
-  mask: var(--asterisk-mark) center / contain no-repeat;
+  /* Kräftigere Fassung der Asterisk-Marke (Strich 3.4 statt 2.4 im 24er-Raster): In der
+     kleinen Labelgröße wirkt der normale Strich zu dünn. */
+  --asterisk-mark-bold: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12%202v20M2%2012h20M4.93%204.93l14.14%2014.14M19.07%204.93L4.93%2019.07'%20fill='none'%20stroke='%23000'%20stroke-width='3.4'%20stroke-linecap='square'/%3E%3C/svg%3E");
+  -webkit-mask: var(--asterisk-mark-bold) center / contain no-repeat;
+  mask: var(--asterisk-mark-bold) center / contain no-repeat;
 }
 .project-meta dd {
   margin: 0;
@@ -564,13 +586,14 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
 .rich-text ul > li::before {
   content: "";
   flex: 0 0 auto;
-  inline-size: 0;
-  block-size: 0;
-  /* Mittig zur ersten Zeile: halbe Zeilenhöhe minus halbe Dreieckshöhe (2 × .24rem). */
+  /* Kleiner schwarzer Punkt, mittig zur ersten Zeile: halbe Zeilenhöhe minus halber Punkt. */
+  --marker-size: .25em;
+  inline-size: var(--marker-size);
+  block-size: var(--marker-size);
   align-self: flex-start;
-  margin-block-start: calc((1lh - .48rem) / 2);
-  border-block: .24rem solid transparent;
-  border-inline-start: .34rem solid var(--ink);
+  margin-block-start: calc((1lh - var(--marker-size)) / 2);
+  border-radius: 50%;
+  background: var(--ink);
 }
 
 .media-placeholder {

@@ -56,6 +56,11 @@ Site settings (``Settings`` in the Wagtail admin, one set per site):
 ``ErrorPageSettings``
     Copy of the 501 placeholder page.
 
+Words that belong together can be kept together softly. In rich-text fields mark them
+with "Kein Umbruch"; in plain-text project titles join them with a no-break space
+(Option+Space on a Mac, e.g. ``Eine Marke``). Such a group moves to the next line as a
+whole and only breaks inside when it is wider than the line on its own.
+
 Statement, challenge, solution, the stats entries and the testimonial quote, name and
 role may be left empty. A text that is empty or consists only of a bracketed starter
 placeholder (``[Name]``, ``[Optionales Kundenstatement zum Projekt.]`` …) is not

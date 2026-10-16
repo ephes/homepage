@@ -134,8 +134,10 @@
     text-wrap: pretty;
   }
 
+  /* „Kein Umbruch“ ist weich: Die Wortgruppe wandert geschlossen in die nächste Zeile und
+     bricht nur in sich um, wenn sie allein breiter ist als die Zeile. */
   [data-no-break] {
-    white-space: nowrap;
+    display: inline-block;
   }
 
   a {

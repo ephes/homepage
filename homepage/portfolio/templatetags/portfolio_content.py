@@ -1,9 +1,12 @@
+import re
 from pathlib import Path
 
 from django import template
 from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.templatetags.static import static
+from django.utils.html import conditional_escape
+from django.utils.safestring import mark_safe
 from wagtail.images.models import Filter
 from wagtail.images.rect import Rect
 from wagtail.rich_text import get_text_for_indexing
@@ -33,6 +36,27 @@ def richtext_plaintext(value):
     """Return RichText as decoded plain text for Django to escape once."""
 
     return get_text_for_indexing(str(value or ""))
+
+
+NO_BREAK_GROUP = re.compile("[^ \t\n\u00a0]+(?:\u00a0[^ \t\n\u00a0]+)+")
+
+
+@register.filter
+def keep_together(value):
+    """Hold word groups joined by no-break spaces together, but only softly.
+
+    Plain-text titles have no rich-text "Kein Umbruch"; editors join words with a no-break
+    space (Option+Space) instead. Each such group becomes the same soft no-break span, so it
+    wraps as a whole and only breaks inside when it is wider than the line on its own.
+    """
+
+    escaped = str(conditional_escape(value))
+    return mark_safe(
+        NO_BREAK_GROUP.sub(
+            lambda match: '<span data-no-break="">' + match.group(0).replace("\u00a0", " ") + "</span>",
+            escaped,
+        )
+    )
 
 
 @register.filter

@@ -80,9 +80,6 @@
     letter-spacing: var(--tracking-action);
     text-decoration: none;
   }
-  /* Kontur 1,5px: 1px Rahmen plus ein halber Pixel als Schatten außen, weil Chromium
-     Rahmenbreiten auf ganze Pixel abrundet. */
-  .pill.ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink); box-shadow: 0 0 0 .5px var(--ink); font-weight: var(--pill-ghost-weight); }
   /* ── Prio 1 ───────────────────────────────────────────────────────────────
      Dritte Stufe über den bestehenden zwei: `.pill` (warmes Schwarz — Navigation,
      CTA-Kachel) ist

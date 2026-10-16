@@ -1,4 +1,4 @@
-{% load wagtailcore_tags %}
+{% load portfolio_content wagtailcore_tags %}
 {% with shell=portfolio_site_settings %}
   {% pageurl portfolio_index as portfolio_home_url %}
   {% url "portfolio_imprint" as portfolio_imprint_url %}
@@ -26,7 +26,7 @@
           <h2 class="foot-h" id="ft-projekte"><a href="{{ portfolio_home_url }}#projekte">{{ shell.projects_label }}</a></h2>
           <ul>
             {% for project in portfolio_projects %}
-              <li><a href="{% pageurl project %}">{{ project.title }}</a></li>
+              <li><a href="{% pageurl project %}">{{ project.title|keep_together }}</a></li>
             {% endfor %}
           </ul>
         </nav>

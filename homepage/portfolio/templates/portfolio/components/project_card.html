@@ -29,7 +29,7 @@
     </div>
     <div class="meta">
       <div class="row1">
-        <h3>{{ project.title }}</h3>
+        <h3>{{ project.title|keep_together }}</h3>
         <span class="tile-arrow" aria-hidden="true">→</span>
       </div>
       <div class="row2">{{ project.get_category_display }} · {{ project.year_display }}</div>

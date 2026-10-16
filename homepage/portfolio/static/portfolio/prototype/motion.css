@@ -672,6 +672,12 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   --fold-ink: var(--creme);
   background: var(--fold-bg);
   color: var(--fold-face-ink);
+  /* Prio 3 auf allen Seiten: Kontur 1,5px (1px Rahmen plus ein halber Pixel als Schatten
+     außen, weil Chromium Rahmenbreiten auf ganze Pixel abrundet) und der etwas kräftigere
+     Schnitt für dunkle Schrift auf Hell. */
+  border: 1px solid var(--ink);
+  box-shadow: 0 0 0 .5px var(--ink);
+  font-weight: var(--pill-ghost-weight, 550);
 }
 .pill.ghost:hover,
 .pill.ghost:focus-visible {

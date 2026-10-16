@@ -387,7 +387,9 @@ def test_content_elements_keep_semantic_lists_and_neutral_browser_margins():
     assert declarations_for(base, {".rich-text ul"})["list-style"] == "disc"
     assert declarations_for(base, {".rich-text ol"})["list-style"] == "decimal"
     assert declarations_for(pages, {".error-heading"})["overflow-wrap"] == "anywhere"
-    assert declarations_for(base, {"[data-no-break]"})["white-space"] == "nowrap"
+    no_break = declarations_for(base, {"[data-no-break]"})
+    assert no_break["display"] == "inline-block"
+    assert "white-space" not in no_break
 
 
 def test_project_display_headline_hyphenates_words_wider_than_the_line():
@@ -426,7 +428,7 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
 
     assert article["container"] == "project / inline-size"
     assert intro["display"] == "grid"
-    assert intro["grid-template-areas"] == '"head" "media" "meta" "link"'
+    assert intro["grid-template-areas"] == '"head" "media" "meta"'
     assert "@container project (width >= 60rem)" in stylesheet
     assert metadata["display"] == "flex"
     assert metadata["flex-wrap"] == "wrap"
@@ -437,13 +439,12 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
     assert services["flex-direction"] == "column"
     assert services["list-style"] == "none"
     assert ".project-service-arrow" not in stylesheet
-    assert arrowhead["inline-size"] == "0"
-    assert arrowhead["border-inline-start"] == ".34rem solid var(--ink)"
+    assert arrowhead["inline-size"] == "var(--marker-size)"
+    assert arrowhead["border-radius"] == "50%"
+    assert arrowhead["background"] == "var(--ink)"
     assert live_link["display"] == "inline-flex"
     assert live_link["gap"] == ".7rem"
-    assert live_link["padding-block"] == ".425rem"
-    assert live_link["font-size"] == "1.2rem"
-    assert live_link["font-weight"] == "700"
+    assert "font-weight" not in live_link
     assert lead["max-inline-size"] == "100%"
 
 

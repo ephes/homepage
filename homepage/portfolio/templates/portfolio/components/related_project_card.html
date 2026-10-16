@@ -1,4 +1,4 @@
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load portfolio_content wagtailcore_tags wagtailimages_tags %}
 <a class="more-card related-project-card" href="{% pageurl project %}">
   <div class="tile-depth">
     <div class="frame related-project-card__frame{% if project.teaser_image %} frame--image{% endif %}">
@@ -10,7 +10,7 @@
     </div>
     <div class="meta related-project-card__meta">
       <div class="row1 related-project-card__title">
-        <h3>{{ project.title }}</h3>
+        <h3>{{ project.title|keep_together }}</h3>
         <span class="tile-arrow related-project-card__arrow" aria-hidden="true">→</span>
       </div>
       <div class="row2 related-project-card__details">{{ project.get_category_display }} · {{ project.year_display }}</div>

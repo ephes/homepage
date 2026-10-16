@@ -175,7 +175,11 @@ def test_project_period_renders_consistently_on_every_project_surface(client):
     following_page = BeautifulSoup(client.get(following_project.url).content, "html.parser")
 
     homepage_details = homepage.select_one(f'a.tile[href="{ranged_project.url}"] .row2').get_text(" ", strip=True)
-    project_year = project_page.select_one(".project-meta__facts > div:last-child dd").get_text(" ", strip=True)
+    project_year = next(
+        row.dd.get_text(" ", strip=True)
+        for row in project_page.select(".project-meta__facts > div")
+        if row.dt.get_text(strip=True) == "Jahr"
+    )
     related_details = following_page.select_one(".related-project-card__details").get_text(" ", strip=True)
 
     assert homepage_details.endswith("2021–2024")
@@ -476,20 +480,21 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
         assert sentinel in rendered_text, field_name
 
 
-def test_project_focus_renders_after_the_year_only_when_filled(client):
+def test_project_facts_run_client_year_focus_area_and_focus_only_when_filled(client):
     index = make_portfolio_tree()
     project = add_project(index)
 
     empty = BeautifulSoup(client.get(project.url).content, "html.parser")
     assert "Fokus" not in [dt.get_text(strip=True) for dt in empty.select(".project-meta__facts dt")]
 
+    project.client = "Studio Beispiel"
     project.focus = "Markenauftritt"
     project.save_revision().publish()
     filled = BeautifulSoup(client.get(project.url).content, "html.parser")
     facts = [(row.dt.get_text(strip=True), row.dd.get_text(strip=True)) for row in filled.select(".project-meta__facts > div")]
 
-    assert facts[-1] == ("Fokus", "Markenauftritt")
-    assert [label for label, _ in facts].index("Jahr") == len(facts) - 2
+    assert [label for label, _ in facts] == ["Kunde", "Jahr", "Fokus", "Bereich"]
+    assert ("Fokus", "Markenauftritt") in facts
 
 
 def test_homepage_renders_fixed_moin_instead_of_the_legacy_hero_field(client):
@@ -728,6 +733,7 @@ def test_project_live_link_uses_its_own_editable_label_over_the_global_default()
 
     assert link is not None
     assert link["href"] == "https://example.com/work"
+    assert "ghost" in link["class"] and "prio" not in link["class"]
     assert str(link.select_one(".pill-label").contents[0]).strip() == "Projekt besuchen"
     assert link.select_one(".ar")["aria-hidden"] == "true"
     assert "Globaler Standard" not in link.get_text()
@@ -1050,3 +1056,29 @@ def test_empty_case_texts_hide_only_their_own_rows(client):
     assert [item.get_text(" ", strip=True) for item in document.select(".result")] == ["3 Kampagnen"]
     assert document.select_one(".project-testimonial blockquote").get_text(strip=True) == "„Sehr gern wieder.“"
     assert document.select_one(".project-testimonial figcaption") is None
+
+
+def test_keep_together_wraps_no_break_space_groups_softly_and_escapes_the_rest():
+    from homepage.portfolio.templatetags.portfolio_content import keep_together
+
+    rendered = keep_together("Marina <Adler>. Eine\u00a0Marke entsteht.")
+
+    assert rendered == 'Marina &lt;Adler&gt;. <span data-no-break="">Eine Marke</span> entsteht.'
+    assert keep_together("Ohne Gruppe") == "Ohne Gruppe"
+
+
+def test_project_titles_keep_no_break_space_groups_together_everywhere(client):
+    index = make_portfolio_tree()
+    project = add_project(index, title="Marke entsteht")
+    project.title = "Eine\u00a0Marke entsteht"
+    project.save_revision().publish()
+    other = add_project(index, title="Weiteres Projekt")
+
+    project_page = BeautifulSoup(client.get(project.url).content, "html.parser")
+    other_page = BeautifulSoup(client.get(other.url).content, "html.parser")
+    homepage = BeautifulSoup(client.get(index.url).content, "html.parser")
+
+    assert project_page.select_one(".project-intro h1 [data-no-break]").get_text() == "Eine Marke"
+    assert project_page.select_one(".project-menu-links [data-no-break]") is not None
+    assert other_page.select_one(".related-project-card [data-no-break]") is not None
+    assert homepage.select_one("a.tile h3 [data-no-break]") is not None

@@ -2,7 +2,6 @@ import uuid
 from unittest.mock import Mock
 
 import pytest
-from django.core.exceptions import ValidationError
 from wagtail.blocks import StreamBlockValidationError, StructBlockValidationError
 from wagtail.images import get_image_model
 from wagtail.models import Collection

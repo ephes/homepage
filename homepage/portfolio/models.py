@@ -12,11 +12,11 @@ from wagtail.models import Orderable, Page, Site
 from wagtail.rich_text import RichTextMaxLengthValidator
 
 from .blocks import (
-    block_is_filled,
     PROJECT_BLOCK_REGION_CASE_STUDY,
     PROJECT_BLOCK_REGION_MEDIA,
     LegalSectionsBlock,
     ProjectBodyBlock,
+    block_is_filled,
     get_project_block_region,
 )
 from .hosts import portfolio_page_path

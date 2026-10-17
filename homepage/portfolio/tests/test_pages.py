@@ -29,7 +29,6 @@ from .test_styles import declarations_for, layer_body
 pytestmark = pytest.mark.django_db
 
 
-
 def filled_project_content():
     """A case study whose texts are all filled in (unlike the starter placeholders)."""
 
@@ -39,6 +38,7 @@ def filled_project_content():
         ("stats", {"items": [{"value": f"0{number}", "label": f"Ergebnis {number}"} for number in range(1, 5)]}),
         ("testimonial", {"quote": "Ein Kundenstatement.", "name": "Kundin", "role": "Leitung"}),
     ]
+
 
 def make_portfolio_tree():
     Locale.objects.get_or_create(language_code="en")
@@ -491,7 +491,10 @@ def test_project_facts_run_client_year_focus_area_and_focus_only_when_filled(cli
     project.focus = "Markenauftritt"
     project.save_revision().publish()
     filled = BeautifulSoup(client.get(project.url).content, "html.parser")
-    facts = [(row.dt.get_text(strip=True), row.dd.get_text(strip=True)) for row in filled.select(".project-meta__facts > div")]
+    facts = [
+        (row.dt.get_text(strip=True), row.dd.get_text(strip=True))
+        for row in filled.select(".project-meta__facts > div")
+    ]
 
     assert [label for label, _ in facts] == ["Kunde", "Jahr", "Fokus", "Bereich"]
     assert ("Fokus", "Markenauftritt") in facts
@@ -525,9 +528,7 @@ def test_unpublished_project_disappears_from_every_public_project_collection(cli
     homepage = BeautifulSoup(client.get(index.url).content, "html.parser")
     project_page = BeautifulSoup(client.get(current.url).content, "html.parser")
     homepage_tiles = {heading.get_text(strip=True) for heading in homepage.select("a.tile h3")}
-    menu_projects = {
-        link.get_text(strip=True) for link in homepage.select(".project-menu-links a")
-    }
+    menu_projects = {link.get_text(strip=True) for link in homepage.select(".project-menu-links a")}
     assert not homepage.select(".project-overview-link")
     footer_projects = {link.get_text(strip=True) for link in homepage.select(".foot-projects li a")}
     related_projects = {

@@ -4,9 +4,7 @@ import pytest
 from django.contrib.staticfiles import finders
 from django.test import RequestFactory
 
-from .test_pages import filled_project_content
-
-from .test_pages import add_project, make_portfolio_tree
+from .test_pages import add_project, filled_project_content, make_portfolio_tree
 from .test_styles import declarations_for, layer_body
 
 pytestmark = pytest.mark.django_db

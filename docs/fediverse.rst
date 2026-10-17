@@ -8,7 +8,13 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
    Redirect to the profile on the fedi host.
 
 ``/.well-known/webfinger``, ``/.well-known/host-meta``, ``/.well-known/nodeinfo``
-   Fetched from the same path on the fedi host and returned to the client
+   On production these paths never reach Django: Traefik routes them on
+   ``wersdoerfer.de`` straight to Mastodon (router ``mastodon-local-wellknown``
+   from ops-library's ``mastodon_deploy``, switched on in ops-control with
+   ``mastodon_traefik_local_domain_wellknown``; see ops-control
+   ``docs/MASTODON.md``). Where that route is absent (development, staging, or
+   after switching it off) the homepage fetches them from the same path on the
+   fedi host and returns them to the client
    (``homepage.fedi.views._proxy_wellknown``). The proxy is deliberately
    narrow:
 

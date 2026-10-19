@@ -1,0 +1,24 @@
+{# Projektdetails: stehen direkt unter dem Statement („Das Projekt“), ohne Statement am Ende der Fallstudie. #}
+{% load portfolio_content %}
+<aside class="project-meta" aria-label="{{ portfolio_site_settings.project_details_heading }}">
+  <dl class="project-meta__services">
+    <div>
+      <dt>{{ portfolio_site_settings.project_meta_services_label }}</dt>
+      <dd>
+        {% with services=page.get_service_names %}
+        <ul class="marker-list project-service-list" style="--service-rows: {{ services|half_rounded_up }}">
+          {% for service in services %}
+            <li>{{ service }}</li>
+          {% endfor %}
+        </ul>
+        {% endwith %}
+      </dd>
+    </div>
+  </dl>
+  <dl class="project-meta__facts">
+    {% if page.client %}<div><dt>{{ portfolio_site_settings.project_meta_client_label }}</dt><dd>{{ page.client }}</dd></div>{% endif %}
+    <div><dt>{{ portfolio_site_settings.project_meta_year_label }}</dt><dd>{{ page.year_display }}</dd></div>
+    {% if page.focus %}<div><dt>{{ portfolio_site_settings.project_meta_focus_label }}</dt><dd>{{ page.focus }}</dd></div>{% endif %}
+    <div><dt>{{ portfolio_site_settings.project_meta_category_label }}</dt><dd>{{ page.get_category_display }}</dd></div>
+  </dl>
+</aside>

@@ -201,7 +201,7 @@
     <div class="stack">
       <h2 class="big motion-heading">{{ page.contact_heading_primary }}<br><span class="lastline">{{ page.contact_heading_secondary }} <span class="lastword">{{ page.contact_heading_emphasis }}<svg class="scr" aria-hidden="true" focusable="false"><text>{{ page.contact_annotation }}</text></svg></span></span></h2>
       <div class="buttons">
-        <a class="pill prio" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="pill-label">{{ page.contact_cta_label }} <span class="ar" aria-hidden="true">→</span></span></a>
+        <a class="pill prio" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="pill-label">{% include "portfolio/components/icon_mail.html" with class="pill-icon" %}{{ page.contact_cta_label }} <span class="ar" aria-hidden="true">→</span></span></a>
       </div>
     </div>
   </section>

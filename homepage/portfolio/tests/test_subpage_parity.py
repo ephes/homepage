@@ -32,14 +32,15 @@ def test_project_uses_canonical_prototype_assets_without_the_destructive_prototy
     assert "/static/portfolio/prototype/portfolio-startseite.css" not in content
     assert "/static/portfolio/prototype/homepage.js" not in content
     assert "/static/portfolio/homepage.css" not in content
-    assert 'class="project-hero project-intro" id="projektstart"' in content
+    assert 'class="project-stage" id="projektstart"' in content
+    assert 'class="project-hero project-intro"' in content
     assert 'class="project-index-link sr-only"' in content
     assert content.count('document.documentElement.classList.add("has-js")') == 1
     assert 'class="motion-heading"' in content
     assert 'class="project-intro__head motion-reveal"' in content
     assert 'class="project-meta__facts"' in content
     assert 'class="project-meta__services"' in content
-    assert '<aside class="project-meta" aria-label="Projektdetails">' in content
+    assert '<aside class="project-meta" aria-label="Und sonst so">' in content
     assert 'class="marker-list project-service-list"' in content
     assert 'class="block project-content"' in content
     assert 'class="media-placeholder hero-media"' in content
@@ -119,7 +120,7 @@ def test_project_adapter_contains_only_wagtail_markup_and_measurement_bridges():
     related_title = declarations_for(css, {".more-projects .block-title"})
     assert related_title["-webkit-hyphens"] == "manual !important"
     assert related_title["hyphens"] == "manual !important"
-    canonical_grids = declarations_for(canonical, {".case-row", ".result-grid", ".more-grid", ".footer-grid"})
+    canonical_grids = declarations_for(canonical, {".result-grid", ".more-grid", ".footer-grid"})
     canonical_card = declarations_for(canonical, {".more-card"})
     canonical_frame_cross = declarations_for(canonical, {".more-card .frame::before", ".more-card .frame::after"})
     wagtail_image_frame = declarations_for(pages, {".related-project-card__frame.frame--image"})

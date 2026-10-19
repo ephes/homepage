@@ -41,6 +41,8 @@
   --type-menu-project: clamp(.75rem, min(calc(.9rem + .2vw), calc(.534rem + 2.077vw)), 1.1rem);
   /* Gemeinsame hervorgehobene Lesestufe: Hero-Subline, Projekt-Lead und Prio-CTA. */
   --type-lead: clamp(1.2rem, calc(1.1rem + .3vw), 1.5rem);
+  /* Projekt-Statement und Fazit: zwischen Lead-Stufe und --headline-s, näher an dieser. */
+  --type-statement: calc((var(--type-lead) + 2 * var(--headline-s)) / 3);
   /* Button-Schnitte: Prio 1 (orange) 700; gefüllte Secondary-Buttons einen Schnitt feiner;
      umrandeter Prio-3-Button etwas kräftiger, weil dunkle Schrift auf Hell leichter wirkt.
      Beim Überfahren steht er hell auf dunkel und nimmt den Secondary-Schnitt an. */
@@ -240,7 +242,7 @@ p { text-wrap: pretty; }
   background: var(--creme);
 }
 body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
-.project-hero[id], section[id] { scroll-margin-block-start: var(--header-h); }
+.project-stage[id], .project-hero[id], section[id] { scroll-margin-block-start: var(--header-h); }
 .menu-icon { position: relative; display: block; inline-size: 1.75rem; block-size: .75rem; }
 .menu-icon::before, .menu-icon::after {
   content: ""; position: absolute; inset-inline-start: 0;
@@ -362,7 +364,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   -webkit-hyphenate-limit-after: 4;
   overflow-wrap: break-word;
 }
-.case-row, .result-grid, .more-grid, .footer-grid {
+.result-grid, .more-grid, .footer-grid {
   display: grid;
   grid-template-columns: var(--project-grid-columns, repeat(4, 1fr));
 }
@@ -374,14 +376,20 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
    Bildschirmrand. Die Breite fragt der Kopf per Container Query an seinem tatsächlichen
    Platz ab, das Seitenverhältnis per Media Query am Fenster. */
 .project { container: project / inline-size; }
-.project-intro {
+/* Bühne aus Projektkopf und Fallstudie (Every Layout: Rasterbereiche, Cover-Prinzip). Der
+   Kopf (.project-intro) gibt seine Teile direkt an die Bühne weiter, damit das Titelbild auf
+   breiten Screens über alle Views hinweg stehen bleiben kann. Schmal stehen Headline mit
+   Anleser und Live-Link, Titelbild, Fallstudie und zum Schluss die Projektdetails als
+   Abbinder untereinander. */
+.project-stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "head" "media" "meta";
+  grid-template-areas: "head" "media" "case" "meta";
   justify-items: start;
-  /* Schmal schließt der nächste Abschnitt mit seiner Linie direkt an die Projektdetails an. */
-  padding-block-end: 0;
+  padding-block-start: var(--space-section);
+  padding-inline: var(--pad);
 }
+.project-intro { display: contents; }
 /* Headline, Anleser und Live-Link gehören zusammen und stehen eng; das Bild setzt sich mit
    dem Abschnittsabstand davon ab. Schmal schließen die Projektdetails ohne Abstand an das
    Bild an: ihre obere Linie ist die Unterkante des Bildes. */
@@ -406,46 +414,208 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   aspect-ratio: 4 / 3;
   border-block-end: 0;
 }
-.project-intro > .project-meta {
+/* Die Projektdetails stehen direkt unter dem Statement („Das Projekt“). Nur ohne Statement
+   schließen sie Kopf und Fallstudie am Ende ab. */
+.case-row > .project-meta {
+  --meta-extra: var(--meta-reach, 0px);
+  margin-block-start: var(--meta-space);
+  /* Im breiten Layout hält der Text Abstand zum Bild (--meta-reach); die Details reichen
+     trotzdem bis zur Mittellinie, damit ihre Spalten auf den Rasterlinien stehen. */
+  margin-inline-end: calc(-1 * var(--meta-reach, 0px));
+}
+/* Container der Details: Ab vier Rasterspalten von mindestens 10rem teilen sich Leistungen
+   und Fakten je auf zwei Spalten auf (siehe unten); neben dem Bild nicht. */
+.project-meta {
+  container: project-meta / inline-size;
+  /* Luft über, unter und zwischen den Linien: vierspaltig (Details ab 40rem breit) --s2,
+     zweispaltig --s1. Prozent beziehen sich auf den umgebenden Block; --meta-extra ist
+     das, was die Details darüber hinausragen (Switcher-Prinzip, ohne Media Query). */
+  --meta-space: max(var(--s1), min(var(--s2), calc((100% + var(--meta-extra, 0px) - 40rem) * 999)));
+}
+/* Mit JavaScript hängen die Details am Statement-Text; dessen Einrückung gleichen sie aus. */
+.case-part > .project-meta {
+  --meta-extra: calc(2 * var(--inset) + var(--meta-reach, 0px));
+  margin-block-start: var(--meta-space);
+  margin-inline: calc(-1 * var(--inset)) calc(-1 * (var(--inset) + var(--meta-reach, 0px)));
+}
+.project-stage > .project-meta {
   grid-area: meta;
   justify-self: stretch;
-  /* Die Projektdetails sind ein eigener Bereich, oben mit der üblichen Abschnittslinie
-     abgetrennt. */
-  padding-block: var(--s1);
-  border-block-start: 1px solid var(--rule);
+  margin-block: var(--case-gap) var(--space-section);
+}
+.project-stage > .project-content {
+  grid-area: case;
+  justify-self: stretch;
+  /* Die Bühne trägt den Seitenrand bereits. */
+  padding-inline: 0;
 }
 /* Nebeneinander nur in deutlich querformatigen Fenstern (mindestens 5:4, etwa Laptop oder
-   Tablet quer): Hochkant oder fast quadratisch rutscht der Kopf auch bei ausreichender
-   Breite untereinander. Als Richtwert gehören zwei Drittel der Höhe Kopf und Anleser (darin
-   mittig), ein Drittel den Projektdetails (oben am Übergang). Beide Zeilen wachsen mit
-   ihrem Inhalt; dazwischen bleibt mindestens der Abschnittsabstand. */
+   Tablet quer): Hochkant oder fast quadratisch rutscht alles auch bei ausreichender Breite
+   untereinander. Rechts steht das Titelbild fest, links folgen Views von mindestens
+   Bildschirmhöhe, ihr Inhalt jeweils mittig: Kopf, Projekt, Aufgabe, Lösung und zum
+   Schluss die Projektdetails. */
 @media (min-aspect-ratio: 5 / 4) {
   @container project (width >= 60rem) {
-    .project-intro {
+    .project-stage {
+      --stage-view: calc(100svh - var(--header-h));
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: minmax(min-content, 2fr) minmax(min-content, 1fr);
-      grid-template-areas: "head media" "meta media";
-      row-gap: var(--space-title-content);
-      min-block-size: calc(100svh - var(--header-h));
+      grid-template-areas: "head media" "case media" "meta media";
       padding-block: 0;
+      /* Neben dem Bild ist Platz für doppelten Innenabstand links in der Textspalte. */
+      --inset: 2rem;
     }
     /* Kopf und Anleser halten Abstand zum Bild; die Projektdetails reichen bis zur
        Mittellinie, damit ihre zwei Spalten auf den Linien des Seitenrasters stehen. */
-    .project-intro__head { align-self: center; margin-inline-end: var(--s2); }
-    /* Der Button wiegt optisch weniger als Headline und Anleser: Zentriert werden Eyebrow,
-       Headline und Anleser, der Button hängt darunter. Dafür bekommt der Kopf oben so viel
-       Innenabstand wie Button-Abstand (--s2) plus Buttonhöhe (Zeile 1.5, Innenabstand
-       2 × .5rem, Rahmen 2px) zusammen. */
-    .project-intro__head:has(> .project-live-link) {
-      padding-block-start: calc(var(--s2) + 1.5 * var(--type-subline) + 1rem + 2px);
+    .project-intro__head {
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      min-block-size: var(--stage-view);
+      margin-inline-end: var(--s2);
     }
-    .project-intro > .project-meta { align-self: start; }
-    .project-intro h1 { font-size: var(--headline-m); }
+    /* Neben dem Bild bleiben die Details zweispaltig (je eine Rasterspalte). */
+    .project-meta { container-type: normal; --meta-space: var(--s1); }
+    .project-intro h1 { font-size: var(--headline-l); }
+    /* Das Titelbild steht von der Kopfleiste bis zum unteren Bildschirmrand und bleibt
+       stehen, bis die Projektdetails durchgescrollt sind. */
     .project-intro > .project-hero-media,
     .project-intro > .hero-media {
+      position: sticky;
+      inset-block-start: var(--header-h);
+      align-self: start;
+      block-size: var(--stage-view);
       margin: 0;
       aspect-ratio: auto;
       border-block: 0;
+    }
+    .project-stage > .project-content {
+      --meta-reach: var(--s2);
+      margin-inline-end: var(--meta-reach);
+    }
+    /* Bühne der Fallstudie (nur wenn motion.js sie einschaltet: .is-staged, also mit
+       JavaScript und ohne „Bewegung reduzieren“). Die Seite steht, während man durch die
+       Fallstudie scrollt: Headline und genau ein Absatz stehen mittig im View; nach je
+       einer Scrollstrecke (--case-step) tauscht der Inhalt mit leichtem Lift-up. Innerhalb
+       eines Abschnitts bleibt seine Headline stehen, nur Absatz und Teilzähler wechseln.
+       Ohne Bühne scrollt der Inhalt links einfach mit normalen Abständen durch. */
+    @media (prefers-reduced-motion: no-preference) {
+      .project-content.is-staged {
+        --case-step: 55svh;
+        /* Lift-up der Stationen: weiter Weg, weich auslaufend. */
+        --stage-lift-in: 4rem;
+        --stage-lift-out: -2.5rem;
+        --stage-fade: .8s;
+        --stage-move: 1.2s;
+        --stage-ease: cubic-bezier(.22, 1, .36, 1);
+        min-block-size: calc(var(--stage-view) + (var(--case-steps) - 1) * var(--case-step));
+        padding-block: 0;
+      }
+      /* Jede Station steht an derselben Stelle: Die Headline sitzt immer gleich hoch, etwas
+         über der Mitte (bei 30 % der Viewhöhe), der Text läuft darunter. */
+      .is-staged > .case-stage {
+        position: sticky;
+        inset-block-start: var(--header-h);
+        display: grid;
+        align-content: start;
+        block-size: var(--stage-view);
+        padding-block-start: calc(var(--stage-view) * .3);
+      }
+      .is-staged .case-stage > .case-row {
+        grid-area: 1 / 1;
+        /* Jeder Abschnitt steht kompakt oben an der gemeinsamen Linie, statt sich auf den
+           längsten zu strecken. */
+        align-self: start;
+        display: grid;
+        align-content: start;
+        margin: 0;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity var(--stage-fade) ease, visibility 0s linear var(--stage-fade);
+      }
+      .is-staged .case-row.is-active {
+        opacity: 1;
+        visibility: visible;
+        transition-delay: 0s;
+      }
+      .is-staged .case-row.motion-reveal { animation: none; }
+      /* Auf der Bühne trägt jede Station ihre eigene Headline-Kopie und wechselt als Ganzes;
+         die eigentliche Headline bleibt nur für Screenreader. */
+      .is-staged .case-row > .case-label {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .is-staged .case-part__label {
+        display: block;
+        margin: 0 0 var(--s1) calc(-1 * .082em);
+        font-size: var(--type-case-large);
+        font-weight: 600;
+        line-height: 1.03;
+        letter-spacing: var(--tracking-display);
+        text-transform: uppercase;
+        text-wrap: balance;
+      }
+      .is-staged .case-copy { display: grid; margin-block-start: 0; }
+      .is-staged .case-copy > .case-part {
+        grid-area: 1 / 1;
+        margin: 0;
+        opacity: 0;
+        visibility: hidden;
+        translate: 0 var(--stage-lift-in);
+        transition: opacity var(--stage-fade) ease, translate var(--stage-move) var(--stage-ease), visibility 0s linear var(--stage-fade);
+      }
+      .is-staged .case-part.is-active {
+        opacity: 1;
+        visibility: visible;
+        translate: 0 0;
+        transition-delay: .1s, .1s, 0s;
+      }
+      .is-staged .case-part.is-past { translate: 0 var(--stage-lift-out); }
+      /* Fortschritt: ein kurzer Strich pro Station an fester Stelle unten in der Bühne,
+         der aktuelle dunkel. */
+      .is-staged .case-progress {
+        position: absolute;
+        inset-inline-start: var(--inset);
+        inset-block-end: var(--s2);
+        display: flex;
+        gap: .5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .is-staged .case-progress > li {
+        inline-size: 1.5rem;
+        block-size: 2px;
+        background: var(--rule);
+        transition: background-color .45s ease;
+      }
+      .is-staged .case-progress > li.is-active { background: var(--ink); }
+      /* Gemeinsame Oberkante: Die Headlines beginnen sichtbar exakt an derselben
+         Linie, unabhängig von Schriftgröße und Zeilenhöhe (Zeile oben auf Versalhöhe
+         beschnitten). */
+      .is-staged .case-part__label {
+        text-box: trim-start cap alphabetic;
+      }
+      /* Scroll-Hinweis unten rechts im scrollenden Inhaltsbereich, gegenüber dem
+         Fortschritt; er scrollt erst mit der letzten Station aus dem Bild. */
+      .is-staged .case-stage > .scrollcue {
+        position: absolute;
+        display: block;
+        inset-inline-end: var(--inset);
+        inset-block-end: var(--s2);
+      }
+      .is-staged .case-part__count {
+        display: block;
+        margin-block-start: var(--s1);
+        color: var(--muted);
+        font-size: var(--type-meta-label);
+        font-weight: 600;
+        letter-spacing: var(--tracking-label);
+        text-transform: uppercase;
+      }
     }
   }
 }
@@ -490,7 +660,13 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   min-inline-size: 0;
   flex-wrap: wrap;
   align-items: stretch;
+  /* Die Spalten gleichen sich in der Höhe aneinander an, nicht an eine Mindesthöhe des
+     Bereichs: Die Zeile bleibt oben, statt sich über den freien Raum zu ziehen. */
+  align-content: flex-start;
   margin: 0;
+  /* Linien oben und unten fassen die Details als eigenen Bereich. */
+  padding-block: var(--meta-space);
+  border-block: var(--border-thin) solid var(--rule);
 }
 .project-meta > dl {
   min-inline-size: 0;
@@ -509,16 +685,16 @@ dl.project-meta {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
-/* Zwischen Label und Wert steht immer weniger Abstand (enger Label-Zeilenfall, dd ohne
-   Außenabstand) als zwischen einem Wert und dem nächsten Label (mindestens .55rem, mehr,
-   wenn die Spalte gestreckt wird). */
+/* Zwischen Label und Wert steht immer weniger Abstand als zwischen einem Wert und dem
+   nächsten Label (mindestens .55rem, vierspaltig --s0, mehr, wenn die Spalte gestreckt
+   wird). */
 .project-meta__facts { justify-content: space-between; gap: .55rem; }
 .project-meta__services > div,
 .project-meta__services dd { display: flex; flex: 1; flex-direction: column; }
 .project-meta__services .project-service-list { flex: 1; justify-content: space-between; }
 /* Die eingerückte Bullet-Liste braucht etwas mehr Luft unter ihrem Label als ein einzelner
    Wert; die Bullets rücken dafür enger zusammen. */
-.project-service-list > li:first-child { margin-block-start: .3rem; }
+.project-service-list { padding-block-start: .3rem; }
 /* Leistungen: Punkte mittig unter dem Asterisk des Labels, Text bündig mit dem Labeltext.
    Asterisk A = .75 und Abstand G = .5625 der Labelgröße, Punkt D = --marker-size:
    Punkt um (A − D) / 2 einrücken, danach (A − D) / 2 + G Abstand. */
@@ -529,6 +705,31 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
 }
 .project-meta__services .project-service-list > li::before { margin-inline-start: var(--marker-offset); }
 .project-meta__services .project-service-list { gap: .2rem; }
+/* Vier Spalten, sobald der Detailbereich vier Rasterspalten von mindestens 10rem bietet
+   (Hochformat, schmalere Fenster): Leistungen über zwei Spalten, erst die erste Hälfte,
+   dann die zweite, deren Punkte auf den Zeilen der ersten stehen; daneben Kunde und Jahr,
+   dann Fokus und Bereich. Der doppelte Einzug als Spaltenabstand setzt jede Spalte auf
+   eine Rasterlinie. Die Zeilenzahl der Leistungen kommt aus dem Template
+   (--service-rows), die der Fakten aus ihrer Anzahl. */
+@container project-meta (width >= 40rem) {
+  .project-meta__services .project-service-list,
+  .project-meta > .project-meta__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: column;
+    align-content: space-between;
+    column-gap: calc(2 * var(--inset));
+  }
+  .project-meta__services .project-service-list {
+    grid-template-rows: repeat(var(--service-rows, 1), auto);
+  }
+  .project-meta__facts { grid-template-rows: auto; }
+  /* Vierspaltig ist Platz für mehr Luft zwischen Label, Wert und Punkten. */
+  .project-meta > .project-meta__facts { row-gap: var(--s0); }
+  .project-meta__services .project-service-list { row-gap: var(--s-2); }
+  .project-meta > dl dd { margin-block-start: var(--s-2); }
+  .project-meta__facts:has(> :nth-child(3)) { grid-template-rows: repeat(2, auto); }
+}
 .project-meta dt {
   color: var(--muted);
   font-size: var(--type-meta-label);
@@ -559,7 +760,7 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
   mask: var(--asterisk-mark-bold) center / contain no-repeat;
 }
 .project-meta dd {
-  margin: 0;
+  margin: .2rem 0 0;
   /* Bündig mit dem Labeltext: Asterisk (.75em) plus Abstand (.5625em) in Labelgröße. */
   padding-inline-start: calc(1.3125 * var(--type-meta-label));
   font-size: var(--type-subline);
@@ -625,24 +826,43 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
   -webkit-hyphens: auto;
   hyphens: auto;
 }
-.case-row { align-items: start; }
-.case-row + .case-row { margin-block-start: clamp(2rem, 3.5vw, 3rem); }
-.case-label {
-  grid-column: 1 / 2;
-  margin: 0;
-  /* Auf breiten Screens fluchtet der Labeltext mit „Case Study“; dessen Asterix hängt
-     dadurch links heraus. Zwischen Mobile und Desktop wächst der Zusatz stufenlos von
-     null auf Asterixbreite + Eyebrow-Gap, ganz ohne weitere Media Query. */
-  padding-inline-start: calc(var(--inset) + clamp(0rem, calc(12.5vw - 6.5rem), calc(.7rem + 1em)));
-  padding-inline-end: var(--inset);
-  color: var(--muted);
-  font-size: var(--type-eyebrow);
-  font-weight: 600;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+/* Fallstudie: Label über dem Text, beide an derselben Kante wie Anleser und Projektdetails
+   im Kopf, damit der Text beim Scrollen nicht springt. */
+.case-row { --motion-enter-distance: 2rem; }
+/* Projekt, Aufgabe und Lösung sind eigene Abschnitte: Abstand wie zwischen Sektionen,
+   solange die Details vierspaltig stehen (Inhalt ab 40rem). Schmaler, bei zweispaltigen
+   Details, reicht der kleinere Abstand. Prozent beziehen sich auf die Breite des Inhalts
+   (Switcher-Prinzip, ohne Media Query). */
+.case-row + .case-row { margin-block-start: var(--case-gap); }
+.case-row + .case-row,
+.project-stage > .project-meta {
+  --case-gap: max(clamp(2rem, 3.5vw, 3rem), min(var(--space-section), calc((100% - 40rem) * 999)));
 }
-.case-copy { grid-column: 2 / 4; margin: 0; padding-inline: var(--inset); max-inline-size: 52rem; font-size: var(--type-copy); line-height: 1.5; }
-.case-copy.large { font-size: var(--type-case-large); line-height: 1.15; }
+/* Das Projekt, Die Aufgabe, Die Lösung: Headlines im Stil der Projekt-Headline. */
+.case-label {
+  margin: 0 0 0 calc(var(--inset) - .082em);
+  padding-inline-end: var(--inset);
+  color: var(--ink);
+  font-size: var(--type-case-large);
+  font-weight: 600;
+  line-height: 1.03;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+/* Absatz-Stationen und ihr Teilzähler entstehen nur per motion.js. Ohne Bühne fließen sie
+   wie normale Absätze, der Zähler bleibt verborgen. */
+.case-part + .case-part { margin-block-start: 1em; }
+.case-part > * { margin-block: 0; }
+.case-part__count,
+.case-part__label { display: none; }
+.case-progress { display: none; }
+.case-stage > .scrollcue { display: none; }
+.case-copy { margin: 1rem 0 0; padding-inline: var(--inset); font-size: var(--type-copy); line-height: 1.5; }
+.case-copy.large { font-size: var(--type-statement); line-height: 1.25; }
+/* Fazit: letzter Absatz der Lösung (eigenes Feld), fett in Fließtextgröße. */
+.case-copy .case-conclusion { margin-block-start: 1em; }
+.case-conclusion > * { margin: 0; }
 /* Fließtexte der Fallstudie: normaler Zeilenfall statt `pretty` (das glich über viele
    Trennstriche aus) und Silbentrennung ab acht Zeichen mit Bruchstücken ab vier — auf dem
    Telefon abgestimmt als Ausgleich zwischen Trennstrichen und Lücken am Zeilenende.
@@ -655,6 +875,12 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
   -webkit-hyphenate-limit-before: 4;
   -webkit-hyphenate-limit-after: 4;
   overflow-wrap: break-word;
+}
+/* Projektdetails brechen nur zwischen ganzen Wörtern um, ohne Silbentrennung; auch wenn
+   sie mit JavaScript im Statement-Text stehen. */
+.project-meta, .project-meta li {
+  -webkit-hyphens: manual;
+  hyphens: manual;
 }
 .gallery {
   display: flex;
@@ -842,11 +1068,8 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: .7rem;
-  padding: 1.05rem 2.1rem;
   background: var(--tangerine);
   color: var(--creme);
-  font-size: var(--type-lead);
   font-weight: 700;
   letter-spacing: var(--tracking-action);
 }
@@ -886,7 +1109,6 @@ footer.site a:focus-visible { outline-color: var(--dark-ink); }
 
 @media (max-width: 52rem) {
   .header-actions { gap: clamp(.25rem, calc(-1.25rem + 10vw), .75rem); }
-  .case-row { grid-template-columns: 1fr; }
   /* Ergebnisse bilden mobil ein kompaktes 2×n-Raster. Nur ein tatsächlicher
      Inhaltsüberlauf setzt per projekt.js die einspaltige Stapelklasse. */
   .result-grid {
@@ -910,9 +1132,7 @@ footer.site a:focus-visible { outline-color: var(--dark-ink); }
      einer dieser beiden Karten nicht hineinpasst, ergänzt projekt.js die Stapelklasse. */
   .more-grid { --project-grid-columns: repeat(2, minmax(0, 1fr)); }
   .more-grid.more-grid-stacked { --project-grid-columns: 1fr; }
-  .case-label, .case-copy { grid-column: auto; }
   .more-card { --more-card-grid-column: auto; }
-  .case-copy { margin-block-start: 1rem; }
   /* Ein Hochformat ohne unmittelbaren Partner schließt die Zeile vollbreit. Nur vom
      Template paarweise markierte Hochformate teilen sich eine Zeile; bei ungerader
      Anzahl bleibt das letzte daher ebenfalls lückenlos vollbreit. */

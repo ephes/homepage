@@ -16,11 +16,13 @@
 {% block content %}
   {% pageurl portfolio_index as portfolio_home_url %}
   <article class="project">
-    <header class="project-hero project-intro" id="projektstart">
+    {# Kopf und Fallstudie teilen sich eine Bühne: Auf breiten Screens bleibt das Titelbild rechts stehen, links folgen Kopf, Projekt, Aufgabe und Lösung als eigene Views. #}
+    <div class="project-stage" id="projektstart">
+    <header class="project-hero project-intro">
       <a class="project-index-link sr-only" href="{{ portfolio_home_url }}#projekte">Zurück zu allen Projekten</a>
       {# Headline, Anleser und Live-Link bewegen sich als ein Block (motion-reveal); die Headline behält über motion-heading nur ihren optischen Randausgleich. #}
       <div class="project-intro__head motion-reveal">
-        <p class="eyebrow">{{ portfolio_site_settings.project_kicker }} {{ project_number|stringformat:"02d" }} / {{ project_total|stringformat:"02d" }}</p>
+        <p class="eyebrow">{{ portfolio_site_settings.case_study_label }} {{ project_number|stringformat:"02d" }}</p>
         <h1 class="motion-heading">{{ page.title|keep_together }}</h1>
         <div class="project-lead">{{ page.teaser_text|richtext }}</div>
         {% if page.live_url %}
@@ -38,36 +40,16 @@
       {% else %}
         <div class="media-placeholder hero-media" role="img" aria-label="Platzhalter für das Projekt-Titelbild">Projekt-Titelbild</div>
       {% endif %}
-      <aside class="project-meta" aria-label="Projektdetails">
-        <dl class="project-meta__services">
-          <div>
-            <dt>{{ portfolio_site_settings.project_meta_services_label }}</dt>
-            <dd>
-              <ul class="marker-list project-service-list">
-                {% for service in page.get_service_names %}
-                  <li>{{ service }}</li>
-                {% endfor %}
-              </ul>
-            </dd>
-          </div>
-        </dl>
-        <dl class="project-meta__facts">
-          {% if page.client %}<div><dt>{{ portfolio_site_settings.project_meta_client_label }}</dt><dd>{{ page.client }}</dd></div>{% endif %}
-          <div><dt>{{ portfolio_site_settings.project_meta_year_label }}</dt><dd>{{ page.year_display }}</dd></div>
-          {% if page.focus %}<div><dt>{{ portfolio_site_settings.project_meta_focus_label }}</dt><dd>{{ page.focus }}</dd></div>{% endif %}
-          <div><dt>{{ portfolio_site_settings.project_meta_category_label }}</dt><dd>{{ page.get_category_display }}</dd></div>
-        </dl>
-      </aside>
     </header>
 
     {% if project_has_case_study %}
-      <section id="case-study" class="block project-content" aria-label="{{ portfolio_site_settings.case_study_label }}">
-        <p class="eyebrow project-content__eyebrow">{{ portfolio_site_settings.case_study_label }}</p>
-        {% for block in page.content %}
-          {% if block|project_block_region == "case-study" %}{% include_block block %}{% endif %}
-        {% endfor %}
+      {# data-part-of: Verbindungswort für den Teilzähler („Die Lösung 1 von 3“), den nur motion.js setzt. #}
+      <section id="case-study" class="block project-content" aria-label="{{ portfolio_site_settings.case_study_label }}" data-part-of="{{ portfolio_site_settings.project_part_of_label }}">
+        {% for block in case_study_blocks %}{% include_block block %}{% endfor %}
       </section>
     {% endif %}
+      {% if not project_has_statement %}{% include "portfolio/components/project_details.html" %}{% endif %}
+    </div>
 
     {% if project_has_editorial_media %}
       <section id="galerie" aria-label="{{ portfolio_site_settings.gallery_label }}">
@@ -105,7 +87,7 @@
       <div class="stack">
         <h2 class="big motion-heading">{{ portfolio_index.contact_heading_primary }}<br><span class="lastline">{{ portfolio_index.contact_heading_secondary }} <span class="lastword">{{ portfolio_index.contact_heading_emphasis }}<svg class="scr" aria-hidden="true"><text>{{ portfolio_index.contact_annotation }}</text></svg></span></span></h2>
         <div class="buttons">
-          <a class="pill prio" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="pill-label">{{ portfolio_index.contact_cta_label }} <span class="ar" aria-hidden="true">→</span></span></a>
+          <a class="pill prio" href="mailto:{{ portfolio_site_settings.contact_email }}"><span class="pill-label">{% include "portfolio/components/icon_mail.html" with class="pill-icon" %}{{ portfolio_index.contact_cta_label }} <span class="ar" aria-hidden="true">→</span></span></a>
         </div>
       </div>
     </section>

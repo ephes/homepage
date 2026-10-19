@@ -875,19 +875,6 @@
   .contact h2.big .lastword .scr { left: 50%; transform: translateX(.18em); }
   .contact h2.big { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-l); font-weight: 600; line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
   .contact .buttons { display: flex; min-inline-size: 0; inline-size: 100%; gap: 0.75rem; flex-wrap: wrap; }
-  .contact .pill.prio {
-    max-inline-size: 100%;
-    font-size: clamp(.75rem, 6vw, var(--type-lead));
-    padding-inline: clamp(.55rem, calc(19.08vw - 1.716rem), 2.1rem);
-    padding-block: clamp(.7rem, 2.8vw, 1.05rem);
-    gap: clamp(.3rem, calc(4.92vw - .284rem), .7rem);
-  }
-  .contact .pill.prio > .pill-label {
-    min-inline-size: 0;
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
-  .contact .pill.prio .ar { inline-size: clamp(1rem, 6vw, 1.5rem); }
   footer.site { border-top: 1px solid var(--rule); }
   .foot-bar nav { display: flex; gap: 1.25rem; }
   .foot-bar a { color: inherit; text-decoration: none; }
@@ -1304,25 +1291,12 @@
      Er sitzt am rechten Textanschlag (Padding-Linie + --hero-inset), also gegenüber
      der Subline, und verschwindet, sobald gescrollt wurde — ein Hinweis, der nach
      dem Befolgen stehen bleibt, ist nur noch Dekoration. */
+  /* Form und Bewegung des Hinweises stehen gemeinsam in motion.css; hier nur seine Lage. */
   .scrollcue{position:absolute;
-    --scrollcue-length:clamp(2.5rem, 5vh, 3.5rem);
     right:calc(var(--pad) + var(--hero-inset));
-    top:calc(var(--sub-bottom, 85%) - var(--scrollcue-length));
-    inline-size:6px; block-size:var(--scrollcue-length);
-    border-radius:999px; background:var(--rule); overflow:hidden;
-    opacity:1; transition:opacity .45s ease;}
-  .scrollcue i{position:absolute; left:0; right:0; block-size:42%;
-    border-radius:999px; background:var(--rule-strong);
-    animation:cue 2.4s cubic-bezier(.75,0,.25,1) infinite;}
-  @keyframes cue{ 0%{top:-42%} 55%,100%{top:100%} }
+    top:calc(var(--sub-bottom, 85%) - var(--scrollcue-length));}
   /* Sobald gescrollt wurde, hat der Hinweis seine Aufgabe erfüllt. */
   .is-scrolled .scrollcue{opacity:0;}
-  @media (hover:none), (pointer:coarse){
-    .scrollcue{display:none;}
-  }
-  @media (prefers-reduced-motion: reduce){
-    .scrollcue i{animation:none; top:0;}
-  }
   /* Mobil bleibt die Erfahrung sichtbar, bekommt aber statt der zu schmalen vierten
      Einzelspalte die beiden linken Rasterspalten. Rechts hält der statische Cursor-Hinweis
      das obere Hero-Feld im Gleichgewicht. */

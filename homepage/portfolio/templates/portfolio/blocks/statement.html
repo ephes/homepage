@@ -1,7 +1,8 @@
 {% load portfolio_content wagtailcore_tags %}
 {% if value.text|filled %}
-  <div class="case-row">
-    <h2 class="case-label">{{ portfolio_site_settings.project_statement_heading }}</h2>
+  <div class="case-row motion-reveal">
+    <h3 class="case-label">{{ portfolio_site_settings.project_statement_heading }}</h3>
     <div class="case-copy large rich-text">{{ value.text|richtext }}</div>
+    {% include "portfolio/components/project_details.html" %}
   </div>
 {% endif %}

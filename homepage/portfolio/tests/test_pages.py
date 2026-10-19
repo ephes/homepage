@@ -452,11 +452,11 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
         "gallery_label": "Sentinel Galerie",
         "results_label": "Sentinel Ergebnisse",
         "footer_pages_heading": "Sentinel Seiten",
-        "project_kicker": "Sentinel Projektzaehler",
         "project_meta_category_label": "Sentinel Bereich",
         "project_meta_year_label": "Sentinel Jahr",
         "project_meta_client_label": "Sentinel Kunde",
         "project_meta_focus_label": "Sentinel Fokus",
+        "project_details_heading": "Sentinel Und sonst so",
         "project_meta_services_label": "Sentinel Projektleistungen",
         "project_live_link_label": "Sentinel Website",
         "project_statement_heading": "Sentinel Projektstatement",
@@ -476,6 +476,10 @@ def test_sitewide_editorial_labels_render_from_site_settings(client):
         for response in (client.get(index.url), client.get(project.url))
     )
 
+    # Die Details-Überschrift ist nur der unsichtbare Name des Detailbereichs.
+    details_heading = sentinels.pop("project_details_heading")
+    details = BeautifulSoup(client.get(project.url).content, "html.parser").select_one(".project-meta")
+    assert details["aria-label"] == details_heading
     for field_name, sentinel in sentinels.items():
         assert sentinel in rendered_text, field_name
 
@@ -1083,3 +1087,81 @@ def test_project_titles_keep_no_break_space_groups_together_everywhere(client):
     assert project_page.select_one(".project-menu-links [data-no-break]") is not None
     assert other_page.select_one(".related-project-card [data-no-break]") is not None
     assert homepage.select_one("a.tile h3 [data-no-break]") is not None
+
+
+def test_case_study_rows_carry_their_own_headings_and_the_eyebrow_counts_the_case(client):
+    index = make_portfolio_tree()
+    project = add_project(index)
+    project.content = filled_project_content()
+    project.save_revision().publish()
+
+    document = BeautifulSoup(client.get(project.url).content, "html.parser")
+    rows = document.select("#case-study > .case-row")
+
+    assert document.select_one("#case-study .case-study-title") is None
+    assert document.select_one("#case-study")["data-part-of"] == "von"
+    assert document.select_one(".project-intro .eyebrow").get_text(strip=True) == "Case Study 01"
+    assert [row.select_one(".case-label").get_text(strip=True) for row in rows] == [
+        "Das Projekt",
+        "Die Aufgabe",
+        "Die Lösung",
+    ]
+    assert document.select_one("#case-study")["aria-label"] == "Case Study"
+    assert document.select_one(".project-stage > #case-study") is not None
+
+    project.content = [("challenge_solution", {"challenge": "", "solution": "<p>Die Umsetzung.</p>"})]
+    project.save_revision().publish()
+    only_solution = BeautifulSoup(client.get(project.url).content, "html.parser")
+    solution_row = only_solution.select_one("#case-study > .case-row")
+
+    assert solution_row.select_one(".case-label").get_text(strip=True) == "Die Lösung"
+
+
+def test_conclusion_migration_moves_only_a_closing_fully_bold_paragraph():
+    import importlib
+
+    migration = importlib.import_module("homepage.portfolio.migrations.0011_move_conclusion_from_solution")
+    solution = '<p data-block-key="a">Erster Absatz.</p><p data-block-key="b"></p><p data-block-key="c"><b>Fazit.</b></p>'
+
+    remaining, conclusion = migration.split_conclusion(solution)
+
+    assert conclusion == '<p data-block-key="c"><b>Fazit.</b></p>'
+    assert remaining == '<p data-block-key="a">Erster Absatz.</p>'
+    assert migration.split_conclusion("<p>Nur <b>teilweise</b> fett.</p>") == ("<p>Nur <b>teilweise</b> fett.</p>", "")
+
+
+def test_project_conclusion_closes_the_solution_and_details_follow_the_statement(client):
+    index = make_portfolio_tree()
+    project = add_project(index)
+    project.content = filled_project_content()
+    project.conclusion = "<p><b>Ein Fazit zum Projekt.</b></p>"
+    project.save_revision().publish()
+
+    document = BeautifulSoup(client.get(project.url).content, "html.parser")
+    solution = document.select("#case-study .case-row")[-1]
+    statement = document.select("#case-study .case-row")[0]
+    details = statement.select_one(":scope > .project-meta")
+
+    assert solution.select_one(".case-label").get_text(strip=True) == "Die Lösung"
+    assert solution.select_one(".case-copy > .case-conclusion").get_text(strip=True) == "Ein Fazit zum Projekt."
+    # Die Details stehen unter dem Statement; ihre Überschrift ist nur ihr Name für Screenreader.
+    assert details["aria-label"] == "Und sonst so"
+    assert document.select_one(".project-stage > .project-meta") is None
+    # Die Zeilenzahl der Leistungen (aufgerundet halbiert) teilt sie in breiten Details auf zwei Spalten.
+    services = details.select(".project-service-list > li")
+    rows = -(-len(services) // 2)
+    assert details.select_one(".project-service-list")["style"] == f"--service-rows: {rows}"
+
+
+def test_contact_button_starts_with_an_envelope_icon_on_every_contact_section(client):
+    index = make_portfolio_tree()
+    project = add_project(index)
+    project.content = filled_project_content()
+    project.save_revision().publish()
+
+    for url in (index.url, project.url):
+        document = BeautifulSoup(client.get(url).content, "html.parser")
+        label = document.select_one("#kontakt .pill.prio > .pill-label")
+        icon = label.find(recursive=False)
+        assert icon.name == "svg" and "pill-icon" in icon["class"], url
+        assert icon["aria-hidden"] == "true"

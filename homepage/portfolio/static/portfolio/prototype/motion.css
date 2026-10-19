@@ -355,7 +355,6 @@ html:not(.has-js) .motion-reveal .motion-heading { animation: none; }
    ruhige Mitte verhindert, dass die Headline beim Durchscrollen ständig weiterwandert. */
 @supports (animation-timeline: view()) {
   html:not(.has-js) .motion-heading,
-  html:not(.has-js) .motion-reveal,
   html:not(.has-js) .no-js-content h1 {
     animation: headline-view-in linear forwards,
                headline-view-out linear forwards;
@@ -376,7 +375,6 @@ html:not(.has-js) .motion-reveal .motion-heading { animation: none; }
    Das Raster bleibt stehen; weder Deckkraft noch Buchstabenform werden verändert. Ohne
    View-Timeline-Support ist alles sichtbar. */
 @supports (animation-timeline: view()) {
-  .case-copy,
   .quote p {
     animation: body-copy-settle linear both;
     animation-timeline: view(block);
@@ -703,8 +701,35 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 }
 .contact .pill.prio:hover,
 .contact .pill.prio:focus-visible { color: var(--fold-ink); }
+/* Kontaktbutton auf Startseite und Projektseiten gleich: Schrift, Innenabstände und
+   Pfeil schrumpfen auf schmalen Telefonen mit, damit Briefumschlag, Text und Pfeil in
+   einer Zeile in die Spalte passen. */
+.contact .pill.prio {
+  max-inline-size: 100%;
+  font-size: clamp(.75rem, 5.2vw, var(--type-lead));
+  padding-inline: clamp(.55rem, calc(19.08vw - 1.716rem), 2.1rem);
+  padding-block: clamp(.7rem, 2.8vw, 1.05rem);
+  gap: clamp(.3rem, calc(4.92vw - .284rem), .7rem);
+}
+.contact .pill.prio > .pill-label {
+  min-inline-size: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.contact .pill.prio .ar { inline-size: clamp(1rem, 6vw, 1.5rem); }
 .pill > .pill-label { position: relative; z-index: 2; }
 .pill > .pill-label { display: inline-flex; align-items: center; gap: inherit; }
+/* Linien-Icon vor dem Buttontext (Briefumschlag im Kontaktbutton): wächst mit der Schrift
+   und nimmt die Textfarbe an, auch beim Hover. Hell auf dunklem Grund wirkt die Linie
+   kräftiger, deshalb ein Hauch feiner als im Menü (1.7). */
+.pill-icon {
+  flex: none;
+  inline-size: 1.3em;
+  block-size: 1.3em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
 
 /* Gemeinsame Projektkarten-Komponente für Startseite und Unterseiten: Ihr bestehender
    Cremegrund deckt das durchlaufende Seitenraster ab. Das Rasterfeld selbst bleibt
@@ -1267,4 +1292,33 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   .tile:not(.cta):focus-visible,
   .more-card:hover,
   .more-card:focus-visible { animation: none; }
+}
+
+/* Scroll-Hinweis (Startseite, Fallstudien-Bühne der Projektseiten): eine Haarlinie mit
+   einem wandernden Segment, dieselbe Liniensprache wie das Seitenraster, nur in Bewegung.
+   Die Lage bestimmt die jeweilige Seite. */
+.scrollcue {
+  --scrollcue-length: clamp(2.5rem, 5vh, 3.5rem);
+  inline-size: 6px;
+  block-size: var(--scrollcue-length);
+  border-radius: 999px;
+  background: var(--rule);
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity .45s ease;
+}
+.scrollcue i {
+  position: absolute;
+  inset-inline: 0;
+  block-size: 42%;
+  border-radius: 999px;
+  background: var(--rule-strong);
+  animation: cue 2.4s cubic-bezier(.75, 0, .25, 1) infinite;
+}
+@keyframes cue { 0% { top: -42%; } 55%, 100% { top: 100%; } }
+@media (hover: none), (pointer: coarse) {
+  .scrollcue { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrollcue i { animation: none; top: 0; }
 }

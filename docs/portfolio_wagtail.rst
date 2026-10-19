@@ -29,11 +29,44 @@ Content model
     cropped to the area. The motif (``hero_image``, ideally a transparent PNG) lies on
     that surface and is always shown whole, never cropped. Without any of them a
     neutral placeholder is shown. When the article is at least 60rem wide (container
-    query) and the window is clearly landscape, at least 5:4 (media query), text and
-    image stand side by side, the image from the header to the bottom of the screen.
-    Otherwise, including tablets in portrait, nearly square windows and phones in
-    landscape, headline and lead come first, then the image, the project details and
-    the live link.
+    query) and the window is clearly landscape, at least 5:4 (media query), the title
+    image stays fixed on the right while the left column scrolls through headline, lead
+    and live link and the case study (statement, challenge, solution). The project
+    details (services, client, year, focus, category) stand directly below the
+    statement in two columns on the lines of the page grid; without a statement they
+    close the case study. Below the side-by-side layout, as soon as the details area
+    offers four grid columns of at least 10rem (container query ``project-meta``), they
+    use all four: the services split into two columns (first half, then second half, on
+    the same lines), then client and year, then focus and category. This works without
+    JavaScript; the template passes the number of service rows as ``--service-rows``. The details are framed by a line above
+    and below and wrap only between whole words, never hyphenated. While they stand in four columns, statement, challenge and solution are
+    separated like page sections (``--space-section``) and the details are set more
+    airily; with two columns both gaps and the space around and inside the details are
+    smaller (``--case-gap``, ``--meta-space``, switched by the content width without a
+    media query). They have no visible heading; "Projekt: Details-Überschrift"
+    (site settings) only names the area for screen readers. The eyebrow reads the
+    "Case Study" label with the project number. In the side-by-side layout the text column
+    has twice the usual inner spacing (``--inset: 2rem``).
+    With JavaScript and no reduced-motion preference the case study becomes a pinned
+    stage (``startCaseStage`` in ``motion.js``): the page stands still while one
+    station at a time - a case-study heading (Das Projekt, Die Aufgabe, Die Lösung) with
+    one of its paragraphs - sits in the middle of the view; the project details share
+    the station of the statement. After each step the whole station, heading included,
+    swaps with a soft lift. Texts with several paragraphs get a small counter
+    such as "1 von 3" (connecting word in the site settings, "Projekt: Teilzähler");
+    only the script sets it, so it never appears in the text itself. Every heading sits at the same
+    height, a little above the middle; marks at the bottom left show the progress
+    through the stations and the scroll cue of the landing page sits at the bottom
+    right. Each scroll gesture (trackpad gesture, wheel click, swipe, key) moves exactly
+    one step from the header through the stations to the gallery and
+    back (``startProjectChapters``); the rest of a gesture's momentum is ignored.
+    Otherwise the content simply scrolls with normal spacing.
+
+    ``conclusion`` ("Fazit") is the closing statement of a case study. It is shown in
+    bold at the end of the solution and always shares a station with the last solution
+    paragraph, never alone. Migration ``0011`` moved the closing, fully bold paragraph
+    of each solution into this field. Tablets in portrait, nearly square windows and
+    phones stack headline and lead, image and case study.
 
 ``ProjectCategory``
     Snippet with the categories shown on project tiles.

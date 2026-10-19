@@ -439,10 +439,11 @@ class PortfolioSiteSettings(BaseSiteSetting):
         max_length=80,
         default="Seite",
     )
-    project_kicker = models.CharField(
-        "Projekt: Zählerbezeichnung",
-        max_length=80,
-        default="Projekt",
+    project_part_of_label = models.CharField(
+        "Projekt: Teilzähler",
+        max_length=40,
+        default="von",
+        help_text="Verbindungswort im Vermerk unter mehrteiligen Fallstudientexten, z. B. „1 von 3“.",
     )
     project_meta_category_label = models.CharField(
         "Projekt: Bereich",
@@ -488,6 +489,11 @@ class PortfolioSiteSettings(BaseSiteSetting):
         "Projekt: Lösungs-Überschrift",
         max_length=120,
         default="Die Lösung",
+    )
+    project_details_heading = models.CharField(
+        "Projekt: Details-Überschrift",
+        max_length=120,
+        default="Und sonst so",
     )
     project_results_heading = models.CharField(
         "Projekt: Mehrwert-Überschrift",
@@ -544,7 +550,7 @@ class PortfolioSiteSettings(BaseSiteSetting):
         ),
         MultiFieldPanel(
             [
-                FieldPanel("project_kicker"),
+                FieldPanel("project_part_of_label"),
                 FieldPanel("project_meta_category_label"),
                 FieldPanel("project_meta_year_label"),
                 FieldPanel("project_meta_client_label"),
@@ -554,6 +560,7 @@ class PortfolioSiteSettings(BaseSiteSetting):
                 FieldPanel("project_statement_heading"),
                 FieldPanel("project_challenge_heading"),
                 FieldPanel("project_solution_heading"),
+                FieldPanel("project_details_heading"),
                 FieldPanel("project_results_heading"),
                 FieldPanel("project_testimonial_label"),
                 FieldPanel("related_projects_eyebrow"),
@@ -978,6 +985,12 @@ class ProjectPage(PortfolioContextMixin, Page):
         ),
     )
     client = models.CharField("Kunde", max_length=160, blank=True)
+    conclusion = RichTextField(
+        "Fazit",
+        blank=True,
+        features=["bold", "italic", "link", "no-break"],
+        help_text="Schlusssatz der Fallstudie. Steht am Ende der Lösung, zusammen mit ihrem letzten Absatz.",
+    )
     focus = models.CharField(
         "Fokus",
         max_length=160,
@@ -1109,6 +1122,7 @@ class ProjectPage(PortfolioContextMixin, Page):
             min_num=1,
         ),
         FieldPanel("content"),
+        FieldPanel("conclusion"),
     ]
 
     def clean_fields(self, exclude=None):
@@ -1233,6 +1247,15 @@ class ProjectPage(PortfolioContextMixin, Page):
                     )
                 ),
                 "project_has_results": "stats" in project_block_types,
+                "project_has_statement": "statement" in project_block_types,
+                # Gefüllte Fallstudien-Blöcke in Seitenreihenfolge; jeder Abschnitt wird auf
+                # breiten Screens ein eigener View.
+                "case_study_blocks": [
+                    block
+                    for block in self.content
+                    if block_is_filled(block)
+                    and get_project_block_region(block.block_type) == PROJECT_BLOCK_REGION_CASE_STUDY
+                ],
                 "project_number": project_number,
                 "project_total": len(numbered_projects),
             }

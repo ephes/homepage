@@ -60,6 +60,13 @@ def keep_together(value):
 
 
 @register.filter
+def half_rounded_up(value):
+    """Half of a count, rounded up: the rows of a list that is split into two columns."""
+
+    return -(-len(value) // 2)
+
+
+@register.filter
 def filled(value):
     """Whether an editorial text is filled in (not empty, not a "[…]" placeholder)."""
 

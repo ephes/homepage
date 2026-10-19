@@ -178,6 +178,231 @@
 
   startHeadlineReveal();
 
+  /* Projektseiten, breites Layout: Vom Kopf über die Stationen der Fallstudie und die
+     Projektdetails bis zu den Bildern geht jede Scrollgeste (Trackpad-Geste, Mausrad-Klick,
+     Wischen, Taste) genau einen Schritt weiter oder zurück; die Seite gleitet weich zur
+     nächsten Position. Der Nachschwung einer Geste wird ignoriert, damit nichts
+     übersprungen wird. Davor und danach scrollt die Seite normal. Aktiv nur, wenn das CSS
+     die Bühne zweispaltig zeigt und keine reduzierte Bewegung gewünscht ist. */
+  function startProjectChapters() {
+    var stage = document.querySelector(".project-stage");
+    if (!stage) return;
+    var head = stage.querySelector(".project-intro__head");
+    var study = stage.querySelector(".project-content");
+    var meta = stage.querySelector(":scope > .project-meta");
+    var gallery = stage.nextElementSibling;
+    var busyUntil = 0;
+    var lastWheel = 0;
+    var touchY = null;
+
+    function active() {
+      return !reduce.matches &&
+        getComputedStyle(stage).gridTemplateColumns.split(" ").length === 2;
+    }
+    function headerHeight() {
+      var header = document.querySelector(".site-header");
+      return header ? header.getBoundingClientRect().height : 0;
+    }
+    function scrollTop(element) {
+      return element.getBoundingClientRect().top + window.scrollY - headerHeight();
+    }
+    // Alle Haltepunkte in Scrollposition: Kopf, jede Station der Bühne, Details, Bilder.
+    function positions() {
+      var list = [scrollTop(head)];
+      if (study) {
+        // Die Bühne beginnt unter der Oberkante des Abschnitts (clientTop = Linienstärke).
+        var start = scrollTop(study) + study.clientTop;
+        var caseStage = study.querySelector(".case-stage");
+        var staged = study.classList.contains("is-staged") && caseStage;
+        var stops = staged ? caseStage.querySelectorAll(".case-part").length : 0;
+        if (staged && stops > 1) {
+          var step = (study.offsetHeight - study.clientTop - caseStage.offsetHeight) / (stops - 1);
+          for (var i = 0; i < stops; i++) list.push(start + i * step);
+        } else {
+          list.push(start);
+        }
+      }
+      if (meta && meta.closest(".case-stage") === null) {
+        list.push(scrollTop(meta) - (window.innerHeight - headerHeight() - meta.offsetHeight) / 2);
+      }
+      if (gallery) list.push(scrollTop(gallery));
+      return list;
+    }
+    function target(down) {
+      var y = window.scrollY;
+      var list = positions();
+      if (y > list[list.length - 1] + 2 || y < list[0] - 2) return null;
+      if (down) {
+        for (var i = 0; i < list.length; i++) if (list[i] > y + 2) return list[i];
+      } else {
+        for (var j = list.length - 1; j >= 0; j--) if (list[j] < y - 2) return list[j];
+      }
+      return null;
+    }
+    function go(down, event) {
+      if (!active() || document.querySelector(".site-nav[open]")) return false;
+      var now = Date.now();
+      if (now < busyUntil) { if (event) event.preventDefault(); return true; }
+      var to = target(down);
+      if (to === null) return false;
+      if (event) event.preventDefault();
+      busyUntil = now + 450;
+      window.scrollTo({ top: Math.round(to), behavior: "smooth" });
+      return true;
+    }
+
+    // Eine neue Geste beginnt nach einer kurzen Pause oder wenn die Scrollstärke wieder
+    // deutlich ansteigt (der Nachschwung einer Trackpad-Geste wird nur schwächer). Hat eine
+    // Geste einen Schritt ausgelöst, schluckt sie ihren Nachschwung, damit nichts
+    // übersprungen wird.
+    var gestureHandled = false;
+    var lastStrength = 0;
+    addEventListener("wheel", function (event) {
+      if (Math.abs(event.deltaY) < 1 || event.ctrlKey) return;
+      var now = Date.now();
+      var strength = Math.abs(event.deltaY);
+      var rising = strength > lastStrength * 1.6 && strength > 12;
+      if (now - lastWheel > 120 || (rising && now >= busyUntil)) gestureHandled = false;
+      lastWheel = now;
+      lastStrength = strength;
+      if (gestureHandled) { event.preventDefault(); return; }
+      if (go(event.deltaY > 0, event)) gestureHandled = true;
+    }, { passive: false });
+    addEventListener("touchstart", function (event) {
+      touchY = event.touches.length === 1 ? event.touches[0].clientY : null;
+    }, { passive: true });
+    addEventListener("touchmove", function (event) {
+      if (touchY === null) return;
+      var delta = touchY - event.touches[0].clientY;
+      if (Math.abs(delta) < 8) { if (active() && target(delta > 0) !== null) event.preventDefault(); return; }
+      if (go(delta > 0, event)) touchY = null;
+    }, { passive: false });
+    addEventListener("keydown", function (event) {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      var control = event.target instanceof Element &&
+        event.target.closest("a, button, summary, input, select, textarea, [contenteditable]");
+      // Auf Bedienelementen behalten Leertaste und Pfeile ihre eigene Funktion.
+      if (control) return;
+      var down = { ArrowDown: true, PageDown: true, " ": !event.shiftKey, ArrowUp: false, PageUp: false }[event.key];
+      if (down === undefined) return;
+      go(down, event);
+    });
+  }
+
+  /* Fallstudie: Jeder Absatz (bzw. jede Liste) wird eine eigene Station (.case-part);
+     mehrteilige Texte bekommen darunter einen Teilzähler wie „1 von 3“ (das
+     Verbindungswort kommt aus den Site-Einstellungen, data-part-of). Im breiten Layout und
+     ohne reduzierte Bewegung wird daraus eine Bühne (.is-staged): Sie steht, während man
+     scrollt, und zeigt je eine Station; nach jeder Scrollstrecke tauscht der Inhalt mit
+     leichtem Lift-up (Übergänge im CSS). Sonst bleibt der Text ein normaler Fluss; ohne
+     JavaScript erscheint auch kein Zähler. */
+  function startCaseStage() {
+    var study = document.querySelector(".project-content[data-part-of]");
+    if (!study) return;
+    var stageGrid = study.closest(".project-stage");
+    var partOf = study.getAttribute("data-part-of");
+    var rows = [].slice.call(study.querySelectorAll(".case-row"));
+    var stations = [];
+    rows.forEach(function (row) {
+      var copy = row.querySelector(".case-copy");
+      var label = row.querySelector(".case-label");
+      if (!copy) return;
+      // Leere Absätze aus dem Editor zählen nicht als Station; das Fazit steht nie allein,
+      // sondern mit dem letzten Absatz der Lösung in einer Station.
+      var all = [].slice.call(copy.children).filter(function (block) {
+        return block.textContent.trim() || block.querySelector("img");
+      });
+      var conclusion = all.filter(function (block) { return block.classList.contains("case-conclusion"); })[0];
+      var blocks = all.filter(function (block) { return block !== conclusion; });
+      blocks.forEach(function (block, index) {
+        var part = document.createElement("div");
+        part.className = "case-part";
+        copy.insertBefore(part, block);
+        // Jede Station trägt ihre Headline mit, damit sie als Ganzes wechselt; die
+        // eigentliche Headline bleibt für Screenreader, die Kopie ist ausgeblendet.
+        if (label) {
+          var heading = document.createElement("p");
+          heading.className = "case-part__label";
+          heading.setAttribute("aria-hidden", "true");
+          heading.textContent = label.textContent.trim();
+          part.appendChild(heading);
+        }
+        part.appendChild(block);
+        if (conclusion && index === blocks.length - 1) part.appendChild(conclusion);
+        // Die Projektdetails unter dem Statement gehören zu dessen Station.
+        var details = row.querySelector(":scope > .project-meta");
+        if (details && index === blocks.length - 1) part.appendChild(details);
+        if (blocks.length > 1) {
+          var count = document.createElement("p");
+          count.className = "case-part__count";
+          count.setAttribute("aria-hidden", "true");
+          count.textContent = (index + 1) + " " + partOf + " " + blocks.length;
+          part.appendChild(count);
+        }
+        stations.push({ row: row, part: part });
+      });
+    });
+    if (!stations.length) return;
+
+    var stage = document.createElement("div");
+    stage.className = "case-stage";
+    rows.forEach(function (row) { stage.appendChild(row); });
+    // Fortschritt der Stationen: zeigt, wo man ist und dass noch etwas folgt.
+    var progress = document.createElement("ol");
+    progress.className = "case-progress";
+    progress.setAttribute("aria-hidden", "true");
+    var marks = stations.map(function () {
+      var mark = document.createElement("li");
+      progress.appendChild(mark);
+      return mark;
+    });
+    stage.appendChild(progress);
+    var cue = document.createElement("div");
+    cue.className = "scrollcue";
+    cue.setAttribute("aria-hidden", "true");
+    cue.appendChild(document.createElement("i"));
+    stage.appendChild(cue);
+    study.appendChild(stage);
+    study.style.setProperty("--case-steps", stations.length);
+
+    var frame = 0;
+    function staged() {
+      return !reduce.matches && stageGrid &&
+        getComputedStyle(stageGrid).gridTemplateColumns.split(" ").length === 2;
+    }
+    function update() {
+      frame = 0;
+      var on = staged();
+      study.classList.toggle("is-staged", on);
+      if (!on) return;
+      var header = document.querySelector(".site-header");
+      var headerHeight = header ? header.getBoundingClientRect().height : 0;
+      var travel = study.offsetHeight - study.clientTop - stage.offsetHeight;
+      var step = stations.length > 1 ? travel / (stations.length - 1) : 1;
+      var position = (window.scrollY - (study.getBoundingClientRect().top + window.scrollY + study.clientTop - headerHeight)) / step;
+      var active = Math.max(0, Math.min(stations.length - 1, Math.round(position)));
+      var activeRow = stations[active].row;
+      var activeRowIndex = rows.indexOf(activeRow);
+      rows.forEach(function (row, index) {
+        row.classList.toggle("is-active", row === activeRow);
+        row.classList.toggle("is-past", index < activeRowIndex);
+      });
+      stations.forEach(function (station, index) {
+        station.part.classList.toggle("is-active", index === active);
+        station.part.classList.toggle("is-past", index < active);
+        marks[index].classList.toggle("is-active", index === active);
+      });
+    }
+    function request() { if (!frame) frame = requestAnimationFrame(update); }
+    addEventListener("scroll", request, { passive: true });
+    addEventListener("resize", request, { passive: true });
+    if (reduce.addEventListener) reduce.addEventListener("change", request);
+    update();
+  }
+
+  startCaseStage();
+  startProjectChapters();
+
   /* Optischer Randausgleich der Headlines: Das CSS zieht jede Headline pauschal um die
      linke Vorbreite eines geraden Versalstamms (Saira: .082em) nach links. Schräge und
      runde Glyphen (A, T, V, Y, Z, O …) haben eine kleinere Vorbreite und stünden dann

@@ -212,7 +212,6 @@ def test_homepage_adapter_only_bridges_wagtail_markup_to_the_canonical_assets():
     assert declarations_for(canonical, {".tile.tile--hero .frame"})["aspect-ratio"] == "21 / 9"
     assert "nth-child(6n)" not in canonical
     assert media_conditions(canonical) == {
-        "(hover:none), (pointer:coarse)",
         "(hover:hover) and (pointer:fine)",
         "(max-width:46rem), (max-height:34rem)",
         "(max-width:20rem) and (orientation:portrait)",

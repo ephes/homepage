@@ -407,12 +407,31 @@ def test_project_display_headline_hyphenates_words_wider_than_the_line():
     assert headline["overflow-wrap"] == "break-word"
 
 
+def test_project_details_split_into_four_grid_columns_only_below_the_side_by_side_layout():
+    stylesheet = Path(finders.find("portfolio/prototype/projekte/projekt.css")).read_text()
+    details_container = stylesheet.index("container: project-meta / inline-size;")
+    side_by_side_reset = stylesheet.index(".project-meta { container-type: normal; --meta-space: var(--s1); }")
+    four_columns = stylesheet.index("@container project-meta (width >= 40rem)")
+    split = declarations_for(stylesheet, {".project-meta__services .project-service-list", ".project-meta > .project-meta__facts"})
+
+    # The side-by-side layout must come after the container so that it can switch it off.
+    assert details_container < side_by_side_reset < four_columns
+    assert split["grid-auto-flow"] == "column"
+    assert split["column-gap"] == "calc(2 * var(--inset))"
+    assert "repeat(var(--service-rows, 1), auto)" in stylesheet
+    assert ".project-meta__facts:has(> :nth-child(3)) { grid-template-rows: repeat(2, auto); }" in stylesheet
+    # Details only wrap between whole words, also inside the hyphenated statement text.
+    whole_words = declarations_for(stylesheet, {".project-meta", ".project-meta li"})
+    assert whole_words["hyphens"] == "manual"
+    assert stylesheet.index(".case-copy, .case-copy p, .case-copy li {") < stylesheet.index(".project-meta, .project-meta li {")
+
+
 def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
     stylesheet_path = finders.find("portfolio/prototype/projekte/projekt.css")
 
     assert stylesheet_path is not None
     stylesheet = Path(stylesheet_path).read_text()
-    metadata = declarations_for(stylesheet, {".project-meta"})
+    metadata = next(block for block in declaration_blocks_for(stylesheet, {".project-meta"}) if "display" in block)
     facts = declarations_for(stylesheet, {".project-meta__facts"})
     services = declarations_for(stylesheet, {".marker-list", ".rich-text ul"})
     arrowhead = declarations_for(
@@ -422,13 +441,16 @@ def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():
     live_link = declarations_for(stylesheet, {".project-live-link"})
     lead = declarations_for(stylesheet, {".project-lead"})
     article = declarations_for(stylesheet, {".project"})
-    intro = declarations_for(stylesheet, {".project-intro"})
-    metadata_columns = declarations_for(stylesheet, {".project-meta > dl"})
+    intro = declarations_for(stylesheet, {".project-stage"})
+    # The wide layout lifts the column limit in a container query; check the base rule.
+    metadata_columns = next(
+        block for block in declaration_blocks_for(stylesheet, {".project-meta > dl"}) if "flex-basis" in block
+    )
     metadata_labels = declarations_for(stylesheet, {".project-meta dt"})
 
     assert article["container"] == "project / inline-size"
     assert intro["display"] == "grid"
-    assert intro["grid-template-areas"] == '"head" "media" "meta"'
+    assert intro["grid-template-areas"] == '"head" "media" "case" "meta"'
     assert "@container project (width >= 60rem)" in stylesheet
     assert metadata["display"] == "flex"
     assert metadata["flex-wrap"] == "wrap"
@@ -461,8 +483,8 @@ def test_project_case_rows_align_labels_and_copy_without_rich_text_margin_drift(
     first_paragraph = declarations_for(adapter, {".case-copy > :first-child"})
     last_paragraph = declarations_for(adapter, {".case-copy > :last-child"})
 
-    assert row["align-items"] == "start"
-    assert following_row["margin-block-start"] == "clamp(2rem, 3.5vw, 3rem)"
+    assert row["--motion-enter-distance"] == "2rem"
+    assert following_row["margin-block-start"] == "var(--case-gap)"
     assert first_paragraph["margin-block-start"] == "0"
     assert last_paragraph["margin-block-end"] == "0"
 

@@ -12,7 +12,7 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 from homepage.core import views as core_views
 from homepage.portfolio import views as portfolio_views
-from homepage.users import api_auth, login_throttle
+from homepage.users import login_throttle
 
 handler404 = default_views_cast.page_not_found
 handler500 = default_views_cast.server_error
@@ -51,8 +51,6 @@ urlpatterns = [
     # Micropub local interface (form for creating posts)
     path("indieweb/micropub-form/", include("homepage.micropub.urls")),
     # rest
-    # Throttled: see docs/api_token_auth.rst
-    path("api/api-token-auth/", api_auth.obtain_auth_token, name="api-token-auth"),
     # url(r'api/', include('homepage.blogs.api.urls', namespace='api')),
     # Same view as rest_framework.urls' login, with failed logins throttled.
     path(

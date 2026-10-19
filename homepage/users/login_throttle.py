@@ -8,9 +8,7 @@ with no limit of their own. Wrapping them with
 and per submitted username, so the per-username limit still holds when an
 attacker rotates addresses or spoofs ``X-Forwarded-For``.
 
-The counters reuse the throttle cache and client-address logic of
-``api/api-token-auth/`` (see :mod:`homepage.users.api_auth`). Only
-failed attempts are counted, so routine successful logins never use up the
+Only failed attempts are counted, so routine successful logins never use up the
 budget, but once a limit is reached every attempt is refused with ``429``,
 including one with the correct password.
 """
@@ -20,11 +18,16 @@ import math
 import unicodedata
 from functools import wraps
 
+from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
+from django.core.cache import caches
 from django.dispatch import receiver
 from django.http import HttpResponse
+from rest_framework.throttling import SimpleRateThrottle
 
-from homepage.users.api_auth import TokenAuthThrottle
+# Keep the existing alias and directory so active admin lockouts survive
+# removal of the token issuance endpoint.
+THROTTLE_CACHE_ALIAS = "api_token_auth_throttle"
 
 LOGGED_IN_ATTR = "_login_throttle_logged_in"
 
@@ -37,12 +40,16 @@ def _mark_logged_in(sender, request, user, **kwargs):
         setattr(request, LOGGED_IN_ATTR, True)
 
 
-class LoginFailureThrottle(TokenAuthThrottle):
+class LoginFailureThrottle(SimpleRateThrottle):
     """Sliding-window counter of failed logins for one key.
 
     DRF's ``allow_request`` records every request it allows. Here checking
     and recording are separate, so only failures are recorded.
     """
+
+    @property
+    def cache(self):
+        return caches[THROTTLE_CACHE_ALIAS if THROTTLE_CACHE_ALIAS in settings.CACHES else "default"]
 
     def __init__(self, ident):
         super().__init__()

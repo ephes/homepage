@@ -19,7 +19,6 @@ Contents:
    weeknote_links
    seo
    indieweb
-   api_token_auth
    admin_login_throttle
    fediverse
    deploy

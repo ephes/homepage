@@ -59,7 +59,11 @@ Content model
     through the stations and the scroll cue of the landing page sits at the bottom
     right. Each scroll gesture (trackpad gesture, wheel click, swipe, key) moves exactly
     one step from the header through the stations to the gallery and
-    back (``startProjectChapters``); the rest of a gesture's momentum is ignored.
+    back (``startProjectChapters``); the rest of a gesture's momentum is ignored, and a
+    swipe that triggered a step stays blocked until the finger lifts.
+    Inactive stations are only transparent and not clickable, never ``visibility:
+    hidden``, so screen readers can read the whole case study; when keyboard focus
+    lands in an inactive station, the page jumps to that station.
     Otherwise the content simply scrolls with normal spacing.
 
     ``conclusion`` ("Fazit") is the closing statement of a case study. It is shown in
@@ -170,7 +174,10 @@ collected like any other app static files:
 * ``portfolio.css``, ``homepage.css``, ``project-wagtail.css``/``.js``: small adapters
   between the design and the Wagtail markup;
 * ``fonts.css`` and ``fonts/``: Saira (upright and italic, variable) and Astagina as
-  WOFF2. The main site loads the same Saira files from ``css/site-overrides.css``.
+  WOFF2. The main site loads the same Saira files from ``css/site-overrides.css``,
+  which also lays the portfolio's linen texture over its pages (``.linen``, z-index
+  1035: above the navbar, below the search dialog, offcanvas and modals; hidden in
+  print).
 
 Templates must reference assets through ``{% static %}`` (or the ``versioned_static``
 tag for stylesheets, which appends the file's modification time in ``DEBUG``), so

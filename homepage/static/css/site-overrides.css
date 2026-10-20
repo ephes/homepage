@@ -97,10 +97,12 @@
 
 /* Leinentextur aus dem Portfolio über der ganzen Seite (dieselbe Grafik). Hell dunkelt sie
    per multiply ab; dunkel wird sie invertiert und hellt per screen auf, sodass die feinen
-   Linien in beiden Themes gleich wirken. */
+   Linien in beiden Themes gleich wirken. Sie liegt über Inhalt und Kopfleiste (1020/1030),
+   aber unter Theme-Umschalter, Offcanvas, Modals und Suchdialog (ab 1040): Fotos in der
+   Galerie und Suchergebnisse bleiben unverfälscht. */
 .linen {
   position: fixed;
-  z-index: 1090;
+  z-index: 1035;
   inset: 0;
   pointer-events: none;
   background-image: url("../images/linen.png");
@@ -115,6 +117,10 @@
 [data-bs-theme="dark"] .linen {
   filter: invert(1);
   mix-blend-mode: screen;
+}
+
+@media print {
+  .linen { display: none; }
 }
 
 /* Linienfarbe der Höhenlinien (liest das Skript im Blog-Kopf). */

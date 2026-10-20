@@ -81,7 +81,7 @@
     text-decoration: none;
   }
   /* ── Prio 1 ───────────────────────────────────────────────────────────────
-     Dritte Stufe über den bestehenden zwei: `.pill` (warmes Schwarz — Navigation,
+     Dritte Stufe über den bestehenden zwei: `.pill` (Schwarz — Navigation,
      CTA-Kachel) ist
      Prio 2, `.pill.ghost` Prio 3. Prio 1 gibt es genau EINMAL auf der Seite, für den
      E-Mail-Button in Kontakt.
@@ -93,7 +93,7 @@
      in größer, nicht als andere Stufe (nebeneinander verglichen).
      ACHTUNG, Kontrast — hier hängt die Mindestgröße dran: Tangerine trägt KEINEN Text in
      Normalgröße. Creme darauf liegt bei 3,42 und braucht deshalb große, fette Schrift;
-     warmes Schwarz liegt bei 4,55 und wäre auch normalgroß zulässig, wirkt hier aber stumpf.
+     Schwarz (#090d19) liegt bei 4,80 und wäre auch normalgroß zulässig, wirkt hier aber stumpf.
      Creme bleibt die Entscheidung (Katharina); der Button MUSS deshalb mindestens 18,66px
      fett bleiben (hier 1.2rem/700 = 19,2px). */
   .pill.prio {
@@ -174,8 +174,8 @@
     transform-origin: center;
   }
   /* Auf dunklem Grund trägt der handschriftliche Vermerk Tangerine statt der
-     Creme — dieselbe Rolle wie das ✳ der Eyebrow darüber. Tangerine auf warmem Schwarz
-     liegt bei 4,55 und trägt die große Schrift. Die Kontur bleibt der
+     Creme — dieselbe Rolle wie das ✳ der Eyebrow darüber. Tangerine auf Schwarz
+     liegt bei 4,80 und trägt die große Schrift. Die Kontur bleibt der
      Untergrund, damit sie sich weiter sauber aus der Headline schneidet. */
   .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--tangerine); stroke: var(--dark-bg); }
 
@@ -371,7 +371,7 @@
   }
   @keyframes project-inquiry-fill {
     /* Tangerine liegt ab dem ersten aktiven Frame vollständig hinter Text und Pfeil.
-       So trifft der AA-sichere warm-schwarze Vordergrund nie auf den dunklen Grund.
+       So trifft der AA-sichere schwarze Vordergrund nie auf den dunklen Grund.
        Danach wächst dieselbe Fläche im freigegebenen Tempo bis zur Layoutmitte. */
     0%,
     4% { inline-size: calc(100% + var(--project-inquiry-pad-inline)); }
@@ -774,8 +774,8 @@
   .on-dark { color: var(--dark-ink); position: relative; }
   .on-dark::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--dark-bg); }
   .on-dark .avail { color: var(--dark-muted); }
-  /* Der Statuspunkt bleibt in jeder Umgebung Smaragdgrün; auf warmem Schwarz erreicht
-     er 5,04:1 und braucht deshalb keinen eigenen Dunkelmodus. */
+  /* Der Statuspunkt bleibt in jeder Umgebung Smaragdgrün; auf Schwarz erreicht
+     er 5,32:1 und braucht deshalb keinen eigenen Dunkelmodus. */
   .on-dark .avail::before { background: var(--smaragd); }
   .clients { border-top: none; padding-inline: 0; }
   .clients .sec-label, .clients h2.big, .clients .cl-note { padding-inline: clamp(1.25rem, 4vw, 4rem); }
@@ -890,17 +890,17 @@
   :root{
     --creme:#F0ECE2;      /* Grundton der ganzen Seite */
     --warm-black:#090d19; /* Schwarz für Schrift, dunkle Flächen, Footer (vorher warmes #171410) */
-    --tangerine:#EB3D00;  /* Akzent — trägt auf hell (3,42) wie dunkel (4,55) */
+    --tangerine:#EB3D00;  /* Akzent — trägt auf hell (3,42) wie dunkel (4,80) */
     --limette:#C7F03C;    /* reservierter Zweitakzent; aktuell nicht eingesetzt */
     --pine:#294122;       /* mittlere Fläche; Creme darauf 9,50 — derzeit unbenutzt */
-    --smaragd:#1C995C;    /* Verfügbarkeits-Punkt; Creme 3,09 · warmes Schwarz 5,04 */
+    --smaragd:#1C995C;    /* Verfügbarkeits-Punkt; Creme 3,09 · Schwarz 5,32 */
 
     --bg:var(--creme);
     --ink:var(--warm-black);
     /* Der gedämpfte Textton erreicht auf Creme 4,5:1. Der frühere warme Grauton #7d766a lag bei 3,81 und
        riss damit alle Eyebrows, Kachel-Metazeilen und Leistungssätze unter AA. */
     --muted:#686D62;
-    /* Linien und Platzhalter sind warmes Schwarz mit Deckkraft, nicht eigene Farben —
+    /* Linien und Platzhalter sind das Schwarz (--warm-black) mit Deckkraft, nicht eigene Farben —
        so bleiben sie beim Ton, wenn der Grundton wechselt. */
     --rule:rgba(9, 13, 25, 0.2);
     --rule-soft:rgba(9, 13, 25, 0.09);
@@ -972,10 +972,10 @@
       8.4rem
     );
   }
-  /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent; 4,55:1 gegen das
-     warme Schwarz trägt Eyebrow-Zeichen und große Schrift. */
+  /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent; 4,80:1 gegen das
+     Schwarz trägt Eyebrow-Zeichen und große Schrift. */
   .on-dark{ --accent:var(--tangerine); }
-  /* Bewusst hell-only: cremefarbener Grund, warmes Schwarz für alle Schriften (helle Start-Section). */
+  /* Bewusst hell-only: cremefarbener Grund, Schwarz für alle Schriften (helle Start-Section). */
   :root{ color-scheme: light; }
   *{box-sizing:border-box;} html,body{margin:0;} html{overflow-x:clip;}
   body{overflow-x:clip;background:var(--bg);color:var(--ink);font-family:"Saira",system-ui,sans-serif;}

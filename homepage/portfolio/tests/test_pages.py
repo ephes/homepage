@@ -1108,6 +1108,8 @@ def test_case_study_rows_carry_their_own_headings_and_the_eyebrow_counts_the_cas
     ]
     assert document.select_one("#case-study")["aria-label"] == "Case Study"
     assert document.select_one(".project-stage > #case-study") is not None
+    # The case-study headings follow the page's h1 directly, without skipping a level.
+    assert [row.select_one(".case-label").name for row in rows] == ["h2", "h2", "h2"]
 
     project.content = [("challenge_solution", {"challenge": "", "solution": "<p>Die Umsetzung.</p>"})]
     project.save_revision().publish()

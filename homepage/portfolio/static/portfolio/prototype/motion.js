@@ -268,15 +268,22 @@
       if (gestureHandled) { event.preventDefault(); return; }
       if (go(event.deltaY > 0, event)) gestureHandled = true;
     }, { passive: false });
+    // Hat ein Wischen einen Schritt ausgelöst, bleibt der Rest dieses Wischens blockiert,
+    // bis der Finger abhebt; sonst liefe das native Scrollen gegen das weiche Gleiten.
+    var touchStepped = false;
     addEventListener("touchstart", function (event) {
       touchY = event.touches.length === 1 ? event.touches[0].clientY : null;
+      touchStepped = false;
     }, { passive: true });
     addEventListener("touchmove", function (event) {
+      if (touchStepped) { if (event.cancelable) event.preventDefault(); return; }
       if (touchY === null) return;
       var delta = touchY - event.touches[0].clientY;
       if (Math.abs(delta) < 8) { if (active() && target(delta > 0) !== null) event.preventDefault(); return; }
-      if (go(delta > 0, event)) touchY = null;
+      if (go(delta > 0, event)) touchStepped = true;
     }, { passive: false });
+    addEventListener("touchend", function () { touchY = null; }, { passive: true });
+    addEventListener("touchcancel", function () { touchY = null; touchStepped = false; }, { passive: true });
     addEventListener("keydown", function (event) {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       var control = event.target instanceof Element &&
@@ -370,16 +377,23 @@
       return !reduce.matches && stageGrid &&
         getComputedStyle(stageGrid).gridTemplateColumns.split(" ").length === 2;
     }
+    // Scrollposition der ersten Station und Scrollstrecke je Station.
+    function geometry() {
+      var header = document.querySelector(".site-header");
+      var headerHeight = header ? header.getBoundingClientRect().height : 0;
+      var travel = study.offsetHeight - study.clientTop - stage.offsetHeight;
+      return {
+        start: study.getBoundingClientRect().top + window.scrollY + study.clientTop - headerHeight,
+        step: stations.length > 1 ? travel / (stations.length - 1) : 1
+      };
+    }
     function update() {
       frame = 0;
       var on = staged();
       study.classList.toggle("is-staged", on);
       if (!on) return;
-      var header = document.querySelector(".site-header");
-      var headerHeight = header ? header.getBoundingClientRect().height : 0;
-      var travel = study.offsetHeight - study.clientTop - stage.offsetHeight;
-      var step = stations.length > 1 ? travel / (stations.length - 1) : 1;
-      var position = (window.scrollY - (study.getBoundingClientRect().top + window.scrollY + study.clientTop - headerHeight)) / step;
+      var g = geometry();
+      var position = (window.scrollY - g.start) / g.step;
       var active = Math.max(0, Math.min(stations.length - 1, Math.round(position)));
       var activeRow = stations[active].row;
       var activeRowIndex = rows.indexOf(activeRow);
@@ -394,6 +408,22 @@
       });
     }
     function request() { if (!frame) frame = requestAnimationFrame(update); }
+    // Inaktive Stationen bleiben für Screenreader und Tastatur erreichbar (nur unsichtbar).
+    // Bekommt ein Element darin den Fokus, springt die Seite zu seiner Station, damit
+    // nichts Unsichtbares fokussiert ist.
+    study.addEventListener("focusin", function (event) {
+      if (!study.classList.contains("is-staged")) return;
+      for (var i = 0; i < stations.length; i++) {
+        var part = stations[i].part;
+        if (!part.contains(event.target)) continue;
+        if (!part.classList.contains("is-active")) {
+          var g = geometry();
+          window.scrollTo({ top: Math.round(g.start + i * g.step), behavior: "instant" });
+          update();
+        }
+        return;
+      }
+    });
     addEventListener("scroll", request, { passive: true });
     addEventListener("resize", request, { passive: true });
     if (reduce.addEventListener) reduce.addEventListener("change", request);

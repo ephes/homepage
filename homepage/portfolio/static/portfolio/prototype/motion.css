@@ -849,7 +849,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 /* Der Projektanfrage-Text ist normale Schrift, nicht der große Prio-1-Button. Seine
    Tangerine-Fläche liegt deshalb im ersten aktiven Frame bereits vollständig hinter
    Text und Pfeil und wird beim Verlassen sofort ausgeblendet (siehe Basis-Styles).
-   Der AA-sichere warm-schwarze Vordergrund erreicht dort 4,55:1; Creme nur 3,42:1. */
+   Der AA-sichere schwarze Vordergrund erreicht dort 4,80:1; Creme nur 3,42:1. */
 .project-inquiry:is(:hover, :focus-visible) strong { color: var(--warm-black); }
 
 /* Einfache Textlinks verwenden überall dieselbe einfahrende Haarlinie. */

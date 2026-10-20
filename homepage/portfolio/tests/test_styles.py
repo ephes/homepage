@@ -499,6 +499,38 @@ def test_project_case_rows_align_labels_and_copy_without_rich_text_margin_drift(
     assert last_paragraph["margin-block-end"] == "0"
 
 
+def test_staged_case_study_keeps_inactive_stations_readable_for_screen_readers():
+    stylesheet = Path(finders.find("portfolio/prototype/projekte/projekt.css")).read_text()
+    script = Path(finders.find("portfolio/prototype/motion.js")).read_text()
+    rows = declarations_for(stylesheet, {".is-staged .case-stage > .case-row"})
+    active_row = declarations_for(stylesheet, {".is-staged .case-row.is-active"})
+    parts = declarations_for(stylesheet, {".is-staged .case-copy > .case-part"})
+    active_part = declarations_for(stylesheet, {".is-staged .case-part.is-active"})
+
+    # visibility: hidden would drop inactive stations from the accessibility tree.
+    for rule in (rows, active_row, parts, active_part):
+        assert "visibility" not in rule
+        assert "visibility" not in rule.get("transition", "")
+    assert rows["opacity"] == parts["opacity"] == "0"
+    assert rows["pointer-events"] == parts["pointer-events"] == "none"
+    assert active_row["pointer-events"] == active_part["pointer-events"] == "auto"
+    # Focus inside an inactive station brings that station forward.
+    assert 'study.addEventListener("focusin"' in script
+    # A swipe that triggered a step stays blocked until the finger lifts.
+    assert "touchStepped = true" in script
+
+
+def test_main_site_linen_lies_below_dialogs_and_is_not_printed():
+    stylesheet = Path(finders.find("css/site-overrides.css")).read_text()
+    linen = declarations_for(stylesheet, {".linen"})
+
+    # Above the sticky/fixed navbar (1020/1030), below the theme corner, offcanvas,
+    # modals and the search overlay (1040 and up).
+    assert 1030 < int(linen["z-index"]) < 1040
+    assert linen["pointer-events"] == "none"
+    assert re.search(r"@media print\s*\{\s*\.linen\s*\{\s*display:\s*none;", stylesheet)
+
+
 def test_editorial_inline_links_use_service_weight_and_tangerine_hover_treatment():
     stylesheet_path = finders.find("portfolio/prototype/motion.css")
 

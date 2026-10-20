@@ -528,18 +528,20 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
         display: grid;
         align-content: start;
         margin: 0;
+        /* Inaktive Stationen sind nur unsichtbar und nicht klickbar, nicht `visibility:
+           hidden`: So bleibt die ganze Fallstudie für Screenreader lesbar. Bekommt ein
+           Link darin den Fokus, holt motion.js seine Station nach vorn. */
         opacity: 0;
-        visibility: hidden;
-        transition: opacity var(--stage-fade) ease, visibility 0s linear var(--stage-fade);
+        pointer-events: none;
+        transition: opacity var(--stage-fade) ease;
       }
       .is-staged .case-row.is-active {
         opacity: 1;
-        visibility: visible;
-        transition-delay: 0s;
+        pointer-events: auto;
       }
       .is-staged .case-row.motion-reveal { animation: none; }
       /* Auf der Bühne trägt jede Station ihre eigene Headline-Kopie und wechselt als Ganzes;
-         die eigentliche Headline bleibt nur für Screenreader. */
+         die eigentliche Headline bleibt nur für Screenreader (die Kopie ist aria-hidden). */
       .is-staged .case-row > .case-label {
         position: absolute;
         inline-size: 1px;
@@ -563,15 +565,15 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
         grid-area: 1 / 1;
         margin: 0;
         opacity: 0;
-        visibility: hidden;
+        pointer-events: none;
         translate: 0 var(--stage-lift-in);
-        transition: opacity var(--stage-fade) ease, translate var(--stage-move) var(--stage-ease), visibility 0s linear var(--stage-fade);
+        transition: opacity var(--stage-fade) ease, translate var(--stage-move) var(--stage-ease);
       }
       .is-staged .case-part.is-active {
         opacity: 1;
-        visibility: visible;
+        pointer-events: auto;
         translate: 0 0;
-        transition-delay: .1s, .1s, 0s;
+        transition-delay: .1s, .1s;
       }
       .is-staged .case-part.is-past { translate: 0 var(--stage-lift-out); }
       /* Fortschritt: ein kurzer Strich pro Station an fester Stelle unten in der Bühne,

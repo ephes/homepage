@@ -434,6 +434,15 @@ class PortfolioSiteSettings(BaseSiteSetting):
         max_length=80,
         default="Mehrwert",
     )
+    theme_switch_label = models.CharField(
+        "Darstellung: Name des Schalters",
+        max_length=80,
+        default="Darstellung",
+        help_text="Wird nicht angezeigt; Screenreader lesen ihn mit der aktuellen Wahl vor.",
+    )
+    theme_system_label = models.CharField("Darstellung: System", max_length=40, default="System")
+    theme_light_label = models.CharField("Darstellung: Hell", max_length=40, default="Hell")
+    theme_dark_label = models.CharField("Darstellung: Dunkel", max_length=40, default="Dunkel")
     footer_pages_heading = models.CharField(
         "Footer: Seitenüberschrift",
         max_length=80,
@@ -547,6 +556,15 @@ class PortfolioSiteSettings(BaseSiteSetting):
                 FieldPanel("results_label"),
             ],
             heading="Navigation",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("theme_switch_label"),
+                FieldPanel("theme_system_label"),
+                FieldPanel("theme_light_label"),
+                FieldPanel("theme_dark_label"),
+            ],
+            heading="Darstellung (Hell/Dunkel)",
         ),
         MultiFieldPanel(
             [

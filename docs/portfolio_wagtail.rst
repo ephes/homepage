@@ -93,6 +93,35 @@ Site settings (``Settings`` in the Wagtail admin, one set per site):
 ``ErrorPageSettings``
     Copy of the 501 placeholder page.
 
+A fixed field in the bottom-left corner, the mirror image of the back-to-top arrow,
+switches the appearance between System, Hell and Dunkel (labels in the site settings,
+"Darstellung"). It shows the icon of the current choice. A click first raises the field's top
+edge like a window over the stacked icons, then slides the menu out to the right to
+reveal the words (word left, icon right); closing runs backwards. On phones only the icon
+in the narrow margin is visible, the tap area stays 44 px; ``theme-switch.js`` stores the choice in the browser (``portfolio-theme``) and an
+inline script in ``base.html`` applies it before the first paint (``data-theme-choice``,
+``data-theme``). Without JavaScript the switch is hidden and the page follows the system.
+Over the landing-page hero the corner fields and the scroll cue invert themselves
+(``mix-blend-mode: difference``) so they stay visible on the revealed image.
+
+Dark mode applies with ``data-theme="dark"`` or, for "System" and without JavaScript,
+with ``prefers-color-scheme: dark``. The switch itself sits once in the token layer of
+``portfolio.css``: it sets ``color-scheme: dark``, ``--weight-shift: -30`` and the linen
+tokens (``--linen-filter: invert(1)``, ``--linen-blend: screen``). Every colour role token
+(``--bg``, ``--ink``, ``--muted``, ``--rule*``, ``--ph*``, ``--dark-bg``) carries both values
+via ``light-dark()``, so creme and black swap roles while Tangerine stays. The dark
+tones are petrol: the main site's blue turned towards sea green, with the hue kept in a
+single token ``--dark-hue``. ``--dark-ground`` (a very subtly tinted black) is the page,
+``--dark-raised`` the larger dark areas (clients, results, footer, contact bar), which stay
+dark but one step lighter. The
+landing-page "MOIN" uses its own token ``--hero-word`` (``portfolio-startseite.css``), in
+the ``--dark-raised`` tone on dark.
+Buttons turn around (creme with dark text). Every ``font-weight`` in the portfolio
+stylesheets is written as ``calc(<weight> + var(--weight-shift))`` so all type is a touch
+lighter on dark; the Astagina handwriting keeps its weight. ``homepage.js`` and
+``motion.js`` redraw the hero and the headline alignment when the theme changes at
+runtime. The light appearance is unchanged; the Wagtail admin theme is not affected.
+
 Words that belong together can be kept together softly. In rich-text fields mark them
 with "Kein Umbruch"; in plain-text project titles join them with a no-break space
 (Option+Space on a Mac, e.g. ``Eine Marke``). Such a group moves to the next line as a

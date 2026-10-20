@@ -14,7 +14,7 @@
   padding-inline: var(--inset);
   color: var(--muted);
   font-size: var(--type-eyebrow);
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
@@ -80,7 +80,7 @@
   inline-size: 100%;
   aspect-ratio: 4 / 5;
 }
-.imprint-visual-fill { fill: color-mix(in srgb, var(--warm-black) 8%, var(--bg)); }
+.imprint-visual-fill { fill: color-mix(in srgb, var(--ink) 8%, var(--bg)); }
 .imprint-visual-lines {
   fill: none;
   stroke: var(--rule);
@@ -91,7 +91,7 @@
   fill: var(--muted);
   font-family: "Saira", system-ui, sans-serif;
   font-size: 1.1px;
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
   letter-spacing: .1em;
   text-anchor: middle;
   text-transform: uppercase;

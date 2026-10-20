@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>document.documentElement.classList.add("has-js");</script>
+    {# Gespeicherte Darstellung vor dem ersten Zeichnen setzen (kein Aufblitzen); „System“ folgt dem Gerät. #}
+    <script>(function () { var root = document.documentElement, choice; try { choice = localStorage.getItem("portfolio-theme"); } catch (e) {} if (choice !== "light" && choice !== "dark") choice = "system"; root.dataset.themeChoice = choice; if (choice !== "system") root.dataset.theme = choice; })();</script>
     <meta name="description" content="{% block meta_description %}Portfolio{% if portfolio_site_settings.brand_name %} von {{ portfolio_site_settings.brand_name }}{% endif %}{% endblock %}">
     {% block meta_robots %}{% endblock %}
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
@@ -26,6 +28,7 @@
     </main>
     {% if portfolio_index %}
       {% include "portfolio/components/site_footer.html" %}
+      {% include "portfolio/components/theme_switch.html" %}
     {% endif %}
     {% block organic_shapes %}{% endblock %}
     {% if portfolio_index %}
@@ -38,6 +41,7 @@
     {% endif %}
     {% block custom_cursor %}{% endblock %}
     {% if portfolio_index %}<div class="linen" aria-hidden="true"></div>{% endif %}
+    {% if portfolio_index %}<script src="{% versioned_static 'portfolio/prototype/theme-switch.js' %}" defer></script>{% endif %}
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>

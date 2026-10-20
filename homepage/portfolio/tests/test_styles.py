@@ -120,14 +120,14 @@ def test_prototype_typography_tokens_are_global_and_page_geometry_stays_local():
     assert tokens["--creme"] == "#f0ece2"
     assert tokens["--warm-black"] == "#090d19"
     assert tokens["--tangerine"] == "#eb3d00"
-    assert tokens["--bg"] == "var(--creme)"
-    assert tokens["--ink"] == "var(--warm-black)"
+    assert tokens["--bg"] == "light-dark(var(--creme), var(--dark-ground))"
+    assert tokens["--ink"] == "light-dark(var(--warm-black), var(--creme))"
     assert tokens["--accent"] == "var(--tangerine)"
     assert tokens["--portfolio-bg"] == "var(--bg)"
     assert tokens["--portfolio-text"] == "var(--ink)"
     assert tokens["--portfolio-accent"] == "var(--accent)"
-    assert tokens["--ph"] == "rgba(9, 13, 25, 0.06)"
-    assert tokens["--ph-ink"] == "rgba(9, 13, 25, 0.45)"
+    assert tokens["--ph"] == "light-dark(rgba(9, 13, 25, 0.06), rgba(240, 236, 226, 0.06))"
+    assert tokens["--ph-ink"] == "light-dark(rgba(9, 13, 25, 0.45), rgba(240, 236, 226, 0.45))"
     assert tokens["color-scheme"] == "light"
     assert tokens["--font-sans"] == '"Saira", system-ui, sans-serif'
     assert tokens["--font-handwriting"] == '"Astagina", cursive'
@@ -183,6 +183,7 @@ def test_prototype_typography_tokens_are_global_and_page_geometry_stays_local():
     assert media_conditions(stylesheet) == {
         "(max-width:36rem)",
         "(max-width:52rem)",
+        "(prefers-color-scheme:dark)",
         "(prefers-reduced-motion:reduce)",
     }
 
@@ -560,7 +561,7 @@ def test_editorial_inline_links_use_service_weight_and_tangerine_hover_treatment
     )
 
     assert links["color"] == "inherit"
-    assert links["font-weight"] == "600"
+    assert links["font-weight"] == "calc(600 + var(--weight-shift))"
     assert links["background-image"] == ("linear-gradient(var(--tangerine), var(--tangerine))")
     assert links["background-size"] == "0 1px"
     assert nested_emphasis["font-weight"] == "inherit"
@@ -586,3 +587,128 @@ def test_shared_shell_does_not_override_the_canonical_menu_geometry():
     assert "border-block-start" not in socials
     assert "grid-template-columns" not in social_links
     assert "min-block-size" not in social_button
+
+
+PORTFOLIO_STYLESHEETS = (
+    "portfolio/portfolio.css",
+    "portfolio/homepage.css",
+    "portfolio/project-wagtail.css",
+    "portfolio/prototype/portfolio-startseite.css",
+    "portfolio/prototype/motion.css",
+    "portfolio/prototype/projekte/projekt.css",
+    "portfolio/prototype/legal.css",
+    "portfolio/prototype/501.css",
+)
+TOKEN_STYLESHEETS = (
+    "portfolio/portfolio.css",
+    "portfolio/prototype/portfolio-startseite.css",
+    "portfolio/prototype/projekte/projekt.css",
+)
+
+
+def read_static(path):
+    stylesheet_path = finders.find(path)
+    assert stylesheet_path is not None
+    return Path(stylesheet_path).read_text()
+
+
+def root_tokens(stylesheet):
+    """Return the first plain :root block, also when it sits inside a layer."""
+
+    without_comments = re.sub(r"/\*.*?\*/", "", stylesheet, flags=re.DOTALL)
+    for match in re.finditer(r"(?:^|[{}])\s*:root\s*\{([^{}]*)\}", without_comments):
+        if "--bg" in match.group(1):
+            return {
+                name.strip(): value.strip()
+                for declaration in match.group(1).split(";")
+                if ":" in declaration
+                for name, value in [declaration.split(":", 1)]
+            }
+    raise AssertionError("Missing :root token block")
+
+
+def compact(value):
+    return re.sub(r"\s+", "", value).lower()
+
+
+def test_dark_mode_swaps_the_role_tokens_and_keeps_the_light_values():
+    for path in TOKEN_STYLESHEETS:
+        tokens = root_tokens(read_static(path))
+        assert compact(tokens["--bg"]) == "light-dark(var(--creme),var(--dark-ground))", path
+        assert compact(tokens["--ink"]) == "light-dark(var(--warm-black),var(--creme))", path
+        # Kräftige Linien: dunkel Creme mit 85 % Deckkraft statt voll.
+        assert compact(tokens["--rule-strong"]) == "light-dark(var(--ink),rgba(240,236,226,0.85))", path
+        assert compact(tokens["--dark-bg"]) == "light-dark(var(--warm-black),var(--dark-raised))", path
+        for name in ("--rule", "--rule-soft", "--ph", "--ph-ink"):
+            light, dark = re.match(r"light-dark\((rgba\([^)]*\)),(rgba\([^)]*\))\)", compact(tokens[name])).groups()
+            assert light.startswith("rgba(9,13,25,"), (path, name)
+            assert dark.startswith("rgba(240,236,226,"), (path, name)
+            assert light.split(",")[-1] == dark.split(",")[-1], (path, name)
+        assert "color-scheme" not in tokens or tokens["color-scheme"] == "light", path
+
+
+def test_dark_mode_switch_lives_once_in_the_token_layer():
+    stylesheet = read_static("portfolio/portfolio.css")
+    tokens_layer = layer_body(stylesheet, "tokens")
+    tokens = declarations_for(tokens_layer, {":root"})
+    forced = declarations_for(tokens_layer, {':root[data-theme="dark"]'})
+    system = declarations_for(tokens_layer, {':root:not([data-theme="light"])'})
+
+    assert tokens["--weight-shift"] == "0"
+    assert tokens["--linen-filter"] == "none"
+    assert tokens["--linen-blend"] == "multiply"
+    assert tokens["--dark-hue"].isdigit()
+    assert tokens["--dark-ground"] == "oklch(0.17 0.025 var(--dark-hue))"
+    assert tokens["--dark-raised"] == "oklch(0.33 0.045 var(--dark-hue))"
+    for dark in (forced, system):
+        assert dark == {
+            "--weight-shift": "-30",
+            "--linen-filter": "invert(1)",
+            "--linen-blend": "screen",
+            "color-scheme": "dark",
+        }
+    assert "@media (prefers-color-scheme: dark)" in tokens_layer
+    for path in PORTFOLIO_STYLESHEETS[1:]:
+        assert "color-scheme:" not in re.sub(r"/\*.*?\*/", "", read_static(path), flags=re.DOTALL), path
+    # Die Leinentextur folgt den Tokens in beiden Fassungen.
+    linen = declarations_for(read_static("portfolio/prototype/motion.css"), {".linen"})
+    assert linen["filter"] == "var(--linen-filter, none)"
+    assert linen["mix-blend-mode"] == "var(--linen-blend, multiply)"
+
+
+def test_dark_tones_keep_readable_contrast():
+    # Petrol-Grund und -Fläche bei --dark-hue 220: oklch(0.17 0.025 220), oklch(0.33 0.045 220).
+    ground, raised, creme = "#031217", "#173b45", "#f0ece2"
+
+    assert contrast_ratio(ground, creme) >= 7
+    assert contrast_ratio(raised, creme) >= 7
+    assert contrast_ratio(ground, "#8f9389") >= 4.5  # --muted im Dunkeln
+    assert contrast_ratio(ground, "#a8aba1") >= 4.5  # Verfügbarkeit in der Kopfleiste
+    assert contrast_ratio(ground, "#eb3d00") >= 4.5  # Tangerine auf dem Grund
+
+
+def test_every_font_weight_follows_the_dark_mode_shift_except_handwriting():
+    pattern = re.compile(r"font-weight\s*:\s*([^;}]+)")
+    for path in PORTFOLIO_STYLESHEETS:
+        stylesheet = read_static(path)
+        for match in pattern.finditer(stylesheet):
+            value = match.group(1).strip()
+            start, end = stylesheet.rfind("{", 0, match.start()), stylesheet.find("}", match.end())
+            block = stylesheet[start:end]
+            if "Astagina" in block:
+                assert value == "400", path
+            elif value != "inherit":
+                assert value.startswith("calc(") and value.endswith("+ var(--weight-shift))"), (path, value)
+
+
+def test_shadows_and_hard_coded_ink_follow_the_color_scheme():
+    for path in PORTFOLIO_STYLESHEETS:
+        stylesheet = re.sub(r"/\*.*?\*/", "", read_static(path), flags=re.DOTALL)
+        for line in stylesheet.splitlines():
+            if line.strip().startswith("--"):
+                continue
+            if "rgba(9, 13, 25" in line or "rgba(255, 255, 255, ." in line and "scrollcue" not in line:
+                assert "light-dark(" in line, (path, line)
+            # Creme bleibt nur als Schrift auf Tangerine fest; Flächen folgen --bg/--ink.
+            assert not re.search(r"background(-color)?\s*:\s*var\(--(creme|warm-black)", line), (path, line)
+            assert "var(--creme, " not in line and "var(--warm-black, " not in line, (path, line)

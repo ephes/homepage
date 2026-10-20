@@ -112,8 +112,27 @@
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cnv);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); }
 
-  var CSS = getComputedStyle(document.documentElement);
-  function col(name,fb){ var v=CSS.getPropertyValue(name).trim(); return v||fb; }
+  // Farb-Tokens tragen light-dark(); das Canvas versteht das nicht. Eine unsichtbare Probe
+  // löst den Token im aktuellen Farbschema zur fertigen Farbe auf.
+  var colorProbe = document.createElement('i');
+  colorProbe.hidden = true;
+  stage.appendChild(colorProbe);
+  // Abgeleitete Töne (oklch(from …)) kommen nicht überall als rgb() zurück; ein
+  // 1×1-Canvas rechnet die Farbe deshalb in feste sRGB-Werte um.
+  var colorPixel = document.createElement('canvas').getContext('2d', {willReadFrequently:true});
+  function col(name,fb){
+    colorProbe.style.color = fb; colorProbe.style.color = 'var(' + name + ',' + fb + ')';
+    var value = getComputedStyle(colorProbe).color || fb;
+    if (!colorPixel || /^rgba?\(/.test(value)) return value;
+    colorPixel.clearRect(0,0,1,1); colorPixel.fillStyle = fb; colorPixel.fillStyle = value; colorPixel.fillRect(0,0,1,1);
+    var d = colorPixel.getImageData(0,0,1,1).data;
+    return 'rgba(' + d[0] + ',' + d[1] + ',' + d[2] + ',' + (d[3]/255) + ')';
+  }
+  // Schnitt des MOIN: 800, im Dunkeln um --weight-shift leichter (wie alle Schriften).
+  function moinFont(size){
+    var shift = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--weight-shift')) || 0;
+    return (800 + shift) + ' ' + size + 'px Saira';
+  }
 
   // Solid und Outline werden mit IDENTISCHER Geometrie (gleiche fs/x/y) gerendert,
   // damit die Buchstaben deckungsgleich sind — es wird nur das Bild dahinter freigelegt.
@@ -135,26 +154,26 @@
     var inkLeft = (padPx + inset) * sx;
     var inkW    = (clientW - 2 * padPx - 2 * inset) * sx;
     var inkTop  = (heroLineTop(0, 0.25) + inset) * sy;            // ab der oberen Rasterlinie
-    ctx.font = '800 300px Saira';
+    ctx.font = moinFont(300);
     var m0 = ctx.measureText('MOIN');
     var ink0 = m0.actualBoundingBoxRight + m0.actualBoundingBoxLeft;
     var fs = 300 * inkW / ink0;
-    ctx.font = '800 ' + fs + 'px Saira';
+    ctx.font = moinFont(fs);
     var m = ctx.measureText('MOIN');
     var penX = inkLeft + m.actualBoundingBoxLeft;                 // inkLeft = penX − abbLeft
     var penY = inkTop + m.actualBoundingBoxAscent;               // inkTop  = penY − ascent
     return { fs: fs, x: penX, y: penY };
   }
   function drawMoin(ctx, g, mode){
-    var ink = col('--ink', '#090d19');
-    ctx.font = '800 ' + g.fs + 'px Saira';
+    var ink = col('--hero-word', '#090d19'); // eigener Token: im Dunkeln Ton der dunklen Flächen
+    ctx.font = moinFont(g.fs);
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     if (mode === 'solid') { ctx.fillStyle = ink; ctx.fillText('MOIN', g.x, g.y); return; }
     // Outline INNEN: gedoppelter, mittiger Stroke, dann per destination-in auf die Glyphe
     // beschnitten → nur die innere Hälfte bleibt. Außenkante == Kante des soliden Buchstabens.
     var W = ctx.canvas.width, H = ctx.canvas.height;
     var t = document.createElement('canvas'); t.width = W; t.height = H; var tc = t.getContext('2d');
-    tc.font = '800 ' + g.fs + 'px Saira'; tc.textAlign = 'left'; tc.textBaseline = 'alphabetic';
+    tc.font = moinFont(g.fs); tc.textAlign = 'left'; tc.textBaseline = 'alphabetic';
     tc.lineWidth = Math.max(2, g.fs * 0.022); tc.strokeStyle = ink; tc.lineJoin = 'round'; tc.miterLimit = 2;
     tc.strokeText('MOIN', g.x, g.y);
     tc.globalCompositeOperation = 'destination-in';
@@ -304,7 +323,7 @@
       stops.push(onLight+' '+(y-offset)+'px 100%');
       return 'linear-gradient(to bottom,'+stops.join(',')+')';
     }
-    pg.style.setProperty('--line-strong', grad('var(--rule-strong)','var(--dark-ink)',0));
+    pg.style.setProperty('--line-strong', grad('var(--rule-strong)','var(--dark-rule-strong)',0));
     pg.style.setProperty('--line-soft',   grad('var(--rule)','var(--dark-rule)',0));
     // Das untere Segment der 1/4-Linie beginnt erst bei --gap-end; seine eigene y-Achse
     // ist um diesen Betrag verschoben.
@@ -588,6 +607,20 @@
     }
   }
   if(revealSource)revealSource.addEventListener('load',refreshRevealSource);
+  // Darstellung zur Laufzeit: Wechsel per Schalter (data-theme) oder Systemeinstellung
+  // malen Grund und MOIN mit den neuen Tokens neu, ohne die Simulation zu verlieren.
+  function refreshTheme(){
+    if(!simulationReady)return;
+    try {
+      buildTextures(); render();
+    } catch (error) {
+      disableSimulation();
+    }
+  }
+  new MutationObserver(refreshTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  var colorSchemeQuery = matchMedia('(prefers-color-scheme: dark)');
+  if(colorSchemeQuery.addEventListener)colorSchemeQuery.addEventListener('change',refreshTheme);
+  else colorSchemeQuery.addListener(refreshTheme);
   if(revealSource)revealSource.addEventListener('error',refreshRevealSource);
   function disableSimulation(){
     simulationReady=false;

@@ -41,7 +41,9 @@
   background-repeat: repeat;
   /* Größe wie in den Lebensläufen und auf der Hauptseite: 400er-Kachel auf 560px. */
   background-size: 560px;
-  mix-blend-mode: multiply;
+  /* Hell multiplizierend, dunkel umgekehrt und aufhellend (Tokens in portfolio.css). */
+  filter: var(--linen-filter, none);
+  mix-blend-mode: var(--linen-blend, multiply);
 }
 /* Auf kleinen Viewports beginnt die feste Leinentextur an der oberen Safe-Area-Kante
    vollständig ruhig und gewinnt erst über die Headerhöhe weich an Präsenz. Die
@@ -78,8 +80,8 @@
   inset-block-start: .5rem;
   inset-inline-start: .5rem;
   padding: .65rem 1rem;
-  background: var(--warm-black);
-  color: var(--creme);
+  background: var(--ink);
+  color: var(--bg);
   text-decoration: none;
   transform: translateY(calc(-100% - 1rem));
 }
@@ -212,7 +214,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   inline-size: 100%;
   color: var(--ink);
   font-size: inherit;
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
   line-height: .95;
   letter-spacing: var(--tracking-display);
   cursor: pointer;
@@ -234,7 +236,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   /* Bis 2.5rem so groß wie die Menüzeile, damit das Aufklappen auch auf kleinen Schriftstufen
      deutlich lesbar bleibt; bei großen Stufen nie unter 78 % der Zeile. */
   font-size: max(.78em, min(1em, 2.5rem));
-  font-weight: 500;
+  font-weight: calc(500 + var(--weight-shift));
   line-height: 1;
 }
 .project-menu[open] > summary::after { content: "−"; }
@@ -284,7 +286,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   min-inline-size: 0;
   color: var(--ink);
   font-size: var(--type-menu-project);
-  font-weight: 500;
+  font-weight: calc(500 + var(--weight-shift));
   line-height: 1.15;
   letter-spacing: var(--tracking-action);
   opacity: 1;
@@ -298,7 +300,7 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   margin: 0;
   color: var(--tangerine);
   font-size: inherit;
-  font-weight: 500;
+  font-weight: calc(500 + var(--weight-shift));
   line-height: 1;
   letter-spacing: var(--tracking-action);
   /* Breite der Asterisk-Fassung (.75em bei min(.7em, --headline-s) auf --headline-m);
@@ -321,8 +323,8 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
     inset-inline-start: auto;
     inset-inline-end: 0;
     box-shadow:
-      -1.1rem 0 1.6rem rgba(9, 13, 25, .46),
-      -3.75rem 0 6.5rem rgba(9, 13, 25, .3);
+      -1.1rem 0 1.6rem light-dark(rgba(9, 13, 25, .46), rgba(0, 0, 0, .74)),
+      -3.75rem 0 6.5rem light-dark(rgba(9, 13, 25, .3), rgba(0, 0, 0, .48));
   }
 }
 
@@ -558,7 +560,7 @@ html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
 .scr.hw-label .hw-svg.hw-clean-joins .hw-ink-edge { display: none; }
 .scr.hw-label .hw-svg .hw-outline {
   fill: none;
-  stroke: var(--hw-outline, var(--creme));
+  stroke: var(--hw-outline, var(--bg));
   stroke-width: 225px; /* 0.11 × 2048: exakt die Kontur des Originals */
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -603,9 +605,10 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
    angeschlagen und fällt von dort nach hinten: So schließt sich die Fläche optisch nach
    unten, statt wie eine nach oben herausgezogene Blende zu wirken. */
 .pill {
-  --fold-face: var(--warm-black);
+  /* Im Dunkeln dreht sich die Vorderfläche um: creme mit dunkler Schrift. */
+  --fold-face: var(--ink);
   --fold-bg: var(--tangerine);
-  --fold-face-ink: var(--creme);
+  --fold-face-ink: var(--bg);
   --fold-ink: #fff;
   position: relative;
   isolation: isolate;
@@ -666,10 +669,10 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   }
 }
 .pill.ghost {
-  --fold-face: var(--creme);
-  --fold-bg: var(--warm-black);
-  --fold-face-ink: var(--warm-black);
-  --fold-ink: var(--creme);
+  --fold-face: var(--bg);
+  --fold-bg: var(--ink);
+  --fold-face-ink: var(--ink);
+  --fold-ink: var(--bg);
   background: var(--fold-bg);
   color: var(--fold-face-ink);
   /* Prio 3 auf allen Seiten: Kontur 1,5px (1px Rahmen plus ein halber Pixel als Schatten
@@ -677,7 +680,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
      Schnitt für dunkle Schrift auf Hell. */
   border: 1px solid var(--ink);
   box-shadow: 0 0 0 .5px var(--ink);
-  font-weight: var(--pill-ghost-weight, 550);
+  font-weight: calc(var(--pill-ghost-weight, 550) + var(--weight-shift));
 }
 .pill.ghost:hover,
 .pill.ghost:focus-visible {
@@ -687,14 +690,15 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 }
 /* Mit der Schriftfarbe wechselt auch der Schnitt (Tokens in den Seiten-Stylesheets). */
 @keyframes ghost-fold-ink {
-  0%, 54% { color: var(--fold-face-ink); font-weight: var(--pill-ghost-weight, 550); }
-  62%, 100% { color: var(--fold-ink); font-weight: var(--pill-secondary-weight, 500); }
+  0%, 54% { color: var(--fold-face-ink); font-weight: calc(var(--pill-ghost-weight, 550) + var(--weight-shift)); }
+  62%, 100% { color: var(--fold-ink); font-weight: calc(var(--pill-secondary-weight, 500) + var(--weight-shift)); }
 }
 .pill.prio {
   --fold-face: var(--tangerine);
-  --fold-bg: var(--warm-black);
+  /* Darunter liegt die Gegenfarbe des Grundes: im Dunkeln creme mit schwarzer Schrift. */
+  --fold-bg: var(--ink);
   --fold-face-ink: #fff;
-  --fold-ink: #fff;
+  --fold-ink: light-dark(#fff, var(--warm-black));
 }
 .contact .pill.prio {
   background: var(--fold-bg);
@@ -759,8 +763,8 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .more-card:focus-visible {
   animation: tile-shadow-in 360ms var(--motion-ease) both;
   box-shadow:
-    inset 0 0 .65rem rgba(9, 13, 25, .3),
-    inset 0 0 0 1px rgba(9, 13, 25, .14);
+    inset 0 0 .65rem light-dark(rgba(9, 13, 25, .3), rgba(0, 0, 0, .48)),
+    inset 0 0 0 1px light-dark(rgba(9, 13, 25, .14), rgba(0, 0, 0, .22));
 }
 .tile:not(.cta):hover .tile-depth,
 .tile:not(.cta):focus-visible .tile-depth,
@@ -776,14 +780,14 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   100% { transform: perspective(45rem) translateZ(-.5rem); }
 }
 @keyframes tile-shadow-in {
-  0% { box-shadow: inset 0 0 0 rgba(9, 13, 25, 0), inset 0 0 0 1px rgba(9, 13, 25, 0); }
-  62% { box-shadow: inset 0 0 .72rem rgba(9, 13, 25, .35), inset 0 0 0 1px rgba(9, 13, 25, .16); }
-  100% { box-shadow: inset 0 0 .65rem rgba(9, 13, 25, .3), inset 0 0 0 1px rgba(9, 13, 25, .14); }
+  0% { box-shadow: inset 0 0 0 light-dark(rgba(9, 13, 25, 0), rgba(0, 0, 0, 0)), inset 0 0 0 1px light-dark(rgba(9, 13, 25, 0), rgba(0, 0, 0, 0)); }
+  62% { box-shadow: inset 0 0 .72rem light-dark(rgba(9, 13, 25, .35), rgba(0, 0, 0, .56)), inset 0 0 0 1px light-dark(rgba(9, 13, 25, .16), rgba(0, 0, 0, .26)); }
+  100% { box-shadow: inset 0 0 .65rem light-dark(rgba(9, 13, 25, .3), rgba(0, 0, 0, .48)), inset 0 0 0 1px light-dark(rgba(9, 13, 25, .14), rgba(0, 0, 0, .22)); }
 }
 .tile:not(.cta):hover,
 .tile:not(.cta):focus-visible,
 .more-card:hover,
-.more-card:focus-visible { background: var(--creme); }
+.more-card:focus-visible { background: var(--bg); }
 .tile-arrow,
 .pill .ar,
 .project-inquiry .ar {
@@ -879,7 +883,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .project-lead a,
 .rich-text a {
   color: inherit;
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
   background-image: linear-gradient(var(--tangerine), var(--tangerine));
   background-position: left bottom;
   background-repeat: no-repeat;
@@ -1005,31 +1009,31 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   animation: none;
   transform: translateY(2px);
   box-shadow:
-    inset 0 1.5px 1.5px rgba(9, 13, 25, .5),
-    inset 0 -1px 1px rgba(255, 255, 255, .72);
+    inset 0 1.5px 1.5px light-dark(rgba(9, 13, 25, .5), rgba(0, 0, 0, .8)),
+    inset 0 -1px 1px light-dark(rgba(255, 255, 255, .72), rgba(240, 236, 226, .18));
 }
 @keyframes social-rim-press {
   0% {
     transform: translateY(0);
-    box-shadow: inset 0 0 0 rgba(9, 13, 25, 0), inset 0 0 0 rgba(255, 255, 255, 0);
+    box-shadow: inset 0 0 0 light-dark(rgba(9, 13, 25, 0), rgba(0, 0, 0, 0)), inset 0 0 0 light-dark(rgba(255, 255, 255, 0), rgba(240, 236, 226, 0));
   }
   62% {
     transform: translateY(1.5px);
     box-shadow:
-      inset 0 1.5px 1.75px rgba(9, 13, 25, .52),
-      inset 0 -1px 1px rgba(255, 255, 255, .76);
+      inset 0 1.5px 1.75px light-dark(rgba(9, 13, 25, .52), rgba(0, 0, 0, .83)),
+      inset 0 -1px 1px light-dark(rgba(255, 255, 255, .76), rgba(240, 236, 226, .19));
   }
   82% {
     transform: translateY(.5px);
     box-shadow:
-      inset 0 1px 1.25px rgba(9, 13, 25, .38),
-      inset 0 -.75px .75px rgba(255, 255, 255, .62);
+      inset 0 1px 1.25px light-dark(rgba(9, 13, 25, .38), rgba(0, 0, 0, .61)),
+      inset 0 -.75px .75px light-dark(rgba(255, 255, 255, .62), rgba(240, 236, 226, .15));
   }
   100% {
     transform: translateY(1px);
     box-shadow:
-      inset 0 1.25px 1.5px rgba(9, 13, 25, .46),
-      inset 0 -1px 1px rgba(255, 255, 255, .7);
+      inset 0 1.25px 1.5px light-dark(rgba(9, 13, 25, .46), rgba(0, 0, 0, .74)),
+      inset 0 -1px 1px light-dark(rgba(255, 255, 255, .7), rgba(240, 236, 226, .17));
   }
 }
 .site-nav nav .menu-socials svg {
@@ -1061,7 +1065,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
     block-size: calc(100vh - var(--header-h, 4.6rem));
     block-size: calc(100svh - var(--header-h, 4.6rem));
     block-size: calc(100dvh - var(--header-h, 4.6rem));
-    box-shadow: 0 1.25rem 2.5rem rgba(9, 13, 25, .22);
+    box-shadow: 0 1.25rem 2.5rem light-dark(rgba(9, 13, 25, .22), rgba(0, 0, 0, .35));
   }
 }
 
@@ -1072,8 +1076,8 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
     animation: none;
     transform: none;
     box-shadow:
-      inset 0 1.25px 1.5px rgba(9, 13, 25, .46),
-      inset 0 -1px 1px rgba(255, 255, 255, .7);
+      inset 0 1.25px 1.5px light-dark(rgba(9, 13, 25, .46), rgba(0, 0, 0, .74)),
+      inset 0 -1px 1px light-dark(rgba(255, 255, 255, .7), rgba(240, 236, 226, .17));
   }
 }
 
@@ -1097,11 +1101,23 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   border-inline-start: 1px solid currentColor;
   border-radius: 0;
   background: transparent;
-  color: var(--warm-black, #090d19);
+  color: var(--ink, #090d19);
   mix-blend-mode: normal;
   text-decoration: none;
 }
-.to-top.is-on-dark { color: var(--creme, #f0ece2); }
+.to-top.is-on-dark { color: var(--dark-ink, #f0ece2); }
+/* Über dem Hero der Startseite kann das freigewischte Bild beliebig hell oder dunkel sein:
+   dort kehrt sich die Ecke per difference um. Die Kante, die genau auf der Rasterlinie
+   liegt, entfällt dabei, sonst löschten sich beide Linien gegenseitig aus. */
+.foot-bar .to-top.is-on-stage,
+.theme-switch.is-on-stage {
+  color: #fff;
+  mix-blend-mode: difference;
+}
+.foot-bar .to-top.is-on-stage { border-inline-start-color: transparent; }
+.theme-switch.is-on-stage .theme-switch__toggle { border-inline-end-color: transparent; }
+/* Aufgeklappt bleibt die rechte Kante des Feldes immer sichtbar, nur die obere entfällt. */
+.theme-switch.is-open .theme-switch__toggle { border-inline-end-color: currentColor; }
 /* Progressive Fallback: Ohne Skript bleibt der Pfeil auch über unbekannten Flächen
    kontrastfähig. Im regulären Betrieb vermeidet die explizite Farbklasse das Auslöschen
    der deckungsgleichen linken Raster- und Ankerkante. */
@@ -1110,8 +1126,8 @@ html:not(.has-js) .to-top {
   mix-blend-mode: difference;
 }
 .to-top .tile-arrow { color: inherit; transform: rotate(-90deg); }
-.foot-bar .to-top { color: var(--warm-black, #090d19); }
-.foot-bar .to-top.is-on-dark { color: var(--creme, #f0ece2); }
+.foot-bar .to-top { color: var(--ink, #090d19); }
+.foot-bar .to-top.is-on-dark { color: var(--dark-ink, #f0ece2); }
 .foot-bar .to-top:hover,
 .foot-bar .to-top:focus-visible {
   background: transparent;
@@ -1123,8 +1139,236 @@ html:not(.has-js) .to-top {
 }
 .to-top:focus-visible,
 .foot-bar .to-top:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+/* Darstellung (System, Hell, Dunkel): das gespiegelte Gegenstück zum Pfeil nach oben im
+   linken Seitenrand, Kante oben und rechts. Das Feld zeigt das Icon der aktuellen Wahl;
+   ein Klick zieht darüber das kleine Menü auf. Feld und Menü bilden dann eine Fläche ohne
+   Trennstrich (wie Kopfleiste und Hauptmenü), alle Icons stehen auf derselben Achse.
+   Ohne JavaScript ausgeblendet, die Seite folgt dann dem System. */
+.theme-switch {
+  --switch-inline-size: calc(var(--pad) + 1px);
+  --switch-icon-size: 1.25rem;
+  /* Mittelachse aller Icons, vom linken Fensterrand aus. */
+  --switch-icon-center: calc(.5 * var(--switch-inline-size));
+  /* Breite der sichtbaren Spalte des Feldes: Desktop das Feld, mobil der Seitenrand. */
+  --switch-strip: var(--switch-inline-size);
+  /* Innenabstand des Menüfensters oben und unten (mobil auch seitlich). */
+  --switch-menu-pad: .6rem;
+  --switch-shadow: .2rem 0 .5rem light-dark(rgba(9, 13, 25, .1), rgba(0, 0, 0, .3));
+  --switch-ease: var(--motion-ease, cubic-bezier(.16, 1, .3, 1));
+  position: fixed;
+  z-index: 35;
+  inset-inline-start: 0;
+  inset-block-end: 0;
+  inline-size: var(--switch-inline-size);
+  block-size: 3.5rem;
+  color: var(--ink, #090d19);
+}
+.theme-switch.is-on-dark { color: var(--dark-ink, #f0ece2); }
+html:not(.has-js) .theme-switch { display: none; }
+.theme-switch__toggle {
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 0;
+  border: 0;
+  border-block-start: 1px solid currentColor;
+  border-inline-end: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  /* Keine graue Tipp-Hervorhebung über der unsichtbaren Fingerfläche. */
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-icon {
+  inline-size: var(--switch-icon-size);
+  block-size: var(--switch-icon-size);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.theme-icon__fill { fill: currentColor; stroke: none; }
+.theme-switch__toggle .theme-icon {
+  position: absolute;
+  inset-inline-start: calc(var(--switch-icon-center) - .5 * var(--switch-icon-size));
+  inset-block-start: calc(50% - .5 * var(--switch-icon-size));
+  display: none;
+  transition: transform .65s var(--switch-ease);
+}
+[data-theme-choice="system"] .theme-switch__toggle .theme-icon--system,
+[data-theme-choice="light"] .theme-switch__toggle .theme-icon--light,
+[data-theme-choice="dark"] .theme-switch__toggle .theme-icon--dark { display: block; }
+.theme-switch__toggle:hover .theme-icon,
+.theme-switch__toggle:focus-visible .theme-icon,
+.theme-switch__toggle[aria-expanded="true"] .theme-icon { transform: rotate(-20deg); }
+.theme-switch__toggle:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+/* Geöffnet (is-open setzt theme-switch.js und nimmt es erst weg, wenn das Menü ganz
+   eingefahren ist): Feld creme, ohne obere Kante, nahtlos im Menü darüber; keine Umkehr
+   über dem Hero, solange etwas vom Menü zu sehen ist. */
+.theme-switch.is-open {
+  color: var(--ink, #090d19);
+  mix-blend-mode: normal;
+}
+.theme-switch.is-open .theme-switch__toggle {
+  background-color: var(--bg, #f0ece2);
+  border-block-start-color: transparent;
+  /* Derselbe Schatten wie das Fenster darüber: Feld und Menü wirken als eine Form. Das
+     Menü liegt im Aufbau darüber und verdeckt den Teil, der nach oben fiele. */
+  box-shadow: var(--switch-shadow);
+}
+/* Das Menü sitzt direkt auf dem Feld; links schließt es am Fensterrand ab, unten trägt
+   nur der Teil rechts vom Feld eine Kante. */
+.theme-switch__menu {
+  position: absolute;
+  inset-block-end: 100%;
+  inset-inline-start: 0;
+  /* Wort, Abstand und Icon; mobil genau eine Rasterspalte. */
+  inline-size: max-content;
+  min-inline-size: calc(var(--switch-strip) + 6rem);
+  /* Links schneidet der Fensterrand ab, unten die Feldkante (1px darunter für die
+     wandernde Oberkante); nach oben und rechts bleibt Raum für den Schatten. */
+  clip-path: inset(-3rem -3rem -1px 0);
+  color: var(--ink, #090d19);
+  transition: display .5s allow-discrete;
+}
+.theme-switch__menu[hidden] { display: none; }
+/* Untere Kante rechts vom Feld: steht fest an der Feldkante und wächst im selben Takt nach
+   rechts, in dem die Fläche herauskommt (gleiche Dauer, Kurve und Verzögerung wie der
+   Schub), damit sie nie als Trennlinie über dem Feld steht. */
+.theme-switch__menu::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-inline: var(--switch-joint, calc(var(--switch-inline-size) - 1px)) 0;
+  inset-block-end: 0;
+  block-size: 1px;
+  background: currentColor;
+  transform-origin: left;
+  transition: transform .22s cubic-bezier(.2, .55, .3, 1) .3s;
+}
+.theme-switch__menu[hidden]::after {
+  transform: scaleX(0);
+  transition: transform .18s cubic-bezier(.45, 0, .8, .55);
+}
+@starting-style {
+  .theme-switch__menu:not([hidden])::after { transform: scaleX(0); }
+}
+/* Wie ein Sichtfenster über einem Sprite, zwei Schritte ohne Halt:
+   1. Die Oberkante des Feldes wandert nach oben; das Fenster wird höher und legt die
+      stillstehenden Icons frei (Zuschnitt der Fläche und mitlaufende Linie, beide in
+      Prozent derselben Höhe, gleiche Kurve).
+   2. Dann schiebt sich das Fenster nach rechts heraus und gibt die Wörter frei.
+   Beim Schließen genau rückwärts. */
+.theme-switch__options {
+  --switch-rise: .34s cubic-bezier(.45, 0, .55, 1);
+  --switch-slide: .22s cubic-bezier(.2, .55, .3, 1);
+  position: relative;
+  display: grid;
+  translate: 0 0;
+  transition: translate var(--switch-slide) .3s;
+}
+.theme-switch__menu[hidden] .theme-switch__options {
+  translate: calc(var(--switch-strip) - 100%) 0;
+  transition: translate .18s cubic-bezier(.45, 0, .8, .55);
+}
+/* Die wandernde Oberkante: zu Beginn genau auf der Linie des Feldes. */
+.theme-switch__options::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: 1px;
+  background: currentColor;
+  transition: inset-block-start var(--switch-rise);
+}
+.theme-switch__menu[hidden] .theme-switch__options::after {
+  inset-block-start: 100%;
+  transition: inset-block-start .3s cubic-bezier(.45, 0, .55, 1) .15s;
+}
+@starting-style {
+  .theme-switch__menu:not([hidden]) .theme-switch__options { translate: calc(var(--switch-strip) - 100%) 0; }
+  .theme-switch__menu:not([hidden]) .theme-switch__options::after { inset-block-start: 100%; }
+  .theme-switch__menu:not([hidden]) .theme-switch__rows { clip-path: inset(100% -3rem 0 0); }
+}
+/* Fläche mit Inhalt: Kante rechts, unten nur rechts vom Feld; die obere Kante ist die
+   wandernde Linie. */
+.theme-switch__rows {
+  display: grid;
+  padding-block: var(--switch-menu-pad);
+  border-inline-end: 1px solid currentColor;
+  background: var(--bg, #f0ece2);
+  box-shadow: var(--switch-shadow);
+  clip-path: inset(0 -3rem 0 0);
+  transition: clip-path var(--switch-rise);
+}
+.theme-switch__menu[hidden] .theme-switch__rows {
+  clip-path: inset(100% -3rem 0 0);
+  transition: clip-path .3s cubic-bezier(.45, 0, .55, 1) .15s;
+}
+/* Wort links, Icon rechts; die Icons stehen untereinander am rechten Rand und im ersten
+   Schritt genau auf der Achse des Feldes. */
+.theme-switch__menu button {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+  gap: .9rem;
+  padding-block: .85rem;
+  /* Rechts so viel Luft, dass das Icon im ersten Schritt auf der Achse des Feldes steht;
+     --switch-icon-air gibt mobil zusätzlichen Abstand (das Fenster rückt dafür im ersten
+     Schritt um denselben Betrag weiter heraus). */
+  padding-inline: 1.25rem calc(var(--switch-strip) - var(--switch-icon-center) - .5 * var(--switch-icon-size) - 1px + var(--switch-icon-air, 0px));
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--type-eyebrow);
+  font-weight: calc(600 + var(--weight-shift));
+  letter-spacing: var(--tracking-label);
+  text-align: start;
+  text-transform: uppercase;
+  /* Menüwörter bleiben ganz, ohne Umbruch und Trennung. */
+  white-space: nowrap;
+  -webkit-hyphens: manual;
+  hyphens: manual;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+/* Mobil hält das Fenster rechts mehr Luft als die schmale Randspalte: Im ersten Schritt
+   stehen die Icons dafür in der Mitte der Spalte und gleiten beim Herausschieben (gleiche
+   Dauer, Kurve und Verzögerung) an ihren Platz; das Fenster bleibt dabei in der Spalte. */
+.theme-switch__menu button .theme-icon {
+  transform: none;
+  transition: transform .22s cubic-bezier(.2, .55, .3, 1) .3s;
+}
+.theme-switch__menu[hidden] button .theme-icon {
+  transform: translateX(var(--switch-icon-air, 0px));
+  transition: transform .18s cubic-bezier(.45, 0, .8, .55);
+}
+@starting-style {
+  .theme-switch__menu:not([hidden]) button .theme-icon { transform: translateX(var(--switch-icon-air, 0px)); }
+}
+.theme-switch__menu button:hover,
+.theme-switch__menu button:focus-visible { background: color-mix(in srgb, var(--bg, #f0ece2), var(--ink, #090d19) 8%); outline: none; }
+.theme-switch__menu button[aria-checked="true"] { background: var(--ink, #090d19); color: var(--bg, #f0ece2); }
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch__toggle,
+  .theme-switch__toggle .theme-icon,
+  .theme-switch__menu,
+  .theme-switch__menu::after,
+  .theme-switch__options,
+  .theme-switch__options::after,
+  .theme-switch__rows,
+  .theme-switch__menu button,
+  .theme-switch__menu button .theme-icon { transition: none; }
+}
+
 /* Der feste Anker darf auf keiner Seitenschale über dem geöffneten Panel liegen. Das
    native details-Attribut deckt Darstellung und Hit-Testing auch ohne JavaScript ab. */
+body:has(.site-nav[open]:not(.is-measuring)) .theme-switch,
 body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   visibility: hidden;
   pointer-events: none;
@@ -1133,6 +1377,9 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
 /* Die gemeinsame Footerleiste lebt vollständig im Shell-Stylesheet. Eine feste Höhe hält
    Linie und obere Ankerkante auf ganzen Gerätepixeln; die Seitenstyles liefern hier keine
    konkurrierenden Desktop- oder Mobile-Geometrien mehr. */
+/* Im Dunkeln steht der Footer einen Hauch tiefer als die übrigen dunklen Flächen, damit
+   Tangerine (Hover der Links) darauf genug Kontrast hat; hell bleibt er schwarz. */
+footer.site { --dark-bg: light-dark(var(--warm-black), var(--dark-footer)); }
 .foot-bar {
   min-block-size: 3.5rem;
   display: flex;
@@ -1215,11 +1462,48 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
     inset-inline-end: calc(.5 * var(--pad) - .75rem);
     inset-block-end: 1.425rem;
   }
-  .foot-bar .to-top { color: var(--warm-black, #090d19); }
+  .foot-bar .to-top { color: var(--ink, #090d19); }
   .to-top.is-on-dark,
   .foot-bar .to-top.is-on-dark {
-    color: var(--creme, #f0ece2);
+    color: var(--dark-ink, #f0ece2);
   }
+  /* Wie der Pfeil: 44-px-Trefferfläche bis in die Ecke, sichtbar nur das Icon im
+     schmalen Seitenrand, ohne Kanten; Icon-Achse in der Mitte des Seitenrands, auf Höhe
+     des Pfeils rechts. */
+  .theme-switch {
+    --switch-inline-size: 2.75rem;
+    --switch-icon-size: 1rem;
+    --switch-icon-center: calc(.5 * var(--pad));
+    inset-inline-start: env(safe-area-inset-left, 0px);
+    inset-block-end: env(safe-area-inset-bottom, 0px);
+    block-size: 2.75rem;
+  }
+  /* Sichtbar bleibt auch aufgeklappt nur das Icon in der schmalen Randspalte: kein Feld,
+     keine Kanten. Das Menü sitzt über der Trefferfläche und hat unten eine durchgehende
+     Kante. */
+  /* Die untere Kante beginnt an der Randlinie: Über dem Icon geht das Menü nahtlos in die
+     schmale Randspalte über. Breite: Seitenrand plus eine Rasterspalte. */
+  /* Rechts und links derselbe Abstand wie oben und unten im Fenster (--switch-menu-pad);
+     --switch-icon-air ergänzt den Abstand, den die Icon-Achse in der schmalen Randspalte
+     schon vorgibt. */
+  .theme-switch {
+    --switch-joint: var(--pad);
+    /* Plus 1px: Die rechte Kante des Fensters liegt so genau auf der Randlinie. */
+    --switch-strip: calc(var(--pad) + 1px);
+    --switch-icon-air: calc(var(--switch-menu-pad) - (var(--switch-strip) - var(--switch-icon-center) - .5 * var(--switch-icon-size) - 1px));
+  }
+  /* Mindestens eine Rasterspalte, breiter nur, wenn die Wörter mit dem Innenabstand
+     sonst umbrechen müssten. */
+  .theme-switch__menu {
+    inline-size: max-content;
+    min-inline-size: calc(var(--pad) + (100vw - 2 * var(--pad)) / 4 + 1px);
+  }
+  .theme-switch__menu button { padding-inline-start: var(--switch-menu-pad); }
+  .theme-switch__toggle,
+  .theme-switch.is-open .theme-switch__toggle { border: 0; background: transparent; box-shadow: none; }
+  /* Ohne eigene Fläche behält das Icon auch aufgeklappt den Kontrast zur Fläche darunter. */
+  .theme-switch.is-open.is-on-dark .theme-switch__toggle { color: var(--dark-ink, #f0ece2); }
+  .theme-switch__toggle .theme-icon { inset-block-start: auto; inset-block-end: 1.25rem; }
   html:not(.has-js) .to-top,
   html:not(.has-js) .foot-bar .to-top {
     background: transparent;
@@ -1284,7 +1568,7 @@ body:has(.site-nav[open]:not(.is-measuring)) .to-top {
   .pill.ghost:hover, .pill.ghost:focus-visible {
     animation: none;
     color: var(--fold-ink);
-    font-weight: var(--pill-secondary-weight, 500);
+    font-weight: calc(var(--pill-secondary-weight, 500) + var(--weight-shift));
   }
   .tile:not(.cta):hover .tile-depth,
   .tile:not(.cta):focus-visible .tile-depth,

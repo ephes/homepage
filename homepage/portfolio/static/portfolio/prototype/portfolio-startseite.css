@@ -12,7 +12,7 @@
     background: var(--bg);
     color: var(--ink);
     font-family: "Saira", system-ui, sans-serif;
-    font-weight: 400;
+    font-weight: calc(400 + var(--weight-shift));
     line-height: 1.5;
   }
 
@@ -66,8 +66,8 @@
     border-bottom: 1px solid var(--rule);
   }
   .site-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.8rem; }
-  .brand { font-weight: 700; font-size: var(--type-subline); letter-spacing: var(--tracking-action); }
-  .avail { display: flex; align-items: center; gap: 0.45rem; font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); }
+  .brand { font-weight: calc(700 + var(--weight-shift)); font-size: var(--type-subline); letter-spacing: var(--tracking-action); }
+  .avail { display: flex; align-items: center; gap: 0.45rem; font-size: var(--type-eyebrow); font-weight: calc(600 + var(--weight-shift)); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); }
   .avail::before { content: ""; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; background: var(--smaragd); }
   .pill {
     display: inline-block;
@@ -76,7 +76,7 @@
     border-radius: 100px;
     padding: 0.5rem 1.2rem;
     font-size: var(--type-subline);
-    font-weight: var(--pill-secondary-weight);
+    font-weight: calc(var(--pill-secondary-weight) + var(--weight-shift));
     letter-spacing: var(--tracking-action);
     text-decoration: none;
   }
@@ -100,7 +100,7 @@
     background: var(--tangerine);
     color: var(--creme);
     font-size: var(--type-lead); /* mindestens 1.2rem — s. Kontrastnotiz oben */
-    font-weight: 700;
+    font-weight: calc(700 + var(--weight-shift));
     letter-spacing: var(--tracking-action);
     padding: 1.05rem 2.1rem;
     display: inline-flex;
@@ -108,13 +108,13 @@
     gap: 0.7rem;
   }
   /* Derselbe Pfeil wie in den Projektkacheln — dort markiert er „hier geht es weiter". */
-  .pill.prio .ar { font-weight: 400; }
+  .pill.prio .ar { font-weight: calc(400 + var(--weight-shift)); }
 
   /* ── Sektionsrahmen ───────────────────────────────────────────── */
   section.block { border-top: 1px solid var(--rule); padding-block: var(--space-section); }
   /* align-items:center statt baseline — das Blümchen hat keine Grundlinie, an der es
      sich sinnvoll ausrichten ließe; es soll mittig zur Versalhöhe stehen. */
-  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); margin-block-end: 0; }
+  .sec-label { display: flex; align-items: center; gap: 0.7rem; font-size: var(--type-eyebrow); font-weight: calc(600 + var(--weight-shift)); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--muted); margin-block-end: 0; }
   /* Auftaktzeichen: dieselbe maskierte Asterisk-Geometrie wie im Kunden-Marquee, in der
      Akzentfarbe. Als leere ::before-Box bleibt im Markup nichts Dekoratives stehen. */
   .sec-label::before { content: ""; color: var(--accent); font-size: 1.15em; line-height: 0; letter-spacing: 0; }
@@ -199,7 +199,7 @@
   h1.moin {
     margin: 0 0 0 -0.058em;
     font-size: clamp(7.5rem, 39.6vw, 38rem);
-    font-weight: 800;
+    font-weight: calc(800 + var(--weight-shift));
     line-height: 0.76;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -219,8 +219,8 @@
      DIESE MARKEN" ragen die Umlautpunkte 12,5px über die Versalhöhe (gemessen), sonst
      rückte die Eyebrow dort optisch zu nah heran. Wert ist textabhängig — bei geänderter
      Headline neu prüfen. */
-  h2.sec-title { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-xl); font-weight: 600; line-height: 0.9; text-transform: uppercase; }
-  .proj-head .count { font-size: var(--type-subline); font-weight: 400; color: var(--muted); }
+  h2.sec-title { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-xl); font-weight: calc(600 + var(--weight-shift)); line-height: 0.9; text-transform: uppercase; }
+  .proj-head .count { font-size: var(--type-subline); font-weight: calc(400 + var(--weight-shift)); color: var(--muted); }
 
   .tilegrid {
     display: grid;
@@ -308,7 +308,7 @@
     place-items: center;
     color: var(--ph-ink);
     font-size: var(--type-eyebrow);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: 0.08em;
     position: relative;
     overflow: hidden;
@@ -327,7 +327,7 @@
      halbe Zeilenhöhe minus halbe Pfeilhöhe (.65rem) angehoben. Der Titel darf schrumpfen
      und trennt lange Wörter, statt den Pfeil aus der Kachel zu schieben. */
   .meta .row1 { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; }
-  .meta h3 { font-size: var(--type-subline); font-weight: 600; margin: 0; line-height: 1.2;
+  .meta h3 { font-size: var(--type-subline); font-weight: calc(600 + var(--weight-shift)); margin: 0; line-height: 1.2;
     min-inline-size: 0; hyphens: auto; overflow-wrap: break-word; }
   .meta .row1 > .tile-arrow { margin-block-end: calc(var(--type-subline) * .6 - .325rem); }
   .meta .row2 { font-size: var(--type-eyebrow); color: var(--muted); letter-spacing: 0.04em; }
@@ -348,10 +348,10 @@
     justify-content: center;
     gap: 0.4rem;
   }
-  .project-inquiry .k { flex: none; white-space: nowrap; font-size: min(var(--type-eyebrow), calc(.175rem + 3vw)); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; opacity: 0.6; }
+  .project-inquiry .k { flex: none; white-space: nowrap; font-size: min(var(--type-eyebrow), calc(.175rem + 3vw)); font-weight: calc(600 + var(--weight-shift)); letter-spacing: var(--tracking-label); text-transform: uppercase; opacity: 0.6; }
   .project-inquiry .k,
   .project-inquiry strong { position: relative; z-index: 1; }
-  .project-inquiry strong { flex: none; display: inline-flex; align-items: center; gap: 0.45rem; font-size: min(var(--type-subline), calc(.05rem + 5vw)); font-weight: 600; line-height: 1.2; white-space: nowrap; }
+  .project-inquiry strong { flex: none; display: inline-flex; align-items: center; gap: 0.45rem; font-size: min(var(--type-subline), calc(.05rem + 5vw)); font-weight: calc(600 + var(--weight-shift)); line-height: 1.2; white-space: nowrap; }
   .project-inquiry strong::before {
     content: "";
     position: absolute;
@@ -403,11 +403,11 @@
     justify-content: center;
     padding-block-end: calc(clamp(1.1rem, 1.8vw, 1.8rem) + (1.9rem + 0.55rem) / 2);
     min-width: 0;
-    background: var(--creme);
+    background: var(--bg);
   }
   .svc .ico { inline-size: 1.9rem; block-size: 1.9rem; color: var(--ink); }
   .svc .ico svg { width: 100%; height: 100%; display: block; }
-  .svc h3 { margin: 0.3rem 0 0; font-size: var(--headline-s); font-weight: 600; line-height: 1.05; }
+  .svc h3 { margin: 0.3rem 0 0; font-size: var(--headline-s); font-weight: calc(600 + var(--weight-shift)); line-height: 1.05; }
   .svc p {
     margin: 0;
     max-width: 30ch;
@@ -430,7 +430,7 @@
      -0.082em, mit dem Sairas Versalien gegen das ✳ der Eyebrow fluchten. */
   .about .statement { position: relative; z-index: 0;
     margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; --dia: 0.139em;
-    font-size: var(--headline-m); font-weight: 600; line-height: 1;
+    font-size: var(--headline-m); font-weight: calc(600 + var(--weight-shift)); line-height: 1;
     text-transform: uppercase; text-wrap: balance; }
   /* Der Name in der Handschrift, mitten im Satz — in der Akzentfarbe, der einzigen Stelle
      neben dem ✳, an der sie Text trägt. Bei 64px greift die Schwelle für große Schrift
@@ -599,7 +599,7 @@
   .about .me-row summary:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
   .about .me-row h3 {
     margin: 0;
-    font-size: var(--headline-s); font-weight: 600; line-height: 1.05;
+    font-size: var(--headline-s); font-weight: calc(600 + var(--weight-shift)); line-height: 1.05;
   }
   /* NICHT `.lead` nennen: die Klasse gibt es schon im Projektraster, wo sie mit
      `display: contents` die Wrapper-Ebene auflöst — der Span hätte dadurch Breite 0
@@ -787,7 +787,7 @@
      Headline hier aber auf 64px statt 128px. Gemessen blieben so nur 19,9px Tinten-
      Abstand gegen 28,8px bei den großen Headlines; 0.139em (= 8,9px bei 64px) schließt
      die Differenz. Der Wert ist textabhängig — bei geänderter Headline neu messen. */
-  .clients h2.big { --dia: 0.139em; margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: var(--headline-m); font-weight: 600; line-height: 1; text-transform: uppercase; }
+  .clients h2.big { --dia: 0.139em; margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 clamp(2.75rem, 4.6vw, 4.25rem) -0.082em; font-size: var(--headline-m); font-weight: calc(600 + var(--weight-shift)); line-height: 1; text-transform: uppercase; }
 
   .marquee {
     border-block: 1px solid var(--dark-rule);
@@ -810,7 +810,7 @@
     gap: clamp(1.5rem, 3vw, 3rem);
     padding-inline: clamp(0.75rem, 1.5vw, 1.5rem);
     font-size: var(--headline-s);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-action);
     white-space: nowrap;
     color: var(--dark-ink);
@@ -873,7 +873,7 @@
      tatsächlichen letzten Wort statt an der Breite des mehrzeiligen Inline-Kastens. */
   .contact h2.big .lastword { position: relative; display: inline-block; }
   .contact h2.big .lastword .scr { left: 50%; transform: translateX(.18em); }
-  .contact h2.big { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-l); font-weight: 600; line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
+  .contact h2.big { margin: calc(var(--space-eyebrow-title) + var(--dia, 0em)) 0 0 -0.082em; font-size: var(--headline-l); font-weight: calc(600 + var(--weight-shift)); line-height: 0.95; text-transform: uppercase; text-wrap: balance; }
   .contact .buttons { display: flex; min-inline-size: 0; inline-size: 100%; gap: 0.75rem; flex-wrap: wrap; }
   footer.site { border-top: 1px solid var(--rule); }
   .foot-bar nav { display: flex; gap: 1.25rem; }
@@ -895,23 +895,30 @@
     --pine:#294122;       /* mittlere Fläche; Creme darauf 9,50 — derzeit unbenutzt */
     --smaragd:#1C995C;    /* Verfügbarkeits-Punkt; Creme 3,09 · Schwarz 5,32 */
 
-    --bg:var(--creme);
-    --ink:var(--warm-black);
+    /* Hell/Dunkel: Jede Rolle trägt beide Werte; light-dark() wählt nach dem color-scheme
+       aus portfolio.css. Im Dunkeln tauschen Creme und Schwarz die Rollen, Tangerine bleibt. */
+    --bg:light-dark(var(--creme), var(--dark-ground));
+    --ink:light-dark(var(--warm-black), var(--creme));
     /* Der gedämpfte Textton erreicht auf Creme 4,5:1. Der frühere warme Grauton #7d766a lag bei 3,81 und
        riss damit alle Eyebrows, Kachel-Metazeilen und Leistungssätze unter AA. */
-    --muted:#686D62;
+    --muted:light-dark(#686D62, #8F9389); /* dunkel: über 6:1 auf dem Petrol-Grund */
     /* Linien und Platzhalter sind das Schwarz (--warm-black) mit Deckkraft, nicht eigene Farben —
        so bleiben sie beim Ton, wenn der Grundton wechselt. */
-    --rule:rgba(9, 13, 25, 0.2);
-    --rule-soft:rgba(9, 13, 25, 0.09);
-    --rule-strong:var(--warm-black); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante */
+    --rule:light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.2));
+    --rule-soft:light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.09));
+    --rule-strong:light-dark(var(--ink), rgba(240, 236, 226, 0.85)); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante; dunkel Creme mit 85 % */
     /* Stärke aller Rasterlinien; geht auch in Höhenrechnungen ein (mobiler Hero). */
     --rule-width:1px;
-    --ph:rgba(9, 13, 25, 0.06);
-    --ph-ink:rgba(9, 13, 25, 0.45);
+    --ph:light-dark(rgba(9, 13, 25, 0.06), rgba(240, 236, 226, 0.06));
+    --ph-ink:light-dark(rgba(9, 13, 25, 0.45), rgba(240, 236, 226, 0.45));
     --accent:var(--tangerine);
 
-    --dark-bg:var(--warm-black);
+    /* Dunkle Flächen bleiben im Dunkeln dunkel, eine Stufe heller als der Grund
+       (Petrol, --dark-raised in portfolio.css). */
+    --dark-bg:light-dark(var(--warm-black), var(--dark-raised));
+    /* Das große MOIN im Hero (WebGL und Fallback). Im Dunkeln nicht creme, sondern im Ton
+       der dunklen Flächen, damit der Kopf zu Kunden und Footer passt. */
+    --hero-word:light-dark(var(--ink), var(--dark-hero));
     --dark-ink:var(--creme);
     --dark-rule:rgba(240,236,226,0.18);
     --dark-muted:rgba(240,236,226,0.62);
@@ -975,14 +982,13 @@
   /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent; 4,80:1 gegen das
      Schwarz trägt Eyebrow-Zeichen und große Schrift. */
   .on-dark{ --accent:var(--tangerine); }
-  /* Bewusst hell-only: cremefarbener Grund, Schwarz für alle Schriften (helle Start-Section). */
-  :root{ color-scheme: light; }
+  /* Das Farbschema (hell, dunkel oder System) setzt allein portfolio.css. */
   *{box-sizing:border-box;} html,body{margin:0;} html{overflow-x:clip;}
   body{overflow-x:clip;background:var(--bg);color:var(--ink);font-family:"Saira",system-ui,sans-serif;}
   body::before {
     content: ""; position: fixed; z-index: 30;
     inset-block: var(--header-h) 0; inset-inline: 0;
-    background-color: rgba(9, 13, 25, .28);
+    background-color: light-dark(rgba(9, 13, 25, .28), rgba(0, 0, 0, .45));
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-blend-mode: soft-light;
@@ -993,10 +999,10 @@
     opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
   }
   .pad{padding-inline:var(--pad);}
-  header.site{z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(.25rem,calc(-2rem + 15vw),1rem);padding-block:.8rem;padding-inline:clamp(.5rem,calc(-1.75rem + 15vw),var(--pad));backdrop-filter:blur(20px) saturate(.7);-webkit-backdrop-filter:blur(20px) saturate(.7);background:color-mix(in srgb,var(--creme) 80%,transparent);border-bottom:1px solid var(--rule-strong);}
+  header.site{z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(.25rem,calc(-2rem + 15vw),1rem);padding-block:.8rem;padding-inline:clamp(.5rem,calc(-1.75rem + 15vw),var(--pad));backdrop-filter:blur(20px) saturate(.7);-webkit-backdrop-filter:blur(20px) saturate(.7);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--rule-strong);}
   header.site::after {
     content: ""; position: absolute; z-index: 1; inset: 0;
-    background-color: rgba(9, 13, 25, .28);
+    background-color: light-dark(rgba(9, 13, 25, .28), rgba(0, 0, 0, .45));
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
     background-repeat: repeat; background-blend-mode: soft-light;
     opacity: 0; visibility: hidden; pointer-events: none;
@@ -1005,13 +1011,13 @@
   header.site:has(.site-nav[open])::after {
     opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
   }
-  .brand{font-weight:700;font-size:var(--type-subline);}
+  .brand{font-weight:calc(700 + var(--weight-shift));font-size:var(--type-subline);}
   header.site > .brand { font-size: var(--type-brand); }
-  .avail{display:flex;align-items:center;gap:0.45rem;font-size:var(--type-eyebrow);font-weight:600;letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--muted);}
-  header.site > .avail { color: #4B4F48; }
+  .avail{display:flex;align-items:center;gap:0.45rem;font-size:var(--type-eyebrow);font-weight:calc(600 + var(--weight-shift));letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--muted);}
+  header.site > .avail { color: light-dark(#4B4F48, #A8ABA1); }
   .avail::before{content:"";inline-size:0.5rem;block-size:0.5rem;border-radius:50%;background:var(--smaragd);}
   .availability-strip { display: none; }
-  .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:var(--type-subline);font-weight:var(--pill-secondary-weight);text-decoration:none;}
+  .pill{display:inline-block;background:var(--ink);color:var(--bg);border-radius:100px;padding:0.5rem 1.2rem;font-size:var(--type-subline);font-weight:calc(var(--pill-secondary-weight) + var(--weight-shift));text-decoration:none;}
   /* Kontakt bleibt der direkte Hauptweg; das eingeklappte Ankermenü sitzt als zweite
      Aktion daneben. Native details/summary hält es ohne Menü-Framework bedienbar. */
   .header-actions { display: flex; align-items: center; gap: clamp(.25rem, calc(-1.25rem + 10vw), 2rem); }
@@ -1032,13 +1038,13 @@
      Oberkante der Kopfleiste (portfolio.css) das Iconfeld vom Seitenrand. */
   .site-nav[open] .menu-toggle {
     position: relative; z-index: 1;
-    background: var(--creme);
-    border-block-end-color: var(--creme);
+    background: var(--bg);
+    border-block-end-color: var(--bg);
   }
   .site-nav[open] .menu-toggle::after {
     content: ""; position: absolute; z-index: 2;
     inset-inline: 0; inset-block-end: -3px; block-size: 4px;
-    background: var(--creme);
+    background: var(--bg);
   }
   body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   section[id] { scroll-margin-block-start: var(--header-h); }
@@ -1061,12 +1067,12 @@
        Panel ab, motion.css hält den Pixel als Innenabstand. */
     border-block-start: 0;
     border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
-    background: var(--creme);
+    background: var(--bg);
     display: grid;
     grid-auto-rows: min-content;
     box-shadow:
-      -1.1rem 0 1.6rem rgba(9, 13, 25, .46),
-      -3.75rem 0 6.5rem rgba(9, 13, 25, .3);
+      -1.1rem 0 1.6rem light-dark(rgba(9, 13, 25, .46), rgba(0, 0, 0, .74)),
+      -3.75rem 0 6.5rem light-dark(rgba(9, 13, 25, .3), rgba(0, 0, 0, .48));
     opacity: 0; visibility: hidden; pointer-events: none;
     transform: translateX(2.5rem);
     clip-path: inset(0 0 0 100%);
@@ -1087,7 +1093,7 @@
   .site-nav nav a {
     display: flex; align-items: center;
     color: var(--ink); text-decoration: none;
-    font-size: var(--headline-m); font-weight: 600;
+    font-size: var(--headline-m); font-weight: calc(600 + var(--weight-shift));
     line-height: .95; letter-spacing: var(--tracking-display);
     opacity: 0;
     transform: translateX(2.5rem);
@@ -1134,7 +1140,7 @@
       justify-content: center;
       padding: .3rem var(--pad);
       border-block-end: 1px solid var(--rule-strong);
-      background: color-mix(in srgb, var(--creme) 92%, transparent);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
     }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -1190,7 +1196,9 @@
      schließt also nur die Doppelzelle ab — in den beiden freien Zellen rechts daneben
      liefe sie ins Leere. `right:50%` trifft die Linie exakt: die Spaltenmitte liegt bei
      halber Stagebreite, weil links und rechts dasselbe Padding steht. */
-  .grid .under{position:absolute;left:0;right:50%;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
+  /* Linie unter dem Einleitungstext: beginnt an der Randlinie, nicht im Seitenrand, damit
+     die Ecke mit dem Darstellungsschalter darunter ruhig bleibt (Moin-Linien laufen durch). */
+  .grid .under{position:absolute;left:var(--pad);right:50%;top:var(--sub-bottom,85%);border-top:1px solid var(--rule);}
   .grid .rows{position:absolute;inset:0;}
   .grid .rows>b{position:absolute;left:0;right:0;border-top:1px solid var(--rule);}
   .grid .rows>b:nth-child(1){top:var(--hero-row1);} .grid .rows>b:nth-child(2){top:var(--hero-row2);}
@@ -1210,9 +1218,9 @@
   .sub::before{content:"";position:absolute;inset:0;z-index:-2;
     background:color-mix(in srgb,var(--bg) 55%,transparent);
     backdrop-filter:blur(12px) saturate(1.08);-webkit-backdrop-filter:blur(12px) saturate(1.08);}
-  .sub p{margin:0;font-size:min(var(--type-lead),calc(.0925rem + 5.538vw));font-weight:300;line-height:1.25;color:var(--ink);}
+  .sub p{margin:0;font-size:min(var(--type-lead),calc(.0925rem + 5.538vw));font-weight:calc(300 + var(--weight-shift));line-height:1.25;color:var(--ink);}
   .sub p + p{margin-block-start:0.7em;}
-  .sub strong{font-weight:700;}
+  .sub strong{font-weight:calc(700 + var(--weight-shift));}
   /* Schmale oder niedrige Viewports: Die Subline ist normaler Flex-Inhalt. Dadurch
      vergrößert sie den Hero bei Bedarf, statt mit MOIN oder der Erfahrungszeile zu
      kollidieren; bei ausreichend Höhe bleibt sie weiterhin am unteren Rasterbereich. */
@@ -1283,7 +1291,7 @@
     right:calc(var(--pad) + var(--hero-inset));
     bottom:calc(100% - var(--hero-row1) + var(--hero-inset));
     margin:0;font-size:var(--type-subline);line-height:1.35;color:var(--ink);text-wrap:pretty;}
-  .hero-note strong{font-weight:700;}
+  .hero-note strong{font-weight:calc(700 + var(--weight-shift));}
   /* ── Scroll-Hinweis ──────────────────────────────────────────────────────
      Eine Haarlinie mit einem wandernden Segment — dieselbe Liniensprache wie das
      Seitenraster, nur in Bewegung. Kein Text: der Cursor über dem Hero trägt schon
@@ -1295,6 +1303,10 @@
   .scrollcue{position:absolute;
     right:calc(var(--pad) + var(--hero-inset));
     top:calc(var(--sub-bottom, 85%) - var(--scrollcue-length));}
+  /* Über dem freigewischten Bild bleibt der Hinweis per Umkehr sichtbar: weiß mit
+     difference wirkt auf Creme dunkel, auf dunklem Bild hell. */
+  .stage .scrollcue{mix-blend-mode:difference;background:rgba(255, 255, 255, .22);}
+  .stage .scrollcue i{background:#fff;}
   /* Sobald gescrollt wurde, hat der Hinweis seine Aufgabe erfüllt. */
   .is-scrolled .scrollcue{opacity:0;}
   /* Mobil bleibt die Erfahrung sichtbar, bekommt aber statt der zu schmalen vierten
@@ -1366,11 +1378,11 @@
      Leserichtung, jede Drehung würde die Wörter kippen. */
   .cursor-ring{position:absolute;inset:0;}
   .cursor-ring text{fill:currentColor;font-family:"Saira",system-ui,sans-serif;
-    font-size:var(--type-subline);font-weight:400;letter-spacing:0.06em;}
+    font-size:var(--type-subline);font-weight:calc(400 + var(--weight-shift));letter-spacing:0.06em;}
   .script{font-family:"Astagina",cursive;}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   .fallback{position:absolute;inset:0;z-index:1;display:none;place-items:end start;padding:0 var(--pad) clamp(2rem,5vw,4rem);}
-  .fallback h1{margin:0;font-size:clamp(7.5rem,calc((100vw - 2*var(--pad))/2.5168),38rem);font-weight:800;line-height:0.82;text-transform:uppercase;color:var(--ink);}
+  .fallback h1{margin:0;font-size:clamp(7.5rem,calc((100vw - 2*var(--pad))/2.5168),38rem);font-weight:calc(800 + var(--weight-shift));line-height:0.82;text-transform:uppercase;color:var(--hero-word);}
   .no-webgl #fluid,
   html:not(.has-js) #fluid{display:none;}
   .no-webgl .fallback,
@@ -1518,7 +1530,7 @@
     flex-wrap: wrap; gap: 1rem 2rem;
     padding-inline: var(--hero-inset);
     padding-block-start: clamp(1.5rem, 2.5vw, 2rem); }
-  .about .me-claim { margin: 0; font-size: var(--type-subline); font-weight: 500; }
+  .about .me-claim { margin: 0; font-size: var(--type-subline); font-weight: calc(500 + var(--weight-shift)); }
 
   /* Gestapelt bleibt die Reihenfolge aus dem Entwurf: Eyebrow (steht als Geschwister vor
      `.about`), dann der Klecks, dann Headline, Kacheln, Abschlusszeile. Das Porträt eröffnet
@@ -1667,7 +1679,7 @@
   .foot-col .avail { margin-block-start: 1.4rem; }
   .foot-col p { font-size: var(--type-subline); line-height: 1.45; color: var(--dark-muted); max-width: 28ch; }
   .foot-h {
-    font-size: var(--type-eyebrow); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase;
+    font-size: var(--type-eyebrow); font-weight: calc(600 + var(--weight-shift)); letter-spacing: var(--tracking-label); text-transform: uppercase;
     color: var(--dark-muted); margin-block: 0 0.7rem;
   }
   .foot-col ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }

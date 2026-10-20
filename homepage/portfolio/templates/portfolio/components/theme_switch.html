@@ -1,0 +1,19 @@
+{# Darstellung: System, Hell oder Dunkel. Festes Feld unten links, Gegenstück zum Pfeil nach oben; das Menü klappt nach oben auf. Nur mit JavaScript sichtbar (theme-switch.js speichert die Wahl). #}
+{% with shell=portfolio_site_settings %}
+  <div class="theme-switch" data-theme-switch>
+    <button type="button" class="theme-switch__toggle" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-switch-menu" aria-label="{{ shell.theme_switch_label }}" data-label="{{ shell.theme_switch_label }}">
+      {% include "portfolio/components/icon_theme.html" with mode="system" %}
+      {% include "portfolio/components/icon_theme.html" with mode="light" %}
+      {% include "portfolio/components/icon_theme.html" with mode="dark" %}
+    </button>
+    <div class="theme-switch__menu" id="theme-switch-menu" role="menu" aria-label="{{ shell.theme_switch_label }}" hidden>
+      <div class="theme-switch__options" role="none">
+        <div class="theme-switch__rows" role="none">
+          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="system">{% include "portfolio/components/icon_theme.html" with mode="system" %}<span>{{ shell.theme_system_label }}</span></button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="light">{% include "portfolio/components/icon_theme.html" with mode="light" %}<span>{{ shell.theme_light_label }}</span></button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-theme-value="dark">{% include "portfolio/components/icon_theme.html" with mode="dark" %}<span>{{ shell.theme_dark_label }}</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endwith %}

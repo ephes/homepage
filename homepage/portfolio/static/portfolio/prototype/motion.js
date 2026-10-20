@@ -97,21 +97,27 @@
      übernimmt deshalb die Farbe der Fläche, die optisch unter seiner Mitte liegt.
      So kann die linke Kante exakt auf der Rasterlinie liegen, ohne dass `difference`
      zwei deckungsgleiche Linien gegenseitig auslöscht. */
-  var topAnchors = [].slice.call(document.querySelectorAll(".to-top"));
+  var topAnchors = [].slice.call(document.querySelectorAll(".to-top, .theme-switch"));
   if (topAnchors.length) {
     var topAnchorFrame = 0;
     function syncTopAnchorContrast() {
       topAnchorFrame = 0;
       topAnchors.forEach(function (anchor) {
         var rect = anchor.getBoundingClientRect();
+        /* Der Pfeil prüft an seiner linken Kante (Rasterlinie), der Schalter in der Mitte. */
+        var x = anchor.classList.contains("to-top") ? rect.left + 2 : rect.left + rect.width / 2;
         var under = document.elementsFromPoint(
-          Math.min(innerWidth - 1, rect.left + 2),
+          Math.min(innerWidth - 1, x),
           Math.min(innerHeight - 1, rect.top + rect.height / 2)
         );
         var dark = under.some(function (node) {
           return node !== anchor && !anchor.contains(node) && !!node.closest(".on-dark");
         });
+        var onStage = under.some(function (node) {
+          return node !== anchor && !anchor.contains(node) && !!(node.closest && node.closest(".stage"));
+        });
         anchor.classList.toggle("is-on-dark", dark);
+        anchor.classList.toggle("is-on-stage", onStage && !dark);
       });
     }
     function requestTopAnchorContrast() {
@@ -544,6 +550,15 @@
     if (fontsReady) fontsReady.then(requestAlign, requestAlign);
     else requestAlign();
     addEventListener("resize", requestAlign, { passive: true });
+    /* Im Dunkeln steht die Schrift leichter; ein Wechsel der Darstellung kann damit den
+       Zeilenfall verschieben und braucht einen neuen Ausgleich. */
+    new MutationObserver(requestAlign).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"]
+    });
+    var colorScheme = matchMedia("(prefers-color-scheme: dark)");
+    if (colorScheme.addEventListener) colorScheme.addEventListener("change", requestAlign);
+    else if (colorScheme.addListener) colorScheme.addListener(requestAlign);
   }
 
   alignHeadingInk();

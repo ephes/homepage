@@ -39,16 +39,31 @@
     --limette: #c7f03c;
     --pine: #294122;
     --smaragd: #1c995c;
-    --bg: var(--creme);
-    --ink: var(--warm-black);
+    /* Hell/Dunkel: Jede Rolle trägt beide Werte; light-dark() wählt nach color-scheme
+       (unten). Im Dunkeln tauschen Creme und Schwarz die Rollen, Tangerine
+       bleibt. */
+    --bg: light-dark(var(--creme), var(--dark-ground));
+    --ink: light-dark(var(--warm-black), var(--creme));
     --accent: var(--tangerine);
-    --muted: #686d62;
-    --rule: rgba(9, 13, 25, 0.2);
-    --rule-soft: rgba(9, 13, 25, 0.09);
-    --rule-strong: var(--warm-black);
-    --ph: rgba(9, 13, 25, 0.06);
-    --ph-ink: rgba(9, 13, 25, 0.45);
-    --dark-bg: var(--warm-black);
+    --muted: light-dark(#686d62, #8f9389);
+    --rule: light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.2));
+    --rule-soft: light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.09));
+    /* Kräftige Linien: hell schwarz, dunkel Creme mit 85 % Deckkraft (voll wäre zu hart). */
+    --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.85));
+    --dark-rule-strong: light-dark(var(--creme), rgba(240, 236, 226, 0.85));
+    --ph: light-dark(rgba(9, 13, 25, 0.06), rgba(240, 236, 226, 0.06));
+    --ph-ink: light-dark(rgba(9, 13, 25, 0.45), rgba(240, 236, 226, 0.45));
+    /* Dunkle Töne in Petrol: das Blau der Hauptseite (#283548, Farbton 258) ein Stück
+       Richtung Meeresgrün gedreht. Der Farbton steht nur in --dark-hue. Der Grund ist
+       sehr dezent getönt, größere dunkle Flächen und das MOIN stehen eine Stufe heller. */
+    --dark-hue: 220;
+    --dark-ground: oklch(0.17 0.025 var(--dark-hue));
+    --dark-raised: oklch(0.33 0.045 var(--dark-hue));
+    /* Das MOIN steht einen Hauch heller als die Flächen, der Footer einen Hauch dunkler,
+       damit Tangerine (Hover der Links) darauf genug Kontrast hat. */
+    --dark-hero: oklch(0.37 0.05 var(--dark-hue));
+    --dark-footer: oklch(0.25 0.04 var(--dark-hue));
+    --dark-bg: light-dark(var(--warm-black), var(--dark-raised));
     --dark-ink: var(--creme);
     --dark-rule: rgba(240, 236, 226, 0.18);
     --dark-muted: rgba(240, 236, 226, 0.62);
@@ -83,6 +98,13 @@
     --tracking-action: 0.01em;
     --tracking-label: 0.1em;
     --asterisk-mark: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12%201.5v21M1.5%2012h21M4.58%204.58l14.84%2014.84M19.42%204.58L4.58%2019.42'%20fill='none'%20stroke='%23000'%20stroke-width='2.4'%20stroke-linecap='square'/%3E%3C/svg%3E");
+    /* Schriftschnitt: Im Dunkeln steht jede Schrift einen Hauch leichter. Alle
+       font-weight-Werte rechnen diese Verschiebung ein (Saira ist variabel). */
+    --weight-shift: 0;
+    /* Leinentextur: hell multipliziert sie dunkle Fasern auf Creme, dunkel wird sie
+       umgekehrt und hellt helle Fasern auf (wie auf der Hauptseite). */
+    --linen-filter: none;
+    --linen-blend: multiply;
     color-scheme: light;
     --ratio: 1.5;
     --s-2: calc(var(--s-1) / var(--ratio));
@@ -96,6 +118,25 @@
     /* Current one-line header contract: 2 × --s0 padding, 1.5rem line box,
        and two borders. Recheck the 501 fold at 320px if any input changes. */
     --site-header-block-size: calc(3.5rem + 2 * var(--border-thin));
+  }
+
+  /* Dunkel per Schalter (data-theme) oder, bei „System“ und ohne JavaScript, nach der
+     Geräteeinstellung. Hier stehen nur Schema und Schnitt; die Farben folgen über
+     light-dark() in den Tokens. */
+  :root[data-theme="dark"] {
+    --weight-shift: -30;
+    --linen-filter: invert(1);
+    --linen-blend: screen;
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --weight-shift: -30;
+      --linen-filter: invert(1);
+      --linen-blend: screen;
+      color-scheme: dark;
+    }
   }
 }
 
@@ -112,9 +153,15 @@
   body {
     overflow-x: clip;
     background: var(--portfolio-bg);
-    font-weight: 400;
+    font-weight: calc(400 + var(--weight-shift));
     hyphenate-limit-chars: 6 3 3;
     hyphens: auto;
+  }
+
+  /* Fett aus dem Browser-Stylesheet (Überschriften ohne eigenen Schnitt, b, strong im
+     Fließtext) folgt ebenfalls der Verschiebung im Dunkeln. */
+  :is(h1, h2, h3, h4, h5, h6, b, strong) {
+    font-weight: calc(700 + var(--weight-shift));
   }
 
   h1,
@@ -323,14 +370,14 @@
        Headerhöhe, die Unterseiten tragen beide Linien in --header-h (projekt.css). */
     border-block-start: var(--border-thin) solid var(--rule-strong);
     border-block-end: var(--border-thin) solid var(--rule-strong);
-    background: color-mix(in srgb, var(--creme) 80%, transparent);
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
     backdrop-filter: blur(20px) saturate(0.7);
   }
 
   .brand {
     color: inherit;
     font-size: min(var(--type-subline), calc(0.15rem + 4vw));
-    font-weight: 700;
+    font-weight: calc(700 + var(--weight-shift));
     letter-spacing: var(--tracking-action);
     text-decoration: none;
   }
@@ -339,9 +386,9 @@
     display: flex;
     align-items: center;
     gap: 0.45rem;
-    color: #4b4f48;
+    color: light-dark(#4b4f48, #a8aba1);
     font-size: var(--type-eyebrow);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
   }
@@ -371,7 +418,7 @@
     color: var(--bg);
     background: var(--ink);
     font-size: min(var(--type-subline), calc(0.15rem + 4vw));
-    font-weight: 500;
+    font-weight: calc(500 + var(--weight-shift));
     letter-spacing: var(--tracking-action);
     text-decoration: none;
     white-space: nowrap;
@@ -455,10 +502,10 @@
     border-block-start: var(--border-thin) solid var(--ink);
     border-inline-start: clamp(0.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
     overflow: auto;
-    background: var(--creme);
+    background: var(--bg);
     box-shadow:
-      -1.1rem 0 1.6rem rgba(9, 13, 25, 0.46),
-      -3.75rem 0 6.5rem rgba(9, 13, 25, 0.3);
+      -1.1rem 0 1.6rem light-dark(rgba(9, 13, 25, 0.46), rgba(0, 0, 0, 0.74)),
+      -3.75rem 0 6.5rem light-dark(rgba(9, 13, 25, 0.3), rgba(0, 0, 0, 0.48));
   }
 
   .menu-primary {
@@ -476,7 +523,7 @@
     align-items: center;
     color: var(--ink);
     font-size: var(--headline-m);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-display);
     line-height: 0.95;
     text-decoration: none;
@@ -522,7 +569,7 @@
   .project-menu-links a {
     color: var(--ink);
     font-size: var(--type-menu-project);
-    font-weight: 500;
+    font-weight: calc(500 + var(--weight-shift));
     letter-spacing: var(--tracking-action);
     text-decoration: none;
   }
@@ -559,7 +606,7 @@
   .project-results__title {
     margin-block: 0;
     font-size: var(--headline-xl);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-display);
     line-height: 0.9;
     text-transform: uppercase;
@@ -587,7 +634,7 @@
 
   .related-project-card__placeholder {
     font-size: var(--type-eyebrow);
-    font-weight: 700;
+    font-weight: calc(700 + var(--weight-shift));
     letter-spacing: 0.08em;
   }
 
@@ -605,7 +652,7 @@
     justify-content: space-between;
     gap: var(--s0);
     font-size: var(--type-subline);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     line-height: 1.2;
   }
 
@@ -630,7 +677,7 @@
   .project-meta dt {
     color: var(--muted);
     font-size: var(--type-eyebrow);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
   }
@@ -643,7 +690,7 @@
   .case-label {
     color: var(--muted);
     font-size: var(--type-eyebrow);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
   }
@@ -665,7 +712,7 @@
 
   .project-results .result-value {
     font-size: var(--headline-s);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     line-height: 1.05;
   }
 
@@ -687,7 +734,8 @@
     background-repeat: repeat;
     /* Größe wie in den Lebensläufen und auf der Hauptseite: 400er-Kachel auf 560px. */
     background-size: 560px;
-    mix-blend-mode: multiply;
+    filter: var(--linen-filter);
+    mix-blend-mode: var(--linen-blend);
   }
 
   @media (max-width: 52rem) {
@@ -715,7 +763,7 @@
       justify-content: center;
       padding: 0.3rem var(--pad, clamp(1.25rem, 4vw, 4rem));
       border-block-end: var(--border-thin) solid var(--rule-strong);
-      background: color-mix(in srgb, var(--creme) 92%, transparent);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
     }
 
     /* Only the rendered mobile status strip replaces the shell's fixed-header
@@ -757,7 +805,7 @@
   .error-code {
     color: var(--muted);
     font-size: var(--type-eyebrow);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
   }
@@ -770,7 +818,7 @@
     max-inline-size: 10ch;
     overflow-wrap: anywhere;
     font-size: var(--headline-l);
-    font-weight: 600;
+    font-weight: calc(600 + var(--weight-shift));
     letter-spacing: var(--tracking-display);
     line-height: 0.9;
     text-transform: uppercase;
@@ -814,7 +862,7 @@
     border-radius: 100vmax;
     color: var(--portfolio-bg);
     background: var(--portfolio-text);
-    font-weight: 500;
+    font-weight: calc(500 + var(--weight-shift));
     text-decoration: none;
   }
 }

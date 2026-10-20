@@ -37,7 +37,7 @@
 .error-code {
   color: var(--muted);
   font-size: var(--type-eyebrow);
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
@@ -51,7 +51,7 @@
   overflow-wrap: anywhere;
   color: var(--ink);
   font-size: var(--headline-l);
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
   line-height: .9;
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;

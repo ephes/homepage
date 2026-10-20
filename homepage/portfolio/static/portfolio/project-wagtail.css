@@ -92,7 +92,7 @@ body[data-project] .pagegrid .pagegrid__cols > i:last-child {
   overflow: hidden;
   border-block: 1px solid var(--rule);
   /* Fläche aus Wagtail: Bild über Verlauf über Farbe; ohne Angaben die neutrale Fläche. */
-  background-color: var(--hero-bg-color, color-mix(in srgb, var(--warm-black) 6%, var(--bg)));
+  background-color: var(--hero-bg-color, color-mix(in srgb, var(--ink) 6%, var(--bg)));
   background-image: var(--hero-bg-image, none), var(--hero-bg-gradient, none);
   background-position: center;
   background-size: cover;
@@ -108,7 +108,7 @@ body[data-project] .pagegrid .pagegrid__cols > i:last-child {
 
 .project-image {
   margin-inline: 0;
-  background: color-mix(in srgb, var(--warm-black) 6%, var(--bg));
+  background: color-mix(in srgb, var(--ink) 6%, var(--bg));
 }
 
 .project-image img {
@@ -167,7 +167,7 @@ body[data-project] .pagegrid .pagegrid__cols > i:last-child {
 }
 
 .more-card .related-project-card__placeholder {
-  font-weight: 600;
+  font-weight: calc(600 + var(--weight-shift));
 }
 
 /* Keep the approved mobile break at the semantic soft-hyphen opportunity. */

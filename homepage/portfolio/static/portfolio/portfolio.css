@@ -46,11 +46,14 @@
     --ink: light-dark(var(--warm-black), var(--creme));
     --accent: var(--tangerine);
     --muted: light-dark(#686d62, #8f9389);
-    --rule: light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.2));
-    --rule-soft: light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.09));
-    /* Kräftige Linien: hell schwarz, dunkel Creme mit 85 % Deckkraft (voll wäre zu hart). */
-    --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.85));
-    --dark-rule-strong: light-dark(var(--creme), rgba(240, 236, 226, 0.85));
+    --rule: light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.26));
+    --rule-soft: light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.12));
+    /* Kräftige Linien: hell schwarz, dunkel Creme mit 50 % Deckkraft (voll wäre zu hart). */
+    --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.5));
+    --dark-rule-strong: light-dark(var(--creme), rgba(240, 236, 226, 0.5));
+    /* Kante in der aktuellen Schriftfarbe, die dunkel wie die kräftigen Linien auf 50 %
+       zurückgeht (Eckfelder, Darstellungsmenü). */
+    --edge: color-mix(in srgb, currentColor 50%, light-dark(currentColor, transparent));
     --ph: light-dark(rgba(9, 13, 25, 0.06), rgba(240, 236, 226, 0.06));
     --ph-ink: light-dark(rgba(9, 13, 25, 0.45), rgba(240, 236, 226, 0.45));
     /* Dunkle Töne in Petrol: das Blau der Hauptseite (#283548, Farbton 258) ein Stück
@@ -65,7 +68,7 @@
     --dark-footer: oklch(0.25 0.04 var(--dark-hue));
     --dark-bg: light-dark(var(--warm-black), var(--dark-raised));
     --dark-ink: var(--creme);
-    --dark-rule: rgba(240, 236, 226, 0.18);
+    --dark-rule: light-dark(rgba(240, 236, 226, 0.18), rgba(240, 236, 226, 0.24));
     --dark-muted: rgba(240, 236, 226, 0.62);
     --portfolio-bg: var(--bg);
     --portfolio-text: var(--ink);

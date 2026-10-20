@@ -10,9 +10,9 @@
   --bg: light-dark(var(--creme), var(--dark-ground));
   --ink: light-dark(var(--warm-black), var(--creme));
   --muted: light-dark(#686D62, #8F9389);
-  --rule: light-dark(rgba(9, 13, 25, .2), rgba(240, 236, 226, .2));
-  --rule-soft: light-dark(rgba(9, 13, 25, .09), rgba(240, 236, 226, .09));
-  --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.85));
+  --rule: light-dark(rgba(9, 13, 25, .2), rgba(240, 236, 226, 0.26));
+  --rule-soft: light-dark(rgba(9, 13, 25, .09), rgba(240, 236, 226, 0.12));
+  --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.5));
   --ph: light-dark(rgba(9, 13, 25, .06), rgba(240, 236, 226, .06));
   --ph-ink: light-dark(rgba(9, 13, 25, .45), rgba(240, 236, 226, .45));
   /* Dunkle Flächen bleiben im Dunkeln dunkel, eine Stufe heller als der Grund
@@ -20,7 +20,7 @@
   --dark-bg: light-dark(var(--warm-black), var(--dark-raised));
   --dark-ink: var(--creme);
   --dark-muted: rgba(240, 236, 226, .62);
-  --dark-rule: rgba(240, 236, 226, .18);
+  --dark-rule: light-dark(rgba(240, 236, 226, .18), rgba(240, 236, 226, .24));
   --pad: clamp(1.25rem, 4vw, 4rem);
   --inset: 1rem;
   --hero-inset: clamp(.5rem, 1.2vw, 1.25rem);
@@ -161,7 +161,7 @@ p { text-wrap: pretty; }
   gap: clamp(.25rem, calc(-2rem + 15vw), 1rem);
   padding-block: .8rem;
   padding-inline: clamp(.5rem, calc(-1.75rem + 15vw), var(--pad));
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule-strong);
   background: color-mix(in srgb, var(--bg) 80%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(.7);
   backdrop-filter: blur(20px) saturate(.7);
@@ -225,7 +225,7 @@ p { text-wrap: pretty; }
   inline-size: clamp(2.75rem, calc(-2.8rem + 37vw), 4.6rem); block-size: 4.6rem; margin-block: -.8rem; padding: 0;
   display: grid; place-items: center;
   border: 0; border-radius: 0; background: transparent; color: var(--ink);
-  border-inline: 1px solid var(--ink);
+  border-inline: 1px solid var(--rule-strong);
   border-block-end: 1px solid transparent;
 }
 /* Offen überdeckt die cremefarbene Unterkante Headerlinie und Panel-Oberkante; oben trennt

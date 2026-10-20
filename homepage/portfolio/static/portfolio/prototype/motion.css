@@ -1097,8 +1097,8 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   place-items: center;
   padding: 0;
   border: 0;
-  border-block-start: 1px solid currentColor;
-  border-inline-start: 1px solid currentColor;
+  border-block-start: 1px solid var(--edge);
+  border-inline-start: 1px solid var(--edge);
   border-radius: 0;
   background: transparent;
   color: var(--ink, #090d19);
@@ -1117,7 +1117,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .foot-bar .to-top.is-on-stage { border-inline-start-color: transparent; }
 .theme-switch.is-on-stage .theme-switch__toggle { border-inline-end-color: transparent; }
 /* Aufgeklappt bleibt die rechte Kante des Feldes immer sichtbar, nur die obere entfällt. */
-.theme-switch.is-open .theme-switch__toggle { border-inline-end-color: currentColor; }
+.theme-switch.is-open .theme-switch__toggle { border-inline-end-color: var(--edge); }
 /* Progressive Fallback: Ohne Skript bleibt der Pfeil auch über unbekannten Flächen
    kontrastfähig. Im regulären Betrieb vermeidet die explizite Farbklasse das Auslöschen
    der deckungsgleichen linken Raster- und Ankerkante. */
@@ -1172,8 +1172,8 @@ html:not(.has-js) .theme-switch { display: none; }
   block-size: 100%;
   padding: 0;
   border: 0;
-  border-block-start: 1px solid currentColor;
-  border-inline-end: 1px solid currentColor;
+  border-block-start: 1px solid var(--edge);
+  border-inline-end: 1px solid var(--edge);
   border-radius: 0;
   background: transparent;
   color: inherit;
@@ -1245,7 +1245,7 @@ html:not(.has-js) .theme-switch { display: none; }
   inset-inline: var(--switch-joint, calc(var(--switch-inline-size) - 1px)) 0;
   inset-block-end: 0;
   block-size: 1px;
-  background: currentColor;
+  background: var(--edge);
   transform-origin: left;
   transition: transform .22s cubic-bezier(.2, .55, .3, 1) .3s;
 }
@@ -1281,7 +1281,7 @@ html:not(.has-js) .theme-switch { display: none; }
   inset-inline: 0;
   inset-block-start: 0;
   block-size: 1px;
-  background: currentColor;
+  background: var(--edge);
   transition: inset-block-start var(--switch-rise);
 }
 .theme-switch__menu[hidden] .theme-switch__options::after {
@@ -1298,7 +1298,7 @@ html:not(.has-js) .theme-switch { display: none; }
 .theme-switch__rows {
   display: grid;
   padding-block: var(--switch-menu-pad);
-  border-inline-end: 1px solid currentColor;
+  border-inline-end: 1px solid var(--edge);
   background: var(--bg, #f0ece2);
   box-shadow: var(--switch-shadow);
   clip-path: inset(0 -3rem 0 0);

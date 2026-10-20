@@ -636,14 +636,19 @@ def test_dark_mode_swaps_the_role_tokens_and_keeps_the_light_values():
         tokens = root_tokens(read_static(path))
         assert compact(tokens["--bg"]) == "light-dark(var(--creme),var(--dark-ground))", path
         assert compact(tokens["--ink"]) == "light-dark(var(--warm-black),var(--creme))", path
-        # Kräftige Linien: dunkel Creme mit 85 % Deckkraft statt voll.
-        assert compact(tokens["--rule-strong"]) == "light-dark(var(--ink),rgba(240,236,226,0.85))", path
+        # Kräftige Linien: dunkel Creme mit 50 % Deckkraft statt voll.
+        assert compact(tokens["--rule-strong"]) == "light-dark(var(--ink),rgba(240,236,226,0.5))", path
         assert compact(tokens["--dark-bg"]) == "light-dark(var(--warm-black),var(--dark-raised))", path
         for name in ("--rule", "--rule-soft", "--ph", "--ph-ink"):
             light, dark = re.match(r"light-dark\((rgba\([^)]*\)),(rgba\([^)]*\))\)", compact(tokens[name])).groups()
             assert light.startswith("rgba(9,13,25,"), (path, name)
             assert dark.startswith("rgba(240,236,226,"), (path, name)
-            assert light.split(",")[-1] == dark.split(",")[-1], (path, name)
+            # Linien stehen im Dunkeln etwas kräftiger als im Hellen, Platzhalter gleich.
+            light_alpha, dark_alpha = (float(value.split(",")[-1].rstrip(")")) for value in (light, dark))
+            if name in ("--rule", "--rule-soft"):
+                assert dark_alpha > light_alpha, (path, name)
+            else:
+                assert dark_alpha == light_alpha, (path, name)
         assert "color-scheme" not in tokens or tokens["color-scheme"] == "light", path
 
 

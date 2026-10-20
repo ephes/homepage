@@ -113,9 +113,12 @@ via ``light-dark()``, so creme and black swap roles while Tangerine stays. The d
 tones are petrol: the main site's blue turned towards sea green, with the hue kept in a
 single token ``--dark-hue``. ``--dark-ground`` (a very subtly tinted black) is the page,
 ``--dark-raised`` the larger dark areas (clients, results, footer, contact bar), which stay
-dark but one step lighter. The
-landing-page "MOIN" uses its own token ``--hero-word`` (``portfolio-startseite.css``), in
-the ``--dark-raised`` tone on dark.
+dark but one step lighter; the footer uses the slightly deeper ``--dark-footer`` so
+Tangerine hovers keep their contrast. The landing-page "MOIN" uses its own token
+``--hero-word`` (``portfolio-startseite.css``), on dark the slightly lighter ``--dark-hero``.
+On dark, strong lines (``--rule-strong`` and ``--edge`` for the corner fields) are creme at
+50 % opacity, while the finer lines (``--rule``, ``--rule-soft``, ``--dark-rule``) are a
+little stronger than on light.
 Buttons turn around (creme with dark text). Every ``font-weight`` in the portfolio
 stylesheets is written as ``calc(<weight> + var(--weight-shift))`` so all type is a touch
 lighter on dark; the Astagina handwriting keeps its weight. ``homepage.js`` and

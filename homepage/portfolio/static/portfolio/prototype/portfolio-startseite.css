@@ -904,9 +904,9 @@
     --muted:light-dark(#686D62, #8F9389); /* dunkel: über 6:1 auf dem Petrol-Grund */
     /* Linien und Platzhalter sind das Schwarz (--warm-black) mit Deckkraft, nicht eigene Farben —
        so bleiben sie beim Ton, wenn der Grundton wechselt. */
-    --rule:light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.2));
-    --rule-soft:light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.09));
-    --rule-strong:light-dark(var(--ink), rgba(240, 236, 226, 0.85)); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante; dunkel Creme mit 85 % */
+    --rule:light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.26));
+    --rule-soft:light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.12));
+    --rule-strong:light-dark(var(--ink), rgba(240, 236, 226, 0.5)); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante; dunkel Creme mit 50 % */
     /* Stärke aller Rasterlinien; geht auch in Höhenrechnungen ein (mobiler Hero). */
     --rule-width:1px;
     --ph:light-dark(rgba(9, 13, 25, 0.06), rgba(240, 236, 226, 0.06));
@@ -920,7 +920,7 @@
        der dunklen Flächen, damit der Kopf zu Kunden und Footer passt. */
     --hero-word:light-dark(var(--ink), var(--dark-hero));
     --dark-ink:var(--creme);
-    --dark-rule:rgba(240,236,226,0.18);
+    --dark-rule:light-dark(rgba(240,236,226,0.18), rgba(240,236,226,0.24));
     --dark-muted:rgba(240,236,226,0.62);
 
     --pad:clamp(1.25rem,4vw,4rem);

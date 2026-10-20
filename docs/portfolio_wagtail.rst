@@ -169,7 +169,8 @@ collected like any other app static files:
   ``handwriting-glyphs.js``, ``handwriting-contact.js``);
 * ``portfolio.css``, ``homepage.css``, ``project-wagtail.css``/``.js``: small adapters
   between the design and the Wagtail markup;
-* ``fonts.css`` and ``fonts/``: Saira and Astagina as WOFF2.
+* ``fonts.css`` and ``fonts/``: Saira (upright and italic, variable) and Astagina as
+  WOFF2. The main site loads the same Saira files from ``css/site-overrides.css``.
 
 Templates must reference assets through ``{% static %}`` (or the ``versioned_static``
 tag for stylesheets, which appends the file's modification time in ``DEBUG``), so

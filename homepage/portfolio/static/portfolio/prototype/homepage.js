@@ -146,7 +146,7 @@
     return { fs: fs, x: penX, y: penY };
   }
   function drawMoin(ctx, g, mode){
-    var ink = col('--ink', '#171410');
+    var ink = col('--ink', '#090d19');
     ctx.font = '800 ' + g.fs + 'px Saira';
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     if (mode === 'solid') { ctx.fillStyle = ink; ctx.fillText('MOIN', g.x, g.y); return; }

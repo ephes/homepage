@@ -1,18 +1,18 @@
 
 :root {
   --creme: #F0ECE2;
-  --warm-black: #171410;
+  --warm-black: #090d19;
   --tangerine: #EB3D00;
   --limette: #C7F03C;
   --smaragd: #1C995C;
   --bg: var(--creme);
   --ink: var(--warm-black);
   --muted: #686D62;
-  --rule: rgba(23, 20, 16, .2);
-  --rule-soft: rgba(23, 20, 16, .09);
+  --rule: rgba(9, 13, 25, .2);
+  --rule-soft: rgba(9, 13, 25, .09);
   --rule-strong: var(--warm-black);
-  --ph: rgba(23, 20, 16, .06);
-  --ph-ink: rgba(23, 20, 16, .45);
+  --ph: rgba(9, 13, 25, .06);
+  --ph-ink: rgba(9, 13, 25, .45);
   --dark-bg: var(--warm-black);
   --dark-ink: var(--creme);
   --dark-muted: rgba(240, 236, 226, .62);
@@ -129,7 +129,7 @@ body::before {
   z-index: 10;
   inset-block: var(--header-h) 0;
   inset-inline: 0;
-  background-color: rgba(23, 20, 16, .28);
+  background-color: rgba(9, 13, 25, .28);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-blend-mode: soft-light;
@@ -167,7 +167,7 @@ p { text-wrap: pretty; }
   position: absolute;
   z-index: 1;
   inset: 0;
-  background-color: rgba(23, 20, 16, .28);
+  background-color: rgba(9, 13, 25, .28);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-blend-mode: soft-light;
@@ -264,8 +264,8 @@ body:has(.site-nav[open]:not(.is-measuring)) { overscroll-behavior: none; }
   border-inline-start: clamp(.7rem, 1.2vw, 1.1rem) solid var(--tangerine);
   background: var(--creme);
   box-shadow:
-    -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
-    -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
+    -1.1rem 0 1.6rem rgba(9, 13, 25, .46),
+    -3.75rem 0 6.5rem rgba(9, 13, 25, .3);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

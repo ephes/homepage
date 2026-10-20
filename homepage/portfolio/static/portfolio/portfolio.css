@@ -34,7 +34,7 @@
 @layer tokens {
   :root {
     --creme: #f0ece2;
-    --warm-black: #171410;
+    --warm-black: #090d19;
     --tangerine: #eb3d00;
     --limette: #c7f03c;
     --pine: #294122;
@@ -43,11 +43,11 @@
     --ink: var(--warm-black);
     --accent: var(--tangerine);
     --muted: #686d62;
-    --rule: rgba(23, 20, 16, 0.2);
-    --rule-soft: rgba(23, 20, 16, 0.09);
+    --rule: rgba(9, 13, 25, 0.2);
+    --rule-soft: rgba(9, 13, 25, 0.09);
     --rule-strong: var(--warm-black);
-    --ph: rgba(23, 20, 16, 0.06);
-    --ph-ink: rgba(23, 20, 16, 0.45);
+    --ph: rgba(9, 13, 25, 0.06);
+    --ph-ink: rgba(9, 13, 25, 0.45);
     --dark-bg: var(--warm-black);
     --dark-ink: var(--creme);
     --dark-rule: rgba(240, 236, 226, 0.18);
@@ -457,8 +457,8 @@
     overflow: auto;
     background: var(--creme);
     box-shadow:
-      -1.1rem 0 1.6rem rgba(23, 20, 16, 0.46),
-      -3.75rem 0 6.5rem rgba(23, 20, 16, 0.3);
+      -1.1rem 0 1.6rem rgba(9, 13, 25, 0.46),
+      -3.75rem 0 6.5rem rgba(9, 13, 25, 0.3);
   }
 
   .menu-primary {
@@ -685,6 +685,8 @@
     pointer-events: none;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsBAMAAAAfmfjxAAAAFVBMVEX////ExMS/v7/8/PyLi4ufn5+6uro3PuJqAAAAB3RSTlMARTAACxAlpkPg9gAAAWVJREFUeF7t1EENgEAABLF9wB8LBGXn3wQ+Jq2I7orYF7E3YnfEnoidCGtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWslaAtaxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1EqxlLWtZy1rWspa1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rGUta1nLWtaylrWsZS1rWcta1rKWtaxlLWtZy1rWspa1rGUta1kr4gcY9P+FkIkE1AAAAABJRU5ErkJggg==");
     background-repeat: repeat;
+    /* Größe wie in den Lebensläufen und auf der Hauptseite: 400er-Kachel auf 560px. */
+    background-size: 560px;
     mix-blend-mode: multiply;
   }
 

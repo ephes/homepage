@@ -118,7 +118,7 @@ def test_prototype_typography_tokens_are_global_and_page_geometry_stays_local():
     base = layer_body(stylesheet, "base")
 
     assert tokens["--creme"] == "#f0ece2"
-    assert tokens["--warm-black"] == "#171410"
+    assert tokens["--warm-black"] == "#090d19"
     assert tokens["--tangerine"] == "#eb3d00"
     assert tokens["--bg"] == "var(--creme)"
     assert tokens["--ink"] == "var(--warm-black)"
@@ -126,8 +126,8 @@ def test_prototype_typography_tokens_are_global_and_page_geometry_stays_local():
     assert tokens["--portfolio-bg"] == "var(--bg)"
     assert tokens["--portfolio-text"] == "var(--ink)"
     assert tokens["--portfolio-accent"] == "var(--accent)"
-    assert tokens["--ph"] == "rgba(23, 20, 16, 0.06)"
-    assert tokens["--ph-ink"] == "rgba(23, 20, 16, 0.45)"
+    assert tokens["--ph"] == "rgba(9, 13, 25, 0.06)"
+    assert tokens["--ph-ink"] == "rgba(9, 13, 25, 0.45)"
     assert tokens["color-scheme"] == "light"
     assert tokens["--font-sans"] == '"Saira", system-ui, sans-serif'
     assert tokens["--font-handwriting"] == '"Astagina", cursive'
@@ -254,12 +254,18 @@ def test_local_font_faces_preserve_the_approved_prototype_files():
     saira = Path(saira_path).read_bytes()
     astagina = Path(astagina_path).read_bytes()
 
-    saira_face = declarations_for(font_stylesheet, {"@font-face"})
-    astagina_face = declaration_blocks_for(font_stylesheet, {"@font-face"})[1]
+    faces = declaration_blocks_for(font_stylesheet, {"@font-face"})
+    saira_face, saira_italic_face, astagina_face = faces
     assert saira_face["font-family"] == '"Saira"'
     assert saira_face["font-weight"] == "100 900"
     assert saira_face["src"].startswith('url("fonts/saira-variable.woff2")')
     assert saira_face["font-display"] == "swap"
+    # The real Saira italic (same version, axes and glyphs as the upright file).
+    assert saira_italic_face["font-family"] == '"Saira"'
+    assert saira_italic_face["font-style"] == "italic"
+    assert saira_italic_face["src"].startswith('url("fonts/saira-italic-variable.woff2")')
+    saira_italic = Path(finders.find("portfolio/fonts/saira-italic-variable.woff2")).read_bytes()
+    assert sha256(saira_italic).hexdigest() == "0f90fe00f487ad10a639bbe80363c479308ee8f03d1b2afd964293f53240423f"
     assert astagina_face["font-family"] == '"Astagina"'
     assert astagina_face["font-weight"] == "400"
     assert astagina_face["src"].startswith('url("fonts/astagina.woff2")')
@@ -412,7 +418,9 @@ def test_project_details_split_into_four_grid_columns_only_below_the_side_by_sid
     details_container = stylesheet.index("container: project-meta / inline-size;")
     side_by_side_reset = stylesheet.index(".project-meta { container-type: normal; --meta-space: var(--s1); }")
     four_columns = stylesheet.index("@container project-meta (width >= 40rem)")
-    split = declarations_for(stylesheet, {".project-meta__services .project-service-list", ".project-meta > .project-meta__facts"})
+    split = declarations_for(
+        stylesheet, {".project-meta__services .project-service-list", ".project-meta > .project-meta__facts"}
+    )
 
     # The side-by-side layout must come after the container so that it can switch it off.
     assert details_container < side_by_side_reset < four_columns
@@ -423,7 +431,9 @@ def test_project_details_split_into_four_grid_columns_only_below_the_side_by_sid
     # Details only wrap between whole words, also inside the hyphenated statement text.
     whole_words = declarations_for(stylesheet, {".project-meta", ".project-meta li"})
     assert whole_words["hyphens"] == "manual"
-    assert stylesheet.index(".case-copy, .case-copy p, .case-copy li {") < stylesheet.index(".project-meta, .project-meta li {")
+    assert stylesheet.index(".case-copy, .case-copy p, .case-copy li {") < stylesheet.index(
+        ".project-meta, .project-meta li {"
+    )
 
 
 def test_project_intro_uses_nested_intrinsic_switchers_and_service_markers():

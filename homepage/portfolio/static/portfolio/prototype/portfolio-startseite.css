@@ -889,7 +889,7 @@
      Dark Mode); alle Tokens stehen jetzt hier. */
   :root{
     --creme:#F0ECE2;      /* Grundton der ganzen Seite */
-    --warm-black:#171410; /* ursprüngliches warmes Schwarz: Schrift, dunkle Flächen, Footer */
+    --warm-black:#090d19; /* Schwarz für Schrift, dunkle Flächen, Footer (vorher warmes #171410) */
     --tangerine:#EB3D00;  /* Akzent — trägt auf hell (3,42) wie dunkel (4,55) */
     --limette:#C7F03C;    /* reservierter Zweitakzent; aktuell nicht eingesetzt */
     --pine:#294122;       /* mittlere Fläche; Creme darauf 9,50 — derzeit unbenutzt */
@@ -902,13 +902,13 @@
     --muted:#686D62;
     /* Linien und Platzhalter sind warmes Schwarz mit Deckkraft, nicht eigene Farben —
        so bleiben sie beim Ton, wenn der Grundton wechselt. */
-    --rule:rgba(23,20,16,0.2);
-    --rule-soft:rgba(23,20,16,0.09);
+    --rule:rgba(9, 13, 25, 0.2);
+    --rule-soft:rgba(9, 13, 25, 0.09);
     --rule-strong:var(--warm-black); /* kräftige Linie wie MOIN — Padding-Linien, Header-Unterkante */
     /* Stärke aller Rasterlinien; geht auch in Höhenrechnungen ein (mobiler Hero). */
     --rule-width:1px;
-    --ph:rgba(23,20,16,0.06);
-    --ph-ink:rgba(23,20,16,0.45);
+    --ph:rgba(9, 13, 25, 0.06);
+    --ph-ink:rgba(9, 13, 25, 0.45);
     --accent:var(--tangerine);
 
     --dark-bg:var(--warm-black);
@@ -982,7 +982,7 @@
   body::before {
     content: ""; position: fixed; z-index: 30;
     inset-block: var(--header-h) 0; inset-inline: 0;
-    background-color: rgba(23, 20, 16, .28);
+    background-color: rgba(9, 13, 25, .28);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-blend-mode: soft-light;
@@ -996,7 +996,7 @@
   header.site{z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(.25rem,calc(-2rem + 15vw),1rem);padding-block:.8rem;padding-inline:clamp(.5rem,calc(-1.75rem + 15vw),var(--pad));backdrop-filter:blur(20px) saturate(.7);-webkit-backdrop-filter:blur(20px) saturate(.7);background:color-mix(in srgb,var(--creme) 80%,transparent);border-bottom:1px solid var(--rule-strong);}
   header.site::after {
     content: ""; position: absolute; z-index: 1; inset: 0;
-    background-color: rgba(23, 20, 16, .28);
+    background-color: rgba(9, 13, 25, .28);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .22'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
     background-repeat: repeat; background-blend-mode: soft-light;
     opacity: 0; visibility: hidden; pointer-events: none;
@@ -1065,8 +1065,8 @@
     display: grid;
     grid-auto-rows: min-content;
     box-shadow:
-      -1.1rem 0 1.6rem rgba(23, 20, 16, .46),
-      -3.75rem 0 6.5rem rgba(23, 20, 16, .3);
+      -1.1rem 0 1.6rem rgba(9, 13, 25, .46),
+      -3.75rem 0 6.5rem rgba(9, 13, 25, .3);
     opacity: 0; visibility: hidden; pointer-events: none;
     transform: translateX(2.5rem);
     clip-path: inset(0 0 0 100%);

@@ -1,7 +1,8 @@
 /* Homepage navigation hub styles */
 :root {
-  --homepage-hero-start: #f5f7fa;
-  --homepage-hero-end: #c3cfe2;
+  /* Verlauf aus dem Creme-Grundton: von der hellen Fläche zu einem tieferen Creme. */
+  --homepage-hero-start: var(--cast-surface);
+  --homepage-hero-end: oklch(from var(--site-creme) calc(l - 0.09) calc(c + 0.02) h);
 }
 
 [data-bs-theme="dark"] {

@@ -24,10 +24,6 @@
       canvas.dataset.heroInit = '1';
       var ctx = canvas.getContext('2d');
 
-      function isDark() {
-        return document.documentElement.getAttribute('data-bs-theme') === 'dark';
-      }
-
       function resize() {
         var hero = canvas.parentElement;
         var dpr = window.devicePixelRatio || 1;
@@ -46,15 +42,10 @@
         return canvas.parentElement.offsetHeight;
       }
 
-      function lineColor(alpha) {
-        if (isDark()) {
-          return 'rgba(56, 189, 248, ' + alpha + ')';
-        }
-        return 'rgba(0, 70, 180, ' + alpha + ')';
-      }
-
-      function bgColor() {
-        return isDark() ? '#1e293b' : '#eef0f3';
+      // Farben kommen aus dem Stylesheet: Linienfarbe als `color` des Canvas
+      // (--site-topo-line), der Grund ist der Hintergrund des Heros (--cast-bg-alt).
+      function lineColor() {
+        return getComputedStyle(canvas).color;
       }
 
       function noise(x, y, seed) {
@@ -72,8 +63,8 @@
         resize();
         var w = getW();
         var h = getH();
-        ctx.fillStyle = bgColor();
-        ctx.fillRect(0, 0, w, h);
+        ctx.clearRect(0, 0, w, h);
+        ctx.strokeStyle = lineColor();
 
         var levels = 22;
         var step = 2.4 / levels;
@@ -82,7 +73,7 @@
         for (var level = 0; level < levels; level++) {
           var threshold = -1.2 + level * step;
           var alpha = level % 3 === 0 ? 0.14 : (level % 3 === 1 ? 0.08 : 0.05);
-          ctx.strokeStyle = lineColor(alpha);
+          ctx.globalAlpha = alpha;
           ctx.lineWidth = level % 3 === 0 ? 1.4 : 0.9;
           ctx.beginPath();
 

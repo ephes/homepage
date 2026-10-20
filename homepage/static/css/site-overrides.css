@@ -1,36 +1,70 @@
 /* Host-site overrides for cast-bootstrap5 tokens. */
-:root {
-  --cast-bg: #f8f9fa;
-  --cast-bg-alt: #f0f1f3;
-  --cast-surface: #ffffff;
 
-  --cast-text: #212529;
-  --cast-text-muted: #626a72;
-  --cast-text-light: #adb5bd;
+/* Saira aus dem Portfolio (dieselbe Datei) statt Inter als Schrift der Hauptseite. */
+@font-face {
+  font-family: "Saira";
+  src: url("../portfolio/fonts/saira-variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Saira";
+  src: url("../portfolio/fonts/saira-italic-variable.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --cast-font-sans: "Saira", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bs-body-font-family: var(--cast-font-sans);
+  /* Creme aus dem Portfolio statt Weiß: im hellen Theme der Grundton, aus dem alle
+     übrigen Töne abgeleitet sind (gleicher Farbton, nur heller oder dunkler); im dunklen
+     Theme die Schrift. */
+  --site-creme: #f0ece2;
+  --bs-body-bg: var(--site-creme);
+  --bs-body-color: var(--cast-text);
+  --cast-bg: var(--site-creme);
+  --cast-bg-alt: oklch(from var(--site-creme) calc(l - 0.035) calc(c + 0.004) h);
+  --cast-surface: oklch(from var(--site-creme) calc(l + 0.045) calc(c * 0.5) h);
+
+  --cast-text: oklch(from var(--site-creme) 0.25 0.012 h);
+  --cast-text-muted: oklch(from var(--site-creme) 0.48 0.02 h);
+  --cast-text-light: oklch(from var(--site-creme) 0.72 0.02 h);
 
   --cast-accent: #0066cc;
   --cast-accent-hover: #004c99;
-  --cast-accent-light: #e6f0ff;
+  --cast-accent-light: color-mix(in oklab, var(--cast-accent) 12%, var(--site-creme));
   --cast-link-on-white: #004c99;
 
-  --cast-border: #e9ecef;
-  --cast-border-strong: #dee2e6;
+  /* Kanten kräftig genug, dass helle Flächen unter der Leinentextur nicht wegsuppen. */
+  --cast-border: oklch(from var(--site-creme) calc(l - 0.11) calc(c + 0.01) h);
+  --cast-border-strong: oklch(from var(--site-creme) calc(l - 0.16) calc(c + 0.012) h);
 
-  --cast-code-bg: #f0f1f3;
-  --cast-code-text: #212529;
+  --cast-code-bg: var(--cast-bg-alt);
+  --cast-code-text: var(--cast-text);
+
+  /* Höhenlinien im Blog-Kopf: warmes Dunkel des Grundtons (Deckkraft setzt das Skript). */
+  --site-topo-line: oklch(from var(--site-creme) 0.35 0.04 h);
 
   --cast-modal-backdrop: rgba(0, 0, 0, 0.85);
-  --cast-gallery-body-bg: rgba(255, 255, 255, 0.8);
-  --cast-gallery-header-bg: rgba(255, 255, 255, 1);
-  --cast-gallery-footer-bg: rgba(255, 255, 255, 1);
+  --cast-gallery-body-bg: rgba(240, 236, 226, 0.8);
+  --cast-gallery-header-bg: var(--site-creme);
+  --cast-gallery-footer-bg: var(--site-creme);
 }
 
 [data-bs-theme="dark"] {
+  --bs-body-bg: #0f172a;
+  --bs-body-color: var(--site-creme);
+  --bs-emphasis-color: var(--site-creme);
+  --bs-heading-color: var(--site-creme);
   --cast-bg: #0f172a;
   --cast-bg-alt: #1e293b;
   --cast-surface: #283548;
 
-  --cast-text: #f8fafc;
+  --cast-text: var(--site-creme);
   --cast-text-muted: #94a3b8;
   --cast-text-light: #64748b;
 
@@ -39,16 +73,53 @@
   --cast-accent-light: #0b1f34;
   --cast-link-on-white: #38bdf8;
 
-  --cast-border: #334155;
-  --cast-border-strong: #475569;
+  /* Eine Stufe heller als zuvor (#334155/#475569): Kanten bleiben unter der Leinentextur sichtbar. */
+  --cast-border: #475569;
+  --cast-border-strong: #64748b;
 
   --cast-code-bg: #1e293b;
-  --cast-code-text: #f8fafc;
+  --cast-code-text: var(--site-creme);
+
+  --site-topo-line: #38bdf8;
 
   --cast-modal-backdrop: rgba(0, 0, 0, 0.85);
   --cast-gallery-body-bg: rgba(15, 23, 42, 0.9);
   --cast-gallery-header-bg: rgba(40, 53, 72, 1);
   --cast-gallery-footer-bg: rgba(40, 53, 72, 1);
+}
+
+/* Kopfleiste: deckender und mit voller Kante (das Theme-Paket setzt sie auf 30 %, das
+   verschwindet unter der Leinentextur). */
+.navbar-sticky {
+  background: color-mix(in srgb, var(--cast-surface) 85%, transparent);
+  border-bottom-color: var(--cast-border);
+}
+
+/* Leinentextur aus dem Portfolio über der ganzen Seite (dieselbe Grafik). Hell dunkelt sie
+   per multiply ab; dunkel wird sie invertiert und hellt per screen auf, sodass die feinen
+   Linien in beiden Themes gleich wirken. */
+.linen {
+  position: fixed;
+  z-index: 1090;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("../images/linen.png");
+  background-repeat: repeat;
+  /* Größe wie in Jochens Lebenslauf (django-resume, Theme „plain“): 400er-Kachel auf 560px. */
+  background-size: 560px;
+  mix-blend-mode: multiply;
+  /* Auf der Hauptseite etwas zurückgenommen (im Portfolio voll). */
+  opacity: 0.6;
+}
+
+[data-bs-theme="dark"] .linen {
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+
+/* Linienfarbe der Höhenlinien (liest das Skript im Blog-Kopf). */
+.cast-hero canvas {
+  color: var(--site-topo-line);
 }
 
 /* Search modal contrast and palette alignment */
@@ -62,7 +133,7 @@
 
 .cast-search-modal-close,
 .cast-btn-clear {
-  color: #5f6770;
+  color: var(--cast-text-muted);
 }
 
 [data-bs-theme="dark"] .cast-search-modal-close,
@@ -81,11 +152,11 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   margin-bottom: var(--s-2);
-  color: #1a1a2e;
+  color: var(--cast-text);
 }
 
 [data-bs-theme="dark"] .cast-hero .blog-title {
-  color: #f1f5f9;
+  color: var(--site-creme);
 }
 
 .cast-hero .blog-title .tilde {
@@ -99,7 +170,7 @@
   line-height: 1.5;
   margin-top: var(--s-1);
   font-style: italic;
-  color: #5a6072;
+  color: var(--cast-text-muted);
 }
 
 [data-bs-theme="dark"] .cast-hero .intro.lead {
@@ -110,12 +181,12 @@
 .cast-hero .intro.lead b {
   font-style: normal;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--cast-text);
 }
 
 [data-bs-theme="dark"] .cast-hero .intro.lead strong,
 [data-bs-theme="dark"] .cast-hero .intro.lead b {
-  color: #f1f5f9;
+  color: var(--site-creme);
 }
 
 .cast-hero .intro.lead p {

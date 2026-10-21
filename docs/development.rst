@@ -108,6 +108,27 @@ SQLite checks do not substitute for PostgreSQL validation. Deploy with the
 committed lock, apply migrations, and collect static files through the deployment
 workflow.
 
+2026-10-17 django-cast develop refresh
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``uv.lock`` advances only django-cast from ``704a60aa`` to ``ddcc44d9``
+(0.2.68 development). It adds transcript glossary snippets, private correction
+sidecars and editor review, preserves approved speaker mappings when transcript
+text changes, and omits the speaker-count hint for known-speaker Voxhelm jobs.
+
+Deploy with migrations ``cast.0084`` through ``0086``. Migration ``0084`` reads
+existing stored transcript files to backfill source fingerprints; retain a fresh
+database backup before deployment. The corrections sidecar uses the private
+voice-reference storage backend. Existing transcripts are not automatically
+glossary-corrected by the migrations; corrections run on future Voxhelm imports
+or through ``apply_transcript_glossary``. Rolling code back does not undo
+transcript edits or remove the added schema.
+
+Validation: 712 application tests passed on PostgreSQL 17 with real migrations,
+all prek hooks passed, and ``makemigrations --check --dry-run`` found no changes.
+An isolated Python 3.15 production environment passed system checks and showed
+only the three expected pending Cast migrations before deployment.
+
 2026-09-16 django-cast release pin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

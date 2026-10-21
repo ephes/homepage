@@ -184,6 +184,7 @@ def test_prototype_typography_tokens_are_global_and_page_geometry_stays_local():
         "(max-width:36rem)",
         "(max-width:52rem)",
         "(prefers-color-scheme:dark)",
+        "print",
         "(prefers-reduced-motion:reduce)",
     }
 
@@ -690,6 +691,55 @@ def test_dark_tones_keep_readable_contrast():
     assert contrast_ratio(ground, "#8f9389") >= 4.5  # --muted im Dunkeln
     assert contrast_ratio(ground, "#a8aba1") >= 4.5  # Verfügbarkeit in der Kopfleiste
     assert contrast_ratio(ground, "#eb3d00") >= 4.5  # Tangerine auf dem Grund
+
+
+def test_tangerine_on_dark_surfaces_uses_a_lighter_step_in_dark_mode():
+    tokens = declarations_for(layer_body(read_static("portfolio/portfolio.css"), "tokens"), {":root"})
+    raised, footer, warm_black = "#173b45", "#06262f", "#090d19"
+    on_dark = "#f6623d"
+
+    assert compact(tokens["--tangerine-on-dark"]) == f"light-dark(var(--tangerine),{on_dark})"
+    # Light: Tangerine on black; dark: the lighter step on the petrol surfaces.
+    assert contrast_ratio(warm_black, "#eb3d00") >= 4.5
+    assert contrast_ratio(footer, on_dark) >= 4.5  # footer link hover and focus text
+    assert contrast_ratio(raised, on_dark) >= 3  # handwriting and asterisks (large text, graphics)
+
+    startseite = read_static("portfolio/prototype/portfolio-startseite.css")
+    motion = read_static("portfolio/prototype/motion.css")
+    projekt = read_static("portfolio/prototype/projekte/projekt.css")
+    assert ".on-dark{ --accent:var(--tangerine-on-dark); }" in startseite
+    assert ".on-dark h2.big .lastline .scr text { fill: var(--tangerine-on-dark);" in startseite
+    assert declarations_for(motion, {".on-dark .scr.hw-label .hw-svg"})["color"] == "var(--tangerine-on-dark)"
+    footer_hover = declarations_for(
+        motion,
+        {
+            ".foot-col a:not(.pill):hover",
+            ".foot-col a:not(.pill):focus-visible",
+            ".foot-bar a:not(.to-top):hover",
+            ".foot-bar a:not(.to-top):focus-visible",
+            ".project-footer a:hover",
+            ".project-footer a:focus-visible",
+        },
+    )
+    assert footer_hover["color"] == "var(--tangerine-on-dark)"
+    assert declarations_for(projekt, {".results .eyebrow::before"})["color"] == "var(--tangerine-on-dark)"
+
+
+def test_portfolio_always_prints_in_the_light_scheme():
+    tokens_layer = layer_body(read_static("portfolio/portfolio.css"), "tokens")
+    print_start = tokens_layer.index("@media print")
+    printed = declarations_for(
+        tokens_layer[print_start:], {":root", ":root[data-theme]", ':root:not([data-theme="light"])'}
+    )
+
+    # After both dark rules, so it wins at equal specificity.
+    assert tokens_layer.index('@media (prefers-color-scheme: dark)') < print_start
+    assert printed == {
+        "--weight-shift": "0",
+        "--linen-filter": "none",
+        "--linen-blend": "multiply",
+        "color-scheme": "light",
+    }
 
 
 def test_every_font_weight_follows_the_dark_mode_shift_except_handwriting():

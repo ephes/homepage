@@ -113,8 +113,12 @@ via ``light-dark()``, so creme and black swap roles while Tangerine stays. The d
 tones are petrol: the main site's blue turned towards sea green, with the hue kept in a
 single token ``--dark-hue``. ``--dark-ground`` (a very subtly tinted black) is the page,
 ``--dark-raised`` the larger dark areas (clients, results, footer, contact bar), which stay
-dark but one step lighter; the footer uses the slightly deeper ``--dark-footer`` so
-Tangerine hovers keep their contrast. The landing-page "MOIN" uses its own token
+dark but one step lighter; the footer uses the slightly deeper ``--dark-footer``.
+On these dark surfaces Tangerine is ``--tangerine-on-dark``: Tangerine itself in light
+mode, a slightly lighter step of the same hue (``#f6623d``) in dark mode, so footer link
+hovers reach 5.08:1 and handwriting and asterisks on the raised petrol 3.86:1. Printing
+always uses the light scheme (``@media print`` in the token layer), because browsers
+usually drop backgrounds and creme text would land on white paper. The landing-page "MOIN" uses its own token
 ``--hero-word`` (``portfolio-startseite.css``), on dark the slightly lighter ``--dark-hero``.
 On dark, strong lines (``--rule-strong`` and ``--edge`` for the corner fields) are creme at
 50 % opacity, while the finer lines (``--rule``, ``--rule-soft``, ``--dark-rule``) are a

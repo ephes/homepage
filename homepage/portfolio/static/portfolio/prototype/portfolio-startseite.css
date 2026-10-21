@@ -175,9 +175,10 @@
   }
   /* Auf dunklem Grund trägt der handschriftliche Vermerk Tangerine statt der
      Creme — dieselbe Rolle wie das ✳ der Eyebrow darüber. Tangerine auf Schwarz
-     liegt bei 4,80 und trägt die große Schrift. Die Kontur bleibt der
+     liegt bei 4,80, im Dunkeln --tangerine-on-dark auf Petrol bei 3,86; beides trägt
+     die große Schrift. Die Kontur bleibt der
      Untergrund, damit sie sich weiter sauber aus der Headline schneidet. */
-  .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--tangerine); stroke: var(--dark-bg); }
+  .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--tangerine-on-dark); stroke: var(--dark-bg); }
 
   /* ── Hero: fullscreen, „MOIN" edge-to-edge ────────────────────── */
   /* Hero trägt KEIN Inline-Padding — MOIN läuft bis an die Screenkante.
@@ -979,9 +980,10 @@
       8.4rem
     );
   }
-  /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent; 4,80:1 gegen das
-     Schwarz trägt Eyebrow-Zeichen und große Schrift. */
-  .on-dark{ --accent:var(--tangerine); }
+  /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent: hell 4,80:1 gegen das
+     Schwarz, im Dunkeln die hellere Stufe --tangerine-on-dark (3,86:1 auf Petrol); beides
+     trägt Eyebrow-Zeichen und große Schrift. */
+  .on-dark{ --accent:var(--tangerine-on-dark); }
   /* Das Farbschema (hell, dunkel oder System) setzt allein portfolio.css. */
   *{box-sizing:border-box;} html,body{margin:0;} html{overflow-x:clip;}
   body{overflow-x:clip;background:var(--bg);color:var(--ink);font-family:"Saira",system-ui,sans-serif;}

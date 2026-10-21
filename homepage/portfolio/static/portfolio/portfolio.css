@@ -45,6 +45,11 @@
     --bg: light-dark(var(--creme), var(--dark-ground));
     --ink: light-dark(var(--warm-black), var(--creme));
     --accent: var(--tangerine);
+    /* Tangerine auf dunklen Flächen (Kunden, Ergebnisse, Footer): hell auf Schwarz 4,80:1.
+       Im Dunkeln sind diese Flächen Petrol; dort steht derselbe Farbton etwas heller
+       (oklch 0.68 0.19 35), damit Footer-Links 5,08:1 und Handschrift und ✳ auf der
+       helleren Petrolfläche 3,86:1 erreichen. */
+    --tangerine-on-dark: light-dark(var(--tangerine), #f6623d);
     --muted: light-dark(#686d62, #8f9389);
     --rule: light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.26));
     --rule-soft: light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.12));
@@ -139,6 +144,19 @@
       --linen-filter: invert(1);
       --linen-blend: screen;
       color-scheme: dark;
+    }
+  }
+
+  /* Gedruckt immer hell: Browser lassen Hintergründe beim Drucken meist weg, Creme-Schrift
+     stünde sonst auf weißem Papier. Die Liste schlägt beide Dunkel-Regeln oben. */
+  @media print {
+    :root,
+    :root[data-theme],
+    :root:not([data-theme="light"]) {
+      --weight-shift: 0;
+      --linen-filter: none;
+      --linen-blend: multiply;
+      color-scheme: light;
     }
   }
 }

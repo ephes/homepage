@@ -565,7 +565,7 @@ html.about-motion-ready .me-row.is-about-leaving > summary > .me-lead {
   stroke-linejoin: round;
   stroke-linecap: round;
 }
-.on-dark .scr.hw-label .hw-svg { color: var(--tangerine); --hw-outline: var(--dark-bg); }
+.on-dark .scr.hw-label .hw-svg { color: var(--tangerine-on-dark); --hw-outline: var(--dark-bg); }
 .about .statement .katha .scr.hw-label .hw-svg { color: var(--accent); }
 .hw-pen,
 .hw-outline-pen {
@@ -864,7 +864,8 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
   background-repeat: no-repeat;
   background-size: 0 1px;
   text-decoration: none !important;
-  background-image: linear-gradient(var(--tangerine), var(--tangerine));
+  /* Der Footer ist immer eine dunkle Fläche: im Dunkeln die hellere Tangerine-Stufe. */
+  background-image: linear-gradient(var(--tangerine-on-dark), var(--tangerine-on-dark));
   transition: color var(--motion-hover) ease, background-size var(--motion-hover) var(--motion-ease);
 }
 .foot-col a:not(.pill):hover,
@@ -873,7 +874,7 @@ html.js-hw .hw-svg.hw-go .hw-outline-pen {
 .foot-bar a:not(.to-top):focus-visible,
 .project-footer a:hover,
 .project-footer a:focus-visible {
-  color: var(--tangerine);
+  color: var(--tangerine-on-dark);
   background-size: 100% 1px;
 }
 

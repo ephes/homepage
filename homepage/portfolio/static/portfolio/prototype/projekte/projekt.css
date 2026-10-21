@@ -920,7 +920,7 @@ dl.project-meta > div { min-inline-size: 0; padding-inline: var(--inset); }
 }
 .results { background: transparent; color: var(--dark-ink); border-top: 0; }
 .results .eyebrow, .results .result-copy { color: var(--dark-muted); }
-.results .eyebrow::before { color: var(--tangerine); }
+.results .eyebrow::before { color: var(--tangerine-on-dark); }
 .result-grid { border-block: 1px solid var(--dark-rule); }
 .result { display: flex; flex-direction: column; min-inline-size: 0; min-block-size: 11rem; padding: clamp(1.2rem, 2.5vw, 2rem) var(--inset); border-inline-end: 1px solid var(--dark-rule); }
 .result:last-child { border-inline-end: 0; }

@@ -9,7 +9,7 @@ dependencies = [
     "beautifulsoup4",
     "django>=6.1,<7.0",
     "boto3",
-    "certifi",
+    "certifi>=2026.10.19",
     "cast-vue",
     "cast-bootstrap5",
     "django-resume",

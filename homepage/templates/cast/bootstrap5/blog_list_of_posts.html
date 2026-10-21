@@ -76,6 +76,18 @@
         var step = 2.4 / levels;
         var gridSize = 5;
 
+        // Rauschwerte einmal pro Gitterpunkt berechnen statt für jede Höhenstufe neu:
+        // gleiche Linien, aber rund 90-mal weniger Rechenarbeit beim Laden der Seite.
+        var cols = Math.ceil(w / gridSize) + 1;
+        var rows = Math.ceil(h / gridSize) + 1;
+        var values = new Float64Array(cols * rows);
+        for (var i = 0; i < cols; i++) {
+          for (var j = 0; j < rows; j++) {
+            values[i * rows + j] = noise(i * gridSize, j * gridSize);
+          }
+        }
+
+        var edges = new Float64Array(8);
         for (var level = 0; level < levels; level++) {
           var threshold = -1.2 + level * step;
           var alpha = level % 3 === 0 ? 0.14 : (level % 3 === 1 ? 0.08 : 0.05);
@@ -83,37 +95,39 @@
           ctx.lineWidth = level % 3 === 0 ? 1.4 : 0.9;
           ctx.beginPath();
 
-          for (var gx = 0; gx < w; gx += gridSize) {
-            for (var gy = 0; gy < h; gy += gridSize) {
-              var v00 = noise(gx, gy);
-              var v10 = noise(gx + gridSize, gy);
-              var v01 = noise(gx, gy + gridSize);
-              var v11 = noise(gx + gridSize, gy + gridSize);
-              var edges = [];
+          for (var ci = 0; ci < cols - 1; ci++) {
+            var gx = ci * gridSize;
+            for (var cj = 0; cj < rows - 1; cj++) {
+              var gy = cj * gridSize;
+              var v00 = values[ci * rows + cj];
+              var v10 = values[(ci + 1) * rows + cj];
+              var v01 = values[ci * rows + cj + 1];
+              var v11 = values[(ci + 1) * rows + cj + 1];
+              var n = 0;
 
               if ((v00 - threshold) * (v10 - threshold) < 0) {
-                var t0 = (threshold - v00) / (v10 - v00);
-                edges.push([gx + t0 * gridSize, gy]);
+                edges[n++] = gx + (threshold - v00) / (v10 - v00) * gridSize;
+                edges[n++] = gy;
               }
               if ((v01 - threshold) * (v11 - threshold) < 0) {
-                var t1 = (threshold - v01) / (v11 - v01);
-                edges.push([gx + t1 * gridSize, gy + gridSize]);
+                edges[n++] = gx + (threshold - v01) / (v11 - v01) * gridSize;
+                edges[n++] = gy + gridSize;
               }
               if ((v00 - threshold) * (v01 - threshold) < 0) {
-                var t2 = (threshold - v00) / (v01 - v00);
-                edges.push([gx, gy + t2 * gridSize]);
+                edges[n++] = gx;
+                edges[n++] = gy + (threshold - v00) / (v01 - v00) * gridSize;
               }
               if ((v10 - threshold) * (v11 - threshold) < 0) {
-                var t3 = (threshold - v10) / (v11 - v10);
-                edges.push([gx + gridSize, gy + t3 * gridSize]);
+                edges[n++] = gx + gridSize;
+                edges[n++] = gy + (threshold - v10) / (v11 - v10) * gridSize;
               }
 
-              if (edges.length >= 2) {
-                ctx.moveTo(edges[0][0], edges[0][1]);
-                ctx.lineTo(edges[1][0], edges[1][1]);
-                if (edges.length === 4) {
-                  ctx.moveTo(edges[2][0], edges[2][1]);
-                  ctx.lineTo(edges[3][0], edges[3][1]);
+              if (n >= 4) {
+                ctx.moveTo(edges[0], edges[1]);
+                ctx.lineTo(edges[2], edges[3]);
+                if (n === 8) {
+                  ctx.moveTo(edges[4], edges[5]);
+                  ctx.lineTo(edges[6], edges[7]);
                 }
               }
             }

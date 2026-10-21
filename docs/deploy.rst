@@ -90,6 +90,10 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
   visit, that page view may show the system font; later pages use the cached Saira.
 * No migration and no settings change; ``collectstatic`` picks up the new font files.
   Rollback: deploy the previous commit.
+* Follow-up: the contour lines in the blog list's hero compute the noise field once
+  per grid point instead of once per contour level. The drawing is pixel-identical,
+  but takes about 6 ms instead of 50 ms on a desktop-wide hero, which removes the
+  blocking time PageSpeed reported for the blog list (230 ms on its desktop run).
 
 2026-10-15 portfolio layout and typography
 ------------------------------------------

@@ -45,36 +45,33 @@
     --bg: light-dark(var(--creme), var(--dark-ground));
     --ink: light-dark(var(--warm-black), var(--creme));
     --accent: var(--tangerine);
-    /* Tangerine auf dunklen Flächen (Kunden, Ergebnisse, Footer): hell auf Schwarz 4,80:1.
-       Im Dunkeln sind diese Flächen Petrol; dort steht derselbe Farbton etwas heller
-       (oklch 0.68 0.19 35), damit Footer-Links 5,08:1 und Handschrift und ✳ auf der
-       helleren Petrolfläche 3,86:1 erreichen. */
-    --tangerine-on-dark: light-dark(var(--tangerine), #f6623d);
+    /* Tangerine auf den „dunklen“ Flächen (Kunden, Ergebnisse, Footer): hell auf Schwarz
+       4,80:1, dunkel auf dem Sand das normale Tangerine für Handschrift und ✳ (Schmuck);
+       nur die Footer-Links nehmen beim Überfahren einen tieferen Ton (motion.css). */
+    --tangerine-on-dark: var(--tangerine);
     --muted: light-dark(#686d62, #8f9389);
     --rule: light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.26));
     --rule-soft: light-dark(rgba(9, 13, 25, 0.09), rgba(240, 236, 226, 0.12));
     /* Kräftige Linien: hell schwarz, dunkel Creme mit 50 % Deckkraft (voll wäre zu hart). */
     --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.5));
-    --dark-rule-strong: light-dark(var(--creme), rgba(240, 236, 226, 0.5));
+    --dark-rule-strong: light-dark(var(--creme), rgba(9, 13, 25, 0.5));
     /* Kante in der aktuellen Schriftfarbe, die dunkel wie die kräftigen Linien auf 50 %
        zurückgeht (Eckfelder, Darstellungsmenü). */
     --edge: color-mix(in srgb, currentColor 50%, light-dark(currentColor, transparent));
     --ph: light-dark(rgba(9, 13, 25, 0.06), rgba(240, 236, 226, 0.06));
     --ph-ink: light-dark(rgba(9, 13, 25, 0.45), rgba(240, 236, 226, 0.45));
-    /* Dunkle Töne in Petrol: das Blau der Hauptseite (#283548, Farbton 258) ein Stück
-       Richtung Meeresgrün gedreht. Der Farbton steht nur in --dark-hue. Der Grund ist
-       sehr dezent getönt, größere dunkle Flächen und das MOIN stehen eine Stufe heller. */
-    --dark-hue: 220;
-    --dark-ground: oklch(0.17 0.025 var(--dark-hue));
-    --dark-raised: oklch(0.33 0.045 var(--dark-hue));
-    /* Das MOIN steht einen Hauch heller als die Flächen, der Footer einen Hauch dunkler,
-       damit Tangerine (Hover der Links) darauf genug Kontrast hat. */
-    --dark-hero: oklch(0.37 0.05 var(--dark-hue));
-    --dark-footer: oklch(0.25 0.04 var(--dark-hue));
+    /* Dunkel: Grund ist das Schwarz; die Flächen, die hell dunkel sind (Kunden, Ergebnisse,
+       Kontaktleiste, Footer), und das MOIN stehen in einem sanften Vanille-Sand statt
+       hartem Creme, mit dunkler Schrift darauf. */
+    --dark-soft: oklch(from var(--creme) 0.82 calc(c * 1.9) calc(h - 4));
+    --dark-ground: var(--warm-black);
+    --dark-raised: var(--dark-soft);
+    --dark-footer: var(--dark-soft);
+    --dark-hero: var(--dark-soft);
     --dark-bg: light-dark(var(--warm-black), var(--dark-raised));
-    --dark-ink: var(--creme);
-    --dark-rule: light-dark(rgba(240, 236, 226, 0.18), rgba(240, 236, 226, 0.24));
-    --dark-muted: rgba(240, 236, 226, 0.62);
+    --dark-ink: light-dark(var(--creme), var(--warm-black));
+    --dark-rule: light-dark(rgba(240, 236, 226, 0.18), rgba(9, 13, 25, 0.2));
+    --dark-muted: light-dark(rgba(240, 236, 226, 0.62), rgba(9, 13, 25, 0.66));
     --portfolio-bg: var(--bg);
     --portfolio-text: var(--ink);
     --portfolio-rule: var(--rule);

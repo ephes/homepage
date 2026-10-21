@@ -206,7 +206,7 @@ def test_homepage_adapter_only_bridges_wagtail_markup_to_the_canonical_assets():
     assert inquiry_arrow["transition"] == ("transform var(--motion-hover) var(--motion-ease)")
     assert contrast_ratio(foundation_tokens["--tangerine"], foundation_tokens["--warm-black"]) >= 4.5
     assert declarations_for(canonical, {"0%", "4%"})["inline-size"] == (
-        "calc(100% + var(--project-inquiry-pad-inline))"
+        "calc(100% + 2 * var(--project-inquiry-pad-inline))"
     )
     assert declarations_for(canonical, {".tile.tile--hero"})["grid-column"] == "span 2"
     assert declarations_for(canonical, {".tile.tile--hero .frame"})["aspect-ratio"] == "21 / 9"

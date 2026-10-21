@@ -109,17 +109,17 @@ with ``prefers-color-scheme: dark``. The switch itself sits once in the token la
 ``portfolio.css``: it sets ``color-scheme: dark``, ``--weight-shift: -30`` and the linen
 tokens (``--linen-filter: invert(1)``, ``--linen-blend: screen``). Every colour role token
 (``--bg``, ``--ink``, ``--muted``, ``--rule*``, ``--ph*``, ``--dark-bg``) carries both values
-via ``light-dark()``, so creme and black swap roles while Tangerine stays. The dark
-tones are petrol: the main site's blue turned towards sea green, with the hue kept in a
-single token ``--dark-hue``. ``--dark-ground`` (a very subtly tinted black) is the page,
-``--dark-raised`` the larger dark areas (clients, results, footer, contact bar), which stay
-dark but one step lighter; the footer uses the slightly deeper ``--dark-footer``.
-On these dark surfaces Tangerine is ``--tangerine-on-dark``: Tangerine itself in light
-mode, a slightly lighter step of the same hue (``#f6623d``) in dark mode, so footer link
-hovers reach 5.08:1 and handwriting and asterisks on the raised petrol 3.86:1. Printing
+via ``light-dark()``, so creme and black swap roles while Tangerine stays. Dark mode
+uses only black and creme, no other hue: ``--dark-ground`` is the black page, and the
+areas that are dark in light mode (clients, results, contact bar, footer) as well as the
+landing-page "MOIN" turn to a soft vanilla sand (``--dark-soft``, a darkened creme) with
+dark text, so nothing glares like full creme. The header contact button uses the same
+sand, a touch lighter so it reads equal on black. Handwriting and asterisks stay
+Tangerine; only footer link hovers use a deeper burnt Tangerine (``#952c03``, 4.5:1 on the
+sand). Printing
 always uses the light scheme (``@media print`` in the token layer), because browsers
 usually drop backgrounds and creme text would land on white paper. The landing-page "MOIN" uses its own token
-``--hero-word`` (``portfolio-startseite.css``), on dark the slightly lighter ``--dark-hero``.
+``--hero-word`` (``portfolio-startseite.css``), on dark ``--dark-hero`` (the sand).
 On dark, strong lines (``--rule-strong`` and ``--edge`` for the corner fields) are creme at
 50 % opacity, while the finer lines (``--rule``, ``--rule-soft``, ``--dark-rule``) are a
 little stronger than on light.

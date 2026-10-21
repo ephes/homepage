@@ -1609,3 +1609,11 @@ footer.site { --dark-bg: light-dark(var(--warm-black), var(--dark-footer)); }
 @media (prefers-reduced-motion: reduce) {
   .scrollcue i { animation: none; top: 0; }
 }
+
+/* Footer-Links werden beim Überfahren Tangerine; auf dem Sand im Dunkeln steht es einen
+   Ton tiefer, ein gebranntes Tangerine (4,55:1). */
+footer.site { --tangerine-on-dark: light-dark(var(--tangerine), #952c03); }
+/* Kontakt-Button in der Kopfleiste: im Dunkeln derselbe sanfte Sand statt Creme. Klein
+   auf Schwarz wirkt derselbe Ton dunkler als eine große Fläche, deshalb steht er optisch
+   angeglichen einen Hauch heller. */
+.header-actions > .pill { --fold-face: light-dark(var(--warm-black), oklch(from var(--dark-soft) calc(l + 0.06) c h)); }

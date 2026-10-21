@@ -663,9 +663,11 @@ def test_dark_mode_switch_lives_once_in_the_token_layer():
     assert tokens["--weight-shift"] == "0"
     assert tokens["--linen-filter"] == "none"
     assert tokens["--linen-blend"] == "multiply"
-    assert tokens["--dark-hue"].isdigit()
-    assert tokens["--dark-ground"] == "oklch(0.17 0.025 var(--dark-hue))"
-    assert tokens["--dark-raised"] == "oklch(0.33 0.045 var(--dark-hue))"
+    # Dunkel nur aus Schwarz und Creme: Grund Schwarz, Flächen und MOIN im sanften Sand.
+    assert tokens["--dark-ground"] == "var(--warm-black)"
+    assert tokens["--dark-soft"].startswith("oklch(from var(--creme) 0.82")
+    for name in ("--dark-raised", "--dark-footer", "--dark-hero"):
+        assert tokens[name] == "var(--dark-soft)", name
     for dark in (forced, system):
         assert dark == {
             "--weight-shift": "-30",
@@ -683,26 +685,26 @@ def test_dark_mode_switch_lives_once_in_the_token_layer():
 
 
 def test_dark_tones_keep_readable_contrast():
-    # Petrol-Grund und -Fläche bei --dark-hue 220: oklch(0.17 0.025 220), oklch(0.33 0.045 220).
-    ground, raised, creme = "#031217", "#173b45", "#f0ece2"
+    # Grund Schwarz, Sandfläche oklch(from creme 0.82 …) = #ccc3b1, darauf dunkle Schrift.
+    ground, raised, creme = "#090d19", "#ccc3b1", "#f0ece2"
 
     assert contrast_ratio(ground, creme) >= 7
-    assert contrast_ratio(raised, creme) >= 7
+    assert contrast_ratio(raised, ground) >= 7
     assert contrast_ratio(ground, "#8f9389") >= 4.5  # --muted im Dunkeln
     assert contrast_ratio(ground, "#a8aba1") >= 4.5  # Verfügbarkeit in der Kopfleiste
     assert contrast_ratio(ground, "#eb3d00") >= 4.5  # Tangerine auf dem Grund
 
 
-def test_tangerine_on_dark_surfaces_uses_a_lighter_step_in_dark_mode():
+def test_tangerine_on_dark_surfaces_keeps_contrast_in_both_modes():
     tokens = declarations_for(layer_body(read_static("portfolio/portfolio.css"), "tokens"), {":root"})
-    raised, footer, warm_black = "#173b45", "#06262f", "#090d19"
-    on_dark = "#f6623d"
+    sand, warm_black, footer_hover = "#ccc3b1", "#090d19", "#952c03"
 
-    assert compact(tokens["--tangerine-on-dark"]) == f"light-dark(var(--tangerine),{on_dark})"
-    # Light: Tangerine on black; dark: the lighter step on the petrol surfaces.
+    # Akzente bleiben Tangerine; nur die Footer-Links nehmen auf dem Sand einen tieferen Ton.
+    assert tokens["--tangerine-on-dark"] == "var(--tangerine)"
     assert contrast_ratio(warm_black, "#eb3d00") >= 4.5
-    assert contrast_ratio(footer, on_dark) >= 4.5  # footer link hover and focus text
-    assert contrast_ratio(raised, on_dark) >= 3  # handwriting and asterisks (large text, graphics)
+    assert contrast_ratio(sand, footer_hover) >= 4.5  # footer link hover and focus text on sand
+    motion_tokens = read_static("portfolio/prototype/motion.css")
+    assert "footer.site { --tangerine-on-dark: light-dark(var(--tangerine), #952c03); }" in motion_tokens
 
     startseite = read_static("portfolio/prototype/portfolio-startseite.css")
     motion = read_static("portfolio/prototype/motion.css")

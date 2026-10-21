@@ -175,8 +175,7 @@
   }
   /* Auf dunklem Grund trägt der handschriftliche Vermerk Tangerine statt der
      Creme — dieselbe Rolle wie das ✳ der Eyebrow darüber. Tangerine auf Schwarz
-     liegt bei 4,80, im Dunkeln --tangerine-on-dark auf Petrol bei 3,86; beides trägt
-     die große Schrift. Die Kontur bleibt der
+     liegt bei 4,80; im Dunkeln auf dem Sand ist es Schmuck in großer Schrift. Die Kontur bleibt der
      Untergrund, damit sie sich weiter sauber aus der Headline schneidet. */
   .on-dark h2.sec-title .scr text, .on-dark h2.big .lastline .scr text { fill: var(--tangerine-on-dark); stroke: var(--dark-bg); }
 
@@ -372,10 +371,11 @@
   }
   @keyframes project-inquiry-fill {
     /* Tangerine liegt ab dem ersten aktiven Frame vollständig hinter Text und Pfeil.
-       So trifft der AA-sichere schwarze Vordergrund nie auf den dunklen Grund.
+       So trifft der AA-sichere schwarze Vordergrund nie auf den dunklen Grund; links hält
+       die Fläche dabei schon denselben Innenabstand zur Schrift wie rechts.
        Danach wächst dieselbe Fläche im freigegebenen Tempo bis zur Layoutmitte. */
     0%,
-    4% { inline-size: calc(100% + var(--project-inquiry-pad-inline)); }
+    4% { inline-size: calc(100% + 2 * var(--project-inquiry-pad-inline)); }
     100% {
       inline-size: calc(50vw - var(--pad));
       inline-size: calc(50cqi + var(--project-inquiry-pad-inline));
@@ -902,7 +902,7 @@
     --ink:light-dark(var(--warm-black), var(--creme));
     /* Der gedämpfte Textton erreicht auf Creme 4,5:1. Der frühere warme Grauton #7d766a lag bei 3,81 und
        riss damit alle Eyebrows, Kachel-Metazeilen und Leistungssätze unter AA. */
-    --muted:light-dark(#686D62, #8F9389); /* dunkel: über 6:1 auf dem Petrol-Grund */
+    --muted:light-dark(#686D62, #8F9389); /* dunkel: über 6:1 auf dem schwarzen Grund */
     /* Linien und Platzhalter sind das Schwarz (--warm-black) mit Deckkraft, nicht eigene Farben —
        so bleiben sie beim Ton, wenn der Grundton wechselt. */
     --rule:light-dark(rgba(9, 13, 25, 0.2), rgba(240, 236, 226, 0.26));
@@ -914,15 +914,15 @@
     --ph-ink:light-dark(rgba(9, 13, 25, 0.45), rgba(240, 236, 226, 0.45));
     --accent:var(--tangerine);
 
-    /* Dunkle Flächen bleiben im Dunkeln dunkel, eine Stufe heller als der Grund
-       (Petrol, --dark-raised in portfolio.css). */
+    /* Die hell dunklen Flächen stehen im Dunkeln im sanften Sand (--dark-raised in
+       portfolio.css), mit dunkler Schrift. */
     --dark-bg:light-dark(var(--warm-black), var(--dark-raised));
     /* Das große MOIN im Hero (WebGL und Fallback). Im Dunkeln nicht creme, sondern im Ton
        der dunklen Flächen, damit der Kopf zu Kunden und Footer passt. */
     --hero-word:light-dark(var(--ink), var(--dark-hero));
-    --dark-ink:var(--creme);
-    --dark-rule:light-dark(rgba(240,236,226,0.18), rgba(240,236,226,0.24));
-    --dark-muted:rgba(240,236,226,0.62);
+    --dark-ink:light-dark(var(--creme), var(--warm-black));
+    --dark-rule:light-dark(rgba(240,236,226,0.18), rgba(9,13,25,0.2));
+    --dark-muted:light-dark(rgba(240,236,226,0.62), rgba(9,13,25,0.66));
 
     --pad:clamp(1.25rem,4vw,4rem);
     --hero-inset:1rem; /* einheitlicher Gap Wort<->Gridzelle; wird per JS in px gesetzt (Canvas+DOM synchron) */
@@ -981,8 +981,8 @@
     );
   }
   /* Tangerine bleibt auch auf dunklem Grund der einheitliche Akzent: hell 4,80:1 gegen das
-     Schwarz, im Dunkeln die hellere Stufe --tangerine-on-dark (3,86:1 auf Petrol); beides
-     trägt Eyebrow-Zeichen und große Schrift. */
+     Schwarz; im Dunkeln auf dem Sand Schmuck für Eyebrow-Zeichen und große Schrift
+     (die Footer-Links nehmen einen tieferen Ton, motion.css). */
   .on-dark{ --accent:var(--tangerine-on-dark); }
   /* Das Farbschema (hell, dunkel oder System) setzt allein portfolio.css. */
   *{box-sizing:border-box;} html,body{margin:0;} html{overflow-x:clip;}

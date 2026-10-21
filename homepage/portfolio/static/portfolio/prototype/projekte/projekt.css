@@ -15,12 +15,12 @@
   --rule-strong: light-dark(var(--ink), rgba(240, 236, 226, 0.5));
   --ph: light-dark(rgba(9, 13, 25, .06), rgba(240, 236, 226, .06));
   --ph-ink: light-dark(rgba(9, 13, 25, .45), rgba(240, 236, 226, .45));
-  /* Dunkle Flächen bleiben im Dunkeln dunkel, eine Stufe heller als der Grund
-     (Petrol, --dark-raised in portfolio.css). */
+  /* Die hell dunklen Flächen stehen im Dunkeln im sanften Sand (--dark-raised in
+     portfolio.css), mit dunkler Schrift. */
   --dark-bg: light-dark(var(--warm-black), var(--dark-raised));
-  --dark-ink: var(--creme);
-  --dark-muted: rgba(240, 236, 226, .62);
-  --dark-rule: light-dark(rgba(240, 236, 226, .18), rgba(240, 236, 226, .24));
+  --dark-ink: light-dark(var(--creme), var(--warm-black));
+  --dark-muted: light-dark(rgba(240, 236, 226, .62), rgba(9, 13, 25, .66));
+  --dark-rule: light-dark(rgba(240, 236, 226, .18), rgba(9, 13, 25, .2));
   --pad: clamp(1.25rem, 4vw, 4rem);
   --inset: 1rem;
   --hero-inset: clamp(.5rem, 1.2vw, 1.25rem);

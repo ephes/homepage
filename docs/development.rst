@@ -255,6 +255,35 @@ not publish the page, nothing is left half done:
 The social rendition is generated after the change is committed. A failure
 there leaves the new cover in place and is reported as an error.
 
+Main Site Fonts
+~~~~~~~~~~~~~~~
+
+The main site (blog, start page, profile pages) uses Saira from
+``homepage/static/fonts/``. These files are derived from the portfolio's variable
+fonts in ``homepage/portfolio/static/portfolio/fonts/``, which stay untouched:
+
+* the width axis is pinned at 100 (the site never sets ``font-stretch``); the weight
+  axis (100-900) is kept;
+* each style is split into a core file (``saira-latin.woff2``,
+  ``saira-italic-latin.woff2``: Basic Latin, Latin-1, punctuation, arrows, euro, ẞ) and
+  an extension file with every other Saira character (``*-latin-ext.woff2``). The
+  ``@font-face`` rules in ``css/site-overrides.css`` carry matching
+  ``unicode-range`` values, so browsers only fetch an extension file when a page uses
+  one of its characters;
+* ``font-display: optional``: if a font is not there by the first paint, that page
+  view keeps the fallback font instead of swapping later and shifting the layout.
+  To make the font arrive in time, ``cast/bootstrap5/base.html`` preloads the upright
+  core file on every page (block ``font_preloads``), and the blog list also preloads
+  the italic core file because its hero intro is italic.
+
+Regenerate the files and the generated ``@font-face`` block (between the
+``saira-fonts`` markers in ``site-overrides.css``) after changing the source fonts or
+the core range in ``scripts/subset_saira_fonts.py``::
+
+    just site-fonts
+
+The script is deterministic and copies ``SAIRA-LICENSE.txt`` next to the files.
+
 Troubleshooting
 ~~~~~~~~~~~~~~~
 

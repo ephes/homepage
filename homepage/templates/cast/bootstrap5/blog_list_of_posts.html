@@ -1,5 +1,11 @@
 {% extends "cast/bootstrap5/blog_list_of_posts.html" %}
-{% load webmention_tags %}
+{% load static webmention_tags %}
+
+{# Die Einleitung im Blog-Kopf ist kursiv: Saira kursiv gleich mitladen. #}
+{% block font_preloads %}
+  {{ block.super }}
+  <link rel="preload" href="{% static 'fonts/saira-italic-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+{% endblock font_preloads %}
 
 {% block meta %}
   {{ block.super }}

@@ -210,8 +210,9 @@ collected like any other app static files:
 * ``portfolio.css``, ``homepage.css``, ``project-wagtail.css``/``.js``: small adapters
   between the design and the Wagtail markup;
 * ``fonts.css`` and ``fonts/``: Saira (upright and italic, variable) and Astagina as
-  WOFF2. The main site loads the same Saira files from ``css/site-overrides.css``,
-  which also lays the portfolio's linen texture over its pages (``.linen``, z-index
+  WOFF2. The main site uses smaller Saira files derived from these (see "Main Site
+  Fonts" in ``development.rst``); its ``css/site-overrides.css`` also lays the
+  portfolio's linen texture over its pages (``.linen``, z-index
   1035: above the navbar, below the search dialog, offcanvas and modals; hidden in
   print).
 

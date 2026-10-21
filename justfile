@@ -198,6 +198,10 @@ deploy-production: deploy-bootstrap
     SOPS_AGE_KEY_FILE={{SOPS_AGE_KEY_FILE}} \
     {{ANSIBLE_PLAYBOOK_CMD}} -i inventories/prod/hosts.yml playbooks/deploy-homepage.yml
 
+# Rebuild the main site's Saira subsets and their @font-face block from the portfolio fonts.
+site-fonts:
+    uvx --with brotli --from fonttools python scripts/subset_saira_fonts.py
+
 # Generate the default blog cover image from the production blog overview.
 blog-cover-screenshot:
     #!/usr/bin/env bash

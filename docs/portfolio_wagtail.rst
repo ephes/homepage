@@ -114,7 +114,9 @@ uses only black and creme, no other hue: ``--dark-ground`` is the black page, an
 areas that are dark in light mode (clients, results, contact bar, footer) as well as the
 landing-page "MOIN" turn to a soft vanilla sand (``--dark-soft``, a darkened creme) with
 dark text, so nothing glares like full creme. The header contact button uses the same
-sand, a touch lighter so it reads equal on black. Handwriting and asterisks stay
+sand, a touch lighter so it reads equal on black (``--dark-soft-lift``); the large
+headlines (``.motion-heading``) take that same tone via ``--headline-ink``, except on the
+sand areas, where they keep the dark text. Handwriting and asterisks stay
 Tangerine; only footer link hovers use a deeper burnt Tangerine (``#952c03``, 4.5:1 on the
 sand). Printing
 always uses the light scheme (``@media print`` in the token layer), because browsers

@@ -68,6 +68,10 @@
     --dark-raised: var(--dark-soft);
     --dark-footer: var(--dark-soft);
     --dark-hero: var(--dark-soft);
+    /* Großer Text und kleine Akzente auf Schwarz (Headlines, Kontakt-Button): derselbe Sand,
+       einen Hauch heller — auf Schwarz wirkt der Ton als Schrift dunkler als als Fläche. */
+    --dark-soft-lift: oklch(from var(--dark-soft) calc(l + 0.06) c h);
+    --headline-ink: light-dark(var(--ink), var(--dark-soft-lift));
     --dark-bg: light-dark(var(--warm-black), var(--dark-raised));
     --dark-ink: light-dark(var(--creme), var(--warm-black));
     --dark-rule: light-dark(rgba(240, 236, 226, 0.18), rgba(9, 13, 25, 0.2));

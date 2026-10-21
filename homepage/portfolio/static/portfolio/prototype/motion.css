@@ -1616,4 +1616,8 @@ footer.site { --tangerine-on-dark: light-dark(var(--tangerine), #952c03); }
 /* Kontakt-Button in der Kopfleiste: im Dunkeln derselbe sanfte Sand statt Creme. Klein
    auf Schwarz wirkt derselbe Ton dunkler als eine große Fläche, deshalb steht er optisch
    angeglichen einen Hauch heller. */
-.header-actions > .pill { --fold-face: light-dark(var(--warm-black), oklch(from var(--dark-soft) calc(l + 0.06) c h)); }
+.header-actions > .pill { --fold-face: light-dark(var(--warm-black), var(--dark-soft-lift)); }
+/* Die großen Headlines stehen im Dunkeln im Ton dieses Buttons; auf den Sandflächen
+   (.on-dark) behalten sie die dunkle Schrift der Fläche. */
+.motion-heading { color: var(--headline-ink); }
+.on-dark .motion-heading { color: var(--dark-ink); }

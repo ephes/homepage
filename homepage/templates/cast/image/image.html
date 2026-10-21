@@ -1,0 +1,25 @@
+{% load wagtailimages_tags %}
+{% comment %}
+  Wie django-casts cast/image/image.html, nur mit loading="lazy", wenn post_body.html
+  lazy_images setzt: in der Blog-Übersicht ab dem zweiten Beitrag. Diese Bilder liegen
+  weit unterhalb des ersten Bildschirms und sollen das erste Zeichnen nicht ausbremsen.
+{% endcomment %}
+<a href="{{ value.regular.src.jpeg }}">
+  <picture>
+    <source
+      srcset="{{ value.regular.srcset.avif }}"
+      type="image/avif"
+      sizes="(max-width: 600px) 555px, {{ value.regular.sizes }}"
+    >
+    <img
+      class="cast-image"
+      alt="{{ value.default_alt_text }}"
+      src="{{ value.regular.src.jpeg }}"
+      srcset="{{ value.regular.srcset.jpeg }}"
+      sizes="(max-width: 600px) 555px, {{ value.regular.sizes }}"
+      width="{{ value.regular.width }}"
+      height="{{ value.regular.height }}"
+      {% if lazy_images %}loading="lazy"{% endif %}
+    >
+  </picture>
+</a>

@@ -4,6 +4,8 @@
 {% load post_body_blocks %}
 
 {% if page %}
+  {# Übersicht: Bilder ab dem zweiten Beitrag erst beim Scrollen laden (siehe cast/image/image.html). #}
+  {% if not render_detail and not forloop.first %}{% firstof "lazy" as lazy_images %}{% endif %}
   <article class="{% if render_detail %}post-detail{% else %}post-card{% endif %} h-entry">
     <header>
       {% if render_detail %}

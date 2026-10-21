@@ -94,6 +94,11 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
   per grid point instead of once per contour level. The drawing is pixel-identical,
   but takes about 6 ms instead of 50 ms on a desktop-wide hero, which removes the
   blocking time PageSpeed reported for the blog list (230 ms on its desktop run).
+* Follow-up: on the blog list, post images from the second post on carry
+  ``loading="lazy"`` (override of django-cast's ``cast/image/image.html``, switched on in
+  ``post_body.html``). They no longer load before the first paint on phones, where they
+  sat far below the screen but still counted toward PageSpeed's simulated LCP. Detail
+  pages and the first post on the list load their images as before.
 
 2026-10-15 portfolio layout and typography
 ------------------------------------------

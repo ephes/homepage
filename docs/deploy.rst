@@ -78,6 +78,19 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-21 main site fonts without layout shifts
+------------------------------------------------
+
+* The main site (blog, start page, profile pages) loads its own Saira subsets from
+  ``static/fonts/`` instead of the portfolio's full variable fonts: about 39 KB upright
+  and 44 KB italic per page instead of 172 KB and 202 KB. See *Main Site Fonts* in
+  :doc:`development`.
+* ``font-display: optional``: text no longer jumps when Saira arrives after the first
+  paint (PageSpeed CLS was about 0.3 on the blog list and on post pages). On a slow first
+  visit, that page view may show the system font; later pages use the cached Saira.
+* No migration and no settings change; ``collectstatic`` picks up the new font files.
+  Rollback: deploy the previous commit.
+
 2026-10-15 portfolio layout and typography
 ------------------------------------------
 

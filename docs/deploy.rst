@@ -99,6 +99,11 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
   ``post_body.html``). They no longer load before the first paint on phones, where they
   sat far below the screen but still counted toward PageSpeed's simulated LCP. Detail
   pages and the first post on the list load their images as before.
+* Follow-up: inline code in the light theme uses ``--cast-link-on-white`` (#004c99)
+  instead of the theme's ``--cast-accent`` (#0066cc). On the ``--cast-bg-alt`` code
+  background the old blue reached only 4.2:1, which PageSpeed flagged as too little
+  contrast; the new one reaches 6.4:1. Dark theme, code blocks and code inside links are
+  unchanged.
 
 2026-10-15 portfolio layout and typography
 ------------------------------------------

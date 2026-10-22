@@ -119,6 +119,13 @@
   border-bottom-color: var(--cast-border);
 }
 
+/* Inline-Code: das Theme färbt ihn mit --cast-accent, hell #0066cc auf --cast-bg-alt sind
+   nur 4,2:1 (zu wenig für kleine Schrift). Das dunklere Link-Blau schafft 6,4:1; im dunklen
+   Theme sind beide Variablen gleich. Code-Blöcke (pre code) erben weiter ihre eigene Farbe. */
+code {
+  color: var(--cast-link-on-white);
+}
+
 /* Leinentextur aus dem Portfolio über der ganzen Seite (dieselbe Grafik). Hell dunkelt sie
    per multiply ab; dunkel wird sie invertiert und hellt per screen auf, sodass die feinen
    Linien in beiden Themes gleich wirken. Sie liegt über Inhalt und Kopfleiste (1020/1030),

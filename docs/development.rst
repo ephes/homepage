@@ -108,6 +108,29 @@ SQLite checks do not substitute for PostgreSQL validation. Deploy with the
 committed lock, apply migrations, and collect static files through the deployment
 workflow.
 
+2026-10-24 image and JSON parser security update
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Pillow advances from 12.3.0 to 13.0.0 and Django REST framework from 3.18.1
+to 3.18.3, with explicit dependency minima preventing a lock refresh from
+restoring the vulnerable versions. This is a deliberate Pillow major upgrade;
+its removal of Python 3.10 support does not change this project's ``>=3.12``
+contract. No other packages or Git pins change in this follow-up.
+
+The `Pillow 13 release notes
+<https://pillow.readthedocs.io/en/stable/releasenotes/13.0.0.html>`_ describe native
+image-decoder and other security fixes. The `DRF JSON parser advisory
+<https://github.com/encode/django-rest-framework/security/advisories/GHSA-3547-9m27-7rxg>`_
+identifies CVE-2026-114136, fixed from 3.18.2; 3.18.3 also repairs the
+accidental content-negotiation API regression in 3.18.2. These targeted fixes
+are not a claim that every vulnerability in the application is resolved.
+
+Regression coverage decodes JPEG, PNG, WebP, GIF and TIFF, resizes and converts
+through Willow, applies EXIF orientation, and verifies JSON parsing accepts
+UTF-8 while rejecting a binary-transform charset. Existing cover-image tests
+exercise the Wagtail application path. No application models or image-processing
+implementation change.
+
 2026-10-24 Django and Wagtail security update
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

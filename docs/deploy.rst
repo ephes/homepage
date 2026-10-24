@@ -95,6 +95,15 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-24 image and JSON parser security patches
+-------------------------------------------------
+
+The follow-up lock upgrades Pillow 12.3.0 to 13.0.0 and Django REST framework
+3.18.1 to 3.18.3. See :doc:`development` for the advisory links and compatibility
+scope. Use the committed lock and the normal static rebuild and service restart
+workflow. This application change does not provision Python or establish that
+any live service has been updated; host qualification remains separate.
+
 2026-10-24 Django and Wagtail security patches
 ------------------------------------------------
 

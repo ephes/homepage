@@ -10,8 +10,8 @@ Ops-control Prerequisites
 * An ops-library clone (set ``OPS_LIBRARY_PATH`` if not located at ``$PROJECTS_ROOT/ops-library``)
 * SOPS age key configured (``SOPS_AGE_KEY_FILE`` defaults to ``~/.config/sops/age/keys.txt``)
 * ``PROJECTS_ROOT`` pointing at the parent directory that contains this repo
-* ``uv`` installed locally; the just recipes run ``uvx --python 3.14 --from ansible-core ansible-playbook``.
-  Ansible is pinned to Python 3.14 because ansible-core 2.21 does not start on Python 3.15.
+* ``just`` and ``uv`` installed locally; ops-control selects the deployment engine
+  from its current service metadata for the requested host.
 
 Deployment Commands
 -------------------
@@ -27,14 +27,31 @@ Deploy to production via ops-control::
 
     just deploy-production
 
-The deploy recipes first install/update Ansible collections and the local ``ops-library``
-collection via ``uvx ansible-galaxy``. They also install ``community.postgresql`` explicitly
-because current ops-control roles require it. The recipes support overriding the launcher
-commands when needed::
+The recipes call ``just deploy-one homepage staging`` or
+``just deploy-one homepage production`` inside ``OPS_CONTROL``. This respects
+ops-control's current per-host Ansible/pyinfra routing and safety guards; do not
+bypass those guards with a direct Ansible invocation. Update ops-control before
+deploying so its metadata reflects the intended engine.
 
-    ANSIBLE_PLAYBOOK_CMD="uvx --python 3.14 --from ansible-core ansible-playbook" just deploy-staging
+``PROJECTS_ROOT`` defaults to this checkout's parent. The dispatcher always deploys
+``$PROJECTS_ROOT/homepage``: name this checkout ``homepage`` when using that
+default. A checkout named differently would select a sibling ``homepage`` instead;
+set ``PROJECTS_ROOT`` explicitly to the parent of the intended ``homepage`` source
+and verify it before deployment.
+``SOPS_AGE_KEY_FILE`` and ``OPS_LIBRARY_PATH`` are forwarded to the dispatcher.
+The legacy Ansible Homepage branch in ops-control currently selects its default
+SOPS key internally; a custom forwarded key is effective on the pyinfra path.
+These commands deploy the selected local source, including uncommitted changes;
+inspect its status and diff before deployment.
 
-    ANSIBLE_GALAXY_CMD="uvx --python 3.14 --from ansible-core ansible-galaxy" just deploy-staging
+For an Ansible target, prepare collections when needed with ``just deploy-bootstrap``.
+It installs the required collections and the local ``ops-library`` collection.
+Pyinfra deployments do not need that bootstrap. Its launcher remains configurable::
+
+    ANSIBLE_GALAXY_CMD="uvx --python 3.14 --from ansible-core ansible-galaxy" just deploy-bootstrap
+
+Ansible bootstrap runs on Python 3.14 because ansible-core 2.21 does not start on
+Python 3.15. Deployment launcher selection belongs to ops-control.
 
 Database Backup
 ---------------

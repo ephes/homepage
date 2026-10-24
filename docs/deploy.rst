@@ -95,6 +95,27 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-24 Django and Wagtail security patches
+------------------------------------------------
+
+Django 6.1.2 and Wagtail 8.0.1 replace 6.1.1 and 8.0 in the committed lock.
+No application model, settings or deployment-recipe behavior changes; all
+package migration files were compared unchanged. Inspect the installed
+migration plan before deployment as usual; this is an operator step, not an
+automated guard added to the app. See :doc:`development` for the one-off checks
+and the Python 3.15.1 upstream-support caveat.
+
+Rebuild static files and restart the web and worker processes through the
+normal ops-control workflow: Wagtail's packaged admin assets can change between
+patch releases. The isolated compressed-static check passed all seven required
+application manifests with no Brotli output. Shared media and existing database
+data were not used by that check.
+
+The controller's Python 3.15.1 provisioning and live rollout are separately
+reviewed. An application merge alone does not mean a server was updated.
+Deploying the previous lock reinstalls the older framework versions and their
+security issues; do not silently undo these patches during recovery.
+
 2026-10-21 main site fonts without layout shifts
 ------------------------------------------------
 

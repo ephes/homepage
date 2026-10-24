@@ -735,7 +735,7 @@ def test_portfolio_always_prints_in_the_light_scheme():
     )
 
     # After both dark rules, so it wins at equal specificity.
-    assert tokens_layer.index('@media (prefers-color-scheme: dark)') < print_start
+    assert tokens_layer.index("@media (prefers-color-scheme: dark)") < print_start
     assert printed == {
         "--weight-shift": "0",
         "--linen-filter": "none",

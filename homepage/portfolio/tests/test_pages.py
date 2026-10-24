@@ -1123,7 +1123,9 @@ def test_conclusion_migration_moves_only_a_closing_fully_bold_paragraph():
     import importlib
 
     migration = importlib.import_module("homepage.portfolio.migrations.0011_move_conclusion_from_solution")
-    solution = '<p data-block-key="a">Erster Absatz.</p><p data-block-key="b"></p><p data-block-key="c"><b>Fazit.</b></p>'
+    solution = (
+        '<p data-block-key="a">Erster Absatz.</p><p data-block-key="b"></p><p data-block-key="c"><b>Fazit.</b></p>'
+    )
 
     remaining, conclusion = migration.split_conclusion(solution)
 

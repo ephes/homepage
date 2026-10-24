@@ -18,36 +18,36 @@
   <article class="project">
     {# Kopf und Fallstudie teilen sich eine Bühne: Auf breiten Screens bleibt das Titelbild rechts stehen, links folgen Kopf, Projekt, Aufgabe und Lösung als eigene Views. #}
     <div class="project-stage" id="projektstart">
-    <header class="project-hero project-intro">
-      <a class="project-index-link sr-only" href="{{ portfolio_home_url }}#projekte">Zurück zu allen Projekten</a>
+      <header class="project-hero project-intro">
+        <a class="project-index-link sr-only" href="{{ portfolio_home_url }}#projekte">Zurück zu allen Projekten</a>
       {# Headline, Anleser und Live-Link bewegen sich als ein Block (motion-reveal); die Headline behält über motion-heading nur ihren optischen Randausgleich. #}
-      <div class="project-intro__head motion-reveal">
-        <p class="eyebrow">{{ portfolio_site_settings.case_study_label }} {{ project_number|stringformat:"02d" }}</p>
-        <h1 class="motion-heading">{{ page.title|keep_together }}</h1>
-        <div class="project-lead">{{ page.teaser_text|richtext }}</div>
-        {% if page.live_url %}
-          <a class="pill ghost project-live-link" href="{{ page.live_url }}"><span class="pill-label">{{ page.live_link_label|default:portfolio_site_settings.project_live_link_label }} <span class="ar" aria-hidden="true">→</span></span></a>
-        {% endif %}
-      </div>
-      {% if page.hero_image or page.hero_surface_style or page.hero_background_image %}
-        {# Titelbild in zwei Ebenen: Fläche (Farbe, Verlauf, Bild) füllt den Bereich, das Motiv liegt eingepasst darauf und wird nie beschnitten. #}
-        {% if page.hero_background_image %}{% image page.hero_background_image width-2200 as hero_background %}{% endif %}
-        <figure class="project-hero-media" style="{{ page.hero_surface_style }}{% if hero_background %} --hero-bg-image: url('{{ hero_background.url }}');{% endif %}">
-          {% if page.hero_image %}
-            {% srcset_image page.hero_image width-{700,1100,1600,2200} sizes="(min-width: 60rem) and (min-aspect-ratio: 5 / 4) 50vw, 100vw" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
+        <div class="project-intro__head motion-reveal">
+          <p class="eyebrow">{{ portfolio_site_settings.case_study_label }} {{ project_number|stringformat:"02d" }}</p>
+          <h1 class="motion-heading">{{ page.title|keep_together }}</h1>
+          <div class="project-lead">{{ page.teaser_text|richtext }}</div>
+          {% if page.live_url %}
+            <a class="pill ghost project-live-link" href="{{ page.live_url }}"><span class="pill-label">{{ page.live_link_label|default:portfolio_site_settings.project_live_link_label }} <span class="ar" aria-hidden="true">→</span></span></a>
           {% endif %}
-        </figure>
-      {% else %}
-        <div class="media-placeholder hero-media" role="img" aria-label="Platzhalter für das Projekt-Titelbild">Projekt-Titelbild</div>
-      {% endif %}
-    </header>
+        </div>
+        {% if page.hero_image or page.hero_surface_style or page.hero_background_image %}
+        {# Titelbild in zwei Ebenen: Fläche (Farbe, Verlauf, Bild) füllt den Bereich, das Motiv liegt eingepasst darauf und wird nie beschnitten. #}
+          {% if page.hero_background_image %}{% image page.hero_background_image width-2200 as hero_background %}{% endif %}
+          <figure class="project-hero-media" style="{{ page.hero_surface_style }}{% if hero_background %} --hero-bg-image: url('{{ hero_background.url }}');{% endif %}">
+            {% if page.hero_image %}
+              {% srcset_image page.hero_image width-{700,1100,1600,2200} sizes="(min-width: 60rem) and (min-aspect-ratio: 5 / 4) 50vw, 100vw" alt=page.hero_image_alt loading="eager" fetchpriority="high" %}
+            {% endif %}
+          </figure>
+        {% else %}
+          <div class="media-placeholder hero-media" role="img" aria-label="Platzhalter für das Projekt-Titelbild">Projekt-Titelbild</div>
+        {% endif %}
+      </header>
 
-    {% if project_has_case_study %}
+      {% if project_has_case_study %}
       {# data-part-of: Verbindungswort für den Teilzähler („Die Lösung 1 von 3“), den nur motion.js setzt. #}
-      <section id="case-study" class="block project-content" aria-label="{{ portfolio_site_settings.case_study_label }}" data-part-of="{{ portfolio_site_settings.project_part_of_label }}">
-        {% for block in case_study_blocks %}{% include_block block %}{% endfor %}
-      </section>
-    {% endif %}
+        <section id="case-study" class="block project-content" aria-label="{{ portfolio_site_settings.case_study_label }}" data-part-of="{{ portfolio_site_settings.project_part_of_label }}">
+          {% for block in case_study_blocks %}{% include_block block %}{% endfor %}
+        </section>
+      {% endif %}
       {% if not project_has_statement %}{% include "portfolio/components/project_details.html" %}{% endif %}
     </div>
 

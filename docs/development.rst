@@ -108,6 +108,35 @@ SQLite checks do not substitute for PostgreSQL validation. Deploy with the
 committed lock, apply migrations, and collect static files through the deployment
 workflow.
 
+2026-10-24 Django and Wagtail security update
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The lock advances Django 6.1.1 to 6.1.2 and Wagtail 8.0 to 8.0.1; the
+existing version ranges now require these security-patched minima. Project
+Python compatibility remains ``>=3.12``. All other locked packages, including
+certifi 2026.10.19, pip 26.2.2 and django-cast ``ddcc44d9``, are unchanged.
+
+See the `Django release notes <https://docs.djangoproject.com/en/6.1/releases/6.1.2/>`_
+and `Wagtail release notes <https://docs.wagtail.org/en/stable/releases/8.0.1.html>`_
+for the security and regression fixes.
+
+One-off validation for this update: 731 application tests passed on Python
+3.15.1 with PostgreSQL 17, all configured prek hooks passed, a fresh database
+completed migrations, and ``makemigrations --check --dry-run`` found no changes.
+The old and new distributions' 49 Django and 325 Wagtail migration source files
+were byte-identical. A separate scratch check used production's
+CompressedManifestStaticFilesStorage with in-memory test media: all seven
+required manifests existed and no Brotli assets were generated. These manual
+checks do not introduce a standing checker in this application repository.
+
+CI tests the exact Python 3.15.1 stack using uv 0.13.5 and retains Python 3.14.
+This does not extend upstream support: the `Django installation FAQ
+<https://docs.djangoproject.com/en/6.1/faq/install/>`_ lists Python 3.15 from
+Django 6.1.3, and the `Wagtail compatibility table
+<https://docs.wagtail.org/en/stable/releases/upgrading.html>`_ currently stops
+at Python 3.14. No unreleased Django patch or interpreter downgrade is substituted.
+Server runtime provisioning and rollout remain separate ops-control work.
+
 2026-10-21 certifi security update
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

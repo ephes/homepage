@@ -6,11 +6,11 @@
       <dt>{{ portfolio_site_settings.project_meta_services_label }}</dt>
       <dd>
         {% with services=page.get_service_names %}
-        <ul class="marker-list project-service-list" style="--service-rows: {{ services|half_rounded_up }}">
-          {% for service in services %}
-            <li>{{ service }}</li>
-          {% endfor %}
-        </ul>
+          <ul class="marker-list project-service-list" style="--service-rows: {{ services|half_rounded_up }}">
+            {% for service in services %}
+              <li>{{ service }}</li>
+            {% endfor %}
+          </ul>
         {% endwith %}
       </dd>
     </div>

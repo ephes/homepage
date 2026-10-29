@@ -95,6 +95,18 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-10-29 Python 3.15.2
+------------------------
+
+ops-control now deploys this site on Python 3.15.2 (previously 3.15.1) with uv
+0.13.6, the first uv release that can install 3.15.2. The lock and application
+code are unchanged, and CI tests 3.15.2 instead of 3.15.1. The interpreter is
+installed by ops-control's runtime step before the normal deploy. The deploy
+restarts the web and worker processes only when it syncs changed files or
+dependencies; the new interpreter alone does not trigger a restart, so check
+afterwards that both processes run 3.15.2 and restart them if not. Django and
+Wagtail upstream support for Python 3.15 is unchanged from the 2026-10-24 note.
+
 2026-10-24 image and JSON parser security patches
 -------------------------------------------------
 

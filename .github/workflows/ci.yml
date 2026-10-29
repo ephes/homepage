@@ -14,9 +14,9 @@ permissions:
 env:
   # Qualify the deployed 3.15 patch stack; retain the upstream-supported
   # Python 3.14 baseline as a separate test job.
-  PYTHON_VERSION: "3.15.1"
-  # Use the toolchain that knows the exact Python 3.15.1 release.
-  UV_VERSION: "0.13.5"
+  PYTHON_VERSION: "3.15.2"
+  # Use the toolchain that knows the exact Python 3.15.2 release.
+  UV_VERSION: "0.13.6"
 
 jobs:
   lint:
@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14", "3.15.1"]
+        python-version: ["3.14", "3.15.2"]
     services:
       postgres:
         image: postgres:17

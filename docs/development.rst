@@ -22,7 +22,7 @@ Quick Start
 
     just dev
 
-This starts PostgreSQL, Django development server, and JupyterLab as defined in the ``Procfile``.
+This starts PostgreSQL and Django. Use ``just dev-all`` for the full ``Procfile``.
 
 Using the Justfile
 ------------------
@@ -34,7 +34,7 @@ Starting Services
 
 * ``just dev`` - Start core development services (PostgreSQL and Django only)
 * ``just dev-all`` - Start all services from Procfile (PostgreSQL, Django, JupyterLab, Vite)
-* ``just dev-force`` - Force restart (kills existing processes first)
+* ``just dev-force`` - Restart only this checkout's recorded services before starting again
 
 The ``dev`` commands will:
 
@@ -42,6 +42,22 @@ The ``dev`` commands will:
 2. Start the requested services
 3. Log all output to ``logs/dev.log``
 4. Display colored output in the terminal
+
+``./run_dev.sh`` uses the same runner as ``just dev-all``. These launchers record
+one runner per checkout in ``logs/dev.json`` and hold ``logs/dev.lock`` for the
+run. Cleanup validates PID, creation time, command and checkout before signalling
+the runner. The runner stops its owned process group on exit, including INT,
+TERM, HUP and QUIT; repeated interrupts do not interrupt teardown. Supervisor
+failures stay nonzero through logging (signals become 128 + signal number), and
+normal exit removes the record. POSIX process groups and the locked development
+``psutil`` dependency are required.
+
+``just cleanup`` and ``just dev-force`` leave unrelated servers, notebooks and
+individually started services alone. A stale/mismatching record is refused:
+inspect the recorded PID and any remaining service PIDs before stopping them
+individually, then remove stale ``logs/dev.json`` (or legacy ``logs/dev.pid``).
+Do not recover with command-name kills. Startup refuses to overwrite an existing
+record.
 
 You can also start services individually in separate terminals:
 
@@ -88,6 +104,14 @@ To update only django-cast and any dependencies required by its new constraints:
 
     uv lock --upgrade-package django-cast
     uv sync --locked
+
+Run ``python audit_dependencies.py`` for the same frozen runtime/development
+registry audit used in CI. It inventories the five excluded Git source commits
+and retains their registry transitives; unexpected sources and export/auditor
+errors fail the command. See README's "Locked dependency audit" for the exact
+scope, including platform markers and separately resolved hook environments.
+Black 26.10.1 and Tornado 6.6 repair the reported formatter/notebook advisories;
+application versions and Git source pins are unchanged.
 
 Run isolated application tests and migration checks without a local database::
 
@@ -339,7 +363,7 @@ The script is deterministic and copies ``SAIRA-LICENSE.txt`` next to the files.
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
-* ``just cleanup`` - Kill any leftover processes from previous runs
+* ``just cleanup`` - Stop only this checkout's recorded runner and owned services
 * ``just troubleshoot`` - Show common issues and solutions
 
 Common Issues
@@ -348,14 +372,19 @@ Common Issues
 Port Already in Use
 ~~~~~~~~~~~~~~~~~~~
 
-If you see "Port 8000 already in use" or similar::
+If this checkout's recorded runner holds the port::
 
-    just cleanup  # Kill leftover processes
+    just cleanup  # Stop this checkout's owned services
     just dev      # Try again
 
-Or force restart everything::
+Or restart this checkout's owned services::
 
     just dev-force
+
+If the port belongs to an unrelated or individually started service, inspect
+its PID and stop it explicitly or choose a different port. Cleanup will not stop
+it. If the runner died without teardown (for example SIGKILL), inspect any
+remaining service PIDs individually before removing the stale ownership record.
 
 Checking What's Using a Port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

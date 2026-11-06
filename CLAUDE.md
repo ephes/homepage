@@ -32,7 +32,7 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 - `just db-migrate` - Create and apply database migrations
 - `just shell` - Enhanced Django shell
 - `just logs-follow` - Watch development logs in real-time
-- `just cleanup` - Kill any leftover development processes
+- `just cleanup` - Stop only this checkout's recorded development runner and its owned services
 
 ## Code Style
 - Black formatter with 119 character line length

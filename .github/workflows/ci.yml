@@ -19,6 +19,19 @@ env:
   UV_VERSION: "0.13.6"
 
 jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Audit frozen runtime and development registry dependencies
+        run: python audit_dependencies.py
+
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 15

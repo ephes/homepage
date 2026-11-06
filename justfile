@@ -42,36 +42,17 @@ check-services:
     fi
     @echo "✓ All clear to start services"
 
-# Kill any leftover processes from previous runs
+# Stop only the supervisor recorded by this checkout
 cleanup:
-    @echo "Cleaning up any leftover processes..."
-    @-pkill -f "postgres -D databases/postgres" 2>/dev/null || true
-    @-pkill -f "manage.py runserver" 2>/dev/null || true
-    @-pkill -f "jupyterlab" 2>/dev/null || true
-    @if [ -f logs/dev.pid ]; then \
-        kill $(cat logs/dev.pid) 2>/dev/null || true; \
-        rm logs/dev.pid; \
-    fi
-    @echo "✓ Cleanup complete"
+    uv run --locked python "{{justfile_directory()}}/dev_runner.py" --cleanup
 
 # Start development server with logging (postgres + django only)
 dev: check-services
-    @mkdir -p logs
-    @echo "Starting development services (postgres + django)..."
-    @# Save process group ID for cleanup
-    @echo $$ > logs/dev.pid
-    @# Use honcho with specific processes
-    @bash -c 'uvx honcho start postgres django 2>&1 | tee >(sed "s/\x1b\[[0-9;]*m//g" > logs/dev.log)' || (rm -f logs/dev.pid; exit 1)
-    @rm -f logs/dev.pid
+    uv run --locked python "{{justfile_directory()}}/dev_runner.py" postgres django
 
 # Start all services from Procfile
 dev-all: check-services
-    @mkdir -p logs
-    @echo "Starting all development services..."
-    @echo $$ > logs/dev.pid
-    @# Run all services defined in Procfile
-    @bash -c 'uvx honcho start 2>&1 | tee >(sed "s/\x1b\[[0-9;]*m//g" > logs/dev.log)' || (rm -f logs/dev.pid; exit 1)
-    @rm -f logs/dev.pid
+    uv run --locked python "{{justfile_directory()}}/dev_runner.py"
 
 # Start dev server without checks (force start)
 dev-force: cleanup
@@ -221,10 +202,10 @@ troubleshoot:
     @echo "Common issues and solutions:"
     @echo ""
     @echo "1. Port already in use:"
-    @echo "   just cleanup  # Kill leftover processes"
+    @echo "   just cleanup  # Stop this checkout's owned runner"
     @echo "   just dev      # Try again"
     @echo ""
-    @echo "2. Force restart everything:"
+    @echo "2. Restart this checkout's owned services:"
     @echo "   just dev-force"
     @echo ""
     @echo "3. Check what's using a port:"

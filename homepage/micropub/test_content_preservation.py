@@ -53,13 +53,13 @@ def test_explicit_text_keeps_heading_and_fenced_code():
     properties = {"content": [{"text": text}]}
     assert ContentConverter().convert_content(text, properties) == [
         ("paragraph", "<h2>Literal &lt;T&gt; &amp;</h2>"),
-        ("code", {"language": "python", "code": "x: list[str] = '<T>'"}),
+        ("code", {"language": "python", "source": "x: list[str] = '<T>'"}),
     ]
 
 
 def test_bare_preformatted_html_still_converts_to_code():
     assert ContentConverter().convert_content('<pre><code class="language-python">x &lt; y</code></pre>', {}) == [
-        ("code", {"language": "python", "code": "x < y"})
+        ("code", {"language": "python", "source": "x < y"})
     ]
 
 

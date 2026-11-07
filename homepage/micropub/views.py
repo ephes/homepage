@@ -117,7 +117,7 @@ def micropub_preview_view(request):
                 format_html(
                     '<pre><code class="language-{}">{}</code></pre>',
                     value.get("language", ""),
-                    value.get("code", ""),
+                    value.get("source", ""),
                 )
             )
 

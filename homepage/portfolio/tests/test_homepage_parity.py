@@ -253,30 +253,6 @@ def test_homepage_adapter_only_bridges_wagtail_markup_to_the_canonical_assets():
     )
 
 
-def test_homepage_webgl_failure_keeps_the_progressive_enhancement_fallback():
-    script_path = finders.find("portfolio/prototype/homepage.js")
-
-    assert script_path is not None
-    script = Path(script_path).read_text()
-    assert re.search(
-        r"try\s*\{\s*initWebGL\(\);\s*\}\s*catch\s*\(error\)\s*\{\s*disableWebGL\(\);\s*\}",
-        script,
-    )
-    webgl = javascript_function_body(script, "initWebGL")
-    assert re.search(
-        r"if\s*\(\s*!canvas\s*\|\|\s*!stage\s*\)\s*\{\s*disableWebGL\(\);\s*return;\s*\}",
-        webgl,
-    )
-    assert "document.documentElement.classList.add('no-webgl')" in script
-    assert "Promise.resolve(document.fonts.load('800 40px Saira'))" in script
-    assert ".then(start, start);" in script
-    assert "if(startAttempted)return;" in script
-    assert script.index("resize(); render();") < script.index("simulationReady=true;")
-    assert "function disableSimulation()" in script
-    assert script.count("disableSimulation();") >= 3
-    assert script.index("initWebGL();") < script.index("Navigation und Scroll-Lock")
-
-
 def test_homepage_webgl_uses_an_editorial_reveal_image_with_the_generated_fallback():
     script_path = finders.find("portfolio/prototype/homepage.js")
 

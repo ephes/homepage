@@ -156,7 +156,7 @@ More text after."""
         self.assertEqual(blocks[0][0], "paragraph")
         self.assertEqual(blocks[1][0], "code")
         self.assertEqual(blocks[1][1]["language"], "python")
-        self.assertIn('print("Hello, World!")', blocks[1][1]["code"])
+        self.assertIn('print("Hello, World!")', blocks[1][1]["source"])
         self.assertEqual(blocks[2][0], "paragraph")
 
     def test_convert_html_content(self):

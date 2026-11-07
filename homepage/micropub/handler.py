@@ -16,6 +16,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.text import slugify
 from indieweb.handlers import MicropubContentHandler, MicropubEntry
 from wagtail.blocks import StreamValue
@@ -406,16 +407,35 @@ class CastPostMicropubHandler(MicropubContentHandler):
             "category": list(post.tags.values_list("name", flat=True)),
         }
 
-        # Extract content from StreamField
-        content_parts = []
-        for stream_block in post.body:
-            if stream_block.block_type in ["overview", "detail"]:
-                for block in stream_block.value:
-                    if block.block_type == "paragraph":
-                        content_parts.append(str(block.value))
+        # Check raw names before StreamValue can omit unknown block types.
+        supported = {"paragraph", "code", "image"}
+        for section in post.body.raw_data:
+            if section.get("type") not in {"overview", "detail"} or any(
+                block.get("type") not in supported for block in section.get("value", [])
+            ):
+                raise MicropubContentError("Source contains unsupported content blocks")
 
-        if content_parts:
-            properties["content"] = ["".join(content_parts)]
+        content_parts = []
+        for section in post.body:
+            for block in section.value:
+                if block.block_type == "paragraph":
+                    content_parts.append(block.render())
+                elif block.block_type == "code":
+                    data = block.block.get_prep_value(block.value)
+                    if not isinstance(data.get("source"), str) or not isinstance(data.get("language"), str):
+                        raise MicropubContentError("Source code cannot be represented")
+                    content_parts.append(
+                        format_html('<pre><code class="language-{}">{}</code></pre>', data["language"], data["source"])
+                    )
+                elif block.block_type == "image":
+                    image = block.block.to_python(block.block.get_prep_value(block.value))
+                    if image is None:
+                        raise MicropubContentError("Source image cannot be represented")
+                    content_parts.append(
+                        format_html('<img src="{}" alt="{}">', image.file.url, image.default_alt_text)
+                    )
+
+        properties["content"] = [{"html": "".join(content_parts)}]
 
         return properties
 

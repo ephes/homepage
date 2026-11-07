@@ -164,3 +164,29 @@ Out-of-range UTC conversions return `400 invalid_request` before creating a page
 or revision. Naive ISO timestamps are interpreted in Django's configured
 `TIME_ZONE`. Missing or ordinary unparseable timestamps use the current time,
 preserving the existing fallback policy. Normal explicit offsets remain valid.
+
+## Source HTML fidelity
+
+`q=source` returns `content: [{"html": "..."}]`, preserving paragraphs, emphasis,
+links and entities without treating HTML as literal text. Supported `overview`
+and `detail` content is serialized in order using Wagtail's public block APIs:
+rich text (including headings/lists), code, and image choosers. Code exports
+escaped `<pre><code>` HTML with its language and exact source whitespace. Image chooser blocks
+export their original file URL and alternative text, without fetching media or
+generating renditions. Source reads create no page revisions.
+
+Unsupported blocks (including structured weeknote links, galleries, embeds,
+audio/video and unknown stored block types) or missing images reject the whole
+source query with `400 invalid_request` instead of returning a truncated post.
+Updates, deletes and undeletes remain unsupported.
+
+HTML imports use the same safe image allowlist as photo-property blocks, keeping
+source-image URLs/alt text during a new create without downloading media. Code
+imports/preview use django-cast's `source` field; HTML code whitespace is kept.
+These changes do not republish or rewrite historical posts.
+
+Rich text follows Wagtail's public HTML rendering: a link to a deleted page or
+document may become an anchor without a target. The explicit missing-image
+rejection applies to image chooser blocks; it does not validate every embedded
+rich-text reference. Preserve the original source separately when repairing
+such historical references.

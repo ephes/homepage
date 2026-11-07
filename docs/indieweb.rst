@@ -242,3 +242,12 @@ Naive ISO publication dates use the configured timezone; missing/unparseable
 dates use the current time. ISO dates whose timezone interpretation overflows
 UTC are rejected before any page/revision is created. See
 ``homepage/micropub/README.md`` for the allocation and date contracts.
+
+Micropub source fidelity
+------------------------
+
+Source queries return a structured HTML content value. Rich text, headings,
+lists, code and image choosers retain their content in overview/detail order.
+Unsupported or missing blocks reject the query rather than silently omitting
+content. Source queries remain read-only; see ``homepage/micropub/README.md``
+for the supported block and HTML round-trip contracts.

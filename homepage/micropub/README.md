@@ -173,7 +173,16 @@ and `detail` content is serialized in order using Wagtail's public block APIs:
 rich text (including headings/lists), code, and image choosers. Code exports
 escaped `<pre><code>` HTML with its language and exact source whitespace. Image chooser blocks
 export their original file URL and alternative text, without fetching media or
-generating renditions. Source reads create no page revisions.
+generating renditions. Resolved chooser instances are reused; the pinned cast
+chooser's unresolved integer IDs are fetched in one batch across overview/detail
+sections. Source reads create no page revisions.
+
+After checking edit permission on the persisted page, source queries return
+Wagtail's latest saved draft (title, body, tags and publication date) when one
+exists. The returned entry URL stays the persisted page's canonical URL, even
+when the draft changes its slug. Reading source neither publishes the draft nor
+changes the live page or tags. Anonymous visitors continue to see published
+content; unauthorized callers cannot read the draft.
 
 Unsupported blocks (including structured weeknote links, galleries, embeds,
 audio/video and unknown stored block types) or missing images reject the whole

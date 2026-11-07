@@ -249,5 +249,10 @@ Micropub source fidelity
 Source queries return a structured HTML content value. Rich text, headings,
 lists, code and image choosers retain their content in overview/detail order.
 Unsupported or missing blocks reject the query rather than silently omitting
-content. Source queries remain read-only; see ``homepage/micropub/README.md``
+content. After checking edit permission on the persisted page, source queries read
+Wagtail's latest saved draft when present, while keeping the persisted canonical
+URL. Live content and tags remain unchanged. Resolved image chooser instances
+are reused, and legacy integer values are batch-loaded across sections.
+Query-budget regressions exercise 1 and 20 distinct synthetic images through
+the actual serializer and Micropub endpoint. Source queries remain read-only; see ``homepage/micropub/README.md``
 for the supported block and HTML round-trip contracts.

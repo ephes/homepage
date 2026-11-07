@@ -282,3 +282,19 @@ then retry the reversal. Representable conclusions return to the solution.
 
 Both directions of migration 0011 read and save only on the database selected
 by the migration command (``--database``); other databases remain untouched.
+
+Portfolio navigation interactions
+--------------------------------
+
+The homepage and shared page menu enhance only unmodified primary clicks on
+local section links. Modified/middle clicks, canceled events, downloads, other
+targets, query changes and other pages keep native browser navigation.
+Deliberate local navigation closes the menu, clears inert content, updates the
+fragment, focuses the destination without an extra scroll, and scrolls it into
+view. Nonfocusable destinations receive a temporary tabindex removed on blur;
+existing tabindex values are preserved. Hover previews change neither focus nor
+history. Escape restores the menu toggle and makes the page interactive again.
+
+Chapter swipes apply only to the two-column layout without reduced motion.
+A change from one touch to multiple touches relinquishes the gesture until a
+new touchstart, preserving native zoom before and after a chapter step.

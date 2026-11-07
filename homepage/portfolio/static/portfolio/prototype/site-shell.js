@@ -78,7 +78,7 @@
 
   const localTarget = (link) => {
     const url = new URL(link.href, location.href);
-    if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash) return null;
+    if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || !url.hash) return null;
     return document.getElementById(decodeURIComponent(url.hash.slice(1)));
   };
   const flyTo = (link, keepOpen) => {
@@ -89,9 +89,19 @@
     if (!keepOpen) {
       lockedY = null;
       menu.removeAttribute("open");
+      inertTargets.forEach((node) => { node.inert = false; });
       history.pushState(null, "", link.hash);
     }
-    requestAnimationFrame(() => target.scrollIntoView({ behavior: motionReduce.matches ? "auto" : "smooth", block: "start" }));
+    requestAnimationFrame(() => {
+      if (!keepOpen) {
+        if (!target.hasAttribute("tabindex") && target.tabIndex < 0) {
+          target.setAttribute("tabindex", "-1");
+          target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
+        }
+        target.focus({ preventScroll: true });
+      }
+      target.scrollIntoView({ behavior: motionReduce.matches ? "auto" : "smooth", block: "start" });
+    });
     flightTimer = window.setTimeout(() => {
       anchorFlight = false;
       if (menu.open) lockedY = window.scrollY;
@@ -107,6 +117,9 @@
   });
   menuLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey ||
+          event.shiftKey || event.altKey || link.hasAttribute("download") ||
+          (link.target && link.target.toLowerCase() !== "_self")) return;
       if (flyTo(link, false)) event.preventDefault();
       else menu.removeAttribute("open");
     });

@@ -58,6 +58,7 @@ dev = [
     "furo",
     "prek>=0.3.9",
     "psutil",
+    "playwright>=1.64.1",
 ]
 
 [tool.uv.sources]

@@ -48,6 +48,8 @@ GitHub Actions (``.github/workflows/ci.yml``) runs on every push and pull reques
 * ``lint``: the pre-commit hooks via ``uv run prek run --all-files`` (Python 3.15.2)
 * ``test``: ``pytest`` against a PostgreSQL 17 service container (Python 3.14
   and 3.15.2, uv 0.13.6, ``uv sync --locked``), with dummy AWS settings; test settings keep uploads in memory
+* migration regressions: real executor reversals on fresh test databases
+* portfolio browser gate: Chromium on synthetic rendered pages (Python 3.14 job; see ``docs/tests.rst``)
 
 User pages
 ^^^^^^^^^^

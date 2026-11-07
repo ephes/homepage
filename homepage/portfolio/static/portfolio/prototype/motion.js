@@ -282,13 +282,18 @@
       touchStepped = false;
     }, { passive: true });
     addEventListener("touchmove", function (event) {
+      if (event.touches.length !== 1) {
+        touchY = null;
+        touchStepped = false;
+        return;
+      }
       if (touchStepped) { if (event.cancelable) event.preventDefault(); return; }
       if (touchY === null) return;
       var delta = touchY - event.touches[0].clientY;
       if (Math.abs(delta) < 8) { if (active() && target(delta > 0) !== null) event.preventDefault(); return; }
       if (go(delta > 0, event)) touchStepped = true;
     }, { passive: false });
-    addEventListener("touchend", function () { touchY = null; }, { passive: true });
+    addEventListener("touchend", function () { touchY = null; touchStepped = false; }, { passive: true });
     addEventListener("touchcancel", function () { touchY = null; touchStepped = false; }, { passive: true });
     addEventListener("keydown", function (event) {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;

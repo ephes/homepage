@@ -37,7 +37,12 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
      thread), every connect attempt and the TLS handshake; when it passes, the
      upstream socket is shut down. Mastodon gives up on a lookup after about
      10 s without response headers, so a longer deadline would only hold a
-     gunicorn worker. A timeout returns ``504``; any other
+     gunicorn worker. At most four DNS lookups may remain outstanding per web
+     process. A stalled lookup retains its slot after the request times out,
+     until the resolver actually exits. There is no waiting queue: requests at
+     capacity fail immediately with ``504``, and capacity recovers as lookups
+     finish. Restart web processes to apply a changed limit.
+     A timeout returns ``504``; any other
      connection or protocol error, a truncated body, a body larger than
      1 MiB, or an invalid upstream status, header or redirect location returns
      ``502``.

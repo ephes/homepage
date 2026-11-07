@@ -167,3 +167,9 @@ to exercise real MigrationExecutor/schema changes on a separate, freshly created
 test database. CI runs this after the application suite. Keep it separate because
 Wagtail's data migrations create default pages/sites that application fixtures
 intentionally construct themselves. All migration fixtures contain synthetic content.
+
+The two-alias regression builds the secondary schema from current models and
+copies the default test database's applied migration history before using the
+real executor for portfolio migrations. This avoids unrelated historical Wagtail
+data migrations that write through default managers. Synthetic pages and both
+live/latest revision encodings are checked on both aliases in both directions.

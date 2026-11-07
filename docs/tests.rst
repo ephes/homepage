@@ -173,3 +173,21 @@ copies the default test database's applied migration history before using the
 real executor for portfolio migrations. This avoids unrelated historical Wagtail
 data migrations that write through default managers. Synthetic pages and both
 live/latest revision encodings are checked on both aliases in both directions.
+
+Portfolio browser regressions
+-----------------------------
+
+Install Chromium with ``uv run --locked playwright install --with-deps chromium``
+(on supported local systems, ``playwright install chromium`` is sufficient when
+system libraries already exist). Run
+``uv run --locked pytest --create-db -p no:sugar tests/browser``.
+``PLAYWRIGHT_BROWSERS_PATH`` may select a writable browser cache.
+
+The gate renders only synthetic Wagtail homepage/project fixtures, serves their
+production scripts/styles/fonts through intercepted browser requests, and
+rejects external resources. Chromium exercises desktop and narrow viewports,
+reduced motion, native link gestures, keyboard focus/inert cleanup, hover, and
+single/multiple-touch chapter routing. WebGL is disabled. The Python 3.14 CI
+job runs this gate after the application and migration suites. These regressions
+stay outside the default application testpaths because Chromium is an explicit
+prerequisite.

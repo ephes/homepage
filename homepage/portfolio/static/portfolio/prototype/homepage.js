@@ -739,11 +739,11 @@ runPortfolioEnhancement('navigation', function () {
 
   function localTarget(link) {
     var url = new URL(link.href, location.href);
-    if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash) return null;
+    if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || !url.hash) return null;
     return document.getElementById(decodeURIComponent(url.hash.slice(1)));
   }
   function flyTo(link, keepOpen) {
-    var target = link.dataset.hoverTarget
+    var target = keepOpen && link.dataset.hoverTarget
       ? document.getElementById(link.dataset.hoverTarget)
       : localTarget(link);
     if (!target) return false;
@@ -752,9 +752,17 @@ runPortfolioEnhancement('navigation', function () {
     if (!keepOpen) {
       lockedY = null;
       menu.removeAttribute('open');
+      inertTargets.forEach(function (node) { node.inert = false; });
       history.pushState(null, '', link.hash);
     }
     requestAnimationFrame(function () {
+      if (!keepOpen) {
+        if (!target.hasAttribute('tabindex') && target.tabIndex < 0) {
+          target.setAttribute('tabindex', '-1');
+          target.addEventListener('blur', function () { target.removeAttribute('tabindex'); }, { once: true });
+        }
+        target.focus({ preventScroll: true });
+      }
       target.scrollIntoView({ behavior: motionReduce.matches ? 'auto' : 'smooth', block: 'start' });
     });
     flightTimer = setTimeout(function () {
@@ -772,6 +780,9 @@ runPortfolioEnhancement('navigation', function () {
   });
   menuLinks.forEach(function (link) {
     link.addEventListener('click', function (event) {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey ||
+          event.shiftKey || event.altKey || link.hasAttribute('download') ||
+          (link.target && link.target.toLowerCase() !== '_self')) return;
       if (flyTo(link, false)) event.preventDefault();
       else menu.removeAttribute('open');
     });

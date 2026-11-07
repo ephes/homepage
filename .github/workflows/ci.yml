@@ -106,3 +106,11 @@ jobs:
 
       - name: Run migration regressions
         run: uv run --locked pytest --migrations --create-db -p no:sugar tests/migrations
+
+      - name: Install Chromium for portfolio interactions
+        if: matrix.python-version == '3.14'
+        run: uv run --locked playwright install --with-deps chromium
+
+      - name: Run portfolio browser regressions
+        if: matrix.python-version == '3.14'
+        run: uv run --locked pytest --create-db -p no:sugar tests/browser

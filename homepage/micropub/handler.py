@@ -20,6 +20,7 @@ from django.utils.html import format_html
 from django.utils.text import slugify
 from indieweb.handlers import MicropubContentHandler, MicropubEntry
 from wagtail.blocks import StreamValue
+from wagtail.images import get_image_model
 from wagtail.log_actions import log as wagtail_log
 
 from homepage.core.page_lookup import find_page_for_url
@@ -397,7 +398,9 @@ class CastPostMicropubHandler(MicropubContentHandler):
         # permission on the page itself rather than ownership or superuser status.
         if not page.permissions_for_user(user).can_edit():
             return None
-        return MicropubEntry(url=page.get_full_url(), properties=self._post_to_properties(page))
+        return MicropubEntry(
+            url=page.get_full_url(), properties=self._post_to_properties(page.get_latest_revision_as_object())
+        )
 
     def _post_to_properties(self, post: Post) -> dict[str, list[Any]]:
         """Convert a Post object back to micropub properties."""
@@ -415,25 +418,29 @@ class CastPostMicropubHandler(MicropubContentHandler):
             ):
                 raise MicropubContentError("Source contains unsupported content blocks")
 
+        blocks = [block for section in post.body for block in section.value]
+        image_model = get_image_model()
+        # Cast's pinned chooser leaves IDs unresolved; ordinary Wagtail choosers
+        # may already supply instances. Fetch only the former, once per source.
+        unresolved_images = image_model.objects.in_bulk(
+            {block.value for block in blocks if block.block_type == "image" and isinstance(block.value, int)}
+        )
         content_parts = []
-        for section in post.body:
-            for block in section.value:
-                if block.block_type == "paragraph":
-                    content_parts.append(block.render())
-                elif block.block_type == "code":
-                    data = block.block.get_prep_value(block.value)
-                    if not isinstance(data.get("source"), str) or not isinstance(data.get("language"), str):
-                        raise MicropubContentError("Source code cannot be represented")
-                    content_parts.append(
-                        format_html('<pre><code class="language-{}">{}</code></pre>', data["language"], data["source"])
-                    )
-                elif block.block_type == "image":
-                    image = block.block.to_python(block.block.get_prep_value(block.value))
-                    if image is None:
-                        raise MicropubContentError("Source image cannot be represented")
-                    content_parts.append(
-                        format_html('<img src="{}" alt="{}">', image.file.url, image.default_alt_text)
-                    )
+        for block in blocks:
+            if block.block_type == "paragraph":
+                content_parts.append(block.render())
+            elif block.block_type == "code":
+                data = block.block.get_prep_value(block.value)
+                if not isinstance(data.get("source"), str) or not isinstance(data.get("language"), str):
+                    raise MicropubContentError("Source code cannot be represented")
+                content_parts.append(
+                    format_html('<pre><code class="language-{}">{}</code></pre>', data["language"], data["source"])
+                )
+            elif block.block_type == "image":
+                image = unresolved_images.get(block.value) if isinstance(block.value, int) else block.value
+                if not isinstance(image, image_model):
+                    raise MicropubContentError("Source image cannot be represented")
+                content_parts.append(format_html('<img src="{}" alt="{}">', image.file.url, image.default_alt_text))
 
         properties["content"] = [{"html": "".join(content_parts)}]
 

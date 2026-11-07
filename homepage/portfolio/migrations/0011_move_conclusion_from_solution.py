@@ -62,18 +62,19 @@ def move_back(stream, conclusion):
 
 
 def forwards(apps, schema_editor):
+    alias = schema_editor.connection.alias
     ProjectPage = apps.get_model("portfolio", "ProjectPage")
     Revision = apps.get_model("wagtailcore", "Revision")
-    for page in ProjectPage.objects.all():
+    for page in ProjectPage.objects.using(alias).all():
         if page.conclusion:
             continue
         stream, conclusion = move_out(list(page.content.raw_data))
         if conclusion:
             page.content = stream
             page.conclusion = conclusion
-            page.save(update_fields=["content", "conclusion"])
+            page.save(using=alias, update_fields=["content", "conclusion"])
         revision_ids = {page.latest_revision_id, page.live_revision_id} - {None}
-        for revision in Revision.objects.filter(pk__in=revision_ids):
+        for revision in Revision.objects.using(alias).filter(pk__in=revision_ids):
             data = revision.content
             if data.get("conclusion"):
                 continue
@@ -84,18 +85,19 @@ def forwards(apps, schema_editor):
                 data["content"] = json.dumps(stored) if isinstance(raw, str) else stored
                 data["conclusion"] = found
                 revision.content = data
-                revision.save(update_fields=["content"])
+                revision.save(using=alias, update_fields=["content"])
 
 
 def backwards(apps, schema_editor):
+    alias = schema_editor.connection.alias
     ProjectPage = apps.get_model("portfolio", "ProjectPage")
     Revision = apps.get_model("wagtailcore", "Revision")
     # Preflight every selected page/revision before any writes. A later schema
     # reversal drops this field, so leaving an unmoved conclusion is unsafe.
-    for page in ProjectPage.objects.all():
+    for page in ProjectPage.objects.using(alias).all():
         records = [(list(page.content.raw_data), page.conclusion)]
         revision_ids = {page.latest_revision_id, page.live_revision_id} - {None}
-        for revision in Revision.objects.filter(pk__in=revision_ids):
+        for revision in Revision.objects.using(alias).filter(pk__in=revision_ids):
             data = revision.content
             raw = data.get("content")
             records.append((json.loads(raw) if isinstance(raw, str) else raw or [], data.get("conclusion", "")))
@@ -106,9 +108,9 @@ def backwards(apps, schema_editor):
                     "restore a challenge_solution block on the page and its live/latest revisions "
                     "or move and clear their conclusions before retrying."
                 )
-    for page in ProjectPage.objects.all():
+    for page in ProjectPage.objects.using(alias).all():
         revision_ids = {page.latest_revision_id, page.live_revision_id} - {None}
-        for revision in Revision.objects.filter(pk__in=revision_ids):
+        for revision in Revision.objects.using(alias).filter(pk__in=revision_ids):
             data = revision.content
             raw = data.get("content")
             stored = json.loads(raw) if isinstance(raw, str) else raw
@@ -117,12 +119,12 @@ def backwards(apps, schema_editor):
                 data["content"] = json.dumps(stored) if isinstance(raw, str) else stored
                 data["conclusion"] = ""
                 revision.content = data
-                revision.save(update_fields=["content"])
+                revision.save(using=alias, update_fields=["content"])
         stream, moved = move_back(list(page.content.raw_data), page.conclusion)
         if moved:
             page.content = stream
             page.conclusion = ""
-            page.save(update_fields=["content", "conclusion"])
+            page.save(using=alias, update_fields=["content", "conclusion"])
 
 
 class Migration(migrations.Migration):

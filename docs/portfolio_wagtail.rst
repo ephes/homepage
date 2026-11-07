@@ -279,3 +279,6 @@ A nonempty conclusion without a ``challenge_solution`` block refuses rollback
 before the conclusion column can be dropped. Restore that block on the page and
 its live/latest revisions, or manually preserve and clear their conclusions,
 then retry the reversal. Representable conclusions return to the solution.
+
+Both directions of migration 0011 read and save only on the database selected
+by the migration command (``--database``); other databases remain untouched.

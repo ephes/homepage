@@ -4,10 +4,12 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.db.models import Prefetch
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseSiteSetting
 from wagtail.fields import RichTextField, StreamField
+from wagtail.images import get_image_model
 from wagtail.models import Orderable, Page, Site
 from wagtail.rich_text import RichTextMaxLengthValidator
 
@@ -672,6 +674,22 @@ def get_site_setting_or_default(setting_model, site, **unsaved_values):
     return setting_model.objects.filter(site=site).first() or setting_model(site=site, **unsaved_values)
 
 
+PROJECT_CARD_IMAGE_FILTERS = (
+    "fill-2100x900",
+    "fill-700x300",
+    "fill-1400x600",
+    "fill-1440x960",
+    "fill-480x320",
+    "fill-960x640",
+    "fill-1200x675",
+    "fill-400x225",
+    "fill-800x450",
+    "fill-1260x540",
+    "fill-420x180",
+    "fill-840x360",
+)
+
+
 class PortfolioContextMixin:
     """Provide the shared, server-rendered portfolio navigation context."""
 
@@ -689,7 +707,25 @@ class PortfolioContextMixin:
 
     def get_portfolio_projects(self, index=None):
         index = index or self.get_portfolio_index()
-        return ProjectPage.objects.child_of(index).live().public().select_related("category")
+        return (
+            ProjectPage.objects.child_of(index)
+            .live()
+            .public()
+            .select_related("category")
+            .prefetch_related(
+                Prefetch(
+                    "teaser_image", queryset=get_image_model().objects.prefetch_renditions(*PROJECT_CARD_IMAGE_FILTERS)
+                )
+            )
+            .defer("content", "conclusion", "teaser_text")
+        )
+
+    def get_portfolio_navigation_projects(self):
+        """Load only titles and routing fields for utility-page menus."""
+
+        return (
+            ProjectPage.objects.child_of(self.get_portfolio_index()).live().public().only("title", "url_path", "path")
+        )
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)

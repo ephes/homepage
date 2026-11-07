@@ -298,3 +298,20 @@ history. Escape restores the menu toggle and makes the page interactive again.
 Chapter swipes apply only to the two-column layout without reduced motion.
 A change from one touch to multiple touches relinquishes the gesture until a
 new touchstart, preserving native zoom before and after a chapter step.
+
+Project list reads
+------------------
+
+Project-card lists join categories and batch teaser images plus existing Wagtail
+renditions for the card templates' crop filters. Other derivatives (including
+admin thumbnails) are excluded. Missing derivatives still use Wagtail's normal generation path; crop
+filters, alt text and responsive sizing are unchanged. Card lists defer case-study
+content, conclusion and teaser text, while the current project retains its full
+content. Utility/legal menus load only project titles and routing fields in public
+tree order. The 501 page loads card data separately for its first two projects.
+
+``homepage/portfolio/tests/test_read_queries.py`` renders the actual card and shell
+templates with 1 and 20 synthetic projects. Its cold image/rendition-cache budget
+is four queries (public restrictions, projects/categories, images, renditions),
+with site URL caching prepared separately. It also checks selected columns and
+zero-query menu rendering so deferred case-study data cannot be fetched lazily.

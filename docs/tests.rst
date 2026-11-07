@@ -203,3 +203,18 @@ frame ownership, including overlapping pause reasons and initially reduced motio
 job runs this gate after the application and migration suites. These regressions
 stay outside the default application testpaths because Chromium is an explicit
 prerequisite.
+
+Page lookup identity contracts
+------------------------------
+
+``uv run --locked pytest homepage/core/tests/test_page_lookup.py`` directly
+checks the shared Webmention/Micropub helper, independently of wrapper policy.
+Synthetic sites sharing a hostname have distinct roots and colliding slugs:
+explicit ports select their own root, omitted HTTP/HTTPS ports select 80/443,
+and malformed ports fail lookup. Wagtail's default-site and unique-hostname
+fallbacks are intentional; ambiguous hosts without a default return no page.
+
+Generic specific page instances are resolved below nested site roots using the
+full ancestor path, including decoded Unicode. Query strings and fragments do
+not change identity, and application routes are excluded. Draft and restricted
+pages remain available to callers; lookup itself grants no visibility or access.

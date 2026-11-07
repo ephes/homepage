@@ -103,3 +103,6 @@ jobs:
 
       - name: Run test suite
         run: uv run --locked pytest --create-db -p no:sugar
+
+      - name: Run migration regressions
+        run: uv run --locked pytest --migrations --create-db -p no:sugar tests/migrations

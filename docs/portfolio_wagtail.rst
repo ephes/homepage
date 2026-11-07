@@ -264,3 +264,18 @@ content into a local database, restore a production dump.
 To view the portfolio as its own site locally, run the command above, publish the page
 in the admin, start Django with ``DJANGO_PORTFOLIO_HOSTS=design.localhost`` (and the
 hostname in ``DJANGO_ALLOWED_HOSTS``) and open ``http://design.localhost:8000/``.
+
+Conclusion data migration safety
+--------------------------------
+
+Migration 0011 extracts only the closing bold paragraph, preserving other text,
+images and embedded media in order. If meaningful media or text follows a bold
+paragraph, it stays in the solution rather than being moved past that content.
+It applies to new migrations; it cannot
+recover content already lost by an earlier execution.
+
+Reversing 0011 preflights every page and its live/latest revisions before writing.
+A nonempty conclusion without a ``challenge_solution`` block refuses rollback
+before the conclusion column can be dropped. Restore that block on the page and
+its live/latest revisions, or manually preserve and clear their conclusions,
+then retry the reversal. Representable conclusions return to the solution.

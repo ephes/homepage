@@ -67,10 +67,10 @@ The test configuration is defined in ``pyproject.toml``:
 Key settings:
 
 * ``testpaths``: Limits default discovery to application tests, excluding local backup and media trees
-  (add any new test roots outside ``homepage`` to this list)
+  (add ordinary application test roots here; migration regressions deliberately run separately)
 * ``DJANGO_SETTINGS_MODULE``: Uses the test-specific Django settings
 * ``--reuse-db``: Reuses the test database between runs for faster testing
-* ``--no-migrations``: Skips migrations during test runs for speed
+* ``--no-migrations``: Skips migrations during the application suite for speed
 * ``-ra``: Shows a short summary of all test outcomes
 
 Media Storage in Tests
@@ -158,3 +158,12 @@ Continuous Integration
 ----------------------
 
 Tests are automatically run in CI/CD pipelines. Ensure all tests pass locally before pushing changes.
+
+Migration regressions
+---------------------
+
+Run ``uv run --locked pytest --migrations --create-db -p no:sugar tests/migrations``
+to exercise real MigrationExecutor/schema changes on a separate, freshly created
+test database. CI runs this after the application suite. Keep it separate because
+Wagtail's data migrations create default pages/sites that application fixtures
+intentionally construct themselves. All migration fixtures contain synthetic content.

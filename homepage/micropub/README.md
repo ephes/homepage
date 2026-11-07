@@ -148,3 +148,19 @@ Titles and each category name must fit the underlying model fields (currently
 surrogates are rejected, while valid multilingual text is accepted. Invalid
 values return `400 invalid_request` before page, revision, log or tag writes;
 the local form reports field errors. Values are never silently truncated.
+
+## Post identity and published dates
+
+Creation serializes Micropub writes to the selected blog within the publication
+transaction. It allocates an available sibling slug: the title-derived slug
+first, then `-2` through `-100`, respecting Wagtail's slug length and normal page
+validation/permissions. Titles without slug characters use `post`. Exhausting
+those 100 candidates returns `400 invalid_request` without creating a page or
+revision. Other page-creation workflows retain Wagtail's own validation; they do
+not participate in this Micropub lock protocol.
+
+Offset-aware `published` timestamps must be representable in UTC (years 1–9999).
+Out-of-range UTC conversions return `400 invalid_request` before creating a page
+or revision. Naive ISO timestamps are interpreted in Django's configured
+`TIME_ZONE`. Missing or ordinary unparseable timestamps use the current time,
+preserving the existing fallback policy. Normal explicit offsets remain valid.

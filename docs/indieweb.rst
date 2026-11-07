@@ -232,3 +232,13 @@ upstream templates, they must keep this policy for remote content:
 
 ``homepage/tests/test_webmentions.py`` renders each override and fails if a
 remote link or avatar lacks these attributes.
+
+Micropub creation safety
+------------------------
+
+Repeated titles receive distinct sibling slugs, with a bounded 100-candidate
+allocation inside the publication transaction. Slug-empty titles use ``post``.
+Naive ISO publication dates use the configured timezone; missing/unparseable
+dates use the current time. ISO dates whose timezone interpretation overflows
+UTC are rejected before any page/revision is created. See
+``homepage/micropub/README.md`` for the allocation and date contracts.

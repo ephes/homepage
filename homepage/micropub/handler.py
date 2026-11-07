@@ -7,7 +7,7 @@ from micropub requests, enabling IndieWeb publishing to your blog.
 
 import logging
 from collections import Counter
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from cast.models import Blog, Post
@@ -33,6 +33,7 @@ User = get_user_model()
 # extension). Its value is a blog slug as advertised by ``q=channel``.
 TARGET_BLOG_PROPERTY = "mp-channel"
 DEFAULT_MICROPUB_BLOG_SLUG = "ephes_blog"
+MAX_SLUG_ATTEMPTS = 100
 
 # Property names that may be named in logs. Property *values* are never logged.
 LOGGABLE_PROPERTY_NAMES = frozenset(
@@ -217,11 +218,23 @@ class CastPostMicropubHandler(MicropubContentHandler):
         # Resolve the explicitly selected (or configured default) blog and make sure
         # the user may add and publish posts there before writing anything.
         blog = self._get_target_blog(properties, user)
+        # Serialize sibling allocation and treebeard's child path update for
+        # concurrent Micropub creates under the same parent.
+        blog = Blog.objects.select_for_update().get(pk=blog.pk)
+        base_slug = slugify(title) or "post"
+        max_length = Post._meta.get_field("slug").max_length
+        for attempt in range(1, MAX_SLUG_ATTEMPTS + 1):
+            suffix = "" if attempt == 1 else f"-{attempt}"
+            slug = base_slug[: max_length - len(suffix)] + suffix
+            if not blog.get_children().filter(slug=slug).exists():
+                break
+        else:
+            raise MicropubContentError("No available post slug")
 
         # Create the post as a draft first
         post = Post(
             title=title,
-            slug=slugify(title),
+            slug=slug,
             visible_date=published,
             owner=user,
             live=False,  # Start as draft
@@ -301,9 +314,17 @@ class CastPostMicropubHandler(MicropubContentHandler):
         if published and published[0]:
             try:
                 # Parse ISO format date
-                return datetime.fromisoformat(str(published[0]).replace("Z", "+00:00"))
+                value = datetime.fromisoformat(str(published[0]).replace("Z", "+00:00"))
             except (ValueError, AttributeError):
                 logger.warning("Micropub create: unparseable published date, using the current time")
+            else:
+                try:
+                    if timezone.is_naive(value):
+                        value = timezone.make_aware(value, timezone.get_default_timezone())
+                    value.astimezone(UTC)
+                except (OverflowError, ValueError):
+                    raise MicropubContentError("Published date is outside the supported UTC range") from None
+                return value
 
         return timezone.now()
 

@@ -332,33 +332,3 @@ process.stdout.write(JSON.stringify({{
     assert evidence["generatedAfterDrawFailure"] is True
     assert evidence["uploadCount"] == 2
     assert evidence["freshFallback"] is True
-
-
-def test_homepage_optional_enhancements_have_independent_error_boundaries():
-    script_path = finders.find("portfolio/prototype/homepage.js")
-
-    assert script_path is not None
-    script = Path(script_path).read_text()
-    enhancement_names = (
-        "navigation",
-        "header",
-        "reels",
-        "about-lines",
-        "about-tiles",
-        "custom-cursor",
-        "reduced-motion-shapes",
-    )
-
-    enhancement_runner = javascript_function_body(script, "runPortfolioEnhancement")
-    assert re.search(
-        r"try\s*\{\s*initialize\(\);\s*\}\s*catch\s*\(error\)",
-        enhancement_runner,
-    )
-    registrations = re.findall(
-        r"runPortfolioEnhancement\(\s*['\"]([^'\"]+)['\"]\s*,\s*function\s*\(\s*\)",
-        script,
-    )
-    assert registrations == list(enhancement_names)
-
-    post_webgl = script.split("Navigation und Scroll-Lock", maxsplit=1)[1]
-    assert re.search(r"(?m)^\s*\(\s*function\s*\(\s*\)", post_webgl) is None

@@ -51,7 +51,9 @@ def _portfolio_shell_context(*, site, portfolio_index=None, include_legal_sectio
 
     if portfolio_index is None:
         portfolio_index = _portfolio_index_for_site(site)
-    portfolio_projects = list(portfolio_index.get_portfolio_projects().order_by("path")) if portfolio_index else []
+    portfolio_projects = (
+        list(portfolio_index.get_portfolio_navigation_projects().order_by("path")) if portfolio_index else []
+    )
     portfolio_site_settings = get_site_setting_or_default(PortfolioSiteSettings, site)
     legal_defaults = {} if include_legal_sections else {"imprint_sections": [], "privacy_sections": []}
     portfolio_legal_settings = get_site_setting_or_default(LegalPageSettings, site, **legal_defaults)
@@ -71,14 +73,15 @@ def error_501(request):
     site = Site.find_for_request(request)
     context = _portfolio_shell_context(site=site)
     error_settings = get_site_setting_or_default(ErrorPageSettings, site)
-    portfolio_projects = context["portfolio_projects"]
+    portfolio_index = context["portfolio_index"]
+    featured_projects = list(portfolio_index.get_portfolio_projects()[:2]) if portfolio_index else []
     return render(
         request,
         "portfolio/501.html",
         {
             **context,
             "error_settings": error_settings,
-            "featured_projects": portfolio_projects[:2],
+            "featured_projects": featured_projects,
         },
         status=501,
     )

@@ -195,7 +195,11 @@ queue, font promises and clock, while retaining real DOM, Canvas2D and navigatio
 events. Context/shader/startup/frame faults must reveal readable fallback content
 and stop animation; pending/rejected/fulfilled/late fonts must start exactly once
 within the 1.5 second fallback deadline. This is lifecycle/error-boundary evidence,
-not a GPU rendering or performance test. The Python 3.14 CI
+not a GPU rendering or performance test. A reel dependency fault verifies that
+later tile, cursor and SVG motion controls survive a failed initializer; native
+navigation remains usable. Repeated
+visibility/intersection/live reduced-motion transitions check zero-or-one pending
+frame ownership, including overlapping pause reasons and initially reduced motion. The Python 3.14 CI
 job runs this gate after the application and migration suites. These regressions
 stay outside the default application testpaths because Chromium is an explicit
 prerequisite.

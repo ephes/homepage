@@ -218,3 +218,20 @@ Generic specific page instances are resolved below nested site roots using the
 full ancestor path, including decoded Unicode. Query strings and fragments do
 not change identity, and application routes are excluded. Draft and restricted
 pages remain available to callers; lookup itself grants no visibility or access.
+
+Rendition repair and signup admission
+-------------------------------------
+
+Run ``uv run --locked pytest homepage/core/tests/test_regenerate_broken_renditions.py
+homepage/users/tests/test_signup_admission.py`` for these boundaries. Rendition
+fixtures use generated images and temporary local storage; database write faults
+occur after the real file write. They protect owned-output cleanup, shared and
+preexisting object preservation, recovery diagnostics, rollback and retry.
+
+Signup tests render the real allauth local/social routes with a synthetic site and
+provider. Disabled registration offers no signup form and creates no User,
+EmailAddress or SocialAccount, including the automatic social signup path. Enabling
+registration restores signup, and existing local/social users can still log in
+while registration is closed. The synthetic callback completes allauth's login
+flow directly; it makes no OAuth or external service call. Adapter-decision
+mutations must fail these tests.

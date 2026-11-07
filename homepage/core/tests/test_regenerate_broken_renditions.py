@@ -256,3 +256,167 @@ def test_command_reports_unchecked_renditions_and_fails(site_root, monkeypatch, 
 
     assert "Blog flaky: checked 1 posts, regenerated 0, unknown 1, failed 0" in stdout.getvalue()
     assert f"rendition {rendition.pk}" in stderr.getvalue() and "left unchanged" in stderr.getvalue()
+
+
+@pytest.fixture
+def repair_storage(monkeypatch, tmp_path):
+    from django.core.files.storage import FileSystemStorage
+
+    storage = FileSystemStorage(location=tmp_path)
+    field = get_image_model().get_rendition_model()._meta.get_field("file")
+    monkeypatch.setattr(field, "storage", storage)
+    return storage
+
+
+def failed_row_save(monkeypatch, rendition, storage):
+    """Let the real FileField write, then fail the database write boundary."""
+    from django.db import DatabaseError
+
+    allocated = []
+    save = storage.save
+
+    def record_save(*args, **kwargs):
+        name = save(*args, **kwargs)
+        allocated.append(name)
+        return name
+
+    def fail(*args, **kwargs):
+        assert allocated and storage.exists(allocated[-1])
+        raise DatabaseError("row write failed")
+
+    monkeypatch.setattr(storage, "save", record_save)
+    monkeypatch.setattr(type(rendition), "_save_table", fail)
+    return allocated
+
+
+def missing_legacy_rendition():
+    image = make_image("save-failure")
+    rendition = make_rendition(image)
+    remove_file(rendition)
+    type(rendition).objects.filter(pk=rendition.pk).update(file="images/legacy-missing.png")
+    return image, stored(rendition)
+
+
+def test_failed_row_save_removes_only_owned_output_and_retry_attaches_one(monkeypatch, repair_storage):
+    from django.core.files.base import ContentFile
+
+    image, rendition = missing_legacy_rendition()
+    before = (rendition.file.name, rendition.width, rendition.height)
+    survivor = repair_storage.save("images/existing.png", ContentFile(b"existing"))
+    allocated = failed_row_save(monkeypatch, rendition, repair_storage)
+
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert len(allocated) == 1
+    assert not repair_storage.exists(allocated[0])
+    assert repair_storage.open(survivor).read() == b"existing"
+    fresh = stored(rendition)
+    assert (fresh.file.name, fresh.width, fresh.height) == before
+    assert not result.regenerated and "row write failed" in result.failed[0][2]
+    monkeypatch.undo()
+    # Reinstall the temporary backend after undoing the fault injection.
+    monkeypatch.setattr(type(rendition)._meta.get_field("file"), "storage", repair_storage)
+    retry = repair.regenerate_renditions_for_image(image)
+    assert [r.pk for r in retry.regenerated] == [rendition.pk]
+    assert image.renditions.count() == 1
+    assert file_exists(rendition)
+
+
+def test_failed_row_save_preserves_output_referenced_by_another_row(monkeypatch, repair_storage):
+    image, rendition = missing_legacy_rendition()
+    other = make_rendition(make_image("shared-output"))
+    allocated = failed_row_save(monkeypatch, rendition, repair_storage)
+    save = repair_storage.save
+
+    def share(*args, **kwargs):
+        name = save(*args, **kwargs)
+        type(other).objects.filter(pk=other.pk).update(file=name)
+        return name
+
+    monkeypatch.setattr(repair_storage, "save", share)
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert allocated and stored(other).file.name == allocated[0]
+    assert repair_storage.exists(allocated[0])
+    assert stored(rendition).file.name == "images/legacy-missing.png"
+    assert "row write failed" in result.failed[0][2]
+
+
+def test_failed_row_save_never_deletes_a_preexisting_returned_name(monkeypatch, repair_storage):
+    from django.core.files.base import ContentFile
+
+    image, rendition = missing_legacy_rendition()
+    existing = repair_storage.save("images/preexisting.png", ContentFile(b"existing"))
+    allocated = failed_row_save(monkeypatch, rendition, repair_storage)
+
+    def reuse(*args, **kwargs):
+        allocated.append(existing)
+        return existing
+
+    monkeypatch.setattr(repair_storage, "save", reuse)
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert allocated == [existing]
+    assert repair_storage.open(existing).read() == b"existing"
+    assert "row write failed" in result.failed[0][2]
+    assert existing in result.failed[0][2]  # Recovery location when ownership cannot be proven.
+
+
+def test_cleanup_failure_preserves_primary_error_and_reports_recovery(monkeypatch, repair_storage):
+    image, rendition = missing_legacy_rendition()
+    allocated = failed_row_save(monkeypatch, rendition, repair_storage)
+
+    def fail_delete(name):
+        raise OSError("cleanup unavailable")
+
+    monkeypatch.setattr(repair_storage, "delete", fail_delete)
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert allocated and repair_storage.exists(allocated[0])
+    assert "row write failed" in result.failed[0][2]
+    assert "cleanup unavailable" in result.failed[0][2]
+    assert allocated[0] in result.failed[0][2]
+    assert stored(rendition).file.name == "images/legacy-missing.png"
+
+
+def test_failed_save_after_database_write_rolls_back_the_old_row(monkeypatch, repair_storage):
+    image, rendition = missing_legacy_rendition()
+    save = type(rendition).save
+    calls = []
+
+    def save_then_fail(self, *args, **kwargs):
+        save(self, *args, **kwargs)
+        calls.append(self.file.name)
+        raise RuntimeError("post-save failure")
+
+    monkeypatch.setattr(type(rendition), "save", save_then_fail)
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert len(calls) == 1
+    assert stored(rendition).file.name == "images/legacy-missing.png"
+    assert not repair_storage.exists(calls[0])
+    assert "post-save failure" in result.failed[0][2]
+
+
+def test_reference_check_failure_retains_output_for_recovery(monkeypatch, repair_storage):
+    from django.db.models import QuerySet
+
+    image, rendition = missing_legacy_rendition()
+    allocated = failed_row_save(monkeypatch, rendition, repair_storage)
+    exists = QuerySet.exists
+    checked = []
+
+    def fail_check(self):
+        if self.model is type(rendition) and allocated:
+            checked.append(True)
+            raise RuntimeError("reference check unavailable")
+        return exists(self)
+
+    monkeypatch.setattr(QuerySet, "exists", fail_check)
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert checked == [True]
+    assert repair_storage.exists(allocated[0])
+    assert "row write failed" in result.failed[0][2]
+    assert "reference check unavailable" in result.failed[0][2]
+    assert allocated[0] in result.failed[0][2]

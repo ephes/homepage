@@ -18,7 +18,19 @@ A rendition is only regenerated when the storage backend reports that its file d
 not exist. If the storage cannot answer (throttling, an outage, denied access), the
 rendition is reported as ``unknown`` and neither deleted nor replaced. A missing
 rendition keeps its database row: the new file is generated first and then attached
-to that row, so a failed regeneration changes nothing.
+to that row. Repairs use a distinct ``repair-<random-id>`` filename, preserving
+existing storage objects. The row save runs inside a database savepoint, so even
+a save hook that writes and then raises leaves the old row intact.
+
+After a failed row save, the command deletes only the newly allocated name whose
+ownership it established before writing, and only after checking that no rendition
+row references it. A storage backend that returns a different name makes ownership
+uncertain: that object is retained and its name is reported for recovery. Failed
+reference checks or deletion also retain the primary error and report the cleanup
+name/error. Inspect those named objects before removing them manually. An interrupted
+process or a storage write that raises before returning a name can still leave an
+object behind; this is compensation for reported save failures, not a crash-atomic
+storage/database transaction. Run repairs without concurrent media writers.
 
 The command exits with an error when a rendition could not be checked or regenerated.
 Those renditions are listed on stderr and left unchanged, so it is safe to simply run

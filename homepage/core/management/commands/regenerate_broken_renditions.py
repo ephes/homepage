@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
+from pathlib import Path
+from uuid import uuid4
 
 from cast.models import Blog, Post
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 
 @dataclass
@@ -30,8 +33,8 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     Only a clear "does not exist" answer from the storage backend counts as missing.
     If the storage cannot say (throttling, an outage, denied access, ...) the rendition
     is reported as unknown and left alone. A missing rendition keeps its database row:
-    the new file is generated first and then attached to the existing row, so a failed
-    regeneration changes nothing and can be retried.
+    the new file is generated first and then attached inside a database savepoint.
+    Failed saves retain the old row and compensate only owned, unreferenced output.
     """
     result = RepairResult()
     for rendition in image.renditions.all():
@@ -43,13 +46,39 @@ def regenerate_renditions_for_image(image) -> RepairResult:
             continue
         if exists:
             continue
+        allocated_name = None
+        owned_output = False
+        storage = rendition.file.storage
         try:
-            # Generate first: the row is only touched once a replacement file exists.
-            new_file = image.generate_rendition_file(rendition.filter)
-            rendition.file = new_file
-            rendition.save()
+            # A distinct name keeps the missing row's old path and existing objects intact.
+            with image.generate_rendition_file(rendition.filter) as new_file:
+                rendition.file = new_file
+                filename = f"repair-{uuid4().hex}{Path(new_file.name).suffix}"
+                expected_name = rendition.file.field.generate_filename(rendition, filename)
+                if storage.exists(expected_name):
+                    raise FileExistsError(f"Repair destination already exists: {expected_name}")
+                rendition.file.save(filename, new_file, save=False)
+                allocated_name = rendition.file.name
+                owned_output = allocated_name == expected_name and allocated_name != stored_name
+            # Roll back even a save hook that writes the row and then raises. Cleanup queries
+            # run after the savepoint exits, so a database failure cannot poison them.
+            with transaction.atomic(using=rendition._state.db):
+                rendition.save()
         except Exception as error:  # noqa: BLE001 - report and keep going with the other renditions
-            result.failed.append((rendition.pk, stored_name, f"regeneration failed: {error!r}"))
+            reason = f"regeneration failed: {error!r}"
+            if allocated_name:
+                if not owned_output:
+                    reason += f"; retained {allocated_name!r}: storage changed the name; ownership is uncertain"
+                else:
+                    try:
+                        referenced = (
+                            type(rendition).objects.using(rendition._state.db).filter(file=allocated_name).exists()
+                        )
+                        if not referenced:
+                            storage.delete(allocated_name)
+                    except Exception as cleanup_error:  # noqa: BLE001 - preserve the primary failure
+                        reason += f"; cleanup failed for {allocated_name!r}: {cleanup_error!r}"
+            result.failed.append((rendition.pk, stored_name, reason))
             continue
         rendition.purge_from_cache()
         result.regenerated.append(rendition)

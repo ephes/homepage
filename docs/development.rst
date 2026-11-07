@@ -197,7 +197,7 @@ commit or lock reinstalls the affected certifi and pip versions; restart the
 application after syncing so running processes load the new bundle.
 
 2026-10-17 django-cast develop refresh
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``uv.lock`` advances only django-cast from ``704a60aa`` to ``ddcc44d9``
 (0.2.68 development). It adds transcript glossary snippets, private correction

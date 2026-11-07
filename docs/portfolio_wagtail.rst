@@ -284,7 +284,7 @@ Both directions of migration 0011 read and save only on the database selected
 by the migration command (``--database``); other databases remain untouched.
 
 Portfolio navigation interactions
---------------------------------
+---------------------------------
 
 The homepage and shared page menu enhance only unmodified primary clicks on
 local section links. Modified/middle clicks, canceled events, downloads, other
@@ -315,3 +315,14 @@ templates with 1 and 20 synthetic projects. Its cold image/rendition-cache budge
 is four queries (public restrictions, projects/categories, images, renditions),
 with site URL caching prepared separately. It also checks selected columns and
 zero-query menu rendering so deferred case-study data cannot be fetched lazily.
+
+Hero startup fallback
+---------------------
+
+The hero waits at most 1.5 seconds for font loading and readiness before rendering
+with available fonts. Rejected font loads also start immediately. Late font
+fulfilment repaints the textures with the loaded font without starting a second
+simulation; late rejection leaves the available-font rendering in place. Navigation and other enhancements
+initialize independently while the font wait is pending. Context, shader, initial
+render and later frame failures reveal the readable HTML heading and stop the
+simulation; navigation remains usable.

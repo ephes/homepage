@@ -668,10 +668,11 @@
   }
   if(motionPreference.addEventListener)motionPreference.addEventListener('change',syncMotionPreference);
   else motionPreference.addListener(syncMotionPreference);
-  var startAttempted=false;
+  var startAttempted=false, fontTimer=0;
   function start(){
     if(startAttempted)return;
     startAttempted=true;
+    clearTimeout(fontTimer);
     try {
       resize(); render();
       simulationReady=true;
@@ -691,10 +692,15 @@
     }
   }
   if(document.fonts && document.fonts.ready){
+    // Webfonts dürfen den ersten nutzbaren Render nicht unbegrenzt aufhalten.
+    fontTimer=setTimeout(start,1500);
     try {
       Promise.resolve(document.fonts.load('800 40px Saira'))
         .then(function(){return document.fonts.ready;})
-        .then(start, start);
+        .then(function(){
+          if(simulationReady)refreshTheme();
+          else start();
+        }, start);
     } catch (error) {
       start();
     }

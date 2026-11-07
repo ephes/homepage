@@ -187,7 +187,15 @@ The gate renders only synthetic Wagtail homepage/project fixtures, serves their
 production scripts/styles/fonts through intercepted browser requests, and
 rejects external resources. Chromium exercises desktop and narrow viewports,
 reduced motion, native link gestures, keyboard focus/inert cleanup, hover, and
-single/multiple-touch chapter routing. WebGL is disabled. The Python 3.14 CI
+single/multiple-touch chapter routing. WebGL is disabled in that navigation fixture.
+
+``tests/browser/test_hero_runtime.py`` separately executes the complete shipped
+hero script and stylesheet on synthetic HTML. It controls the WebGL API, frame
+queue, font promises and clock, while retaining real DOM, Canvas2D and navigation
+events. Context/shader/startup/frame faults must reveal readable fallback content
+and stop animation; pending/rejected/fulfilled/late fonts must start exactly once
+within the 1.5 second fallback deadline. This is lifecycle/error-boundary evidence,
+not a GPU rendering or performance test. The Python 3.14 CI
 job runs this gate after the application and migration suites. These regressions
 stay outside the default application testpaths because Chromium is an explicit
 prerequisite.

@@ -840,7 +840,7 @@ wheels = [
 [[package]]
 name = "django-cast"
 version = "0.2.68"
-source = { git = "https://github.com/ephes/django-cast?branch=develop#ddcc44d9ed1a47ac62b1d5ac93943eb1337d395a" }
+source = { git = "https://github.com/ephes/django-cast?branch=develop#e7fd52470d2deb087716fe742eda92518b41eebb" }
 dependencies = [
     { name = "crispy-bootstrap4" },
     { name = "django" },
@@ -967,7 +967,7 @@ wheels = [
 [[package]]
 name = "django-indieweb"
 version = "0.6.2"
-source = { git = "https://github.com/ephes/django-indieweb?branch=develop#c1918dc6fe40666a90f4f8fa662fd87a3cc13ed2" }
+source = { git = "https://github.com/ephes/django-indieweb?branch=develop#50ceea26ebfcc8808a9a2ebb8fec07541eb700fe" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "cryptography" },
@@ -1055,9 +1055,10 @@ wheels = [
 [[package]]
 name = "django-resume"
 version = "0.3.0"
-source = { git = "https://github.com/ephes/django-resume?branch=main#7e2fb3e86c2ce3c10e15ac2207fc62358e462410" }
+source = { git = "https://github.com/ephes/django-resume?branch=main#73123227c40680bf5e309b01d0da3e13ff6ff496" }
 dependencies = [
     { name = "django" },
+    { name = "filelock" },
     { name = "jsonschema" },
     { name = "nh3" },
 ]
@@ -1265,6 +1266,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/33/a4/9473c7c3b87009d9c1d74034e4a0f6a35ff0d42dd0f9866d0c3ec4e9217b/fastjsonschema-2.22.2.tar.gz", hash = "sha256:72064e12356a7d6ef02165be2946b9abadbdf238536e07eb587e3dbaa33099cf", size = 385171, upload-time = "2026-08-15T19:47:08.853Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/82/2755c7c982086f00d4dab85bc120ec35045a9fc2191893a6ce79afe94443/fastjsonschema-2.22.2-py3-none-any.whl", hash = "sha256:0fb3915616adac85ccfdd737d26be1089845d2019819505b42d39888458f74d4", size = 27413, upload-time = "2026-08-15T19:47:04.406Z" },
+]
+
+[[package]]
+name = "filelock"
+version = "4.2.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/1d/d730c664fcb4f1d264a722722a3134cf0881854f73c1fd58abf87572f232/filelock-4.2.9.tar.gz", hash = "sha256:96530b7c538d4ea08493ab067247aab7948c54d8cd622cce711c97cccc5d9896", size = 663116, upload-time = "2026-11-04T18:37:10.014Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/05/76184fe08339723d643ab47887a8e4de8f2921ca4e008617ab7490af7857/filelock-4.2.9-py3-none-any.whl", hash = "sha256:a379c50a729e5b68c8519a4d26489f755d9769960a236ecd838190e2a78db2e9", size = 164734, upload-time = "2026-11-04T18:37:08.273Z" },
 ]
 
 [[package]]

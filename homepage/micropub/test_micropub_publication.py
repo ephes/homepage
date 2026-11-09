@@ -291,7 +291,7 @@ def test_unexpected_failure_logs_only_the_error_type(blogs, users, caplog, capsy
 def test_endpoint_failure_logs_no_submitted_values(
     client, blogs, users, caplog, capsys, error_class, status, raised  # noqa: F811
 ):
-    """django-indieweb logs what the handler raises: message, or message plus traceback."""
+    """django-indieweb logs the class of what the handler raises; a 500 adds a message-free traceback."""
     caplog.set_level(logging.DEBUG)
     properties = secret_properties()
     del properties[SECRETS["property"]]
@@ -313,7 +313,8 @@ def test_endpoint_failure_logs_no_submitted_values(
     if status == 500:
         [record] = [record for record in indieweb_records if record.exc_info]
         logged = record.exc_info[1]
-        assert type(logged).__name__ == raised and str(logged) == "Micropub create failed (RuntimeError)"
+        # django-indieweb logs a copy without the message: class and stack only.
+        assert type(logged).__name__ == raised and str(logged) == ""
         assert logged.__cause__ is None and logged.__context__ is None
 
 

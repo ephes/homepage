@@ -1055,7 +1055,7 @@ wheels = [
 [[package]]
 name = "django-resume"
 version = "0.3.0"
-source = { git = "https://github.com/ephes/django-resume?branch=main#73123227c40680bf5e309b01d0da3e13ff6ff496" }
+source = { git = "https://github.com/ephes/django-resume?branch=main#93e37b76bc186debe3aa68976c693020e2278a5c" }
 dependencies = [
     { name = "django" },
     { name = "filelock" },

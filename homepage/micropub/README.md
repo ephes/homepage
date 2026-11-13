@@ -53,6 +53,14 @@ qualify. Rejected requests create nothing; the Micropub endpoint answers them
 with `400 invalid_request` (django-indieweb maps handler `ValueError`s to that
 response), and the form shows a generic error message.
 
+After waiting for the target blog's row lock, creation rechecks the selected
+identity, live status and slug ambiguity, then applies Wagtail's add/publish
+policy with a freshly loaded user. Changes committed during the wait reject
+creation without a partial page or revision. Permission/group rows themselves
+are not held locked throughout publication. Channel discovery reuses Wagtail's
+per-user permission cache; the one-versus-fifty-blog query oracle protects
+bounded SQL and preserves denied branches and ambiguous-slug exclusion.
+
 `q=source` lookups resolve the URL through the Wagtail page tree and require
 Wagtail **edit** permission on the post (not mere ownership).
 

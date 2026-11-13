@@ -236,11 +236,22 @@ while registration is closed. The synthetic callback completes allauth's login
 flow directly; it makes no OAuth or external service call. Adapter-decision
 mutations must fail these tests.
 
-Concurrent login admission
---------------------------
+Concurrent login and Micropub admission
+---------------------------------------
 
 ``uv run --locked pytest homepage/users/tests/test_login_concurrency.py`` uses
 independent spawned workers sharing a temporary production-style file cache.
 It checks atomic completed failures, one-slot client/username admission, lease
 expiry and late completion, successful/exceptional release and refusal rollback.
 No real credentials or external authentication backend is used.
+
+``uv run --locked pytest homepage/micropub/test_locked_target_policy.py
+homepage/micropub/test_channel_query_scaling.py`` checks current policy admission
+and bounded channel SQL. The policy cases require PostgreSQL: two independent
+connections hold and wait for the blog row, and ``pg_blocking_pids`` proves the
+wait before unpublishing/renaming the target, revoking publish permission or
+deactivating the user. All four must refuse without posts or revisions. SQLite
+skips these row-lock cases explicitly; it is not equivalent concurrency evidence.
+The discovery oracle compares one and fifty blogs for multiple permission roles;
+Wagtail already shares the necessary permission query, so no custom batching is
+required.

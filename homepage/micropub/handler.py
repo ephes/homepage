@@ -8,7 +8,7 @@ from micropub requests, enabling IndieWeb publishing to your blog.
 import logging
 from collections import Counter
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cast.models import Blog, Post
 from django.conf import settings
@@ -29,7 +29,10 @@ from .converters import ContentConverter
 from .validation import validate_category, validate_title
 
 logger = logging.getLogger(__name__)
-User = get_user_model()
+if TYPE_CHECKING:
+    from homepage.users.models import User
+else:
+    User = get_user_model()
 
 # Micropub property a client uses to choose the target blog (Micropub channels
 # extension). Its value is a blog slug as advertised by ``q=channel``.
@@ -220,9 +223,25 @@ class CastPostMicropubHandler(MicropubContentHandler):
         # Resolve the explicitly selected (or configured default) blog and make sure
         # the user may add and publish posts there before writing anything.
         blog = self._get_target_blog(properties, user)
+        selected_slug = blog.slug
         # Serialize sibling allocation and treebeard's child path update for
         # concurrent Micropub creates under the same parent.
-        blog = Blog.objects.select_for_update().get(pk=blog.pk)
+        blog = Blog.objects.select_for_update().filter(pk=blog.pk).first()
+        # The preliminary decision may predate a lock wait. Keep the selected
+        # identity and re-evaluate liveness/ambiguity on the locked row.
+        if (
+            blog is None
+            or not blog.live
+            or blog.slug != selected_slug
+            or Blog.objects.live().filter(slug=selected_slug).exclude(pk=blog.pk).exists()
+        ):
+            raise MicropubTargetError("No unique live blog matches the selected target")
+        # Wagtail caches group/page permissions on the user instance. A fresh
+        # instance also sees deactivation and group changes committed while we
+        # waited, without relying on private permission-cache attributes.
+        current_user = User.objects.filter(pk=user.pk).first()
+        if current_user is None or not user_can_publish_into(blog, current_user):
+            raise MicropubPermissionError("The user may not publish posts in the selected blog")
         base_slug = slugify(title) or "post"
         max_length = Post._meta.get_field("slug").max_length
         for attempt in range(1, MAX_SLUG_ATTEMPTS + 1):

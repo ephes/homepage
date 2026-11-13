@@ -235,3 +235,12 @@ registration restores signup, and existing local/social users can still log in
 while registration is closed. The synthetic callback completes allauth's login
 flow directly; it makes no OAuth or external service call. Adapter-decision
 mutations must fail these tests.
+
+Concurrent login admission
+--------------------------
+
+``uv run --locked pytest homepage/users/tests/test_login_concurrency.py`` uses
+independent spawned workers sharing a temporary production-style file cache.
+It checks atomic completed failures, one-slot client/username admission, lease
+expiry and late completion, successful/exceptional release and refusal rollback.
+No real credentials or external authentication backend is used.

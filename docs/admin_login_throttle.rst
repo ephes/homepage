@@ -39,18 +39,40 @@ those count as failed there. The Wagtail and browsable-API logins log such a
 user in, so there they count as a successful login. Wagtail then admits only
 users with the ``wagtailadmin.access_admin`` permission, independently of
 staff status.
-Successful logins do not count. GET requests are never throttled.
+Successful logins do not count. GET requests are never throttled. A view that
+raises before logging in counts as a failed attempt and still releases its
+admission slots.
 
 The client limit is checked first, and a refused request is not counted
 against anything. Once either limit is reached, every POST is refused with
 ``429 Too Many Requests`` and a ``Retry-After`` header, even with the correct
 password, until the oldest counted failure is older than the window.
 
+Concurrent authentication reserves one slot in both budgets before the view
+runs. Completed failures plus in-flight attempts cannot exceed either limit.
+If the username refuses admission, the client reservation is released without
+counting a failure. Successful logins release both slots without resetting
+previous failures. Reservations expire after 300 seconds if a worker disappears;
+keep the web worker request timeout below that lease. A request that outlives
+its lease can overlap a newer attempt; its late cleanup cannot remove the newer
+request's reservation. A temporary refusal reports the earliest slot expiry in
+``Retry-After``. The cache lock is held only for admission/completion, never
+while hashing a password.
+
 The rates live in ``REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]``. The counters
 use the ``api_token_auth_throttle`` cache when it is configured
 (production: a shared file-based cache under ``DJANGO_CACHE_LOCATION``), and
 the ``default`` cache otherwise. The legacy cache alias and directory are
 retained so existing admin lockouts survive removal of the token endpoint.
+
+File-cache updates use Django's file-lock API on 64 stable lock files in the
+``login-locks`` subdirectory of the configured cache location. All workers must
+share that directory on a filesystem supporting exclusive locks. Do not remove
+lock files while workers are running; ordinary cache clearing/culling leaves
+them intact. Existing failure keys, sliding expiry and username normalization
+are preserved. Local/test ``LocMemCache`` uses process-local thread locks and
+is suitable only for a single process. Other cache backends fail closed until
+a corresponding atomic locking strategy is provided.
 
 Locked out?
 -----------

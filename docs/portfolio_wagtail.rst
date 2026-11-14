@@ -326,3 +326,16 @@ simulation; late rejection leaves the available-font rendering in place. Navigat
 initialize independently while the font wait is pending. Context, shader, initial
 render and later frame failures reveal the readable HTML heading and stop the
 simulation; navigation remains usable.
+
+Historical conclusion migration replay
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Migration 0011 evaluates the live row and its distinct live/latest revisions
+independently. An existing conclusion is preserved in that record without
+preventing conversion of an eligible draft. Forward conversion and both reverse
+passes stream pages without caching the inventory (100-row fetch chunks); only
+one page and its selected revisions are processed at a time on the selected
+connection. Reverse preflight still checks every record before the first write.
+These changes affect fresh installs and migration replay only. They do not repair
+records in databases where 0011 is already applied; audit such records separately
+before any explicitly scoped repair.

@@ -11,6 +11,16 @@ from django.core.management.base import BaseCommand, CommandError
 
 from homepage.core.weeknotes.converter import BodyConversion, convert_body
 
+
+def _published_mode(target: Path) -> int:
+    try:
+        return target.stat().st_mode & 0o777
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        return 0o666 & ~umask
+
+
 # Report value for a page that changed between reading it and saving its conversion.
 CHANGED_SINCE_READ = "changed_since_read"
 # PostgreSQL's SQLSTATE for a row lock that NOWAIT could not get.
@@ -112,6 +122,9 @@ class Command(BaseCommand):
             raise CommandError(f"Cannot stage conversion report before changes: {error}") from error
         try:
             with stream:
+                # NamedTemporaryFile is always 0600; publish with the mode a plain
+                # create would give (or the replaced report's mode) so readers keep access.
+                os.chmod(stream.fileno(), _published_mode(target))
                 # Write/flush before any revision; fail early on unavailable report storage.
                 self._checkpoint_report(stream, report)
                 yield stream

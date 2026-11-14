@@ -5,7 +5,8 @@
 - Report rendition cache purge failures separately from committed repairs and
   add a cache-only retry by rendition ID.
 - Stage and atomically publish weeknote conversion reports, retaining recovery
-  receipts and completed revision identities on handled failures.
+  receipts and completed revision identities on handled failures. Published
+  reports keep the umask-derived mode or the mode of the report they replace.
 
 - Give cover uploads operation-specific names and compensate only storage with
   a proven exclusive-create contract; retain uncertain names with recovery diagnostics.

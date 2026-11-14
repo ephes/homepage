@@ -996,3 +996,25 @@ def test_conversion_failure_retains_completed_checkpoint(monkeypatch, tmp_path):
     (receipt,) = tmp_path.glob(".report.json.*.pending")
     assert json.loads(receipt.read_text())[0]["revision_id"] == first.latest_revision_id
     assert str(first.latest_revision_id) in stderr.getvalue()
+
+
+@pytest.mark.django_db
+def test_published_report_keeps_umask_mode_or_replaced_report_mode(tmp_path):
+    import os
+    import stat
+
+    _weeknote_post(slug="weeknotes-report-mode", overview_html=LEGACY_ARTICLES)
+    fresh = tmp_path / "fresh.json"
+    previous = os.umask(0o022)
+    try:
+        call_command("convert_weeknote_links", "--report", str(fresh), stdout=io.StringIO())
+    finally:
+        os.umask(previous)
+    assert stat.S_IMODE(fresh.stat().st_mode) == 0o644
+
+    existing = tmp_path / "existing.json"
+    existing.write_text("previous report")
+    existing.chmod(0o640)
+    call_command("convert_weeknote_links", "--report", str(existing), stdout=io.StringIO())
+    assert stat.S_IMODE(existing.stat().st_mode) == 0o640
+    assert existing.read_text() != "previous report"

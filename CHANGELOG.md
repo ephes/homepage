@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Vary fediverse discovery proxy responses on Accept and preserve upstream
+  wildcard variation so caches cannot reuse negotiated or uncacheable responses.
+- Keep fediverse gateway warnings and transport exceptions free of raw upstream
+  error details, retaining route/category diagnostics and admin-mail suppression.
+
 - Report rendition cache purge failures separately from committed repairs and
   add a cache-only retry by rendition ID.
 - Stage and atomically publish weeknote conversion reports, retaining recovery

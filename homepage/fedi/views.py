@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlsplit
 
 import certifi
 from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
+from django.utils.cache import patch_vary_headers
 
 logger = logging.getLogger(__name__)
 
@@ -94,13 +95,13 @@ def _resolve(host, port, remaining):
     except BaseException as exc:
         slots.release()
         if isinstance(exc, RuntimeError):
-            raise UpstreamError("cannot start resolver") from exc
+            raise UpstreamError("cannot start resolver") from None
         raise
     resolver.join(max(remaining, 0))
     if resolver.is_alive():
         raise UpstreamTimeout
     if "error" in result:
-        raise UpstreamError(f"cannot resolve {host}: {result['error']}")
+        raise UpstreamError("cannot resolve upstream")
     return result["addresses"]
 
 
@@ -142,8 +143,8 @@ def _connect(conn, parts, deadline, deadline_hit, active):
         conn.sock = sock
         return
     if isinstance(last_error, TimeoutError):
-        raise UpstreamTimeout from last_error
-    raise UpstreamError(f"cannot connect to {parts.hostname}: {last_error}")
+        raise UpstreamTimeout from None
+    raise UpstreamError("cannot connect to upstream")
 
 
 def _fetch(url, accept):
@@ -199,8 +200,8 @@ def _fetch(url, accept):
         raise
     except (OSError, ValueError, http.client.HTTPException) as exc:
         if deadline_hit.is_set() or isinstance(exc, TimeoutError):
-            raise UpstreamTimeout from exc
-        raise UpstreamError(f"{type(exc).__name__}: {exc}") from exc
+            raise UpstreamTimeout from None
+        raise UpstreamError("upstream transport or protocol error") from None
     finally:
         timer.cancel()
         conn.close()
@@ -230,16 +231,16 @@ def _proxy_wellknown(request, path, *, forward_query=True, default_accept="*/*")
     except UpstreamTimeout:
         logger.warning("Timeout fetching %s", path)
         return _gateway_error(request, "Upstream timeout", 504)
-    except UpstreamError as exc:
-        logger.warning("Failed to fetch %s: %s", path, exc)
+    except UpstreamError:
+        logger.warning("Failed to fetch %s: upstream failure (502)", path)
         return _gateway_error(request, "Bad gateway", 502)
 
     try:
         return _build_response(request, url, status, headers, content)
-    except ValueError as exc:
+    except ValueError:
         # Invalid upstream status or header values (BadHeaderError is a ValueError),
         # or a malformed redirect location.
-        logger.warning("Invalid upstream response for %s: %s", path, exc)
+        logger.warning("Invalid upstream response for %s (502)", path)
         return _gateway_error(request, "Bad gateway", 502)
 
 
@@ -263,6 +264,12 @@ def _build_response(request, url, status, headers, content):
         value = headers.get(name)
         if value is not None:
             response[name] = value
+    # Accept is the only caller-controlled header sent upstream. Other named
+    # upstream variations are constant here; '*' must still forbid cache reuse.
+    upstream_vary = {
+        name.strip() for header, value in headers.items() if header.lower() == "vary" for name in value.split(",")
+    }
+    patch_vary_headers(response, ["*"] if "*" in upstream_vary else ["Accept"])
     location = headers.get("Location")
     if 300 <= status < 400 and location:
         # Redirects are not followed; pass them on, absolute against the fedi host.

@@ -28,6 +28,11 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
    * Only the upstream status, ``Content-Type``, ``Cache-Control``,
      ``Access-Control-Allow-Origin`` and ``Content-Encoding`` are returned.
      Upstream ``Set-Cookie`` and all other headers are dropped.
+   * Responses vary on ``Accept``, including ``HEAD`` and redirects, so caches
+     keep negotiated representations separate. An upstream ``Vary: *`` is
+     preserved to forbid reuse. Other upstream variation names are dropped:
+     those client headers are never forwarded and their upstream values are
+     fixed by the proxy.
    * The body is not decoded: ``Accept-Encoding: identity`` is requested and
      any ``Content-Encoding`` the upstream still uses is passed on as is.
    * Upstream redirects are not followed; a ``3xx`` is returned to the client
@@ -49,7 +54,10 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
    * These ``502``/``504`` responses are expected when the fedi host is slow,
      for example while many servers resolve the account at once after a reply
      to a large account. Each is logged as a warning
-     (``Timeout fetching ...`` / ``Failed to fetch ...``) but does not mail
+     with its discovery route and a fixed timeout, upstream-failure or
+     invalid-response category. Raw exception text, exception chains, query
+     strings and upstream status/header/redirect values are omitted from these
+     diagnostics. These failures do not mail
      the admins: ``homepage.fedi.log_filters.SkipFediUpstreamFailures``,
      installed on the ``django.request`` logger in ``FediConfig.ready``, drops
      the request log record for them. Any ``500`` (an exception in the view or

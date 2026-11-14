@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reload and lock cover publication state, refuse competing drafts, and require
+  the social rendition before committing a cover change.
+
 - Convert historical portfolio live/latest conclusions independently and stream
   page hydration in forward and reverse migration passes, retaining rollback preflight.
 

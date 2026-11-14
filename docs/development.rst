@@ -328,8 +328,14 @@ not publish the page, nothing is left half done:
   file could not be removed, its storage name is printed so it can be deleted
   by hand.
 
-The social rendition is generated after the change is committed. A failure
-there leaves the new cover in place and is reported as an error.
+The required social rendition is generated inside the transaction before the
+cover can be published. A rendition failure keeps the prior cover and compensates
+both uploaded original and rendition files under the same ownership policy.
+At attachment the command reloads and locks the current blog and its revisions
+on the writer database with NOWAIT. Publication refuses a changed revision pair
+or an editor draft; review the current page before retrying. Unrelated current
+fields are preserved, including in ``--no-publish`` mode, which saves only cover
+fields. A busy or removed page fails without publication.
 
 Main Site Fonts
 ~~~~~~~~~~~~~~~

@@ -348,3 +348,52 @@ def test_recorder_wraps_and_restores_the_lazy_default_storage():
     finally:
         default_storage.delete(saved)
         default_storage.delete("cover-recorder/other.txt")
+
+
+def test_no_publish_uses_current_blog_after_upload(blog, new_cover_path, monkeypatch):
+    Image = get_image_model()
+    save = Image.save
+
+    def editor_during_upload(self, *args, **kwargs):
+        save(self, *args, **kwargs)
+        Blog.objects.filter(pk=blog.pk).update(title="Current editor title", description="Current editor body")
+
+    monkeypatch.setattr(Image, "save", editor_during_upload)
+    run(new_cover_path, "--no-publish")
+    current = Blog.objects.get(pk=blog.pk)
+    assert current.title == "Current editor title"
+    assert current.description == "Current editor body"
+
+
+def test_publish_refuses_editor_draft_created_during_upload(blog, new_cover_path, monkeypatch, storage):
+    Image = get_image_model()
+    save = Image.save
+    before = stored_names(storage)
+
+    def draft_during_upload(self, *args, **kwargs):
+        save(self, *args, **kwargs)
+        current = Blog.objects.get(pk=blog.pk)
+        current.title = "Editor draft"
+        current.save_revision()
+
+    monkeypatch.setattr(Image, "save", draft_during_upload)
+    with pytest.raises(CommandError, match="changed|draft"):
+        run(new_cover_path)
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id
+    assert stored_names(storage) == before
+
+
+def test_rendition_failure_prevents_publication_and_compensates_upload(blog, new_cover_path, monkeypatch, storage):
+    before = stored_names(storage)
+    image_ids = set(get_image_model().objects.values_list("pk", flat=True))
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("rendition failed")
+
+    monkeypatch.setattr(get_image_model(), "get_rendition", fail)
+    with pytest.raises(RuntimeError, match="rendition failed"):
+        run(new_cover_path)
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id
+    assert set(get_image_model().objects.values_list("pk", flat=True)) == image_ids
+    assert not Revision.objects.filter(object_id=str(blog.pk)).exists()
+    assert stored_names(storage) == before

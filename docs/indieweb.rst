@@ -15,12 +15,21 @@ Target blog
    (environment variable, default ``ephes_blog``) is used. There is no fallback
    to another blog; an unknown, non-live or ambiguous slug rejects the request.
    The local form offers a blog selector limited to publishable blogs (blogs
-   whose slug is shared by another live blog are never offered).
+   whose slug is shared by another live blog are never offered). Discovery uses
+   Wagtail's shared per-user permission cache. A database query-count regression
+   compares one and fifty blogs with inherited group permissions, denied branches,
+   inactive users, superusers, drafts and duplicate slugs; SQL stays bounded.
 
 Permissions
    The posting user needs Wagtail page permission to add *and* publish pages
    below the target blog (grant ``Add`` and ``Publish`` on the blog via a group
    in the Wagtail admin, or be a superuser). Inactive users never qualify.
+   After acquiring the parent-row lock for creation, the handler rechecks the
+   selected blog's identity, live status and unique slug, then loads a fresh user
+   and runs Wagtail's add/publish checks again. Unpublication, renaming,
+   deactivation or permission revocation committed during the wait refuses the
+   create before any child or revision is written. This admission check does
+   not lock all permission/group rows against subsequent administrative edits.
    Rejected requests create nothing; the endpoint answers ``400
    invalid_request`` and the form shows a generic error without exception text.
 

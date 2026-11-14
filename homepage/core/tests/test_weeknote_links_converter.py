@@ -915,3 +915,84 @@ def test_editor_save_waits_for_the_weeknote_conversion_and_then_completes():
     assert not editor.is_alive()
     assert errors == []
     assert Post.objects.get(pk=post.pk).get_latest_revision_as_object().title == "Saved after the conversion"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("failure", ["write", "replace"])
+def test_report_failure_preserves_old_report_and_committed_revision(monkeypatch, tmp_path, failure):
+    import os
+
+    post = _weeknote_post(slug="weeknotes-receipt", overview_html=REALISTIC_WEEKNOTE_OVERVIEW)
+    path = tmp_path / "report.json"
+    path.write_bytes(b"previous successful report\n")
+
+    def fail(*args, **kwargs):
+        raise OSError("report disk failure")
+
+    if failure == "replace":
+        monkeypatch.setattr(os, "replace", fail)
+    else:
+        # Initial preflight must succeed; fail the checkpoint after a real revision.
+        write = Command._checkpoint_report if hasattr(Command, "_checkpoint_report") else None
+
+        def late_failure(self, stream, report):
+            if any(entry["revision_id"] for entry in report):
+                fail()
+            return write(self, stream, report)
+
+        if write:
+            monkeypatch.setattr(Command, "_checkpoint_report", late_failure)
+        else:
+            from pathlib import Path
+
+            monkeypatch.setattr(Path, "write_text", fail)
+    stderr = io.StringIO()
+    with pytest.raises(DjangoCommandError, match="report|receipt"):
+        call_command("convert_weeknote_links", "--write", "--report", str(path), stdout=io.StringIO(), stderr=stderr)
+    assert path.read_bytes() == b"previous successful report\n"
+    post.refresh_from_db()
+    revision_id = post.latest_revision_id
+    assert revision_id is not None
+    assert str(revision_id) in stderr.getvalue()
+    assert post.slug in stderr.getvalue()
+    assert "retained" in stderr.getvalue()
+    before = post.revisions.count()
+    monkeypatch.undo()
+    call_command("convert_weeknote_links", "--write", "--report", str(path), stdout=io.StringIO())
+    assert post.revisions.count() == before
+
+
+@pytest.mark.django_db
+def test_report_preflight_fails_before_creating_revisions(tmp_path):
+    post = _weeknote_post(slug="weeknotes-preflight", overview_html=REALISTIC_WEEKNOTE_OVERVIEW)
+    before = post.revisions.count()
+    with pytest.raises(DjangoCommandError, match="report|receipt"):
+        call_command("convert_weeknote_links", "--write", "--report", str(tmp_path / "missing" / "report.json"))
+    assert post.revisions.count() == before
+
+
+@pytest.mark.django_db
+def test_conversion_failure_retains_completed_checkpoint(monkeypatch, tmp_path):
+    first = _weeknote_post(slug="weeknotes-receipt-first", overview_html=LEGACY_ARTICLES)
+    second = _weeknote_post(slug="weeknotes-receipt-second", overview_html=LEGACY_ARTICLES)
+    path = tmp_path / "report.json"
+    path.write_text("previous report")
+    save = Command._save_conversion
+
+    def fail_second(self, post, *args, **kwargs):
+        if post.pk == second.pk:
+            raise RuntimeError("second conversion failed")
+        return save(self, post, *args, **kwargs)
+
+    monkeypatch.setattr(Command, "_save_conversion", fail_second)
+    stderr = io.StringIO()
+    with pytest.raises(DjangoCommandError, match="second conversion failed"):
+        call_command("convert_weeknote_links", "--write", "--report", str(path), stderr=stderr)
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert first.latest_revision_id is not None
+    assert second.latest_revision_id is None
+    assert path.read_text() == "previous report"
+    (receipt,) = tmp_path.glob(".report.json.*.pending")
+    assert json.loads(receipt.read_text())[0]["revision_id"] == first.latest_revision_id
+    assert str(first.latest_revision_id) in stderr.getvalue()

@@ -255,3 +255,17 @@ skips these row-lock cases explicitly; it is not equivalent concurrency evidence
 The discovery oracle compares one and fifty blogs for multiple permission roles;
 Wagtail already shares the necessary permission query, so no custom batching is
 required.
+
+Cover, repair and conversion recovery regressions
+--------------------------------------------------
+
+The cover import tests use private generated images and exclusive local storage,
+plus a fake overwrite backend. They inject naming races, rendition/URL/database
+failures and competing editor state; two independent-connection editor cases
+explicitly require PostgreSQL. SQLite skips them and cannot establish row locking.
+Repair tests interleave two generated outputs before attachment, replace current
+row identities, and fault cache purges after a real save. Cache-only retry must
+allocate no files. Weeknote tests fault report preflight, checkpoint writes and
+atomic replace, checking preserved old bytes, retained revision identities and
+retry without duplicate revisions. MigrationExecutor tests independently convert
+live/latest content and measure retained large page instances in both directions.

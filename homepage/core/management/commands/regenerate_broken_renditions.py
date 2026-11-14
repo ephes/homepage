@@ -15,15 +15,17 @@ class RepairResult:
     # (rendition pk, stored file name, reason) for renditions whose database row was left as it was
     unknown: list = field(default_factory=list)
     failed: list = field(default_factory=list)
+    cache_pending: list = field(default_factory=list)
 
     def extend(self, other: "RepairResult") -> None:
         self.regenerated.extend(other.regenerated)
         self.unknown.extend(other.unknown)
         self.failed.extend(other.failed)
+        self.cache_pending.extend(other.cache_pending)
 
     @property
     def incomplete(self) -> bool:
-        return bool(self.unknown or self.failed)
+        return bool(self.unknown or self.failed or self.cache_pending)
 
 
 def regenerate_renditions_for_image(image) -> RepairResult:
@@ -39,6 +41,14 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     result = RepairResult()
     for rendition in image.renditions.all():
         stored_name = rendition.file.name
+        observed = (
+            stored_name,
+            rendition.image_id,
+            rendition.filter_spec,
+            rendition.focal_point_key,
+            rendition.width,
+            rendition.height,
+        )
         try:
             exists = rendition.file.storage.exists(stored_name)
         except Exception as error:  # noqa: BLE001 - any storage error means "we do not know"
@@ -63,7 +73,21 @@ def regenerate_renditions_for_image(image) -> RepairResult:
             # Roll back even a save hook that writes the row and then raises. Cleanup queries
             # run after the savepoint exits, so a database failure cannot poison them.
             with transaction.atomic(using=rendition._state.db):
-                rendition.save()
+                current = type(rendition).objects.using(rendition._state.db).select_for_update().get(pk=rendition.pk)
+                identity = (
+                    current.file.name,
+                    current.image_id,
+                    current.filter_spec,
+                    current.focal_point_key,
+                    current.width,
+                    current.height,
+                )
+                if identity != observed:
+                    raise RuntimeError("Rendition changed during regeneration; current row was left unchanged")
+                current.file.name = rendition.file.name
+                current.width, current.height = rendition.width, rendition.height
+                current.save(update_fields=["file", "width", "height"])
+                rendition = current
         except Exception as error:  # noqa: BLE001 - report and keep going with the other renditions
             reason = f"regeneration failed: {error!r}"
             if allocated_name:
@@ -80,8 +104,11 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                         reason += f"; cleanup failed for {allocated_name!r}: {cleanup_error!r}"
             result.failed.append((rendition.pk, stored_name, reason))
             continue
-        rendition.purge_from_cache()
         result.regenerated.append(rendition)
+        try:
+            rendition.purge_from_cache()
+        except Exception as error:  # the replacement is already committed
+            result.cache_pending.append((rendition.pk, rendition.file.name, repr(error)[:300]))
     return result
 
 
@@ -105,7 +132,14 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument("blog_slugs", nargs="+", type=str)
+        parser.add_argument("blog_slugs", nargs="*", type=str)
+        parser.add_argument(
+            "--retry-cache-purge",
+            nargs="+",
+            type=int,
+            metavar="RENDITION_ID",
+            help="Retry cache invalidation of current rows only; never generate files.",
+        )
         parser.add_argument(
             "--limit",
             type=int,
@@ -117,6 +151,25 @@ class Command(BaseCommand):
         limit = options["limit"]
         if limit is not None and limit < 1:
             raise CommandError("--limit must be a positive number")
+        if options["retry_cache_purge"]:
+            if options["blog_slugs"] or limit is not None:
+                raise CommandError("--retry-cache-purge is used without blog slugs or --limit")
+            from wagtail.images import get_image_model
+
+            Rendition = get_image_model().get_rendition_model()
+            pending = []
+            for pk in dict.fromkeys(options["retry_cache_purge"]):
+                try:
+                    Rendition.objects.get(pk=pk).purge_from_cache()
+                except Exception as error:
+                    pending.append(pk)
+                    self.stderr.write(f"rendition {pk}: cache purge failed: {repr(error)[:300]}")
+            if pending:
+                raise CommandError(f"Retry cache purge for rendition IDs: {pending}")
+            self.stdout.write("Cache purge completed; no rendition files were generated.")
+            return
+        if not options["blog_slugs"]:
+            raise CommandError("Provide blog slugs or --retry-cache-purge")
         blogs = []
         for slug in options["blog_slugs"]:
             try:
@@ -146,10 +199,17 @@ class Command(BaseCommand):
                 f"Blog {blog.slug}: checked {post_count} posts, regenerated {len(blog_result.regenerated)}, "
                 f"unknown {len(blog_result.unknown)}, failed {len(blog_result.failed)}"
             )
+            for pk, stored_name, reason in blog_result.cache_pending:
+                self.stderr.write(
+                    f"rendition {pk} ({stored_name}) repaired; cache purge pending: {reason}. "
+                    f"Retry with --retry-cache-purge {pk}"
+                )
             total.extend(blog_result)
         self.stdout.write(f"generated renditions: {len(total.regenerated)}")
         if total.incomplete:
             raise CommandError(
                 f"{len(total.unknown)} renditions could not be checked and {len(total.failed)} could not be "
-                "regenerated. They were left unchanged; rerun the command to retry."
+                f"regenerated. They were left unchanged; rerun the command to retry. "
+                f"{len(total.cache_pending)} committed repairs have cache purge pending; "
+                "use --retry-cache-purge with the reported IDs."
             )

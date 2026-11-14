@@ -1,10 +1,12 @@
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from unittest.mock import patch
+from uuid import uuid4
 
 from cast.models import Blog
 from django.contrib.auth import get_user_model
 from django.core.files import File
+from django.core.files.storage import FileSystemStorage
 from django.core.management.base import BaseCommand, CommandError
 from django.db import OperationalError, router, transaction
 from wagtail.images import get_image_model
@@ -14,22 +16,25 @@ SOCIAL_COVER_RENDITION_SPEC = "fill-1200x630|format-jpeg|jpegquality-75"
 
 
 @contextmanager
-def _record_saved_names(storage, saved_names: list[str]):
-    """Record the names ``storage.save()`` returns while the block runs.
+def _record_saved_names(storage, saved_names: list[tuple[str, bool]]):
+    """Allocate operation names; compensate only a known exclusive-create backend.
 
-    A name is recorded only when it was free before the save: a storage that
-    overwrites returns the requested name even if an object with that name was
-    already there, and that object is not this run's to delete. The command is
-    a single-threaded one-off, so wrapping the shared storage's ``save`` for the
-    duration of the upload does not affect anything else.
+    Django's generic save() contract permits overwrite. FileSystemStorage with
+    allow_overwrite=False uses exclusive creation even if another writer races
+    its name selection. deconstruct() is its public constructor configuration API.
+    Unknown/custom backends are usable, but their returned names are retained.
     """
     original_save = storage.save
+    exclusive = False
+    if type(storage) is FileSystemStorage:
+        _, args, kwargs = storage.deconstruct()
+        exclusive = not kwargs.get("allow_overwrite", args[4] if len(args) > 4 else False)
 
     def recording_save(name, content, max_length=None):
-        name_was_taken = storage.exists(name)
-        saved_name = original_save(name, content, max_length=max_length)
-        if not (name_was_taken and saved_name == name):
-            saved_names.append(saved_name)
+        path = Path(name)
+        allocated = str(path.with_name(f"cover-{uuid4().hex}{path.suffix}"))
+        saved_name = original_save(allocated, content, max_length=max_length)
+        saved_names.append((saved_name, exclusive))
         return saved_name
 
     with patch.object(storage, "save", recording_save):
@@ -40,7 +45,8 @@ class Command(BaseCommand):
     help = (
         "Import an image file and set it as the cover image for a blog page. "
         "If saving the image or the blog page fails, the database changes are rolled back "
-        "and the newly uploaded file is removed again; existing files are never deleted."
+        "and exclusively owned uploads are removed again. Uncertain storage names are reported "
+        "for recovery; existing files are never deleted."
     )
 
     def add_arguments(self, parser):
@@ -101,6 +107,7 @@ class Command(BaseCommand):
                     image.save(using=alias)
                 # A required rendition is part of the publication precondition.
                 rendition = image.get_rendition(SOCIAL_COVER_RENDITION_SPEC)
+                rendition_url = rendition.url
                 with self._current_blog(blog.pk, alias) as current:
                     if not options["no_publish"] and (
                         (current.latest_revision_id, current.live_revision_id) != expected_revisions
@@ -121,7 +128,7 @@ class Command(BaseCommand):
         message = "Updated {} cover image to image {}; social rendition: {}".format(
             blog.slug,
             image.pk,
-            rendition.url,
+            rendition_url,
         )
         self.stdout.write(self.style.SUCCESS(message))
 
@@ -132,8 +139,12 @@ class Command(BaseCommand):
         try:
             with transaction.atomic(using=alias):
                 list(
-                    Page.objects.using(alias).get(pk=pk).revisions.using(alias)
-                    .select_for_update(nowait=True, no_key=True).order_by("pk").values_list("pk", flat=True)
+                    Page.objects.using(alias)
+                    .get(pk=pk)
+                    .revisions.using(alias)
+                    .select_for_update(nowait=True, no_key=True)
+                    .order_by("pk")
+                    .values_list("pk", flat=True)
                 )
                 Page.objects.using(alias).select_for_update(nowait=True, no_key=True).get(pk=pk)
                 yield Blog.objects.using(alias).select_for_update(nowait=True, no_key=True).get(pk=pk)
@@ -146,7 +157,12 @@ class Command(BaseCommand):
 
     def _remove_saved_files(self, storage, saved_names):
         """Delete the files this run stored; report any that could not be removed."""
-        for name in saved_names:
+        for name, owned in saved_names:
+            if not owned:
+                self.stderr.write(
+                    f"Retained unreferenced upload {name!r}: storage does not guarantee exclusive creation."
+                )
+                continue
             try:
                 storage.delete(name)
             except Exception as exc:  # the original failure must stay the reported error

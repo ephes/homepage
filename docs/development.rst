@@ -316,20 +316,22 @@ The image is uploaded through the image model, so django-cast strips EXIF GPS
 data from it like from any other upload. The command stores the image file
 first and then changes the database: it creates the image row and saves (or, by default, publishes a revision of) the
 blog page in one transaction. If that fails, for example because the user may
-not publish the page, nothing is left half done:
+not publish the page, recovery distinguishes database rollback from storage cleanup:
 
 * the image row and the blog change are rolled back, so the blog keeps its
   previous cover image and alt text;
-* the file uploaded by this run is deleted from storage again. Only the name
-  that the storage returned for this upload is removed, and only if that name
-  was free before; the previous cover and any other existing file are never
-  deleted;
+* uploads use random operation basenames. A returned name is eligible for cleanup on
+  standard FileSystemStorage configured with ``allow_overwrite=False``. That
+  backend guarantees exclusive creation even during a naming race. Generic,
+  custom and overwrite-capable backends (including S3) do not provide that
+  guarantee through Django's save API; their returned names are retained and
+  printed for manual inspection on failure. Existing files are never deleted;
 * the original error is raised and the command exits non-zero. If the uploaded
   file could not be removed, its storage name is printed so it can be deleted
   by hand.
 
-The required social rendition is generated inside the transaction before the
-cover can be published. A rendition failure keeps the prior cover and compensates
+The required social rendition and its URL are validated inside the transaction
+before the cover can be published. A rendition failure keeps the prior cover and compensates
 both uploaded original and rendition files under the same ownership policy.
 At attachment the command reloads and locks the current blog and its revisions
 on the writer database with NOWAIT. Publication refuses a changed revision pair

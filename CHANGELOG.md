@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Report rendition cache purge failures separately from committed repairs and
+  add a cache-only retry by rendition ID.
+- Stage and atomically publish weeknote conversion reports, retaining recovery
+  receipts and completed revision identities on handled failures.
+
+- Give cover uploads operation-specific names and compensate only storage with
+  a proven exclusive-create contract; retain uncertain names with recovery diagnostics.
+- Fence rendition repair attachment against current row identity and compensate
+  losing repair output instead of overwriting a concurrent replacement.
+
 - Reload and lock cover publication state, refuse competing drafts, and require
   the social rendition before committing a cover change.
 

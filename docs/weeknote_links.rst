@@ -219,3 +219,21 @@ configured through ``CAST_POST_BODY_BLOCKS``. Daybook can send the author-facing
 JSON shape above; the editor API validates and prepares it through the Wagtail
 block API and returns the same logical value without exposing internal
 ``ListBlock`` item wrappers.
+
+Report publication and interrupted runs
+--------------------------------------
+
+With ``--report``, the command creates a unique sibling ``.pending`` receipt and
+writes/flushes it before making database changes. Each completed page checkpoints
+its revision ID and publication result. On success a same-directory atomic replace
+publishes the JSON report; an existing report is never truncated in place.
+
+On a handled conversion, write, flush, close or replace failure, the existing report
+survives. The command exits nonzero, retains the staged receipt path, and prints
+every completed revision ID, slug and publication flag on stderr. Inspect both:
+a failed write may leave an incomplete staged JSON file. Database changes already
+committed are not undone by a report failure. Preserve stderr with the receipt,
+inspect the identified revisions, then retry from current page state. Converted
+live content is unchanged on retry, and existing converted drafts are skipped;
+the retry does not republish those revisions. This is recovery evidence for handled
+failures, not a crash-atomic transaction spanning database and report filesystem.

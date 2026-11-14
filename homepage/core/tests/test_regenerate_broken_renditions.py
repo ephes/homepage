@@ -420,3 +420,94 @@ def test_reference_check_failure_retains_output_for_recovery(monkeypatch, repair
     assert "row write failed" in result.failed[0][2]
     assert "reference check unavailable" in result.failed[0][2]
     assert allocated[0] in result.failed[0][2]
+
+
+def test_repair_refuses_a_row_replaced_during_generation(monkeypatch, repair_storage):
+    from django.core.files.base import ContentFile
+
+    image, rendition = missing_legacy_rendition()
+    external = repair_storage.save("images/current.png", ContentFile(b"current owner"))
+    save = repair_storage.save
+    allocated = []
+
+    def competing_attachment(*args, **kwargs):
+        name = save(*args, **kwargs)
+        allocated.append(name)
+        type(rendition).objects.filter(pk=rendition.pk).update(file=external, width=333)
+        return name
+
+    monkeypatch.setattr(repair_storage, "save", competing_attachment)
+    result = repair.regenerate_renditions_for_image(image)
+    assert stored(rendition).file.name == external
+    assert stored(rendition).width == 333
+    assert repair_storage.open(external).read() == b"current owner"
+    assert len(result.failed) == 1 and "changed" in result.failed[0][2]
+    assert allocated and not repair_storage.exists(allocated[0])
+
+
+def test_two_repairs_keep_the_winner_and_compensate_the_loser(monkeypatch, repair_storage):
+    image, rendition = missing_legacy_rendition()
+    save = repair_storage.save
+    allocated = []
+    nested = []
+
+    def interleave(*args, **kwargs):
+        name = save(*args, **kwargs)
+        allocated.append(name)
+        if len(allocated) == 1:
+            nested.append(repair.regenerate_renditions_for_image(image))
+        return name
+
+    monkeypatch.setattr(repair_storage, "save", interleave)
+    result = repair.regenerate_renditions_for_image(image)
+    assert len(nested[0].regenerated) == 1
+    assert len(result.failed) == 1 and "changed" in result.failed[0][2]
+    assert stored(rendition).file.name == allocated[1]
+    assert repair_storage.exists(allocated[1])
+    assert not repair_storage.exists(allocated[0])
+
+
+def test_cache_failure_keeps_committed_repairs_and_continues(monkeypatch, repair_storage):
+    image = make_image("purge-failure")
+    first = make_rendition(image)
+    second = make_rendition(image, "width-50")
+    for rendition in (first, second):
+        remove_file(rendition)
+    purge = type(first).purge_from_cache
+
+    def fail_first(self):
+        if self.pk == first.pk:
+            raise RuntimeError("cache unavailable")
+        purge(self)
+
+    monkeypatch.setattr(type(first), "purge_from_cache", fail_first)
+    result = repair.regenerate_renditions_for_image(image)
+    assert {r.pk for r in result.regenerated} == {first.pk, second.pk}
+    assert file_exists(first) and file_exists(second)
+    assert result.incomplete and not result.failed
+    assert result.cache_pending[0][0] == first.pk
+    repaired_name = stored(first).file.name
+    monkeypatch.setattr(type(first), "purge_from_cache", purge)
+    monkeypatch.setattr(
+        get_image_model(), "generate_rendition_file", lambda *a, **k: pytest.fail("purge must not regenerate")
+    )
+    call_command("regenerate_broken_renditions", "--retry-cache-purge", str(first.pk), stdout=io.StringIO())
+    assert stored(first).file.name == repaired_name
+
+
+def test_command_reports_cache_pending_separately(site_root, monkeypatch):
+    blog = site_root.add_child(instance=Blog(title="Purge", slug="purge"))
+    rendition = make_rendition(make_image("pending"))
+    make_post(blog, "post-pending", images=[rendition.image])
+    remove_file(rendition)
+
+    def fail(self):
+        raise RuntimeError("cache unavailable")
+
+    monkeypatch.setattr(type(rendition), "purge_from_cache", fail)
+    stdout, stderr = io.StringIO(), io.StringIO()
+    with pytest.raises(CommandError, match="cache purge"):
+        call_command("regenerate_broken_renditions", "purge", stdout=stdout, stderr=stderr)
+    assert file_exists(rendition)
+    assert "generated renditions: 1" in stdout.getvalue()
+    assert f"--retry-cache-purge {rendition.pk}" in stderr.getvalue()

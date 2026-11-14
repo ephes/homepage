@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any
@@ -8,6 +10,16 @@ from typing import Any
 from django.core.management.base import BaseCommand, CommandError
 
 from homepage.core.weeknotes.converter import BodyConversion, convert_body
+
+
+def _published_mode(target: Path) -> int:
+    try:
+        return target.stat().st_mode & 0o777
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        return 0o666 & ~umask
+
 
 # Report value for a page that changed between reading it and saving its conversion.
 CHANGED_SINCE_READ = "changed_since_read"
@@ -51,7 +63,7 @@ class Command(BaseCommand):
         conflict_count = 0
 
         publish_context = self._suppress_webmentions() if options["suppress_webmentions"] else nullcontext()
-        with publish_context:
+        with self._report_file(options["report"], report) as receipt, publish_context:
             for post in queryset:
                 # What the conversion is computed from. It is compared with the page again
                 # before anything is written.
@@ -73,9 +85,8 @@ class Command(BaseCommand):
                     else:
                         saved_count += 1
                 report.append(entry)
-
-        if options["report"]:
-            Path(options["report"]).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
+                if receipt is not None:
+                    self._checkpoint_report(receipt, report)
 
         action_count = saved_count if options["write"] else changed_count
         action = "converted" if options["write"] else "would convert"
@@ -91,6 +102,54 @@ class Command(BaseCommand):
             )
         if warning_count and options["fail_on_warnings"]:
             raise CommandError(f"Conversion produced {warning_count} warning(s).")
+
+    @contextmanager
+    def _report_file(self, path, report):
+        if not path:
+            yield None
+            return
+        target = Path(path)
+        try:
+            stream = tempfile.NamedTemporaryFile(
+                mode="w+",
+                encoding="utf-8",
+                dir=target.parent,
+                prefix=f".{target.name}.",
+                suffix=".pending",
+                delete=False,
+            )
+        except OSError as error:
+            raise CommandError(f"Cannot stage conversion report before changes: {error}") from error
+        try:
+            with stream:
+                # NamedTemporaryFile is always 0600; publish with the mode a plain
+                # create would give (or the replaced report's mode) so readers keep access.
+                os.chmod(stream.fileno(), _published_mode(target))
+                # Write/flush before any revision; fail early on unavailable report storage.
+                self._checkpoint_report(stream, report)
+                yield stream
+            os.replace(stream.name, target)
+        except Exception as error:
+            self.stderr.write(f"Conversion receipt retained at {stream.name!r} (may be incomplete).")
+            for entry in report:
+                if entry["revision_id"] is not None:
+                    self.stderr.write(
+                        f"Committed revision: {entry['slug']} revision_id={entry['revision_id']} "
+                        f"published={entry['published']}"
+                    )
+            raise CommandError(
+                f"Conversion/report failed: {error}. Any completed revisions remain committed; "
+                "inspect the retained receipt and reported revision IDs before retrying."
+            ) from error
+
+    def _checkpoint_report(self, stream, report):
+        stream.seek(0)
+        payload = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+        if stream.write(payload) != len(payload):
+            raise OSError("Short conversion report write")
+        stream.truncate()
+        stream.flush()
+        os.fsync(stream.fileno())
 
     def _report_entry(self, post, conversion: BodyConversion) -> dict[str, Any]:
         return {

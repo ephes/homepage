@@ -6,7 +6,7 @@ import pytest
 from cast.image_metadata import has_gps
 from cast.models import Blog
 from django.core.files.base import ContentFile
-from django.core.files.storage import InMemoryStorage, default_storage
+from django.core.files.storage import FileSystemStorage, InMemoryStorage, default_storage
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from PIL import Image as PILImage
@@ -30,9 +30,11 @@ def root_collection():
 
 
 @pytest.fixture(autouse=True)
-def storage(monkeypatch):
+def storage(monkeypatch, tmp_path):
     """A private, empty image storage so file names never leak between tests."""
-    private_storage = InMemoryStorage()
+    # SQLite reuses rolled-back image IDs; isolate Wagtail rendition cache entries too.
+    get_image_model().get_rendition_model().cache_backend.clear()
+    private_storage = FileSystemStorage(location=tmp_path / "storage")
     monkeypatch.setattr(get_image_model()._meta.get_field("file"), "storage", private_storage)
     return private_storage
 
@@ -201,7 +203,7 @@ def test_failure_cleanup_reports_the_removed_upload(blog, new_cover_path, storag
             COMMAND, str(new_cover_path), "--blog-slug", "cover_blog", "--user", "cover-editor", stderr=stderr
         )
 
-    assert "Removed the unreferenced upload 'original_images/new-cover.png'" in stderr.getvalue()
+    assert "Removed the unreferenced upload 'original_images/cover-" in stderr.getvalue()
 
 
 def test_same_named_existing_file_survives_a_failed_import(blog, new_cover_path, storage, monkeypatch):
@@ -225,7 +227,7 @@ def test_same_named_existing_file_survives_a_failed_import(blog, new_cover_path,
 
     assert len(deleted) == 1
     assert deleted[0] != existing_name
-    assert deleted[0].startswith("original_images/new-cover")
+    assert deleted[0].startswith("original_images/cover-")
     assert stored_names(storage) == before
     assert storage.open(existing_name).read() == b"earlier upload"
 
@@ -234,7 +236,8 @@ def test_overwriting_storage_never_deletes_a_name_that_existed_before(blog, new_
     # A storage configured to overwrite returns the requested name even though
     # an object with that name was there before. That name is not ours to delete.
     existing_name = storage.save("original_images/new-cover.png", ContentFile(b"earlier upload"))
-    monkeypatch.setattr(storage, "get_available_name", lambda name, max_length=None: name)
+    storage = FileSystemStorage(location=storage.location, allow_overwrite=True)
+    monkeypatch.setattr(get_image_model()._meta.get_field("file"), "storage", storage)
     deleted: list[str] = []
     monkeypatch.setattr(storage, "delete", deleted.append)
     monkeypatch.setattr(Blog, "save_revision", lambda self, *a, **kw: (_ for _ in ()).throw(RuntimeError("boom")))
@@ -277,7 +280,7 @@ def test_cleanup_failure_keeps_the_original_error_and_names_the_leftover(blog, n
             COMMAND, str(new_cover_path), "--blog-slug", "cover_blog", "--user", "cover-editor", stderr=stderr
         )
 
-    assert "Could not remove the unreferenced upload 'original_images/new-cover.png'" in stderr.getvalue()
+    assert "Could not remove the unreferenced upload 'original_images/cover-" in stderr.getvalue()
     assert "delete denied" in stderr.getvalue()
 
 
@@ -336,15 +339,184 @@ def test_storage_save_is_restored_after_the_command(blog, new_cover_path, storag
 
 def test_recorder_wraps_and_restores_the_lazy_default_storage():
     # Production uses Django's lazily configured default storage object.
-    names: list[str] = []
+    names: list[tuple[str, bool]] = []
 
     with cover_command._record_saved_names(default_storage, names):
         saved = default_storage.save("cover-recorder/probe.txt", ContentFile(b"probe"))
     try:
-        assert names == [saved]
+        assert names == [(saved, False)]
         assert "save" not in vars(default_storage._wrapped)
-        default_storage.save("cover-recorder/other.txt", ContentFile(b"later"))
-        assert names == [saved]
+        other = default_storage.save("cover-recorder/other.txt", ContentFile(b"later"))
+        assert names == [(saved, False)]
     finally:
         default_storage.delete(saved)
-        default_storage.delete("cover-recorder/other.txt")
+        default_storage.delete(other)
+
+
+def test_no_publish_uses_current_blog_after_upload(blog, new_cover_path, monkeypatch):
+    Image = get_image_model()
+    save = Image.save
+
+    def editor_during_upload(self, *args, **kwargs):
+        save(self, *args, **kwargs)
+        Blog.objects.filter(pk=blog.pk).update(title="Current editor title", description="Current editor body")
+
+    monkeypatch.setattr(Image, "save", editor_during_upload)
+    run(new_cover_path, "--no-publish")
+    current = Blog.objects.get(pk=blog.pk)
+    assert current.title == "Current editor title"
+    assert current.description == "Current editor body"
+
+
+def test_publish_refuses_editor_draft_created_during_upload(blog, new_cover_path, monkeypatch, storage):
+    Image = get_image_model()
+    save = Image.save
+    before = stored_names(storage)
+
+    def draft_during_upload(self, *args, **kwargs):
+        save(self, *args, **kwargs)
+        current = Blog.objects.get(pk=blog.pk)
+        current.title = "Editor draft"
+        current.save_revision()
+
+    monkeypatch.setattr(Image, "save", draft_during_upload)
+    with pytest.raises(CommandError, match="changed|draft"):
+        run(new_cover_path)
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id
+    assert stored_names(storage) == before
+
+
+def test_rendition_failure_prevents_publication_and_compensates_upload(blog, new_cover_path, monkeypatch, storage):
+    before = stored_names(storage)
+    image_ids = set(get_image_model().objects.values_list("pk", flat=True))
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("rendition failed")
+
+    monkeypatch.setattr(get_image_model(), "get_rendition", fail)
+    with pytest.raises(RuntimeError, match="rendition failed"):
+        run(new_cover_path)
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id
+    assert set(get_image_model().objects.values_list("pk", flat=True)) == image_ids
+    assert not Revision.objects.filter(object_id=str(blog.pk)).exists()
+    assert stored_names(storage) == before
+
+
+def test_recorder_preserves_a_competing_object_on_overwrite_storage(monkeypatch):
+    storage = InMemoryStorage()
+    deleted = []
+    save = storage.save
+
+    def competing_save(name, content, max_length=None):
+        save(name, ContentFile(b"external object"))
+        # An overwrite-capable backend can return a name now owned by another writer.
+        return name
+
+    monkeypatch.setattr(storage, "save", competing_save)
+    monkeypatch.setattr(storage, "delete", deleted.append)
+    names = []
+    with cover_command._record_saved_names(storage, names):
+        returned = storage.save("original_images/cover.png", ContentFile(b"upload"))
+    cover_command.Command(stderr=io.StringIO())._remove_saved_files(storage, names)
+    assert deleted == []
+    assert storage.open(returned).read() == b"external object"
+    assert returned != "original_images/cover.png"
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("publish", [False, True])
+def test_editor_commit_during_upload_survives_cover_import(blog, new_cover_path, storage, monkeypatch, publish):
+    import threading
+
+    from django.db import close_old_connections, connection
+
+    if connection.vendor != "postgresql":
+        pytest.skip("Independent editor commits and row locks require PostgreSQL")
+    save = storage.save
+    errors = []
+    revisions = []
+
+    def editor():
+        close_old_connections()
+        try:
+            current = Blog.objects.get(pk=blog.pk)
+            current.title = "Committed editor title"
+            current.description = "Committed editor body"
+            if publish:
+                revisions.append(current.save_revision().pk)
+            else:
+                current.save(update_fields=["title", "description"])
+        except Exception as error:
+            errors.append(error)
+        finally:
+            close_old_connections()
+
+    def pause_upload(*args, **kwargs):
+        thread = threading.Thread(target=editor)
+        thread.start()
+        thread.join(timeout=10)
+        assert not thread.is_alive() and not errors
+        return save(*args, **kwargs)
+
+    monkeypatch.setattr(storage, "save", pause_upload)
+    if publish:
+        with pytest.raises(CommandError, match="changed|draft"):
+            run(new_cover_path)
+        current = Blog.objects.get(pk=blog.pk)
+        assert current.cover_image_id == blog.cover_image_id
+        assert current.latest_revision_id == revisions[0]
+        assert current.get_latest_revision_as_object().title == "Committed editor title"
+        assert current.get_latest_revision_as_object().description == "Committed editor body"
+    else:
+        run(new_cover_path, "--no-publish")
+        current = Blog.objects.get(pk=blog.pk)
+        assert current.title == "Committed editor title"
+        assert current.description == "Committed editor body"
+
+
+def test_exclusive_filesystem_cleanup_preserves_a_racing_creation(tmp_path, monkeypatch):
+    storage = FileSystemStorage(location=tmp_path)
+    available = storage.get_available_name
+    competing = []
+
+    def race(name, max_length=None):
+        result = available(name, max_length=max_length)
+        if not competing:
+            competing.append(result)
+            path = tmp_path / result
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"external winner")
+        return result
+
+    monkeypatch.setattr(storage, "get_available_name", race)
+    names = []
+    with cover_command._record_saved_names(storage, names):
+        uploaded = storage.save("original_images/cover.png", ContentFile(b"owned upload"))
+    cover_command.Command(stderr=io.StringIO())._remove_saved_files(storage, names)
+    assert storage.open(competing[0]).read() == b"external winner"
+    assert uploaded != competing[0]
+    assert not storage.exists(uploaded)
+
+
+@pytest.mark.parametrize("failure", ["rendition_row", "rendition_url", "publish"])
+def test_failure_compensates_original_and_social_files_on_exclusive_storage(
+    blog, new_cover_path, storage, monkeypatch, failure
+):
+    Rendition = get_image_model().get_rendition_model()
+    monkeypatch.setattr(Rendition._meta.get_field("file"), "storage", storage)
+    before = stored_names(storage)
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("required cover operation failed")
+
+    if failure == "rendition_row":
+        monkeypatch.setattr(Rendition, "_save_table", fail)
+    elif failure == "rendition_url":
+        monkeypatch.setattr(Rendition, "url", property(fail))
+    else:
+        monkeypatch.setattr(Revision, "publish", fail)
+    with pytest.raises(RuntimeError, match="required cover operation failed"):
+        run(new_cover_path)
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id
+    assert stored_names(storage) == before
+    assert not Revision.objects.filter(object_id=str(blog.pk)).exists()

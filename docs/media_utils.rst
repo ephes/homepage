@@ -30,11 +30,26 @@ reference checks or deletion also retain the primary error and report the cleanu
 name/error. Inspect those named objects before removing them manually. An interrupted
 process or a storage write that raises before returning a name can still leave an
 object behind; this is compensation for reported save failures, not a crash-atomic
-storage/database transaction. Run repairs without concurrent media writers.
+storage/database transaction. At attachment the rendition row is locked and its
+observed file, image, filter, focal point and dimensions are compared with current
+values. A concurrent replacement wins; the losing repair reports a conflict and
+compensates its own unreferenced output. This fence protects database attachment;
+run repairs without concurrent storage writers, since arbitrary external writes to
+the same object key cannot be fenced by a database lock.
 
 The command exits with an error when a rendition could not be checked or regenerated.
 Those renditions are listed on stderr and left unchanged, so it is safe to simply run
 the command again.
+
+Cache invalidation is a separate post-save outcome. If a purge fails, the usable
+replacement stays committed and counts as regenerated; independent repairs continue.
+The command exits nonzero and lists ``cache purge pending`` IDs separately from
+unchanged/failed repairs. Retry only invalidation, without allocating any files::
+
+    uv run python manage.py regenerate_broken_renditions --retry-cache-purge 123 456
+
+This reads the current rows and purges their cache keys. Missing rows and renewed
+cache failures are reported nonzero; the option accepts no blog slugs or limit.
 
 Video width and height
 ======================

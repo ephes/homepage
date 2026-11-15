@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Refresh Soup Sieve 2.10 to 4.1 (CVE-2026-126190 and related selector DoS
+  advisories) and notebook-only Tornado 6.6 to 6.6.1 (CVE-2026-126347).
+  Beautiful Soup 4.15.0 remains compatible. Document-level CSS selectors now
+  skip inert HTML template contents; select on the template to inspect them.
+
 - Vary fediverse discovery proxy responses on Accept and preserve upstream
   wildcard variation so caches cannot reuse negotiated or uncacheable responses.
 - Keep fediverse gateway warnings and transport exceptions free of raw upstream

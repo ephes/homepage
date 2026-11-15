@@ -111,3 +111,23 @@ The development lock refresh raises Black to at least 26.10.1 and Tornado to at
 least 6.6 for the reported formatter/notebook advisories. Application dependencies
 and all five source commits remain pinned. The independent Black prek hook uses
 the same fixed formatter release; no application deployment is needed.
+
+Selector and notebook security updates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The lock uses Soup Sieve 4.1 with Beautiful Soup 4.15.0. Soup Sieve requires
+Python 3.11.5 or later, below this project's Python 3.12 minimum. Its 4.x
+selectors skip inert HTML ``template`` contents unless called on the template
+itself; ``iframe`` children no longer count as a separate document. See the
+`Soup Sieve changelog <https://facelessuser.github.io/soupsieve/about/changelog/>`_
+and `CVE-2026-126190 advisory <https://github.com/facelessuser/soupsieve/security/advisories/GHSA-mmhr-3c5m-f64f>`_.
+
+Tornado 6.6.1 enters only through ``dj-notebook``'s Jupyter development stack
+(ipykernel, jupyter-client/server/lab, notebook and terminado), not the runtime
+graph. No application code imports Tornado. The
+`6.6.1 release notes <https://www.tornadoweb.org/en/stable/releases/v6.6.1.html>`_
+list security fixes and restore compatible RedirectHandler substitutions;
+no API migration is needed from the previously locked 6.6. LF-only HTTP header
+endings are scheduled for removal in 6.7. Regression tests check the
+`CVE-2026-126347 triple-slash redirect fix <https://github.com/tornadoweb/tornado/security/advisories/GHSA-5cjw-f85j-cv6r>`_
+and ordinary local substitutions without opening a server socket.

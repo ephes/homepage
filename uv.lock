@@ -840,7 +840,7 @@ wheels = [
 [[package]]
 name = "django-cast"
 version = "0.2.68"
-source = { git = "https://github.com/ephes/django-cast?branch=develop#c290ec1a2793715c3f7f71dfb4676e5059060686" }
+source = { git = "https://github.com/ephes/django-cast?branch=develop#93ac6cb49151dbbc60920fb58fc32a18928adf0f" }
 dependencies = [
     { name = "crispy-bootstrap4" },
     { name = "django" },
@@ -858,7 +858,6 @@ dependencies = [
     { name = "pillow" },
     { name = "pillow-heif" },
     { name = "pygments" },
-    { name = "python-dateutil" },
     { name = "python-slugify" },
     { name = "requests" },
     { name = "rich" },

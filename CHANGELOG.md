@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Relock django-cast to develop 93ac6cb4 (from c290ec1a): transcript version
+  admission, blog cache snapshots, public render and comment-target boundaries,
+  regeneration consent, atomic glossary imports, configured-storage failures
+  without silent fallback, preserved facet queries and bounded theme discovery.
+  No new migrations.
+
 - Limit development logs to a 5 MiB active file and two rotated backups (15 MiB
   total), preserving UTF-8 boundaries and the latest output.
 

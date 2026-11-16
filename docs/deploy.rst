@@ -95,6 +95,45 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-17 django-cast develop 93ac6cb4
+---------------------------------------
+
+``uv.lock`` moves django-cast ``develop`` from ``c290ec1a`` to ``93ac6cb4``.
+No other locked package changed; django-cast no longer depends on
+``python-dateutil`` directly, but the package stays locked through other
+dependencies. django-cast adds no migrations in this range (the schema stays at
+``cast.0094``), so deploying the previous lock again needs no database step.
+
+Upgrade actions from the django-cast release notes, checked for this site:
+
+* Theme discovery only looks at ``<template-root>/cast/<theme>/``. The local
+  themes live in ``homepage/templates/cast/<theme>/``, and cast-bootstrap5 and
+  cast-vue ship theirs as ``templates/cast/<theme>/`` in their apps, so nothing
+  moves. The offered theme list (bootstrap4, plain, vue, bootstrap5) is
+  unchanged.
+* Configured ``cast_private_media``, ``cast_public_transcripts`` and
+  ``cast_voice_references`` storages now fail loudly instead of falling back.
+  This site configures none of them, so the fallbacks still apply.
+* Comment posting only accepts Wagtail page targets unless
+  ``CAST_COMMENTS_ALLOWED_TARGET_MODELS`` opts in others. Comments here are on
+  blog posts, so the setting stays unset.
+* The modal facet counts view opts out of ``ATOMIC_REQUESTS`` and reads all
+  groups in one snapshot. With PostgreSQL and Wagtail's default database
+  search backend it keeps answering, also with a search term; other backends
+  would get HTTP 503.
+* Galleries are limited to 500 images. The largest gallery here has 38.
+* ``cast.runner`` is removed. This site's test settings use Django's
+  ``DiscoverRunner``.
+
+Navigation without view-restricted pages, the non-zero exit codes of
+``media_replace`` and ``recalc_video_posters`` and the Voxhelm credential pair
+were already part of ``c290ec1a``; the release notes only list them under
+upgrade actions now.
+
+Local gates: the PostgreSQL test suite on Python 3.15.2 and 3.14.8, the
+migration and browser regressions, ``makemigrations --check``, prek and the
+dependency audit all passed.
+
 2026-10-29 Python 3.15.2
 ------------------------
 

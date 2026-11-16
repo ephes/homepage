@@ -108,7 +108,7 @@ process group has received TERM (up to ten seconds grace) and a final KILL (two 
 to confirm retirement), including descendants of an already-exited leader. Only
 confirmed retirement removes the ownership record; failures retain its group ID
 for manual inspection. Process-table access and POSIX ``waitid(WNOWAIT)`` are
-required.
+required (on macOS: Python 3.13 or newer; older interpreters are refused before start).
 
 Locked dependency audit
 ^^^^^^^^^^^^^^^^^^^^^^^

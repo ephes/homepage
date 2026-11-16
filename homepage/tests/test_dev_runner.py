@@ -355,6 +355,23 @@ def test_denied_signal_after_leader_exit_still_requires_confirmed_retirement(sta
     fake_run.child.wait.assert_not_called()
 
 
+def test_missing_waitid_is_refused_before_record_or_child(state, fake_run, monkeypatch):
+    monkeypatch.delattr(dev_runner.os, "WNOWAIT", raising=False)
+    with pytest.raises(RuntimeError, match="waitid"):
+        dev_runner.run([], state)
+    fake_run.popen.assert_not_called()
+    assert not state.exists()
+
+
+def test_leader_exiting_during_group_signal_is_rechecked(state, fake_run, monkeypatch):
+    # The leader is still running at the pre-signal check and exits before killpg.
+    states = iter([None])
+    monkeypatch.setattr(dev_runner, "observe_exit", lambda child: next(states, object()))
+    fake_run.killpg.side_effect = PermissionError("synthetic Darwin zombie-only group")
+    dev_runner.retire_group(fake_run.child)
+    fake_run.child.wait.assert_called_once()
+
+
 def test_exited_leader_alone_in_group_retires_without_signal_error():
     """Darwin refuses killpg with EPERM when only the unreaped (zombie) leader remains."""
     import sys

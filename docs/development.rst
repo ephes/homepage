@@ -53,7 +53,8 @@ the record is removed only after confirmed group retirement. The leader remains
 unreaped while TERM (up to ten seconds grace) and final KILL (two seconds for retirement)
 are sent, so a terminated leader cannot leave resistant descendants or release a
 reusable group ID before the last signal. Failed or uncertain cleanup retains
-``dev.json`` with its group ID for manual inspection. POSIX ``waitid(WNOWAIT)``,
+``dev.json`` with its group ID for manual inspection. POSIX ``waitid(WNOWAIT)``
+(on macOS: Python 3.13 or newer; older interpreters are refused before start),
 process-table access, process groups and the locked development
 ``psutil`` dependency are required.
 

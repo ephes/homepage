@@ -73,8 +73,7 @@ def retire_group(child):
     """Finish every group signal before reaping the leader; fail with evidence."""
     scan_error = None
     for sig, grace in ((signal.SIGTERM, TERM_GRACE), (signal.SIGKILL, KILL_GRACE)):
-        # Refuse to signal if another waiter released our identity.
-        leader_exited = observe_exit(child) is not None
+        observe_exit(child)  # Refuse to signal if another waiter released our identity.
         try:
             os.killpg(child.pid, sig)
         except ProcessLookupError:
@@ -82,7 +81,7 @@ def retire_group(child):
         except PermissionError:
             # Darwin answers EPERM (not ESRCH) when the group holds only the unreaped leader.
             # Only then is the refusal benign; the process-table scan below still decides.
-            if not leader_exited:
+            if observe_exit(child) is None:
                 raise
         deadline = time.monotonic() + grace
         while True:
@@ -223,7 +222,14 @@ def open_lock(path):
         os.close(fd)
 
 
+def require_waitid():
+    if not (hasattr(os, "waitid") and hasattr(os, "WNOWAIT")):
+        raise RuntimeError("dev_runner needs os.waitid(WNOWAIT); on macOS use Python 3.13 or newer")
+
+
 def run(processes, state=STATE):
+    # Fail before any record or child exists: teardown cannot be confirmed without it.
+    require_waitid()
     state.parent.mkdir(parents=True, exist_ok=True)
     # The lock lives for the entire run; never unlink the lock file.
     with open_lock(state.parent / "dev.lock"):

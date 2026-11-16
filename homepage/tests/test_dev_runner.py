@@ -62,8 +62,11 @@ def test_no_state_does_nothing(state, owner):
 
 @pytest.fixture
 def fake_run(monkeypatch, owner):
-    child = Mock(pid=5678, stdout=io.StringIO("\x1b[31msynthetic log\x1b[0m\n"))
+    child = Mock(pid=5678, stdout=io.BytesIO(b"\x1b[31msynthetic log\x1b[0m\n"))
     child.wait.return_value = 0
+    child.returncode = 0
+    monkeypatch.setattr(dev_runner, "observe_exit", Mock(return_value=object()))
+    monkeypatch.setattr(dev_runner, "group_alive", Mock(return_value=False))
     popen = Mock(return_value=child)
     killpg = Mock()
     monkeypatch.setattr(dev_runner.subprocess, "Popen", popen)
@@ -76,6 +79,7 @@ def fake_run(monkeypatch, owner):
 @pytest.mark.parametrize("result,expected", [(0, 0), (23, 23), (-15, 143)])
 def test_supervisor_result_logging_and_owned_group_cleanup(state, fake_run, result, expected):
     fake_run.child.wait.return_value = result
+    fake_run.child.returncode = result
     assert dev_runner.run(["postgres", "django"], state) == expected
     assert not state.exists()
     assert state.with_name("dev.log").read_text() == "synthetic log\n"
@@ -85,10 +89,9 @@ def test_supervisor_result_logging_and_owned_group_cleanup(state, fake_run, resu
         start_new_session=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True,
-        errors="replace",
+        bufsize=0,
     )
-    fake_run.killpg.assert_called_once_with(5678, signal.SIGTERM)
+    assert fake_run.killpg.call_args_list == [((5678, signal.SIGTERM),), ((5678, signal.SIGKILL),)]
 
 
 def test_start_failure_removes_state(state, fake_run):
@@ -225,18 +228,17 @@ def test_repeated_interrupt_during_shutdown_cannot_skip_escalation(state, fake_r
         handlers[sig] = handler
         return previous
 
-    def wait(timeout=None):
+    def alive(pgid):
         nonlocal interrupted_wait
-        if timeout == 10:
-            interrupted_wait = True
-            handler = handlers[signal.SIGINT]
-            if callable(handler):
-                handler(signal.SIGINT, None)
-            raise subprocess.TimeoutExpired("synthetic stubborn honcho", timeout)
-        return 0
+        interrupted_wait = True
+        handler = handlers[signal.SIGINT]
+        if callable(handler):
+            handler(signal.SIGINT, None)
+        return fake_run.killpg.call_count == 1
 
     monkeypatch.setattr(dev_runner.signal, "signal", install)
-    fake_run.child.wait.side_effect = wait
+    monkeypatch.setattr(dev_runner, "group_alive", alive)
+    monkeypatch.setattr(dev_runner, "TERM_GRACE", 0)
     assert dev_runner.run([], state) == 0
     assert interrupted_wait
     assert not state.exists()
@@ -266,3 +268,90 @@ def test_shell_launcher_uses_physical_checkout_path(tmp_path):
         timeout=5,
     )
     assert result.stdout.strip() == str(checkout / "dev_runner.py")
+
+
+@pytest.mark.parametrize("stop_signal", [None, signal.SIGTERM])
+def test_exited_leader_retires_term_resistant_descendant(tmp_path, stop_signal):
+    import os
+    import shutil
+    import sys
+    import time
+
+    import psutil
+
+    script = tmp_path / "dev_runner.py"
+    shutil.copy(dev_runner.ROOT / "dev_runner.py", script)
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    pid_file = tmp_path / "descendant.pid"
+    uvx = tools / "uvx"
+    descendant = (
+        "import os,pathlib,signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        f"pathlib.Path({str(pid_file)!r}).write_text(str(os.getpid())); time.sleep(60)"
+    )
+    uvx.write_text(
+        f"#!{sys.executable}\n"
+        "import pathlib, subprocess, sys, time\n"
+        f"subprocess.Popen([sys.executable, '-c', {descendant!r}], "
+        "stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
+        f"while not pathlib.Path({str(pid_file)!r}).exists(): time.sleep(0.01)\n"
+        + ("time.sleep(60)\n" if stop_signal else "sys.exit(23)\n")
+    )
+    uvx.chmod(0o755)
+    runner = subprocess.Popen(
+        [sys.executable, str(script)],
+        cwd=tmp_path,
+        env={**os.environ, "PATH": str(tools) + os.pathsep + os.environ["PATH"]},
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+    descendant_process = None
+    try:
+        deadline = time.monotonic() + 10
+        while not pid_file.exists():
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        descendant_process = psutil.Process(int(pid_file.read_text()))
+        if stop_signal:
+            runner.send_signal(stop_signal)
+        _, stderr = runner.communicate(timeout=10)
+        assert runner.returncode == (128 + stop_signal if stop_signal else 23), stderr
+        assert not descendant_process.is_running() or descendant_process.status() == psutil.STATUS_ZOMBIE
+        assert not (tmp_path / "logs" / "dev.json").exists()
+    finally:
+        if runner.poll() is None:
+            runner.kill()
+            runner.wait(timeout=5)
+        if descendant_process and descendant_process.is_running():
+            descendant_process.kill()
+
+
+def test_uncertain_group_cleanup_retains_ownership_record(state, fake_run):
+    fake_run.killpg.side_effect = PermissionError("synthetic denied group signal")
+    with pytest.raises(PermissionError):
+        dev_runner.run([], state)
+    assert state.exists()
+
+
+def test_leader_is_reserved_until_all_group_signals_complete(state, fake_run, monkeypatch):
+    events = []
+    fake_run.killpg.side_effect = lambda pid, sig: events.append(sig)
+
+    def reap(timeout):
+        assert events == [signal.SIGTERM, signal.SIGKILL]
+        events.append("reap")
+        return 0
+
+    fake_run.child.wait.side_effect = reap
+    assert dev_runner.run([], state) == 0
+    assert events == [signal.SIGTERM, signal.SIGKILL, "reap"]
+
+
+def test_unconfirmed_retirement_retains_group_evidence(state, fake_run, monkeypatch):
+    monkeypatch.setattr(dev_runner, "group_alive", lambda pid: True)
+    monkeypatch.setattr(dev_runner, "TERM_GRACE", 0)
+    monkeypatch.setattr(dev_runner, "KILL_GRACE", 0)
+    with pytest.raises(RuntimeError, match="did not retire"):
+        dev_runner.run([], state)
+    assert json.loads(state.read_text())["pgid"] == 5678
+    fake_run.child.wait.assert_not_called()

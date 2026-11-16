@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reserve the development supervisor's group identity until bounded TERM/KILL
+  retirement completes, including resistant descendants of exited leaders;
+  retain ownership evidence when retirement cannot be confirmed.
+
 - Validate portfolio half-float filtering and framebuffer completeness, bound hero
   surfaces by device dimensions and pixel budget, and show terminal readable
   fallback on WebGL context loss while releasing allocated resources.

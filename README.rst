@@ -88,7 +88,12 @@ use a command-name kill to recover. Startup refuses to overwrite
 an existing record. The runner uses POSIX process groups and the locked ``psutil``
 development dependency. Install dependencies with ``uv sync --locked`` first.
 Supervisor failures produce a nonzero command status (including through logging),
-signals become 128 + signal number, and normal exit removes the ownership record.
+signals become 128 + signal number. The leader stays unreaped until the owned
+process group has received TERM (one second grace) and a final KILL (two seconds
+to confirm retirement), including descendants of an already-exited leader. Only
+confirmed retirement removes the ownership record; failures retain its group ID
+for manual inspection. Process-table access and POSIX ``waitid(WNOWAIT)`` are
+required.
 
 Locked dependency audit
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -49,7 +49,12 @@ run. Cleanup validates PID, creation time, command and checkout before signallin
 the runner. The runner stops its owned process group on exit, including INT,
 TERM, HUP and QUIT; repeated interrupts do not interrupt teardown. Supervisor
 failures stay nonzero through logging (signals become 128 + signal number), and
-normal exit removes the record. POSIX process groups and the locked development
+the record is removed only after confirmed group retirement. The leader remains
+unreaped while TERM (one second grace) and final KILL (two seconds for retirement)
+are sent, so a terminated leader cannot leave resistant descendants or release a
+reusable group ID before the last signal. Failed or uncertain cleanup retains
+``dev.json`` with its group ID for manual inspection. POSIX ``waitid(WNOWAIT)``,
+process-table access, process groups and the locked development
 ``psutil`` dependency are required.
 
 ``just cleanup`` and ``just dev-force`` leave unrelated servers, notebooks and

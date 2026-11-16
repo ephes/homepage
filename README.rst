@@ -75,6 +75,10 @@ Local development services
 ``just dev`` starts PostgreSQL and Django; ``just dev-all`` or ``./run_dev.sh``
 starts the full Procfile. All use ``dev_runner.py`` to own one supervisor per
 checkout, stream terminal output and save a colour-stripped ``logs/dev.log``.
+Output drains in fixed 16 KiB byte chunks, including unterminated lines, with
+incremental UTF-8 decoding (invalid bytes are replaced). Colour sequences split
+across chunks are stripped with at most 256 characters of carry; oversized or
+unsupported escape sequences remain literal. Terminal output stays live.
 ``just cleanup`` signals only the runner recorded in ``logs/dev.json`` after
 checking its PID, creation time, command and checkout. The runner stops its own
 process group on exit, including INT, TERM, HUP and QUIT. ``just dev-force`` cleans up that checkout before starting

@@ -419,6 +419,11 @@ All services log to ``logs/dev.log`` with:
 * Process prefixes (``[django]``, ``[postgres]``, etc.)
 * Timestamps from each service
 
+Output drains in fixed 16 KiB byte chunks, including unterminated lines, with
+incremental UTF-8 decoding (invalid bytes are replaced). Colour sequences split
+across chunks are stripped with at most 256 characters of carry; oversized or
+unsupported escape sequences remain literal. Terminal output stays live.
+
 The log file is git-ignored and perfect for debugging or for AI assistants to read when helping with development.
 
 Browser Console Access

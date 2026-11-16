@@ -1,6 +1,7 @@
 """Own one checkout's local development supervisor and its process group."""
 
 import argparse
+import codecs
 import contextlib
 import fcntl
 import json
@@ -20,7 +21,10 @@ ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "logs" / "dev.json"
 TERM_GRACE = 1.0
 KILL_GRACE = 2.0
+READ_SIZE = 16384
+ANSI_CARRY_LIMIT = 256
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
+ANSI_PREFIX = re.compile(r"\x1b(?:\[[0-9;]*)?\Z")
 
 
 def cleanup(state=STATE):
@@ -84,25 +88,57 @@ def retire_group(child):
     raise RuntimeError("Owned process group did not retire; retaining ownership record")
 
 
-def stream_output(child, log):
-    def write(line):
-        text = line.decode("utf-8", errors="replace")
-        print(text, end="", flush=True)
-        log.write(ANSI.sub("", text))
-        log.flush()
+class OutputLogger:
+    """Decode fixed byte chunks and retain only a bounded possible colour suffix."""
 
+    def __init__(self, log):
+        self.log = log
+        self.decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        self.pending = ""
+
+    def write(self, chunk, final=False):
+        text = self.decoder.decode(chunk, final=final)
+        print(text, end="", flush=True)
+        plain = ANSI.sub("", self.pending + text)
+        self.pending = ""
+        if not final:
+            start = plain.rfind("\x1b")
+            if start >= 0 and len(plain) - start <= ANSI_CARRY_LIMIT and ANSI_PREFIX.fullmatch(plain[start:]):
+                self.pending = plain[start:]
+                plain = plain[:start]
+        self.log.write(plain)
+        self.log.flush()
+
+
+def stream_output(child, output):
+    os.set_blocking(child.stdout.fileno(), False)
     eof = False
     while observe_exit(child) is None:
         if eof:
             time.sleep(0.02)
         elif select.select([child.stdout], [], [], 0.02)[0]:
-            line = child.stdout.readline()
-            if line:
-                write(line)
+            try:
+                chunk = os.read(child.stdout.fileno(), READ_SIZE)
+            except BlockingIOError:
+                continue
+            if chunk:
+                output.write(chunk)
             else:
                 eof = True
-    # No descendant may keep the pipe open after the leader has completed.
-    return
+
+
+def drain_output(child, output):
+    # Owned writers are retired. Do not wait on a pipe held by an escaped process.
+    deadline = time.monotonic() + KILL_GRACE
+    while time.monotonic() < deadline:
+        try:
+            chunk = os.read(child.stdout.fileno(), READ_SIZE)
+        except BlockingIOError:
+            break
+        if not chunk:
+            break
+        output.write(chunk)
+    output.write(b"", final=True)
 
 
 @contextlib.contextmanager
@@ -158,17 +194,14 @@ def run(processes, state=STATE):
             record["pgid"] = child.pid
             state.write_text(json.dumps(record))
             with (state.parent / "dev.log").open("w") as log:
-                stream_output(child, log)
+                output = OutputLogger(log)
+                stream_output(child, output)
                 # Repeated interrupts cannot release identity before the final signal.
                 for sig in previous:
                     signal.signal(sig, signal.SIG_IGN)
                 retire_group(child)
                 retired = True
-                for line in child.stdout:
-                    text = line.decode("utf-8", errors="replace")
-                    print(text, end="", flush=True)
-                    log.write(ANSI.sub("", text))
-                log.flush()
+                drain_output(child, output)
             result = child.returncode
             return result if result >= 0 else 128 - result
         finally:

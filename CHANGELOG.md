@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Stream development output in fixed byte chunks with incremental UTF-8 decoding
+  and bounded colour-sequence carry, including large unterminated lines.
+
 - Admit the stable development lock without truncation or symlink traversal,
   reject hardlinks/special files and fence its named inode after locking.
 

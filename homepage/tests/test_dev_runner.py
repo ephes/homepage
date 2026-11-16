@@ -1,6 +1,6 @@
 """Synthetic process identities only: never signal a real process."""
 
-import io
+import os
 import json
 import signal
 import subprocess
@@ -62,7 +62,11 @@ def test_no_state_does_nothing(state, owner):
 
 @pytest.fixture
 def fake_run(monkeypatch, owner):
-    child = Mock(pid=5678, stdout=io.BytesIO(b"\x1b[31msynthetic log\x1b[0m\n"))
+    read_fd, write_fd = os.pipe()
+    os.write(write_fd, b"\x1b[31msynthetic log\x1b[0m\n")
+    os.close(write_fd)
+    stdout = os.fdopen(read_fd, "rb", buffering=0)
+    child = Mock(pid=5678, stdout=stdout)
     child.wait.return_value = 0
     child.returncode = 0
     monkeypatch.setattr(dev_runner, "observe_exit", Mock(return_value=object()))
@@ -73,7 +77,8 @@ def fake_run(monkeypatch, owner):
     monkeypatch.setattr(dev_runner.os, "killpg", killpg)
     monkeypatch.setattr(dev_runner.fcntl, "flock", Mock())
     monkeypatch.setattr(dev_runner.signal, "signal", Mock())
-    return SimpleNamespace(child=child, popen=popen, killpg=killpg)
+    yield SimpleNamespace(child=child, popen=popen, killpg=killpg)
+    stdout.close()
 
 
 @pytest.mark.parametrize("result,expected", [(0, 0), (23, 23), (-15, 143)])
@@ -400,3 +405,88 @@ def test_second_runner_cannot_truncate_or_replace_held_lock(state):
             dev_runner.run([], state)
     assert lock.read_text() == "stable sentinel"
     assert lock.stat().st_ino == before.st_ino
+
+
+def test_unterminated_output_is_read_in_fixed_chunks(state, fake_run, monkeypatch):
+    import hashlib
+    import os
+
+    payload = (b"x" * (16384 - 1) + "€".encode() + b"\x1b[31mred\x1b[0m") * 512
+    source = state.with_name("output.bin")
+    source.write_bytes(payload)
+    terminal = hashlib.sha256()
+    writes = []
+
+    class Terminal:
+        def write(self, text):
+            terminal.update(text.encode())
+            writes.append(len(text))
+
+        def flush(self):
+            pass
+
+    with source.open("rb", buffering=0) as stream:
+
+        class ChunkOnly:
+            def fileno(self):
+                return stream.fileno()
+
+            def readline(self):
+                raise AssertionError("Unbounded line read")
+
+            def __iter__(self):
+                raise AssertionError("Unbounded line iteration")
+
+            def close(self):
+                pass
+
+        fake_run.child.stdout = ChunkOnly()
+        monkeypatch.setattr(dev_runner.sys, "stdout", Terminal())
+        monkeypatch.setattr(
+            dev_runner,
+            "observe_exit",
+            lambda child: object() if stream.tell() == len(payload) else None,
+        )
+        original_read = os.read
+        reads = []
+
+        def read(fd, size):
+            assert 0 < size <= 16384
+            reads.append(size)
+            return original_read(fd, size)
+
+        monkeypatch.setattr(dev_runner.os, "read", read)
+        assert dev_runner.run([], state) == 0
+    expected_terminal = payload.decode()
+    expected_log = dev_runner.ANSI.sub("", expected_terminal)
+    assert terminal.hexdigest() == hashlib.sha256(expected_terminal.encode()).hexdigest()
+    assert state.with_name("dev.log").read_text() == expected_log
+    assert len(reads) > 500
+    assert max(writes) <= 16384
+
+
+@pytest.mark.parametrize(
+    "parts",
+    [
+        [b"\xe2", b"\x82", b"\xac\x1b", b"[3", b"1mred\x1b[", b"0m\n"],
+        [b"\x1b[" + b"1" * 128] * 1000,
+        [b"partial \xe2"],
+    ],
+)
+def test_incremental_output_decoder_and_ansi_carry_are_bounded(parts, capsys):
+    import io
+
+    log = io.StringIO()
+    output = dev_runner.OutputLogger(log)
+    for part in parts:
+        output.write(part)
+        assert len(output.pending) <= dev_runner.ANSI_CARRY_LIMIT
+        assert len(output.decoder.getstate()[0]) <= 3
+    output.write(b"", final=True)
+    terminal = capsys.readouterr().out
+    assert terminal == b"".join(parts).decode("utf-8", errors="replace")
+    if len(parts) < 10:
+        assert log.getvalue() == dev_runner.ANSI.sub("", terminal)
+    else:
+        assert len(log.getvalue()) + dev_runner.ANSI_CARRY_LIMIT >= len(terminal)
+    assert not output.pending

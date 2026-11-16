@@ -12,6 +12,12 @@ import pytest
 
 import dev_runner
 
+# The runner refuses interpreters without waitid(WNOWAIT) (macOS before Python 3.13).
+pytestmark = pytest.mark.skipif(
+    not (hasattr(os, "waitid") and hasattr(os, "WNOWAIT")),
+    reason="dev_runner needs os.waitid(WNOWAIT); on macOS use Python 3.13 or newer",
+)
+
 
 @pytest.fixture
 def state(tmp_path):

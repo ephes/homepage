@@ -85,7 +85,10 @@ Cleanup refuses stale, legacy or mismatching records. Inspect the recorded
 process first, then remove stale ``logs/dev.json`` (or the old ``logs/dev.pid``)
 manually after inspecting/stopping any orphaned service PIDs individually; never
 use a command-name kill to recover. Startup refuses to overwrite
-an existing record. The runner uses POSIX process groups and the locked ``psutil``
+an existing record. The stable ``dev.lock`` is opened without truncation or following
+symlinks; only a regular file owned by the current user with one hard link is
+admitted. The named inode must still match after the exclusive lock is acquired.
+Never remove or replace ``dev.lock`` while a runner is active. The runner uses POSIX process groups and the locked ``psutil``
 development dependency. Install dependencies with ``uv sync --locked`` first.
 Supervisor failures produce a nonzero command status (including through logging),
 signals become 128 + signal number. The leader stays unreaped until the owned

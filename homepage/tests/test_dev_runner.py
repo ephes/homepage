@@ -355,3 +355,48 @@ def test_unconfirmed_retirement_retains_group_evidence(state, fake_run, monkeypa
         dev_runner.run([], state)
     assert json.loads(state.read_text())["pgid"] == 5678
     fake_run.child.wait.assert_not_called()
+
+
+@pytest.mark.parametrize("kind", ["symlink", "hardlink"])
+def test_lock_admission_never_modifies_special_or_linked_file(state, fake_run, kind):
+    import os
+
+    victim = state.with_name("victim")
+    victim.write_text("synthetic sentinel")
+    lock = state.with_name("dev.lock")
+    if kind == "symlink":
+        lock.symlink_to(victim)
+    elif kind == "hardlink":
+        os.link(victim, lock)
+    with pytest.raises((OSError, RuntimeError)):
+        dev_runner.run([], state)
+    assert victim.read_text() == "synthetic sentinel"
+    fake_run.popen.assert_not_called()
+    assert not state.exists()
+
+
+def test_replaced_lock_path_is_refused_after_flock(state, fake_run):
+    lock = state.with_name("dev.lock")
+    lock.write_text("original")
+
+    def replace(fd, operation):
+        lock.unlink()
+        lock.write_text("replacement")
+
+    dev_runner.fcntl.flock.side_effect = replace
+    with pytest.raises(RuntimeError, match="lock"):
+        dev_runner.run([], state)
+    fake_run.popen.assert_not_called()
+    assert lock.read_text() == "replacement"
+
+
+def test_second_runner_cannot_truncate_or_replace_held_lock(state):
+    lock = state.with_name("dev.lock")
+    lock.write_text("stable sentinel")
+    before = lock.stat()
+    with lock.open("r+") as held:
+        dev_runner.fcntl.flock(held, dev_runner.fcntl.LOCK_EX | dev_runner.fcntl.LOCK_NB)
+        with pytest.raises(RuntimeError, match="already owned"):
+            dev_runner.run([], state)
+    assert lock.read_text() == "stable sentinel"
+    assert lock.stat().st_ino == before.st_ino

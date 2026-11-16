@@ -1,12 +1,14 @@
 """Own one checkout's local development supervisor and its process group."""
 
 import argparse
+import contextlib
 import fcntl
 import json
 import os
 import re
 import select
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -103,14 +105,36 @@ def stream_output(child, log):
     return
 
 
+@contextlib.contextmanager
+def open_lock(path):
+    """Hold one nontruncating, owned, single-link lock inode for the whole run."""
+    fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    try:
+        opened = os.fstat(fd)
+        if not stat.S_ISREG(opened.st_mode) or opened.st_uid != os.geteuid() or opened.st_nlink != 1:
+            raise RuntimeError("Refusing unsafe development lock")
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError("Development services already owned by this checkout") from exc
+        named = os.stat(path, follow_symlinks=False)
+        held = os.fstat(fd)
+        if (
+            (named.st_dev, named.st_ino) != (held.st_dev, held.st_ino)
+            or not stat.S_ISREG(named.st_mode)
+            or held.st_uid != os.geteuid()
+            or held.st_nlink != 1
+        ):
+            raise RuntimeError("Development lock identity changed while acquiring ownership")
+        yield fd
+    finally:
+        os.close(fd)
+
+
 def run(processes, state=STATE):
     state.parent.mkdir(parents=True, exist_ok=True)
     # The lock lives for the entire run; never unlink the lock file.
-    with (state.parent / "dev.lock").open("w") as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
-            raise RuntimeError("Development services already owned by this checkout") from exc
+    with open_lock(state.parent / "dev.lock"):
         if state.exists():
             raise RuntimeError(f"Refusing to overwrite {state}; inspect/remove stale state first")
         child = None

@@ -62,7 +62,10 @@ individually started services alone. A stale/mismatching record is refused:
 inspect the recorded PID and any remaining service PIDs before stopping them
 individually, then remove stale ``logs/dev.json`` (or legacy ``logs/dev.pid``).
 Do not recover with command-name kills. Startup refuses to overwrite an existing
-record.
+record. The stable ``dev.lock`` is opened without truncation or following
+symlinks; only a regular file owned by the current user with one hard link is
+admitted. The named inode must still match after the exclusive lock is acquired.
+Never remove or replace ``dev.lock`` while a runner is active.
 
 You can also start services individually in separate terminals:
 

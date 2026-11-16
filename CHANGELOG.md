@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Admit the stable development lock without truncation or symlink traversal,
+  reject hardlinks/special files and fence its named inode after locking.
+
 - Reserve the development supervisor's group identity until bounded TERM/KILL
   retirement completes, including resistant descendants of exited leaders;
   retain ownership evidence when retirement cannot be confirmed.

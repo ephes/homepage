@@ -49,7 +49,13 @@ run. Cleanup validates PID, creation time, command and checkout before signallin
 the runner. The runner stops its owned process group on exit, including INT,
 TERM, HUP and QUIT; repeated interrupts do not interrupt teardown. Supervisor
 failures stay nonzero through logging (signals become 128 + signal number), and
-normal exit removes the record. POSIX process groups and the locked development
+the record is removed only after confirmed group retirement. The leader remains
+unreaped while TERM (up to ten seconds grace) and final KILL (two seconds for retirement)
+are sent, so a terminated leader cannot leave resistant descendants or release a
+reusable group ID before the last signal. Failed or uncertain cleanup retains
+``dev.json`` with its group ID for manual inspection. POSIX ``waitid(WNOWAIT)``
+(on macOS: Python 3.13 or newer; older interpreters are refused before start),
+process-table access, process groups and the locked development
 ``psutil`` dependency are required.
 
 ``just cleanup`` and ``just dev-force`` leave unrelated servers, notebooks and
@@ -57,7 +63,10 @@ individually started services alone. A stale/mismatching record is refused:
 inspect the recorded PID and any remaining service PIDs before stopping them
 individually, then remove stale ``logs/dev.json`` (or legacy ``logs/dev.pid``).
 Do not recover with command-name kills. Startup refuses to overwrite an existing
-record.
+record. The stable ``dev.lock`` is opened without truncation or following
+symlinks; only a regular file owned by the current user with one hard link is
+admitted. The named inode must still match after the exclusive lock is acquired.
+Never remove or replace ``dev.lock`` while a runner is active.
 
 You can also start services individually in separate terminals:
 
@@ -410,6 +419,18 @@ All services log to ``logs/dev.log`` with:
 * Color codes stripped for readability
 * Process prefixes (``[django]``, ``[postgres]``, etc.)
 * Timestamps from each service
+
+Output drains in fixed 16 KiB byte chunks, including unterminated lines, with
+incremental UTF-8 decoding (invalid bytes are replaced). Colour sequences split
+across chunks are stripped with at most 256 characters of carry. Incomplete
+escape suffixes exceeding that limit and unsupported sequences remain literal.
+Terminal output stays live.
+
+The active log rotates at 5 MiB into ``dev.log.1`` and ``dev.log.2``: at most
+three files and 15 MiB of log content, with UTF-8 boundaries preserved. These
+names belong to the runner. Startup resets the active log; backups remain until
+rotation replaces them. ``just logs`` reads the active file; reopen or restart
+``just logs-follow`` after rotation to follow the new active file.
 
 The log file is git-ignored and perfect for debugging or for AI assistants to read when helping with development.
 

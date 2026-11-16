@@ -75,6 +75,18 @@ Local development services
 ``just dev`` starts PostgreSQL and Django; ``just dev-all`` or ``./run_dev.sh``
 starts the full Procfile. All use ``dev_runner.py`` to own one supervisor per
 checkout, stream terminal output and save a colour-stripped ``logs/dev.log``.
+Output drains in fixed 16 KiB byte chunks, including unterminated lines, with
+incremental UTF-8 decoding (invalid bytes are replaced). Colour sequences split
+across chunks are stripped with at most 256 characters of carry. Incomplete
+escape suffixes exceeding that limit and unsupported sequences remain literal.
+Terminal output stays live.
+
+The active log rotates at 5 MiB into ``dev.log.1`` and ``dev.log.2``: at most
+three files and 15 MiB of log content, with UTF-8 boundaries preserved. These
+names belong to the runner. Startup resets the active log; backups remain until
+rotation replaces them. ``just logs`` reads the active file; reopen or restart
+``just logs-follow`` after rotation to follow the new active file.
+
 ``just cleanup`` signals only the runner recorded in ``logs/dev.json`` after
 checking its PID, creation time, command and checkout. The runner stops its own
 process group on exit, including INT, TERM, HUP and QUIT. ``just dev-force`` cleans up that checkout before starting
@@ -85,10 +97,18 @@ Cleanup refuses stale, legacy or mismatching records. Inspect the recorded
 process first, then remove stale ``logs/dev.json`` (or the old ``logs/dev.pid``)
 manually after inspecting/stopping any orphaned service PIDs individually; never
 use a command-name kill to recover. Startup refuses to overwrite
-an existing record. The runner uses POSIX process groups and the locked ``psutil``
+an existing record. The stable ``dev.lock`` is opened without truncation or following
+symlinks; only a regular file owned by the current user with one hard link is
+admitted. The named inode must still match after the exclusive lock is acquired.
+Never remove or replace ``dev.lock`` while a runner is active. The runner uses POSIX process groups and the locked ``psutil``
 development dependency. Install dependencies with ``uv sync --locked`` first.
 Supervisor failures produce a nonzero command status (including through logging),
-signals become 128 + signal number, and normal exit removes the ownership record.
+signals become 128 + signal number. The leader stays unreaped until the owned
+process group has received TERM (up to ten seconds grace) and a final KILL (two seconds
+to confirm retirement), including descendants of an already-exited leader. Only
+confirmed retirement removes the ownership record; failures retain its group ID
+for manual inspection. Process-table access and POSIX ``waitid(WNOWAIT)`` are
+required (on macOS: Python 3.13 or newer; older interpreters are refused before start).
 
 Locked dependency audit
 ^^^^^^^^^^^^^^^^^^^^^^^

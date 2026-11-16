@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Limit development logs to a 5 MiB active file and two rotated backups (15 MiB
+  total), preserving UTF-8 boundaries and the latest output.
+
+- Stream development output in fixed byte chunks with incremental UTF-8 decoding
+  and bounded colour-sequence carry, including large unterminated lines.
+
+- Admit the stable development lock without truncation or symlink traversal,
+  reject hardlinks/special files and fence its named inode after locking.
+
+- Reserve the development supervisor's group identity until bounded TERM/KILL
+  retirement completes, including resistant descendants of exited leaders;
+  retain ownership evidence when retirement cannot be confirmed. The TERM grace
+  stays ten seconds; on macOS the runner needs Python 3.13 or newer
+  (`os.waitid`) and refuses older interpreters before starting services.
+
 - Validate portfolio half-float filtering and framebuffer completeness, bound hero
   surfaces by device dimensions and pixel budget, and show terminal readable
   fallback on WebGL context loss while releasing allocated resources.

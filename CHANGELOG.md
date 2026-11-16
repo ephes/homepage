@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Validate portfolio half-float filtering and framebuffer completeness, bound hero
+  surfaces by device dimensions and pixel budget, and show terminal readable
+  fallback on WebGL context loss while releasing allocated resources.
+- Retire settled cursor frames and fence pending handwriting font completion by
+  the live motion preference and startup generation. Reduced motion immediately
+  restores plain about text and cancels its queued animation work.
+- Resync reel overflow and ARIA state after intrinsic content changes, and bind
+  dragging to one pointer through cancellation and capture loss.
+- Bound optional about-line animation work without limiting editorial content;
+  retire stale navigation focus/scroll flights on conflicting menu actions.
+
 - Refresh Soup Sieve 2.10 to 4.1 (CVE-2026-126190 and related selector DoS
   advisories) and notebook-only Tornado 6.6 to 6.6.1 (CVE-2026-126347).
   Beautiful Soup 4.15.0 remains compatible. Document-level CSS selectors now

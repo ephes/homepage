@@ -11,7 +11,8 @@ ASSETS = Path(__file__).resolve().parents[2] / "homepage/portfolio/static/portfo
 # Only the WebGL calls used by the hero are substituted. Canvas2D, DOM, promises,
 # CSS and event dispatch stay real; this gate makes no GPU/pixel accuracy claim.
 CONTROLS = """(options) => {
-  const state = window.heroTest = {renders: 0, failures: 0, stageObservers: 0, frames: new Map()};
+  const state = window.heroTest = {renders: 0, failures: 0, stageObservers: 0,
+    frames: new Map(), allocations: [], filters: [], deleted: 0};
   state.motionChanges = 0;
   matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => state.motionChanges++);
   state.enhancementFaults = 0;
@@ -63,8 +64,12 @@ CONTROLS = """(options) => {
   Object.defineProperty(document.fonts, 'ready', {
     value: options.fonts === 'pending-ready' ? ready : Promise.resolve(document.fonts)
   });
-  const gl = {COMPILE_STATUS: 1, LINK_STATUS: 2, ACTIVE_UNIFORMS: 3};
-  gl.getExtension = () => ({HALF_FLOAT_OES: 36193});
+  const gl = {COMPILE_STATUS: 1, LINK_STATUS: 2, ACTIVE_UNIFORMS: 3,
+    FRAMEBUFFER_COMPLETE: 4, MAX_TEXTURE_SIZE: 5, LINEAR: 6, NEAREST: 7};
+  gl.getParameter = () => options.maxTextureSize ?? 4096;
+  gl.checkFramebufferStatus = () => options.incomplete ? 0 : gl.FRAMEBUFFER_COMPLETE;
+  gl.getExtension = name => name === 'OES_texture_half_float_linear' && options.noLinear
+    ? null : {HALF_FLOAT_OES: 36193};
   gl.getShaderParameter = () => {
     if (options.failure === 'shader') { state.failures++; return false; }
     return true;
@@ -79,6 +84,13 @@ CONTROLS = """(options) => {
    'texImage2D', 'framebufferTexture2D', 'viewport', 'clear', 'pixelStorei', 'useProgram',
    'uniform1f', 'uniform1i', 'uniform2f', 'uniform3f', 'activeTexture']
     .forEach(name => { gl[name] = () => {}; });
+  gl.texParameteri = (target, name, value) => state.filters.push(value);
+  gl.texImage2D = (...args) => {
+    const source = args.length === 6 ? args[5] : null;
+    state.allocations.push(source ? [source.width, source.height] : [args[3], args[4]]);
+  };
+  ['deleteTexture', 'deleteFramebuffer', 'deleteBuffer', 'deleteShader', 'deleteProgram']
+    .forEach(name => { gl[name] = () => state.deleted++; });
   let framebuffer;
   gl.bindFramebuffer = (target, value) => { framebuffer = value; };
   gl.drawArrays = () => {
@@ -120,14 +132,16 @@ def hero_page():
         errors = []
         unexpected = []
 
-        def open_page(*, failure=None, fonts="fulfilled", enhancement_failure=None, reduced_motion="no-preference"):
+        def open_page(
+            *, failure=None, fonts="fulfilled", enhancement_failure=None, reduced_motion="no-preference", **extra
+        ):
             context = browser.new_context(viewport={"width": 1000, "height": 800}, reduced_motion=reduced_motion)
             contexts.append(context)
             page = context.new_page()
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.clock.install(time=0)
             page.clock.pause_at(1)
-            options = {"failure": failure, "fonts": fonts, "enhancementFailure": enhancement_failure}
+            options = {"failure": failure, "fonts": fonts, "enhancementFailure": enhancement_failure, **extra}
             page.add_init_script(f"({CONTROLS})({json.dumps(options)})")
 
             html = HTML
@@ -196,11 +210,16 @@ def test_webgl_failure_has_readable_fallback_and_navigation(hero_page, failure):
         page.evaluate("heroTest.failRender = true; heroTest.tick()")
     assert page.evaluate("heroTest.failures") > 0
     assert_stopped_fallback(page)
+    renders = page.evaluate("heroTest.renders")
     # Failure is terminal even when normal resume signals arrive later.
     page.evaluate("heroTest.intersect?.(true); dispatchEvent(new Event('resize'))")
     page.emulate_media(reduced_motion="reduce")
     page.emulate_media(reduced_motion="no-preference")
+    # Resize may queue the reel's one coalesced sync frame; draining it must not
+    # restart the hero loop or render again.
+    page.evaluate("heroTest.tick()")
     assert page.evaluate("heroTest.frames.size") == 0
+    assert page.evaluate("heroTest.renders") == renders
 
 
 @pytest.mark.parametrize("fonts", ["pending-load", "pending-ready", "rejected", "fulfilled", "throw"])
@@ -313,3 +332,45 @@ def test_hero_resumes_only_when_all_pause_reasons_clear(hero_page):
     page.evaluate("heroTest.tick()")
     assert page.evaluate("heroTest.renders") == 2
     assert page.evaluate("heroTest.frames.size") == 1
+
+
+def test_framebuffer_capability_admission(hero_page):
+    page = hero_page(incomplete=True)
+    assert_stopped_fallback(page)
+    assert page.evaluate("heroTest.deleted") > 0
+    page = hero_page(noLinear=True)
+    assert page.evaluate("heroTest.renders") == 1
+    # Half-float targets use supported nearest filtering; byte image textures stay linear.
+    assert page.evaluate("heroTest.filters.includes(7)")
+
+
+@pytest.mark.parametrize("limit", [512, 2048, 0])
+def test_hero_texture_allocation_budget(hero_page, limit):
+    page = hero_page(maxTextureSize=limit)
+    if limit == 0:
+        assert_stopped_fallback(page)
+        return
+    page.evaluate("""() => {
+      const stage = document.querySelector('#stage');
+      stage.style.cssText = 'width:100px;height:12000px;min-height:0';
+      dispatchEvent(new Event('resize'));
+    }""")
+    sizes = page.evaluate("heroTest.allocations")
+    assert all(0 < w <= limit and 0 < h <= limit and w * h <= 4096 * 4096 for w, h in sizes)
+    w, h = sizes[-1]
+    assert abs(w / h - 100 / 12000) < 1 / h
+    assert page.evaluate("heroTest.renders") == 2
+
+
+def test_context_loss_is_terminal_before_or_after_start(hero_page):
+    for fonts in ["fulfilled", "pending-load"]:
+        page = hero_page(fonts=fonts)
+        page.locator("#fluid").dispatch_event("webglcontextlost")
+        page.evaluate("heroTest.finishFonts()")
+        page.clock.run_for(1600)
+        assert_stopped_fallback(page)
+        before = page.evaluate("heroTest.renders")
+        page.locator("#fluid").dispatch_event("webglcontextrestored")
+        page.evaluate("heroTest.intersect?.(true); dispatchEvent(new Event('resize')); heroTest.tick()")
+        assert page.evaluate("heroTest.renders") == before
+        assert page.evaluate("heroTest.frames.size") == 0

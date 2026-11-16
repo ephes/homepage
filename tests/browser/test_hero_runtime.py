@@ -210,11 +210,16 @@ def test_webgl_failure_has_readable_fallback_and_navigation(hero_page, failure):
         page.evaluate("heroTest.failRender = true; heroTest.tick()")
     assert page.evaluate("heroTest.failures") > 0
     assert_stopped_fallback(page)
+    renders = page.evaluate("heroTest.renders")
     # Failure is terminal even when normal resume signals arrive later.
     page.evaluate("heroTest.intersect?.(true); dispatchEvent(new Event('resize'))")
     page.emulate_media(reduced_motion="reduce")
     page.emulate_media(reduced_motion="no-preference")
+    # Resize may queue the reel's one coalesced sync frame; draining it must not
+    # restart the hero loop or render again.
+    page.evaluate("heroTest.tick()")
     assert page.evaluate("heroTest.frames.size") == 0
+    assert page.evaluate("heroTest.renders") == renders
 
 
 @pytest.mark.parametrize("fonts", ["pending-load", "pending-ready", "rejected", "fulfilled", "throw"])

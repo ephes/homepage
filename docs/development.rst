@@ -421,8 +421,15 @@ All services log to ``logs/dev.log`` with:
 
 Output drains in fixed 16 KiB byte chunks, including unterminated lines, with
 incremental UTF-8 decoding (invalid bytes are replaced). Colour sequences split
-across chunks are stripped with at most 256 characters of carry; oversized or
-unsupported escape sequences remain literal. Terminal output stays live.
+across chunks are stripped with at most 256 characters of carry. Incomplete
+escape suffixes exceeding that limit and unsupported sequences remain literal.
+Terminal output stays live.
+
+The active log rotates at 5 MiB into ``dev.log.1`` and ``dev.log.2``: at most
+three files and 15 MiB of log content, with UTF-8 boundaries preserved. These
+names belong to the runner. Startup resets the active log; backups remain until
+rotation replaces them. ``just logs`` reads the active file; reopen or restart
+``just logs-follow`` after rotation to follow the new active file.
 
 The log file is git-ignored and perfect for debugging or for AI assistants to read when helping with development.
 

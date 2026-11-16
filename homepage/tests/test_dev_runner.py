@@ -1,7 +1,7 @@
-"""Synthetic process identities only: never signal a real process."""
+"""Synthetic supervisors only: never signal an existing development service."""
 
-import os
 import json
+import os
 import signal
 import subprocess
 from pathlib import Path
@@ -414,6 +414,7 @@ def test_unterminated_output_is_read_in_fixed_chunks(state, fake_run, monkeypatc
     payload = (b"x" * (16384 - 1) + "€".encode() + b"\x1b[31mred\x1b[0m") * 512
     source = state.with_name("output.bin")
     source.write_bytes(payload)
+    monkeypatch.setattr(dev_runner, "LOG_MAX_BYTES", 16 * 1024 * 1024)
     terminal = hashlib.sha256()
     writes = []
 
@@ -490,3 +491,98 @@ def test_incremental_output_decoder_and_ansi_carry_are_bounded(parts, capsys):
     else:
         assert len(log.getvalue()) + dev_runner.ANSI_CARRY_LIMIT >= len(terminal)
     assert not output.pending
+
+
+@pytest.mark.parametrize("payload", ["synthetic line\n" * 1000, "€" * 10000 + "latest\n"], ids=["lines", "unicode"])
+def test_log_retention_bounds_bytes_and_keeps_latest_output(state, fake_run, monkeypatch, capsys, payload):
+    source = state.with_name("output.bin")
+    source.write_bytes(payload.encode())
+    monkeypatch.setattr(dev_runner, "LOG_MAX_BYTES", 128, raising=False)
+    monkeypatch.setattr(dev_runner, "LOG_BACKUPS", 2, raising=False)
+    with source.open("rb", buffering=0) as stdout:
+        fake_run.child.stdout = stdout
+        assert dev_runner.run([], state) == 0
+    assert capsys.readouterr().out == payload
+    logs = sorted(state.parent.glob("dev.log*"))
+    assert {path.name for path in logs} == {"dev.log", "dev.log.1", "dev.log.2"}
+    assert all(0 < path.stat().st_size <= 128 for path in logs)
+    retained = "".join(state.with_name(name).read_text() for name in ("dev.log.2", "dev.log.1", "dev.log"))
+    assert payload.endswith(retained)
+    assert retained.endswith("line\n" if payload.startswith("synthetic") else "latest\n")
+
+
+def test_process_table_failure_still_attempts_final_group_kill(state, fake_run, monkeypatch):
+    monkeypatch.setattr(dev_runner, "group_alive", Mock(side_effect=PermissionError("synthetic process table denied")))
+    with pytest.raises(RuntimeError, match="confirm"):
+        dev_runner.run([], state)
+    assert signal.SIGKILL in [call.args[1] for call in fake_run.killpg.call_args_list]
+    fake_run.child.wait.assert_not_called()
+    assert state.exists()
+
+
+def test_reserved_leader_and_stubborn_child_retire_with_known_inventory(tmp_path, monkeypatch):
+    """Use a complete synthetic inventory, without querying unrelated OS processes."""
+    import sys
+    import time
+
+    import psutil
+
+    pid_file = tmp_path / "child.pid"
+    descendant_code = (
+        "import os,pathlib,signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        f"pathlib.Path({str(pid_file)!r}).write_text(str(os.getpid())); time.sleep(60)"
+    )
+    leader_code = (
+        "import pathlib,subprocess,sys,time; "
+        f"subprocess.Popen([sys.executable, '-c', {descendant_code!r}]); "
+        f"p=pathlib.Path({str(pid_file)!r})\n"
+        "while not p.exists(): time.sleep(0.01)\n"
+        "sys.exit(23)\n"
+    )
+    leader = subprocess.Popen([sys.executable, "-c", leader_code], start_new_session=True)
+    descendant = None
+    try:
+        deadline = time.monotonic() + 5
+        while dev_runner.observe_exit(leader) is None:
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        descendant = psutil.Process(int(pid_file.read_text()))
+        monkeypatch.setattr(dev_runner.psutil, "pids", lambda: [leader.pid, descendant.pid])
+        killpg = os.killpg
+        signals = []
+
+        def signal_reserved_group(pgid, sig):
+            assert leader.returncode is None
+            assert dev_runner.observe_exit(leader) is not None
+            signals.append(sig)
+            killpg(pgid, sig)
+
+        monkeypatch.setattr(dev_runner.os, "killpg", signal_reserved_group)
+        dev_runner.retire_group(leader)
+        assert leader.returncode == 23
+        assert signals == [signal.SIGTERM, signal.SIGKILL]
+        assert not descendant.is_running() or descendant.status() == psutil.STATUS_ZOMBIE
+    finally:
+        if descendant and descendant.is_running():
+            descendant.kill()
+        if leader.poll() is None:
+            leader.kill()
+        leader.wait(timeout=5)
+
+
+@pytest.mark.parametrize("chunk", [b"end \xe2", b"end\x1b[31"], ids=["utf8", "ansi"])
+def test_signal_shutdown_finalizes_pending_output(state, fake_run, monkeypatch, chunk):
+    source = state.with_name("output.bin")
+    source.touch()
+
+    def interrupt(child, output):
+        output.write(chunk)
+        raise SystemExit(143)
+
+    monkeypatch.setattr(dev_runner, "stream_output", interrupt)
+    with source.open("rb", buffering=0) as stdout:
+        fake_run.child.stdout = stdout
+        with pytest.raises(SystemExit, match="143"):
+            dev_runner.run([], state)
+    assert state.with_name("dev.log").read_text() == chunk.decode("utf-8", errors="replace")
+    assert not state.exists()

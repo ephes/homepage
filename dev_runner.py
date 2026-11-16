@@ -21,6 +21,8 @@ ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "logs" / "dev.json"
 TERM_GRACE = 1.0
 KILL_GRACE = 2.0
+LOG_MAX_BYTES = 5 * 1024 * 1024
+LOG_BACKUPS = 2
 READ_SIZE = 16384
 ANSI_CARRY_LIMIT = 256
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
@@ -69,6 +71,7 @@ def group_alive(pgid):
 
 def retire_group(child):
     """Finish every group signal before reaping the leader; fail with evidence."""
+    scan_error = None
     for sig, grace in ((signal.SIGTERM, TERM_GRACE), (signal.SIGKILL, KILL_GRACE)):
         observe_exit(child)  # Refuse to signal if another waiter released our identity.
         try:
@@ -76,16 +79,64 @@ def retire_group(child):
         except ProcessLookupError:
             pass
         deadline = time.monotonic() + grace
-        while group_alive(child.pid):
+        while True:
+            try:
+                alive = group_alive(child.pid)
+            except (OSError, psutil.Error) as exc:
+                scan_error = exc
+                break  # Still attempt the final KILL, but never claim retirement.
+            if not alive:
+                if sig == signal.SIGKILL:
+                    child.wait(timeout=KILL_GRACE)
+                    return
+                break
             if time.monotonic() >= deadline:
                 break
             time.sleep(0.02)
-        else:
-            if sig == signal.SIGKILL:
-                child.wait(timeout=KILL_GRACE)
-                return
         # A final KILL also fences forks racing the last process-table snapshot.
+    if scan_error is not None:
+        raise RuntimeError("Cannot confirm owned group retirement; retaining ownership record") from scan_error
     raise RuntimeError("Owned process group did not retire; retaining ownership record")
+
+
+class RotatingLog:
+    """Keep only the active log and two backups, each bounded in actual bytes."""
+
+    def __init__(self, path):
+        self.path = path
+        self.size = 0
+        self.file = path.open("wb")
+
+    def rotate(self):
+        self.file.close()
+        for index in range(LOG_BACKUPS, 1, -1):
+            source = self.path.with_name(f"{self.path.name}.{index - 1}")
+            if source.exists():
+                source.replace(self.path.with_name(f"{self.path.name}.{index}"))
+        self.path.replace(self.path.with_name(f"{self.path.name}.1"))
+        self.file = self.path.open("wb")
+        self.size = 0
+
+    def write(self, text):
+        data = text.encode("utf-8")
+        while data:
+            end = min(len(data), LOG_MAX_BYTES - self.size)
+            # Each retained file is valid UTF-8, even at a rotation boundary.
+            if end < len(data):
+                while end and data[end] & 0xC0 == 0x80:
+                    end -= 1
+            if not end:
+                self.rotate()
+                continue
+            self.file.write(data[:end])
+            self.size += end
+            data = data[end:]
+
+    def flush(self):
+        self.file.flush()
+
+    def close(self):
+        self.file.close()
 
 
 class OutputLogger:
@@ -193,15 +244,17 @@ def run(processes, state=STATE):
             )
             record["pgid"] = child.pid
             state.write_text(json.dumps(record))
-            with (state.parent / "dev.log").open("w") as log:
+            with contextlib.closing(RotatingLog(state.parent / "dev.log")) as log:
                 output = OutputLogger(log)
-                stream_output(child, output)
-                # Repeated interrupts cannot release identity before the final signal.
-                for sig in previous:
-                    signal.signal(sig, signal.SIG_IGN)
-                retire_group(child)
-                retired = True
-                drain_output(child, output)
+                try:
+                    stream_output(child, output)
+                finally:
+                    # Keep logging open through signal-driven retirement and final decoding.
+                    for sig in previous:
+                        signal.signal(sig, signal.SIG_IGN)
+                    retire_group(child)
+                    retired = True
+                    drain_output(child, output)
             result = child.returncode
             return result if result >= 0 else 128 - result
         finally:

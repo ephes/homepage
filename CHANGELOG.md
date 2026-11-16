@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Limit development logs to a 5 MiB active file and two rotated backups (15 MiB
+  total), preserving UTF-8 boundaries and the latest output.
+
 - Stream development output in fixed byte chunks with incremental UTF-8 decoding
   and bounded colour-sequence carry, including large unterminated lines.
 

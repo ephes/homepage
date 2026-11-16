@@ -2,7 +2,9 @@
 (function () {
   "use strict";
 
+  var releaseWebGL = function () {};
   function disableWebGL() {
+    releaseWebGL();
     document.documentElement.classList.add('no-webgl');
   }
 
@@ -21,9 +23,22 @@
         || canvas.getContext('experimental-webgl', {alpha:true});
   if (!gl) { disableWebGL(); return; }
 
+  // Own every GPU handle, including partially constructed targets on admission failure.
+  var resources = [];
+  function own(handle, remove) {
+    if (!handle) throw new Error('WebGL allocation failed');
+    resources.push([handle, remove]);
+    return handle;
+  }
+  releaseWebGL = function () {
+    resources.splice(0).reverse().forEach(function (resource) { gl[resource[1]](resource[0]); });
+  };
+  var maxTextureSize = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+  if (!Number.isFinite(maxTextureSize) || maxTextureSize < 512) { disableWebGL(); return; }
+
   // Half-float-Support (WebGL1)
   var halfFloat = gl.getExtension('OES_texture_half_float');
-  gl.getExtension('OES_texture_half_float_linear');
+  var halfFilter = gl.getExtension('OES_texture_half_float_linear') ? gl.LINEAR : gl.NEAREST;
   var HALF = halfFloat ? halfFloat.HALF_FLOAT_OES : null;
   if (!HALF) { disableWebGL(); return; }
 
@@ -38,9 +53,9 @@
   var REVEAL_SIZE = 3.9, EDGE_SOFT = 0.5, EDGE_WIDTH = 0.06; // Kante noch etwas schärfer
 
   // ---- Shader-Helfer ----
-  function compile(type, src){ var s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+  function compile(type, src){ var s=own(gl.createShader(type),'deleteShader'); gl.shaderSource(s,src); gl.compileShader(s);
     if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)+"\n"+src); return s; }
-  function prog(vs, fs){ var p=gl.createProgram(); gl.attachShader(p,compile(gl.VERTEX_SHADER,vs)); gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs));
+  function prog(vs, fs){ var p=own(gl.createProgram(),'deleteProgram'); gl.attachShader(p,compile(gl.VERTEX_SHADER,vs)); gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs));
     gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
     p.uni={}; var n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS); for(var i=0;i<n;i++){var u=gl.getActiveUniform(p,i).name; p.uni[u]=gl.getUniformLocation(p,u);} return p; }
 
@@ -84,16 +99,17 @@
   };
 
   // Fullscreen-Quad
-  var quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+  var quad = own(gl.createBuffer(),'deleteBuffer'); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
   function bindQuad(p){ gl.bindBuffer(gl.ARRAY_BUFFER, quad); var a=gl.getAttribLocation(p,'aPos'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0); }
   function draw(fbo){ gl.bindFramebuffer(gl.FRAMEBUFFER, fbo?fbo.fbo:null); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); }
 
-  function makeFBO(w,h,internal){ var tex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tex);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  function makeFBO(w,h,internal){ var tex=own(gl.createTexture(),'deleteTexture'); gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,halfFilter); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,halfFilter);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,HALF,null);
-    var fbo=gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER,fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    var fbo=own(gl.createFramebuffer(),'deleteFramebuffer'); gl.bindFramebuffer(gl.FRAMEBUFFER,fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('Incomplete hero framebuffer');
     gl.viewport(0,0,w,h); gl.clear(gl.COLOR_BUFFER_BIT);
     return {tex:tex,fbo:fbo,w:w,h:h,texel:[1/w,1/h]}; }
   function makeDouble(w,h){ var a=makeFBO(w,h),b=makeFBO(w,h); return {read:a,write:b,w:w,h:h,texel:a.texel,swap:function(){var t=this.read;this.read=this.write;this.write=t;}}; }
@@ -103,7 +119,7 @@
   initFBOs();
 
   // ---- Texturen: Base (clean) + Reveal (Illustration), Text eingebrannt ----
-  var baseTex=gl.createTexture(), revealTex=gl.createTexture();
+  var baseTex=own(gl.createTexture(),'deleteTexture'), revealTex=own(gl.createTexture(),'deleteTexture');
   var baseAspect=1, revealAspect=1;
   function uploadTex(tex, cnv){ gl.bindTexture(gl.TEXTURE_2D,tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // Canvas oben-links → WebGL unten-links: vertikal flippen
@@ -181,11 +197,11 @@
     ctx.drawImage(t, 0, 0);
   }
   function buildTextures(){
-    // Texturbreite = Canvas-Breite. Alles darunter wird beim Zeichnen hochskaliert und
-    // die Kanten des eingebrannten MOIN fransen sichtbar aus (vorher fix auf 2048 gedeckelt
-    // → auf großen Screens Faktor 2 Upscaling).
-    var W = Math.max(1024, canvas.width);
-    var H = Math.round(W * stage.clientHeight/stage.clientWidth);
+    // Bound both edges and total pixels before allocating Canvas2D or GPU storage.
+    // One common scale preserves the live stage aspect and editorial focal placement.
+    var size = boundedSize(stage.clientWidth, stage.clientHeight,
+      Math.max(1024, canvas.width) / stage.clientWidth);
+    var W = size[0], H = size[1];
     // Base = Creme + solides MOIN
     var b=document.createElement('canvas'); b.width=W; b.height=H; var bx=b.getContext('2d');
     var g = moinGeom(bx, W, H);
@@ -260,14 +276,19 @@
   }
 
   // ---- Größe ----
+  function boundedSize(cw, ch, desiredScale) {
+    if (!(cw > 0 && ch > 0 && Number.isFinite(cw) && Number.isFinite(ch))) {
+      throw new Error('Invalid hero dimensions');
+    }
+    var scale = Math.min(desiredScale, maxTextureSize / cw, maxTextureSize / ch,
+      Math.sqrt(4 * 1024 * 1024 / cw / ch));
+    var w = Math.floor(cw * scale), h = Math.floor(ch * scale);
+    if (w < 1 || h < 1) throw new Error('Hero aspect exceeds texture budget');
+    return [w, h];
+  }
   function resize(){ var dpr=Math.min(2,window.devicePixelRatio||1);
-    var MAXD=4096, cw=stage.clientWidth, ch=stage.clientHeight;
-    // Den MASSSTAB deckeln, nicht die Kanten einzeln: würde nur die Breite gekappt
-    // (großer Screen: 2560×2 = 5120 → 4096, Höhe bleibt ungekappt), stimmte das
-    // Seitenverhältnis des Canvas nicht mehr mit dem der Textur überein — der
-    // Composite-Shader macht einen cover-Fit und zoomt die Textur seitlich aus dem Bild.
-    var scale=Math.min(dpr, MAXD/cw, MAXD/ch);
-    canvas.width=Math.round(cw*scale); canvas.height=Math.round(ch*scale);
+    var size=boundedSize(stage.clientWidth,stage.clientHeight,dpr);
+    canvas.width=size[0]; canvas.height=size[1];
     // Einheitlicher Gap Wort↔Gridzelle: einmal berechnen, für Canvas (MOIN) UND DOM (Subline) nutzen.
     HERO_INSET = Math.max(8, Math.min(0.012*stage.clientWidth, 20));
     document.documentElement.style.setProperty('--hero-inset', HERO_INSET+'px');
@@ -622,7 +643,11 @@
   if(colorSchemeQuery.addEventListener)colorSchemeQuery.addEventListener('change',refreshTheme);
   else colorSchemeQuery.addListener(refreshTheme);
   if(revealSource)revealSource.addEventListener('error',refreshRevealSource);
+  var simulationRetired=false;
+  canvas.addEventListener('webglcontextlost', disableSimulation);
   function disableSimulation(){
+    simulationRetired=true;
+    clearTimeout(fontTimer);
     simulationReady=false;
     if(simulationFrame)cancelAnimationFrame(simulationFrame);
     simulationFrame=0; pointer.moved=false; mouseSeeded=false;
@@ -670,7 +695,7 @@
   else motionPreference.addListener(syncMotionPreference);
   var startAttempted=false, fontTimer=0;
   function start(){
-    if(startAttempted)return;
+    if(startAttempted||simulationRetired)return;
     startAttempted=true;
     clearTimeout(fontTimer);
     try {
@@ -733,7 +758,12 @@ runPortfolioEnhancement('navigation', function () {
   if (!menu) return;
   var lockedY = null;
   var anchorFlight = false;
-  var flightTimer = 0;
+  var flightTimer = 0, flightFrame = 0, flightGeneration = 0, flightMenuOpen = null;
+  function retireFlight() {
+    flightGeneration++;
+    clearTimeout(flightTimer); cancelAnimationFrame(flightFrame);
+    flightTimer = 0; flightFrame = 0; anchorFlight = false; flightMenuOpen = null;
+  }
   var desktopHover = matchMedia('(min-width: 52.001rem) and (hover: hover) and (pointer: fine)');
   var motionReduce = matchMedia('(prefers-reduced-motion: reduce)');
   var toggle = menu.querySelector('summary');
@@ -753,7 +783,8 @@ runPortfolioEnhancement('navigation', function () {
       ? document.getElementById(link.dataset.hoverTarget)
       : localTarget(link);
     if (!target) return false;
-    clearTimeout(flightTimer);
+    retireFlight();
+    var generation = flightGeneration;
     anchorFlight = true;
     if (!keepOpen) {
       lockedY = null;
@@ -761,7 +792,11 @@ runPortfolioEnhancement('navigation', function () {
       inertTargets.forEach(function (node) { node.inert = false; });
       history.pushState(null, '', link.hash);
     }
-    requestAnimationFrame(function () {
+    flightMenuOpen = menu.open;
+    flightFrame = requestAnimationFrame(function () {
+      if (generation !== flightGeneration) return;
+      if (menu.open !== flightMenuOpen) { retireFlight(); return; }
+      flightFrame = 0;
       if (!keepOpen) {
         if (!target.hasAttribute('tabindex') && target.tabIndex < 0) {
           target.setAttribute('tabindex', '-1');
@@ -772,13 +807,17 @@ runPortfolioEnhancement('navigation', function () {
       target.scrollIntoView({ behavior: motionReduce.matches ? 'auto' : 'smooth', block: 'start' });
     });
     flightTimer = setTimeout(function () {
+      if (generation !== flightGeneration) return;
+      flightTimer = 0;
       anchorFlight = false;
       if (menu.open) lockedY = window.scrollY;
     }, 850);
     return true;
   }
 
+  toggle.addEventListener('click', retireFlight);
   menu.addEventListener('toggle', function () {
+    if (flightMenuOpen !== null && menu.open !== flightMenuOpen) retireFlight();
     lockedY = menu.open ? window.scrollY : null;
     toggle.setAttribute('aria-label', menu.open ? 'Menü schließen' : 'Menü');
     inertTargets.forEach(function (node) { node.inert = menu.open; });
@@ -790,7 +829,7 @@ runPortfolioEnhancement('navigation', function () {
           event.shiftKey || event.altKey || link.hasAttribute('download') ||
           (link.target && link.target.toLowerCase() !== '_self')) return;
       if (flyTo(link, false)) event.preventDefault();
-      else menu.removeAttribute('open');
+      else { retireFlight(); menu.removeAttribute('open'); }
     });
     link.addEventListener('pointerenter', function () {
       if (desktopHover.matches) flyTo(link, true);
@@ -839,13 +878,15 @@ runPortfolioEnhancement('navigation', function () {
     if (lockedY !== null && !anchorFlight && window.scrollY !== lockedY) window.scrollTo(0, lockedY);
   }, { passive: true });
   document.addEventListener('keydown', function (event) {
-    if (!menu.open) return;
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' && (menu.open || flightFrame)) {
+      retireFlight();
       menu.removeAttribute('open');
+      inertTargets.forEach(function (node) { node.inert = false; });
       toggle.focus();
       event.preventDefault();
       return;
     }
+    if (!menu.open) return;
     if (event.key === 'Tab') {
       var stops = [toggle].concat(menuStops);
       var first = stops[0], last = stops[stops.length - 1];
@@ -862,7 +903,7 @@ runPortfolioEnhancement('navigation', function () {
     }
   });
   document.addEventListener('click', function (event) {
-    if (menu.open && !menu.contains(event.target)) menu.removeAttribute('open');
+    if (menu.open && !menu.contains(event.target)) { retireFlight(); menu.removeAttribute('open'); }
   });
 });
 // Höhe der Navigation als CSS-Variable. Eigener Block, damit er auch ohne WebGL läuft.
@@ -897,39 +938,68 @@ runPortfolioEnhancement('reels', function () {
     var thumb = bar.querySelector('.reelbar-thumb');
     if (!reel || !track || !thumb) return;
 
+    var activePointer = null, startX = 0, startScroll = 0, syncFrame = 0;
     // Breite des Anfassers = sichtbarer Anteil, Position = Scrollfortschritt.
     function sync() {
       var max = reel.scrollWidth - reel.clientWidth;
       var isScrollable = max > 1;
       bar.classList.toggle('is-scrollable', isScrollable);
       reel.tabIndex = isScrollable ? 0 : -1;
-      if (max <= 1) return;
+      if (max <= 1) {
+        retireDrag();
+        thumb.style.setProperty('--thumb-size', '100%');
+        thumb.style.setProperty('--thumb-pos', '0%');
+        thumb.setAttribute('aria-valuenow', '0');
+        return;
+      }
       var frac = reel.clientWidth / reel.scrollWidth;
       var pos = reel.scrollLeft / max;
       thumb.style.setProperty('--thumb-size', (frac * 100) + '%');
       thumb.style.setProperty('--thumb-pos', (pos * (100 - frac * 100)) + '%');
       thumb.setAttribute('aria-valuenow', Math.round(pos * 100));
     }
-    reel.addEventListener('scroll', sync, { passive: true });
-    if ('ResizeObserver' in window) new ResizeObserver(sync).observe(reel);
-    addEventListener('resize', sync, { passive: true });
+    function requestSync() {
+      if (syncFrame) return;
+      syncFrame = requestAnimationFrame(function () { syncFrame = 0; sync(); });
+    }
+    reel.addEventListener('scroll', requestSync, { passive: true });
+    reel.addEventListener('load', requestSync, true);
+    reel.addEventListener('error', requestSync, true);
+    var contentObserver = 'ResizeObserver' in window ? new ResizeObserver(requestSync) : null;
+    function observeContent() {
+      if (!contentObserver) return;
+      contentObserver.disconnect();
+      contentObserver.observe(reel);
+      reel.querySelectorAll('*').forEach(function (item) { contentObserver.observe(item); });
+    }
+    observeContent();
+    new MutationObserver(function () { observeContent(); requestSync(); })
+      .observe(reel, { childList: true, subtree: true, characterData: true });
+    addEventListener('resize', requestSync, { passive: true });
     sync();
 
-    // Ziehen: zurückgelegte Strecke auf der Spur → Scrollstrecke im Reel.
-    var dragging = false, startX = 0, startScroll = 0;
+    // One captured pointer owns the drag; unrelated contacts cannot replace it.
+    function retireDrag() {
+      if (activePointer === null) return;
+      var pointerId = activePointer;
+      activePointer = null;
+      if (thumb.hasPointerCapture(pointerId)) thumb.releasePointerCapture(pointerId);
+    }
     thumb.addEventListener('pointerdown', function (e) {
-      dragging = true; startX = e.clientX; startScroll = reel.scrollLeft;
+      if (activePointer !== null || e.button !== 0 || e.isPrimary === false ||
+          reel.scrollWidth - reel.clientWidth <= 1) return;
       thumb.setPointerCapture(e.pointerId);
+      activePointer = e.pointerId; startX = e.clientX; startScroll = reel.scrollLeft;
       e.preventDefault();
     });
     thumb.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
+      if (e.pointerId !== activePointer) return;
       var travel = track.clientWidth - thumb.offsetWidth;
       var max = reel.scrollWidth - reel.clientWidth;
       if (travel > 0) reel.scrollLeft = startScroll + (e.clientX - startX) * (max / travel);
     });
-    ['pointerup', 'pointercancel'].forEach(function (t) {
-      thumb.addEventListener(t, function () { dragging = false; });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (t) {
+      thumb.addEventListener(t, function (e) { if (e.pointerId === activePointer) retireDrag(); });
     });
 
     // Tastatur: der Anfasser bildet den horizontalen Scrollstand semantisch ab.
@@ -950,6 +1020,8 @@ runPortfolioEnhancement('reels', function () {
 // unverändert da.
 runPortfolioEnhancement('about-lines', function () {
   var reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  // Decoration must not turn editorial copy into unbounded layout work or stagger time.
+  var MAX_ANIMATED_TEXT = 2400, MAX_ANIMATED_LINES = 16;
 
   document.querySelectorAll(".about .me-row").forEach(function (row) {
     var p = row.querySelector("p");
@@ -972,7 +1044,8 @@ runPortfolioEnhancement('about-lines', function () {
         if (!r.height) return;
         if (!tops.length || r.top > tops[tops.length - 1] + 1) tops.push(r.top);
       });
-      if (tops.length < 2) return false;
+      if (tops.length === 1 || tops.length > MAX_ANIMATED_LINES) return null;
+      if (!tops.length) return false;
 
       // Das erste Zeichen nach einem GETRENNTEN Umbruch meldet ZWEI Rechtecke: eines am
       // Ende der alten Zeile (dort sitzt der erzeugte Trennstrich) und eines am Anfang
@@ -1044,8 +1117,11 @@ runPortfolioEnhancement('about-lines', function () {
     function versuchen(rest) {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(function () {
-        if (!row.open) { zurueck(); return; }
-        if (!zerlegen()) {
+        frame = 0;
+        if (!row.open || reduce.matches) { zurueck(); return; }
+        var prepared = zerlegen();
+        if (prepared === null) { zurueck(); return; }
+        if (!prepared) {
           if (rest > 0) { versuchen(rest - 1); return; }
           zurueck(); return;
         }
@@ -1060,17 +1136,23 @@ runPortfolioEnhancement('about-lines', function () {
       });
     }
 
+    function retireLines() {
+      clearTimeout(timer); cancelAnimationFrame(frame);
+      timer = 0; frame = 0; zurueck();
+    }
+    function syncLinePreference() { if (reduce.matches) retireLines(); }
+    if (reduce.addEventListener) reduce.addEventListener('change', syncLinePreference);
+    else reduce.addListener(syncLinePreference);
     function zeigen() {
-      clearTimeout(timer);
-      cancelAnimationFrame(frame);
-      if (!row.open || reduce.matches) { zurueck(); return; }
+      retireLines();
+      if (!row.open || reduce.matches || !text.length || text.length > MAX_ANIMATED_TEXT) return;
       versuchen(3);
     }
     row.addEventListener("toggle", zeigen);
     // Sicherheitsnetz: Wird während der Animation die Breite geändert, sofort zurück
     // auf reinen Text — sonst stünden dort Zeilen, die zur neuen Breite nicht passen.
     addEventListener("resize", function () {
-      clearTimeout(timer); cancelAnimationFrame(frame); zurueck();
+      retireLines();
     }, { passive: true });
   });
 });
@@ -1107,25 +1189,39 @@ runPortfolioEnhancement('custom-cursor', function () {
     return;
   }
 
-  var tx = 0, ty = 0, x = 0, y = 0, raf = 0;
-  // Nachlaufen mit Lerp: der Ring hängt dem Zeiger eine Spur hinterher, das nimmt ihm
-  // die Härte und passt zur trägen Bewegung der Flüssigkeitssimulation darunter.
-  function loop() {
-    x += (tx - x) * 0.2; y += (ty - y) * 0.2;
+  var tx = 0, ty = 0, x = 0, y = 0, raf = 0, inside = false;
+  var cursorMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  function paintCursor() {
     cur.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
-    raf = requestAnimationFrame(loop);
   }
-  addEventListener('pointermove', function (e) { tx = e.clientX; ty = e.clientY; }, { passive: true });
-  stage.addEventListener('pointerenter', function (e) {
-    tx = x = e.clientX; ty = y = e.clientY;      // ohne Sprung einsetzen
-    cur.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
-    document.documentElement.classList.add('stage-hover');
-    if (!raf) raf = requestAnimationFrame(loop);
-  });
-  stage.addEventListener('pointerleave', function () {
-    document.documentElement.classList.remove('stage-hover');
+  function requestCursor() {
+    if (!inside || document.hidden || cursorMotion.matches || raf) return;
+    if (Math.abs(tx - x) > 0.1 || Math.abs(ty - y) > 0.1) raf = requestAnimationFrame(loop);
+  }
+  function loop() {
+    raf = 0;
+    if (!inside || document.hidden || cursorMotion.matches) return;
+    x += (tx - x) * 0.2; y += (ty - y) * 0.2;
+    if (Math.abs(tx - x) <= 0.1 && Math.abs(ty - y) <= 0.1) { x = tx; y = ty; }
+    paintCursor(); requestCursor();
+  }
+  function settleCursor() {
     cancelAnimationFrame(raf); raf = 0;
+    x = tx; y = ty; paintCursor();
+    document.documentElement.classList.toggle('stage-hover', inside && !document.hidden);
+  }
+  addEventListener('pointermove', function (e) {
+    tx = e.clientX; ty = e.clientY;
+    if (inside && cursorMotion.matches) { x = tx; y = ty; paintCursor(); }
+    requestCursor();
+  }, { passive: true });
+  stage.addEventListener('pointerenter', function (e) {
+    inside = true; tx = e.clientX; ty = e.clientY; settleCursor();
   });
+  stage.addEventListener('pointerleave', function () { inside = false; settleCursor(); });
+  document.addEventListener('visibilitychange', settleCursor);
+  if (cursorMotion.addEventListener) cursorMotion.addEventListener('change', settleCursor);
+  else cursorMotion.addListener(settleCursor);
 });
 // SMIL kennt prefers-reduced-motion nicht, und display:none auf dem <animate> stoppt es
 // nicht zuverlässig. pauseAnimations() ist der dafür vorgesehene Weg — es friert die

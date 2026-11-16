@@ -1066,24 +1066,36 @@
     requestHeadingScan();
   }
 
-  var handwritingStarted = false;
+  var handwritingStarted = false, handwritingPending = false, handwritingGeneration = 0;
   function start() {
-    if (reduce.matches || handwritingStarted || !window.PORTFOLIO_HANDWRITING) return;
-    handwritingStarted = true;
+    if (reduce.matches || handwritingStarted || handwritingPending || !window.PORTFOLIO_HANDWRITING) return;
+    handwritingPending = true;
+    var generation = ++handwritingGeneration;
     glyphs = window.PORTFOLIO_HANDWRITING;
     var ready = document.fonts && document.fonts.load
       ? document.fonts.load('400 40px "Astagina"')
       : Promise.resolve();
     Promise.resolve(ready).then(function () {
+      if (generation !== handwritingGeneration || reduce.matches) return;
+      handwritingPending = false;
       var svgs = prepareScriptText();
       if (!svgs.length) return;
+      handwritingStarted = true;
       root.classList.add("js-hw");
       writeHandwriting(svgs);
     }).catch(function () {
+      if (generation !== handwritingGeneration) return;
+      handwritingPending = false;
       root.classList.remove("js-hw");
     });
   }
 
+  function syncHandwritingStartup() {
+    if (reduce.matches) { handwritingGeneration++; handwritingPending = false; }
+    else start();
+  }
+  if (reduce.addEventListener) reduce.addEventListener("change", syncHandwritingStartup);
+  else reduce.addListener(syncHandwritingStartup);
   window.addEventListener("portfolio:handwriting-ready", start);
   if (window.PORTFOLIO_HANDWRITING) start();
   else if (handwritingSource) {

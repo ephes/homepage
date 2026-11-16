@@ -204,6 +204,21 @@ job runs this gate after the application and migration suites. These regressions
 stay outside the default application testpaths because Chromium is an explicit
 prerequisite.
 
+Portfolio state regressions without Chromium
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run ``npm ci --ignore-scripts`` and ``npm test`` (Node 22.12+ or 24+). The locked
+JSDOM development dependency is used only in tests. These tests execute the complete
+shipped scripts against synthetic DOM, WebGL, layout rectangles, font promises,
+frame queues and pointer capture. They cover framebuffer/filter admission, tall and
+wide texture budgets, context loss before/after startup, idle cursor retirement,
+stale font generations, live motion retirement, intrinsic reel resync, pointer
+ownership, optional text work bounds and competing navigation flights in both
+homepage and shared-shell scripts. They require neither a database nor Chromium;
+they do not establish browser layout, GPU output or performance correctness.
+The Chromium gate remains required and includes the new hero resource regressions.
+No workflow is added for these local checks.
+
 Page lookup identity contracts
 ------------------------------
 

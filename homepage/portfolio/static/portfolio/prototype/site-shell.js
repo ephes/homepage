@@ -66,7 +66,12 @@
   if (!menu) return;
   let lockedY = null;
   let anchorFlight = false;
-  let flightTimer = 0;
+  let flightTimer = 0, flightFrame = 0, flightGeneration = 0, flightMenuOpen = null;
+  const retireFlight = () => {
+    flightGeneration++;
+    clearTimeout(flightTimer); cancelAnimationFrame(flightFrame);
+    flightTimer = 0; flightFrame = 0; anchorFlight = false; flightMenuOpen = null;
+  };
   const desktopHover = matchMedia("(min-width: 52.001rem) and (hover: hover) and (pointer: fine)");
   const motionReduce = matchMedia("(prefers-reduced-motion: reduce)");
   const toggle = menu.querySelector("summary");
@@ -84,7 +89,8 @@
   const flyTo = (link, keepOpen) => {
     const target = localTarget(link);
     if (!target) return false;
-    clearTimeout(flightTimer);
+    retireFlight();
+    const generation = flightGeneration;
     anchorFlight = true;
     if (!keepOpen) {
       lockedY = null;
@@ -92,7 +98,11 @@
       inertTargets.forEach((node) => { node.inert = false; });
       history.pushState(null, "", link.hash);
     }
-    requestAnimationFrame(() => {
+    flightMenuOpen = menu.open;
+    flightFrame = requestAnimationFrame(() => {
+      if (generation !== flightGeneration) return;
+      if (menu.open !== flightMenuOpen) { retireFlight(); return; }
+      flightFrame = 0;
       if (!keepOpen) {
         if (!target.hasAttribute("tabindex") && target.tabIndex < 0) {
           target.setAttribute("tabindex", "-1");
@@ -103,13 +113,17 @@
       target.scrollIntoView({ behavior: motionReduce.matches ? "auto" : "smooth", block: "start" });
     });
     flightTimer = window.setTimeout(() => {
+      if (generation !== flightGeneration) return;
+      flightTimer = 0;
       anchorFlight = false;
       if (menu.open) lockedY = window.scrollY;
     }, 850);
     return true;
   };
 
+  toggle.addEventListener("click", retireFlight);
   menu.addEventListener("toggle", () => {
+    if (flightMenuOpen !== null && menu.open !== flightMenuOpen) retireFlight();
     lockedY = menu.open ? window.scrollY : null;
     toggle.setAttribute("aria-label", menu.open ? "Menü schließen" : "Menü");
     inertTargets.forEach((node) => { node.inert = menu.open; });
@@ -121,7 +135,7 @@
           event.shiftKey || event.altKey || link.hasAttribute("download") ||
           (link.target && link.target.toLowerCase() !== "_self")) return;
       if (flyTo(link, false)) event.preventDefault();
-      else menu.removeAttribute("open");
+      else { retireFlight(); menu.removeAttribute("open"); }
     });
     link.addEventListener("pointerenter", () => {
       if (desktopHover.matches) flyTo(link, true);
@@ -163,13 +177,15 @@
     if (lockedY !== null && !anchorFlight && window.scrollY !== lockedY) window.scrollTo(0, lockedY);
   }, { passive: true });
   document.addEventListener("keydown", (event) => {
-    if (!menu.open) return;
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && (menu.open || flightFrame)) {
+      retireFlight();
       menu.removeAttribute("open");
+      inertTargets.forEach((node) => { node.inert = false; });
       toggle.focus();
       event.preventDefault();
       return;
     }
+    if (!menu.open) return;
     if (event.key === "Tab") {
       const stops = [toggle, ...menuStops];
       const first = stops[0];
@@ -187,6 +203,6 @@
     if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) event.preventDefault();
   });
   document.addEventListener("click", (event) => {
-    if (menu.open && !menu.contains(event.target)) menu.removeAttribute("open");
+    if (menu.open && !menu.contains(event.target)) { retireFlight(); menu.removeAttribute("open"); }
   });
 })();

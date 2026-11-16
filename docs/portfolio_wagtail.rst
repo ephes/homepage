@@ -293,7 +293,10 @@ Deliberate local navigation closes the menu, clears inert content, updates the
 fragment, focuses the destination without an extra scroll, and scrolls it into
 view. Nonfocusable destinations receive a temporary tabindex removed on blur;
 existing tabindex values are preserved. Hover previews change neither focus nor
-history. Escape restores the menu toggle and makes the page interactive again.
+history. Pending focus/scroll work belongs to the latest navigation generation.
+Reopening the menu, Escape or another destination retires the old frame and timer;
+the deliberate close caused by navigation itself preserves that flight.
+Escape restores the menu toggle and makes the page interactive again.
 
 Chapter swipes apply only to the two-column layout without reduced motion.
 A change from one touch to multiple touches relinquishes the gesture until a
@@ -325,7 +328,42 @@ fulfilment repaints the textures with the loaded font without starting a second
 simulation; late rejection leaves the available-font rendering in place. Navigation and other enhancements
 initialize independently while the font wait is pending. Context, shader, initial
 render and later frame failures reveal the readable HTML heading and stop the
-simulation; navigation remains usable.
+simulation; navigation remains usable. Half-float render targets use linear filtering
+only when supported, otherwise nearest filtering. Every framebuffer must be complete
+before enhancement starts. Admission failure releases partially allocated GPU resources.
+Canvas and image textures share an aspect-preserving scale capped at the smaller of
+4096 and the device's ``MAX_TEXTURE_SIZE``, and at 4,194,304 pixels per surface.
+Devices unable to hold the 512-pixel dye target, zero-size stages and aspect ratios
+that cannot retain a positive pixel on both axes use the readable HTML fallback.
+Editorial reveal focal coordinates retain the same cover placement within those bounds.
+A ``webglcontextlost`` event is terminal for this page: it cancels pending startup and
+simulation frames, releases GPU handles and reveals the heading. Restoration does not
+reuse stale resources; reload the page to attempt enhancement again.
+
+Optional motion and reel ownership
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The fine-pointer cursor schedules frames only while converging on a moving target
+inside the hero. At a distance of at most 0.1 CSS pixels it settles exactly and retires
+its frame. Hidden pages and reduced motion cancel interpolation; reduced motion keeps
+the cursor at the actual pointer position. The native touch hint is unchanged.
+Handwriting rechecks the current motion preference and startup generation after its
+font promise resolves. A stale completion cannot replace the readable SVG text;
+returning to permitted motion can prepare the handwriting once.
+
+About disclosures cancel queued frames and line-animation timers immediately when
+reduced motion activates, restoring the complete paragraph. Optional splitting is
+limited to 2400 UTF-16 code units and 16 rendered lines. Longer or more heavily wrapped
+copy stays ordinary text: there is no editorial content limit or truncation. At most
+four measurements are attempted while layout is unavailable. With the current CSS,
+the final animated line finishes within 2215 ms (2615 ms fallback timer).
+
+Reels resync overflow, focusability, thumb geometry and ARIA position after image
+load/error, content mutations and observed descendant size changes. Updates coalesce
+into one frame without polling; returning to no overflow resets the thumb to 100 %
+and ARIA position to zero. One primary, left-button pointer owns thumb dragging;
+other pointers cannot replace or retire it. Up, cancellation, capture loss and loss
+of overflow retire that ownership. Keyboard scrolling remains available.
 
 Historical conclusion migration replay
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

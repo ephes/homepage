@@ -73,11 +73,17 @@ def retire_group(child):
     """Finish every group signal before reaping the leader; fail with evidence."""
     scan_error = None
     for sig, grace in ((signal.SIGTERM, TERM_GRACE), (signal.SIGKILL, KILL_GRACE)):
-        observe_exit(child)  # Refuse to signal if another waiter released our identity.
+        # Refuse to signal if another waiter released our identity.
+        leader_exited = observe_exit(child) is not None
         try:
             os.killpg(child.pid, sig)
         except ProcessLookupError:
             pass
+        except PermissionError:
+            # Darwin answers EPERM (not ESRCH) when the group holds only the unreaped leader.
+            # Only then is the refusal benign; the process-table scan below still decides.
+            if not leader_exited:
+                raise
         deadline = time.monotonic() + grace
         while True:
             try:

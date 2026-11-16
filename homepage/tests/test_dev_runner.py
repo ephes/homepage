@@ -331,11 +331,45 @@ def test_exited_leader_retires_term_resistant_descendant(tmp_path, stop_signal):
             descendant_process.kill()
 
 
-def test_uncertain_group_cleanup_retains_ownership_record(state, fake_run):
+def test_uncertain_group_cleanup_retains_ownership_record(state, fake_run, monkeypatch):
+    # A running leader cannot explain EPERM: the group may hold processes we cannot signal.
+    monkeypatch.setattr(dev_runner, "observe_exit", Mock(return_value=None))
+    monkeypatch.setattr(dev_runner, "stream_output", Mock())
     fake_run.killpg.side_effect = PermissionError("synthetic denied group signal")
     with pytest.raises(PermissionError):
         dev_runner.run([], state)
     assert state.exists()
+    fake_run.child.wait.assert_not_called()
+
+
+def test_denied_signal_after_leader_exit_still_requires_confirmed_retirement(state, fake_run, monkeypatch):
+    fake_run.killpg.side_effect = PermissionError("synthetic denied group signal")
+    monkeypatch.setattr(dev_runner, "group_alive", lambda pid: True)
+    monkeypatch.setattr(dev_runner, "TERM_GRACE", 0)
+    monkeypatch.setattr(dev_runner, "KILL_GRACE", 0)
+    with pytest.raises(RuntimeError, match="did not retire"):
+        dev_runner.run([], state)
+    assert state.exists()
+    fake_run.child.wait.assert_not_called()
+
+
+def test_exited_leader_alone_in_group_retires_without_signal_error():
+    """Darwin refuses killpg with EPERM when only the unreaped (zombie) leader remains."""
+    import sys
+    import time
+
+    leader = subprocess.Popen([sys.executable, "-c", "pass"], start_new_session=True)
+    try:
+        deadline = time.monotonic() + 5
+        while dev_runner.observe_exit(leader) is None:
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        dev_runner.retire_group(leader)
+        assert leader.returncode == 0
+    finally:
+        if leader.poll() is None:
+            leader.kill()
+            leader.wait(timeout=5)
 
 
 def test_leader_is_reserved_until_all_group_signals_complete(state, fake_run, monkeypatch):

@@ -19,7 +19,7 @@ import psutil
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "logs" / "dev.json"
-TERM_GRACE = 1.0
+TERM_GRACE = 10.0
 KILL_GRACE = 2.0
 LOG_MAX_BYTES = 5 * 1024 * 1024
 LOG_BACKUPS = 2
@@ -168,7 +168,6 @@ class OutputLogger:
 
 
 def stream_output(child, output):
-    os.set_blocking(child.stdout.fileno(), False)
     eof = False
     while observe_exit(child) is None:
         if eof:
@@ -231,7 +230,7 @@ def run(processes, state=STATE):
         if state.exists():
             raise RuntimeError(f"Refusing to overwrite {state}; inspect/remove stale state first")
         child = None
-        retired = False
+        retired = None  # None: not attempted; False: attempted, unconfirmed; True: confirmed.
         previous = {
             sig: signal.signal(sig, interrupted)
             for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT)
@@ -248,6 +247,8 @@ def run(processes, state=STATE):
                 stderr=subprocess.STDOUT,
                 bufsize=0,
             )
+            # Before anything can raise: teardown drains must never block on an escaped writer.
+            os.set_blocking(child.stdout.fileno(), False)
             record["pgid"] = child.pid
             state.write_text(json.dumps(record))
             with contextlib.closing(RotatingLog(state.parent / "dev.log")) as log:
@@ -258,9 +259,13 @@ def run(processes, state=STATE):
                     # Keep logging open through signal-driven retirement and final decoding.
                     for sig in previous:
                         signal.signal(sig, signal.SIG_IGN)
-                    retire_group(child)
-                    retired = True
-                    drain_output(child, output)
+                    # Exactly one bounded attempt; a failure keeps dev.json and still drains output.
+                    retired = False
+                    try:
+                        retire_group(child)
+                        retired = True
+                    finally:
+                        drain_output(child, output)
             result = child.returncode
             return result if result >= 0 else 128 - result
         finally:
@@ -268,9 +273,12 @@ def run(processes, state=STATE):
             for sig in previous:
                 signal.signal(sig, signal.SIG_IGN)
             try:
-                if child is not None and not retired:
+                if child is not None and retired is None:
+                    retired = False
                     retire_group(child)
-                state.unlink(missing_ok=True)
+                    retired = True
+                if child is None or retired:
+                    state.unlink(missing_ok=True)
             finally:
                 if child is not None:
                     child.stdout.close()

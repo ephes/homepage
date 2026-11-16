@@ -104,7 +104,7 @@ Never remove or replace ``dev.lock`` while a runner is active. The runner uses P
 development dependency. Install dependencies with ``uv sync --locked`` first.
 Supervisor failures produce a nonzero command status (including through logging),
 signals become 128 + signal number. The leader stays unreaped until the owned
-process group has received TERM (one second grace) and a final KILL (two seconds
+process group has received TERM (up to ten seconds grace) and a final KILL (two seconds
 to confirm retirement), including descendants of an already-exited leader. Only
 confirmed retirement removes the ownership record; failures retain its group ID
 for manual inspection. Process-table access and POSIX ``waitid(WNOWAIT)`` are

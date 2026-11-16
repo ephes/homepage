@@ -50,7 +50,7 @@ the runner. The runner stops its owned process group on exit, including INT,
 TERM, HUP and QUIT; repeated interrupts do not interrupt teardown. Supervisor
 failures stay nonzero through logging (signals become 128 + signal number), and
 the record is removed only after confirmed group retirement. The leader remains
-unreaped while TERM (one second grace) and final KILL (two seconds for retirement)
+unreaped while TERM (up to ten seconds grace) and final KILL (two seconds for retirement)
 are sent, so a terminated leader cannot leave resistant descendants or release a
 reusable group ID before the last signal. Failed or uncertain cleanup retains
 ``dev.json`` with its group ID for manual inspection. POSIX ``waitid(WNOWAIT)``,

@@ -278,14 +278,16 @@ def test_shell_launcher_uses_physical_checkout_path(tmp_path):
 @pytest.mark.parametrize("stop_signal", [None, signal.SIGTERM])
 def test_exited_leader_retires_term_resistant_descendant(tmp_path, stop_signal):
     import os
-    import shutil
     import sys
     import time
 
     import psutil
 
     script = tmp_path / "dev_runner.py"
-    shutil.copy(dev_runner.ROOT / "dev_runner.py", script)
+    source = (dev_runner.ROOT / "dev_runner.py").read_text()
+    assert source.count("\nTERM_GRACE = 10.0\n") == 1
+    # Keep the resistant-descendant scenario fast; the escalation path is unchanged.
+    script.write_text(source.replace("\nTERM_GRACE = 10.0\n", "\nTERM_GRACE = 0.5\n"))
     tools = tmp_path / "tools"
     tools.mkdir()
     pid_file = tmp_path / "descendant.pid"
@@ -394,6 +396,57 @@ def test_unconfirmed_retirement_retains_group_evidence(state, fake_run, monkeypa
         dev_runner.run([], state)
     assert json.loads(state.read_text())["pgid"] == 5678
     fake_run.child.wait.assert_not_called()
+
+
+def test_failed_retirement_is_attempted_once_and_still_drains_output(state, fake_run, monkeypatch):
+    attempts = []
+
+    def retire(child):
+        attempts.append(child)
+        if len(attempts) == 1:
+            raise RuntimeError("Cannot confirm owned group retirement; retaining ownership record")
+
+    monkeypatch.setattr(dev_runner, "retire_group", retire)
+    with pytest.raises(RuntimeError, match="Cannot confirm"):
+        dev_runner.run([], state)
+    # A silent second cycle could unlink dev.json while the error says it is retained.
+    assert attempts == [fake_run.child]
+    assert state.exists()
+    assert state.with_name("dev.log").read_text() == "synthetic log\n"
+
+
+def test_output_pipe_is_nonblocking_before_streaming_starts(state, fake_run, monkeypatch):
+    """An early signal must not leave teardown in a blocking read held open by an escaped writer."""
+    import threading
+
+    read_fd, write_fd = os.pipe()
+    os.write(write_fd, b"early output\n")
+    stdout = os.fdopen(read_fd, "rb", buffering=0)
+    fake_run.child.stdout = stdout
+
+    def interrupt(child, output):
+        raise SystemExit(143)
+
+    monkeypatch.setattr(dev_runner, "stream_output", interrupt)
+    monkeypatch.setattr(dev_runner, "KILL_GRACE", 0.2)
+    outcome = []
+
+    def target():
+        try:
+            dev_runner.run([], state)
+        except SystemExit as exc:
+            outcome.append(exc.code)
+
+    worker = threading.Thread(target=target)
+    worker.start()
+    worker.join(timeout=5)
+    hung = worker.is_alive()
+    os.close(write_fd)  # Unblock a hung read so the test always finishes.
+    worker.join(timeout=5)
+    stdout.close()
+    assert not hung
+    assert outcome == [143]
+    assert state.with_name("dev.log").read_text() == "early output\n"
 
 
 @pytest.mark.parametrize("kind", ["symlink", "hardlink"])
@@ -582,6 +635,7 @@ def test_reserved_leader_and_stubborn_child_retire_with_known_inventory(tmp_path
             time.sleep(0.01)
         descendant = psutil.Process(int(pid_file.read_text()))
         monkeypatch.setattr(dev_runner.psutil, "pids", lambda: [leader.pid, descendant.pid])
+        monkeypatch.setattr(dev_runner, "TERM_GRACE", 0.5)
         killpg = os.killpg
         signals = []
 

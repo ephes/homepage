@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Check shared images only once per rendition repair invocation, including
+  direct/gallery overlap across posts and blogs; count each repair or incomplete
+  outcome once and report the number of unique images checked.
+
+- Retain committed cover and social rendition files when a post-commit callback
+  fails; report blog/image/revision IDs and pending callback recovery without
+  repeating publication. Cover import now requires its own commit boundary.
+
 - Bound legacy SSH command output and transport deadlines (download deadline scaled
   with the backup size, prefetching kept), require one successful backup announcement
   and a complete verified gzip download, close all transports before publication and

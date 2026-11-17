@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+from collections import Counter
+from types import SimpleNamespace
 
 import pytest
 from cast.models import Blog, Gallery, Post
@@ -511,3 +513,108 @@ def test_command_reports_cache_pending_separately(site_root, monkeypatch):
     assert file_exists(rendition)
     assert "generated renditions: 1" in stdout.getvalue()
     assert f"--retry-cache-purge {rendition.pk}" in stderr.getvalue()
+
+
+def test_command_checks_shared_images_once_across_all_blogs(site_root, monkeypatch):
+    first = site_root.add_child(instance=Blog(title="Shared first", slug="shared-first"))
+    site_root.add_child(instance=Blog(title="Shared second", slug="shared-second"))
+    image = make_image("shared")
+    renditions = [make_rendition(image, f"width-{width}") for width in range(1, 21)]
+    distinct = make_rendition(make_image("distinct"))
+
+    def related(*items):
+        return SimpleNamespace(all=lambda: items)
+
+    # Synthetic posts retain real image/rendition managers and storage calls.
+    # Separate model instances with the same PK must share the identity too.
+    posts = [
+        SimpleNamespace(
+            pk=index,
+            images=related(get_image_model().objects.get(pk=image.pk)),
+            galleries=related(SimpleNamespace(images=related(image, distinct.image))),
+        )
+        for index in range(100)
+    ]
+
+    def descendant_of(blog):
+        selected = posts[:50] if blog.pk == first.pk else posts[50:]
+        return SimpleNamespace(order_by=lambda *args: SimpleNamespace(iterator=lambda **kwargs: iter(selected)))
+
+    monkeypatch.setattr(Post.objects, "descendant_of", descendant_of)
+    storage = distinct.file.storage
+    exists = storage.exists
+    checked = []
+
+    def count_exists(name):
+        checked.append(name)
+        return exists(name)
+
+    monkeypatch.setattr(storage, "exists", count_exists)
+    for _ in range(2):  # A new invocation must check everything again.
+        checked.clear()
+        stdout, stderr = run_command("shared-first", "shared-second", "shared-first")
+        assert Counter(checked) == Counter({r.file.name: 1 for r in [*renditions, distinct]})
+        assert "checked images: 2" in stdout
+        assert "generated renditions: 0" in stdout
+        assert stderr == ""
+
+
+@pytest.mark.parametrize("outcome", ["missing", "unknown", "failed", "cache_pending"])
+def test_command_accounts_shared_image_outcome_once(site_root, monkeypatch, outcome):
+    blog = site_root.add_child(instance=Blog(title="Shared outcome", slug="shared-outcome"))
+    image = make_image("shared-outcome")
+    rendition = make_rendition(image)
+    for index in range(2):
+        make_post(blog, f"shared-outcome-{index}", images=[image], gallery_images=[image])
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("injected failure")
+
+    if outcome == "unknown":
+        monkeypatch.setattr(rendition.file.storage, "exists", fail)
+    else:
+        remove_file(rendition)
+        if outcome == "failed":
+            monkeypatch.setattr(get_image_model(), "generate_rendition_file", fail)
+        elif outcome == "cache_pending":
+            monkeypatch.setattr(type(rendition), "purge_from_cache", fail)
+
+    stdout, stderr = io.StringIO(), io.StringIO()
+
+    def invoke():
+        call_command("regenerate_broken_renditions", blog.slug, stdout=stdout, stderr=stderr)
+
+    if outcome == "missing":
+        invoke()
+        assert "generated renditions: 1" in stdout.getvalue()
+        assert file_exists(rendition)
+    else:
+        with pytest.raises(CommandError) as error:
+            invoke()
+        if outcome == "cache_pending":
+            assert "1 committed repairs have cache purge pending" in str(error.value)
+            assert "generated renditions: 1" in stdout.getvalue()
+            assert file_exists(rendition)
+        else:
+            expected = "1 renditions could not be checked" if outcome == "unknown" else "1 could not be regenerated"
+            assert expected in str(error.value)
+        assert stderr.getvalue().count(f"rendition {rendition.pk} (") == 1
+
+
+def test_standalone_post_helper_deduplicates_overlap_but_rechecks_on_next_call(site_root, monkeypatch):
+    blog = site_root.add_child(instance=Blog(title="Helper", slug="helper"))
+    image = make_image("helper")
+    rendition = make_rendition(image)
+    post = make_post(blog, "helper-post", images=[image], gallery_images=[image])
+    checked = []
+    exists = rendition.file.storage.exists
+
+    def count_exists(name):
+        checked.append(name)
+        return exists(name)
+
+    monkeypatch.setattr(rendition.file.storage, "exists", count_exists)
+    for _ in range(2):
+        result = repair.regenerate_renditions_for_post(post)
+        assert not result.incomplete
+    assert checked == [rendition.file.name, rendition.file.name]

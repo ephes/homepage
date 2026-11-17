@@ -112,14 +112,25 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     return result
 
 
-def regenerate_renditions_for_post(post) -> RepairResult:
-    """Repair the renditions of all images of a post, including its gallery images."""
+def regenerate_renditions_for_post(post, *, seen_images: set | None = None) -> RepairResult:
+    """Repair each image once, optionally sharing invocation-wide identities."""
+    if seen_images is None:
+        seen_images = set()
     result = RepairResult()
-    for image in post.images.all():
+
+    def repair_once(image):
+        identity = (image._state.db, image.pk)
+        if identity in seen_images:
+            return
+        # Unknown/failed/cache-pending outcomes also belong to this one attempt.
+        seen_images.add(identity)
         result.extend(regenerate_renditions_for_image(image))
+
+    for image in post.images.all():
+        repair_once(image)
     for gallery in post.galleries.all():
         for image in gallery.images.all():
-            result.extend(regenerate_renditions_for_image(image))
+            repair_once(image)
     return result
 
 
@@ -128,7 +139,7 @@ class Command(BaseCommand):
         "When the renditions were deleted from s3 - regenerate the ones that are missing. "
         "Provide slugs for blogs where renditions should be regenerated. All posts of each "
         "blog are checked unless --limit is given. Renditions whose state cannot be "
-        "determined are never deleted or replaced."
+        "determined are never deleted or replaced. Shared images are checked once per invocation."
     )
 
     def add_arguments(self, parser):
@@ -178,6 +189,7 @@ class Command(BaseCommand):
                 raise CommandError(f"Blog with slug {slug!r} does not exist; nothing was changed") from error
 
         total = RepairResult()
+        seen_images = set()
         for blog in blogs:
             self.stdout.write(f"Blog: {blog.slug} {blog.title}")
             post_queryset = Post.objects.descendant_of(blog).order_by("-visible_date", "-pk")
@@ -187,7 +199,7 @@ class Command(BaseCommand):
             post_count = 0
             for post in post_queryset.iterator(chunk_size=100):
                 post_count += 1
-                post_result = regenerate_renditions_for_post(post)
+                post_result = regenerate_renditions_for_post(post, seen_images=seen_images)
                 blog_result.extend(post_result)
                 self.stdout.write(
                     f"  post {post.pk} {post}: regenerated {len(post_result.regenerated)}, "
@@ -205,6 +217,7 @@ class Command(BaseCommand):
                     f"Retry with --retry-cache-purge {pk}"
                 )
             total.extend(blog_result)
+        self.stdout.write(f"checked images: {len(seen_images)}")
         self.stdout.write(f"generated renditions: {len(total.regenerated)}")
         if total.incomplete:
             raise CommandError(

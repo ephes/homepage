@@ -14,6 +14,17 @@ The command checks every post of each blog, including gallery images, and prints
 summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` posts
 of each blog; without it nothing is skipped.
 
+An image shared by direct slots, galleries, posts or requested blogs is checked
+only once in the complete invocation, using its database alias and primary key.
+Rendition queries and storage checks therefore scale with unique images and their
+renditions, rather than repeated references. The final ``checked images`` count
+reports unique images attempted. Repair/error/cache-pending counts belong to the
+first post/blog that encounters the image; later references add no duplicate
+outcomes. Unknown and failed images are not retried within the same run. A new
+invocation checks them again. Calling ``regenerate_renditions_for_post(post)``
+directly still works and deduplicates that post's direct/gallery overlap; callers
+may pass a shared ``seen_images`` set to extend that scope across posts.
+
 A rendition is only regenerated when the storage backend reports that its file does
 not exist. If the storage cannot answer (throttling, an outage, denied access), the
 rendition is reported as ``unknown`` and neither deleted nor replaced. A missing

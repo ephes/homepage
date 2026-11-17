@@ -276,11 +276,20 @@ Cover, repair and conversion recovery regressions
 
 The cover import tests use private generated images and exclusive local storage,
 plus a fake overwrite backend. They inject naming races, rendition/URL/database
-failures and competing editor state; two independent-connection editor cases
+failures and competing editor state. Real publication/save signal receivers
+schedule failing ``on_commit`` callbacks on a transaction-enabled test: committed
+cover/revision rows and original/social files must survive, with recovery IDs
+and no automatic republication. Nested application transactions are refused.
+Two independent-connection editor cases
 explicitly require PostgreSQL. SQLite skips them and cannot establish row locking.
 Repair tests interleave two generated outputs before attachment, replace current
 row identities, and fault cache purges after a real save. Cache-only retry must
-allocate no files. Weeknote tests fault report preflight, checkpoint writes and
+allocate no files. A hundred synthetic posts across multiple blogs share real
+images/renditions and counted storage: each unique rendition is checked once per
+invocation, including direct/gallery overlap and duplicate blog arguments.
+Missing, unknown, failed and cache-pending outcomes are counted once; subsequent
+invocations and standalone helper calls recheck independently.
+Weeknote tests fault report preflight, checkpoint writes and
 atomic replace, checking preserved old bytes, retained revision identities and
 retry without duplicate revisions. MigrationExecutor tests independently convert
 live/latest content and measure retained large page instances in both directions.

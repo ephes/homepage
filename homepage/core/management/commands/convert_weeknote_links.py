@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Func, IntegerField, TextField
+from django.db.models.functions import Cast
 
 from homepage.core.weeknotes.converter import BodyConversion, convert_body
 
@@ -31,6 +33,21 @@ class Command(BaseCommand):
     help = "Convert legacy weeknote h2+ul link sections into structured weeknote_links blocks."
 
     def add_arguments(self, parser):
+        parser.add_argument("--after-pk", type=int, default=0, help="Continue after this processed page ID.")
+        parser.add_argument("--through-pk", type=int, help="Keep the initial run's inclusive upper page ID.")
+        parser.add_argument("--max-posts", type=int, default=100, help="Maximum processed posts (default: 100).")
+        parser.add_argument(
+            "--max-body-bytes",
+            type=int,
+            default=16 * 1024 * 1024,
+            help="Total admitted stored body bytes (default: 16 MiB).",
+        )
+        parser.add_argument(
+            "--max-report-bytes",
+            type=int,
+            default=4 * 1024 * 1024,
+            help="Total admitted receipt bytes (default: 4 MiB).",
+        )
         parser.add_argument("--slug", help="Convert only one weeknote post slug.")
         parser.add_argument("--write", action="store_true", help="Create Wagtail revisions with converted bodies.")
         parser.add_argument(
@@ -50,10 +67,31 @@ class Command(BaseCommand):
         if options["suppress_webmentions"] and not options["publish"]:
             raise CommandError("--suppress-webmentions requires --publish.")
 
-        queryset = Post.objects.filter(slug__startswith="weeknotes-").order_by("visible_date")
+        for name in ("max_posts", "max_body_bytes", "max_report_bytes"):
+            if options[name] <= 0:
+                raise CommandError(f"--{name.replace('_', '-')} must be positive.")
+        if options["after_pk"] < 0 or (
+            options["through_pk"] is not None and options["through_pk"] < options["after_pk"]
+        ):
+            raise CommandError("Require 0 <= --after-pk <= --through-pk.")
+        queryset = (
+            Post.objects.filter(slug__startswith="weeknotes-")
+            .annotate(
+                _body_bytes=Func(Cast("body", TextField()), function="OCTET_LENGTH", output_field=IntegerField())
+            )
+            .order_by("pk")
+        )
         if options["slug"]:
             queryset = queryset.filter(slug=options["slug"])
 
+        cursor = options["after_pk"]
+        through_pk = options["through_pk"]
+        if through_pk is None:
+            through_pk = queryset.order_by("-pk").values_list("pk", flat=True).first() or cursor
+        queryset = queryset.filter(pk__lte=through_pk)
+        body_bytes = 0
+        report_bytes = 3  # JSON list framing and trailing newline.
+        boundary = ""
         report: list[dict[str, Any]] = []
         warning_count = 0
         changed_count = 0
@@ -64,15 +102,33 @@ class Command(BaseCommand):
 
         publish_context = self._suppress_webmentions() if options["suppress_webmentions"] else nullcontext()
         with self._report_file(options["report"], report) as receipt, publish_context:
-            for post in queryset:
+            while (next_pk := queryset.filter(pk__gt=cursor).values_list("pk", flat=True).first()) is not None:
+                if len(report) >= options["max_posts"]:
+                    boundary = "post budget"
+                    break
+                # Size admission happens in SQL, before a full Post/body is hydrated.
+                # Repeat the size predicate on hydration to cover concurrent growth.
+                post = queryset.filter(pk=next_pk, _body_bytes__lte=options["max_body_bytes"] - body_bytes).first()
+                if post is None:
+                    boundary = f"body budget (or removed page {next_pk})"
+                    break
+                body_bytes += post._body_bytes
                 # What the conversion is computed from. It is compared with the page again
                 # before anything is written.
                 source = self._source_state(post)
                 conversion = convert_body(post.body.raw_data)
+                entry = self._report_entry(post, conversion)
+                entry.update(page_id=post.pk, through_pk=through_pk)
+                # Reserve room for the save result (64-bit revision ID, skip reason,
+                # indentation and commas) before committing anything.
+                entry_bytes = len(json.dumps(entry, indent=2, ensure_ascii=False).encode("utf-8")) + 256
+                if report_bytes + entry_bytes > options["max_report_bytes"]:
+                    boundary = "report budget"
+                    break
+                report_bytes += entry_bytes
                 warning_count += len(conversion.warnings)
                 if conversion.changed:
                     changed_count += 1
-                entry = self._report_entry(post, conversion)
                 if conversion.changed and options["write"]:
                     save_result = self._save_conversion(post, conversion, publish=options["publish"], source=source)
                     entry.update(save_result)
@@ -85,6 +141,7 @@ class Command(BaseCommand):
                     else:
                         saved_count += 1
                 report.append(entry)
+                cursor = post.pk
                 if receipt is not None:
                     self._checkpoint_report(receipt, report)
 
@@ -94,6 +151,11 @@ class Command(BaseCommand):
             f"{action} {action_count} post(s), published {published_count}, "
             f"skipped {skipped_count}, warnings {warning_count}."
         )
+        if boundary:
+            continuation = f"--after-pk {cursor} --through-pk {through_pk}"
+            self.stderr.write(f"Partial run: {boundary}; continue with the same flags and {continuation}.")
+            raise CommandError(f"Partial run: {boundary}; {continuation}. Completed receipts were retained.")
+        self.stdout.write(f"Complete through page ID {through_pk}.")
         if conflict_count:
             self.stderr.write(
                 f"{conflict_count} post(s) changed or were being saved while they were being converted "
@@ -224,7 +286,13 @@ class Command(BaseCommand):
             if not self._lock_rows(post):
                 yield None
                 return
-            yield Post.objects.filter(pk=post.pk).first()
+            current = Post.objects.filter(pk=post.pk)
+            if hasattr(post, "_body_bytes"):
+                # Do not hydrate an unadmitted replacement body while checking conflicts.
+                current = current.annotate(
+                    _body_bytes=Func(Cast("body", TextField()), function="OCTET_LENGTH", output_field=IntegerField())
+                ).filter(_body_bytes__lte=post._body_bytes)
+            yield current.first()
 
     @staticmethod
     def _lock_rows(post) -> bool:

@@ -220,6 +220,34 @@ JSON shape above; the editor API validates and prepares it through the Wagtail
 block API and returns the same logical value without exposing internal
 ``ListBlock`` item wrappers.
 
+Bounded runs and continuation
+-----------------------------
+
+Each invocation processes at most 100 posts, 16 MiB of stored JSON body bytes and
+4 MiB of receipt data (including reserved save-result space). Override these
+positive limits with ``--max-posts``, ``--max-body-bytes`` and
+``--max-report-bytes``. Bodies are size-checked by PostgreSQL before hydration;
+only one eligible Post is hydrated at a time, without an ORM result cache. The
+same size guard applies to the locked conflict recheck. Conversion copies and
+warnings are bounded by the admitted body work; retained receipts by both the
+post and receipt budgets.
+
+Traversal uses increasing page IDs, with the initial maximum eligible ID as a
+fixed inclusive boundary. It no longer uses publication dates. On a budget
+boundary the command publishes the completed per-invocation report, prints
+``Partial run`` with ``--after-pk N --through-pk M``, and exits nonzero. Repeat the
+same scope/write/publish/suppression flags with that continuation, keeping each
+report under a separate name. Every processed receipt includes ``page_id`` and
+``through_pk``; no receipt is emitted for an unprocessed page. A completed run
+explicitly says ``Complete through page ID M``. Concurrent inserts above M belong
+to a later run; this ID boundary is not a content snapshot.
+
+If the next body or receipt cannot fit even in a fresh invocation, increase the
+relevant budget explicitly or inspect that post separately with ``--slug``.
+Never advance past an unprocessed page to make a run appear complete. Existing
+conflict/draft skips remain in the report: revisit those separately, since
+continuation moves past every processed page, including skips and warnings.
+
 Report publication and interrupted runs
 --------------------------------------
 

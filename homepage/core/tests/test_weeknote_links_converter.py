@@ -483,17 +483,47 @@ class FakePost:
 
 
 class FakeQuerySet:
+    hydrated = []
+
     def __init__(self, posts):
         self.posts = posts
 
     def filter(self, **kwargs):
-        slug = kwargs.get("slug")
-        if slug is None:
-            return self
-        return FakeQuerySet([post for post in self.posts if post.slug == slug])
+        posts = self.posts
+        for field, expected in kwargs.items():
+            name, _, lookup = field.partition("__")
 
-    def order_by(self, *_fields):
+            def matches(post):
+                actual = getattr(post, name)
+                if lookup == "startswith":
+                    return actual.startswith(expected)
+                if lookup == "gt":
+                    return actual > expected
+                if lookup == "lte":
+                    return actual <= expected
+                return actual == expected
+
+            posts = [post for post in posts if matches(post)]
+        return FakeQuerySet(posts)
+
+    def annotate(self, **kwargs):
+        for post in self.posts:
+            post._body_bytes = len(json.dumps(getattr(post.body, "raw_data", post.body)).encode("utf-8"))
         return self
+
+    def order_by(self, field):
+        if field.lstrip("-") == "pk":
+            return FakeQuerySet(sorted(self.posts, key=lambda post: post.pk, reverse=field.startswith("-")))
+        return self
+
+    def values_list(self, field, *, flat):
+        return SimpleNamespace(first=lambda: getattr(self.posts[0], field) if self.posts else None)
+
+    def first(self):
+        if not self.posts:
+            return None
+        self.hydrated.append(self.posts[0].pk)
+        return self.posts[0]
 
     def __iter__(self):
         return iter(self.posts)
@@ -1018,3 +1048,108 @@ def test_published_report_keeps_umask_mode_or_replaced_report_mode(tmp_path):
     call_command("convert_weeknote_links", "--report", str(existing), stdout=io.StringIO())
     assert stat.S_IMODE(existing.stat().st_mode) == 0o640
     assert existing.read_text() != "previous report"
+
+
+@pytest.mark.parametrize("budget", ["posts", "body", "report"])
+def test_inventory_budget_stops_before_next_save_and_resumes_exactly(monkeypatch, tmp_path, budget):
+    # Thousands of eligible rows, each with a large body and a warning.
+    posts = [
+        FakePost(body=_overview(_paragraph(REALISTIC_WEEKNOTE_OVERVIEW + "x" * 4096)), slug=f"weeknotes-synthetic-{i}")
+        for i in range(1000)
+    ]
+    for i, post in enumerate(posts, 1):
+        post.pk = i
+    _patch_post_model(monkeypatch, posts)
+    FakeQuerySet.hydrated = []
+    report = tmp_path / "report.json"
+    options = (
+        {"max_posts": 2}
+        if budget == "posts"
+        else (
+            {"max_body_bytes": 2 * len(json.dumps(posts[0].body.raw_data).encode("utf-8"))}
+            if budget == "body"
+            else {"max_report_bytes": 1400}
+        )
+    )
+    stderr = io.StringIO()
+    with pytest.raises(DjangoCommandError, match="Partial run"):
+        call_command(
+            "convert_weeknote_links",
+            write=True,
+            publish=True,
+            report=str(report),
+            stdout=io.StringIO(),
+            stderr=stderr,
+            **options,
+        )
+    entries = json.loads(report.read_text())
+    assert 1 <= len(entries) <= 2
+    last = entries[-1]["page_id"]
+    assert FakeQuerySet.hydrated == list(range(1, last + 1)) + ([last + 1] if budget == "report" else [])
+    assert all(entry["revision_id"] == 42 and entry["published"] for entry in entries)
+    assert f"--after-pk {last} --through-pk 1000" in stderr.getvalue()
+    old_revisions = [post.saved_revision for post in posts[:last]]
+    # A new row is outside this invocation's frozen upper boundary.
+    new_post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)), slug="weeknotes-new")
+    new_post.pk = 1001
+    posts.append(new_post)
+    with pytest.raises(DjangoCommandError, match="Partial run"):
+        call_command(
+            "convert_weeknote_links",
+            write=True,
+            publish=True,
+            after_pk=last,
+            through_pk=1000,
+            max_posts=2,
+            report=str(report),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    assert [entry["page_id"] for entry in json.loads(report.read_text())] == [last + 1, last + 2]
+    assert [post.saved_revision for post in posts[:last]] == old_revisions
+    assert new_post.saved_revision is None
+
+
+def test_oversize_body_is_not_hydrated_or_saved(monkeypatch, tmp_path):
+    post = FakePost(body=_overview(_paragraph("x" * 10000)))
+    _patch_post_model(monkeypatch, [post])
+    FakeQuerySet.hydrated = []
+    with pytest.raises(DjangoCommandError, match="Partial run"):
+        call_command(
+            "convert_weeknote_links",
+            max_body_bytes=100,
+            write=True,
+            report=str(tmp_path / "report.json"),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    assert FakeQuerySet.hydrated == []
+    assert post.saved_revision is None
+
+
+@pytest.mark.django_db
+def test_database_body_admission_and_pk_continuation(tmp_path):
+    first = _weeknote_post(slug="weeknotes-budget-first", overview_html=LEGACY_ARTICLES)
+    second = _weeknote_post(slug="weeknotes-budget-second", overview_html=LEGACY_ARTICLES + "x" * 10000)
+    report = tmp_path / "report.json"
+    with pytest.raises(DjangoCommandError, match="Partial run"):
+        call_command(
+            "convert_weeknote_links",
+            write=True,
+            max_body_bytes=5000,
+            report=str(report),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    assert [entry["page_id"] for entry in json.loads(report.read_text())] == [first.pk]
+    second.refresh_from_db()
+    assert second.latest_revision_id is None
+    call_command(
+        "convert_weeknote_links",
+        write=True,
+        after_pk=first.pk,
+        through_pk=second.pk,
+        report=str(report),
+        stdout=io.StringIO(),
+    )
+    assert [entry["page_id"] for entry in json.loads(report.read_text())] == [second.pk]

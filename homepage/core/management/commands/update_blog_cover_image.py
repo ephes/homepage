@@ -46,7 +46,8 @@ class Command(BaseCommand):
         "Import an image file and set it as the cover image for a blog page. "
         "If saving the image or the blog page fails, the database changes are rolled back "
         "and exclusively owned uploads are removed again. Uncertain storage names are reported "
-        "for recovery; existing files are never deleted."
+        "for recovery; existing files are never deleted. A post-commit callback failure retains "
+        "the committed cover and reports its image/revision IDs; do not repeat publication."
     )
 
     def add_arguments(self, parser):
@@ -97,8 +98,18 @@ class Command(BaseCommand):
             if all(field.storage is not backend for backend, _ in uploads):
                 uploads.append((field.storage, []))
 
+        committed = False
+        revision_id = None
+
+        def record_commit():
+            nonlocal committed
+            committed = True
+
         try:
-            with transaction.atomic(using=alias), ExitStack() as stack:
+            # Own the commit boundary. Register before any model/signal callbacks:
+            # they can raise after the database has committed successfully.
+            with transaction.atomic(using=alias, durable=True), ExitStack() as stack:
+                transaction.on_commit(record_commit, using=alias)
                 for backend, names in uploads:
                     stack.enter_context(_record_saved_names(backend, names))
                 # Keep model pre_save sanitization (including EXIF GPS stripping).
@@ -119,10 +130,19 @@ class Command(BaseCommand):
                     if options["no_publish"]:
                         current.save(using=alias, update_fields=["cover_image", "cover_alt_text"])
                     else:
-                        current.save_revision(user=user).publish(user=user)
+                        revision = current.save_revision(user=user)
+                        revision_id = revision.pk
+                        revision.publish(user=user)
         except BaseException:
-            for backend, names in uploads:
-                self._remove_saved_files(backend, names)
+            if committed:
+                self.stderr.write(
+                    f"Committed blog {blog.pk}: image {image.pk}, revision {revision_id}; "
+                    "post-commit callbacks failed or remain pending. Cover files retained. "
+                    "Inspect the committed page and callback/cache state. Do not rerun the import or republish."
+                )
+            else:
+                for backend, names in uploads:
+                    self._remove_saved_files(backend, names)
             raise
 
         message = "Updated {} cover image to image {}; social rendition: {}".format(

@@ -324,7 +324,9 @@ command flags, including ``--title``, ``--alt-text``, ``--user`` and
 The image is uploaded through the image model, so django-cast strips EXIF GPS
 data from it like from any other upload. The command stores the image file
 first and then changes the database: it creates the image row and saves (or, by default, publishes a revision of) the
-blog page in one transaction. If that fails, for example because the user may
+blog page in one transaction. The command requires its own commit boundary and
+refuses invocation inside another application transaction before uploading.
+If the transaction fails, for example because the user may
 not publish the page, recovery distinguishes database rollback from storage cleanup:
 
 * the image row and the blog change are rolled back, so the blog keeps its
@@ -338,6 +340,15 @@ not publish the page, recovery distinguishes database rollback from storage clea
 * the original error is raised and the command exits non-zero. If the uploaded
   file could not be removed, its storage name is printed so it can be deleted
   by hand.
+
+An exception from an ``on_commit`` callback has a different outcome: the database
+change has already committed. The command retains all cover/rendition files,
+exits nonzero with the original error, and reports the committed blog, image and
+revision IDs (revision ``None`` for ``--no-publish``). The failing callback and
+later callbacks may still need attention, including cache invalidation. Inspect
+the reported page/revision and repair the callback/cache state separately; do not
+rerun the import or republish just to retry callbacks. ``--no-publish`` still
+saves only cover fields and creates no revision.
 
 The required social rendition and its URL are validated inside the transaction
 before the cover can be published. A rendition failure keeps the prior cover and compensates

@@ -9,11 +9,14 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage, InMemoryStorage, default_storage
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import transaction
+from django.db.models.signals import post_save
 from PIL import Image as PILImage
 from wagtail.actions.publish_page_revision import PublishPagePermissionError
 from wagtail.images import get_image_model
 from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Collection, Locale, Page, Revision
+from wagtail.signals import page_published
 
 from homepage.core.management.commands import update_blog_cover_image as cover_command
 from homepage.users.tests.factories import UserFactory
@@ -520,3 +523,74 @@ def test_failure_compensates_original_and_social_files_on_exclusive_storage(
     assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id
     assert stored_names(storage) == before
     assert not Revision.objects.filter(object_id=str(blog.pk)).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("publish", [True, False])
+def test_published_callback_failure_keeps_committed_cover_and_rendition(
+    blog, new_cover_path, storage, monkeypatch, publish
+):
+    Rendition = get_image_model().get_rendition_model()
+    monkeypatch.setattr(Rendition._meta.get_field("file"), "storage", storage)
+    before = stored_names(storage)
+    callbacks = []
+
+    def fail_after_commit():
+        callbacks.append("failed")
+        assert not transaction.get_connection().in_atomic_block
+        raise RuntimeError("publication cache unavailable")
+
+    def published(sender, instance, **kwargs):
+        if instance.pk == blog.pk:
+            transaction.on_commit(fail_after_commit)
+            transaction.on_commit(lambda: callbacks.append("later"))
+
+    stdout, stderr = io.StringIO(), io.StringIO()
+    signal = page_published if publish else post_save
+    signal.connect(published, sender=Blog, weak=False)
+    try:
+        with pytest.raises(RuntimeError, match="publication cache unavailable"):
+            call_command(
+                COMMAND,
+                str(new_cover_path),
+                "--blog-slug",
+                "cover_blog",
+                "--user",
+                "cover-editor",
+                "--title",
+                "committed cover",
+                stdout=stdout,
+                stderr=stderr,
+                **({} if publish else {"no_publish": True}),
+            )
+    finally:
+        signal.disconnect(published, sender=Blog)
+
+    current = Blog.objects.get(pk=blog.pk)
+    image = get_image_model().objects.get(title="committed cover")
+    assert current.cover_image_id == image.pk
+    if publish:
+        assert current.live_revision_id == current.latest_revision_id
+        assert current.live_revision.as_object().cover_image_id == image.pk
+    else:
+        assert not Revision.objects.filter(object_id=str(blog.pk)).exists()
+    rendition = image.renditions.get(filter_spec=cover_command.SOCIAL_COVER_RENDITION_SPEC)
+    assert storage.exists(image.file.name)
+    assert storage.exists(rendition.file.name)
+    assert stored_names(storage) == before | {image.file.name, rendition.file.name}
+    assert callbacks == ["failed"]
+    assert f"Committed blog {blog.pk}: image {image.pk}, revision {current.live_revision_id}" in stderr.getvalue()
+    assert "callbacks failed or remain pending" in stderr.getvalue()
+    assert "Do not rerun" in stderr.getvalue()
+    assert "Removed" not in stderr.getvalue()
+    assert stdout.getvalue() == ""
+
+
+@pytest.mark.django_db(transaction=True)
+def test_cover_import_requires_its_own_commit_boundary(blog, new_cover_path, storage):
+    before = stored_names(storage)
+    with transaction.atomic():
+        with pytest.raises(RuntimeError, match="durable atomic block cannot be nested"):
+            run(new_cover_path)
+    assert stored_names(storage) == before
+    assert Blog.objects.get(pk=blog.pk).cover_image_id == blog.cover_image_id

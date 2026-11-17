@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Stage and validate the complete Saira font/license/CSS set before publication,
+  roll back handled failures and retain recovery backups if rollback fails.
+- Serialize Saira generation with a stable local lock and refuse changed source,
+  license, stylesheet or output generations; preserve CSS outside the markers.
+
 - Relock django-cast to develop 93ac6cb4 (from c290ec1a): transcript version
   admission, blog cache snapshots, public render and comment-target boundaries,
   regeneration consent, atomic glossary imports, configured-storage failures

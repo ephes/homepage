@@ -333,3 +333,6 @@ backups/
 
 # Added by specsync
 specs
+
+# Stable local Saira generator lock (never remove while running)
+homepage/static/fonts/.saira-generation.lock

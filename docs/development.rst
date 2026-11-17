@@ -376,6 +376,46 @@ the core range in ``scripts/subset_saira_fonts.py``::
     just site-fonts
 
 The script is deterministic and copies ``SAIRA-LICENSE.txt`` next to the files.
+It requires POSIX file locking (Linux/macOS). A stable
+``homepage/static/fonts/.saira-generation.lock`` serializes the whole build;
+a second invocation fails immediately and can be retried after the first exits.
+Never delete or replace this ignored lock file, including after a failed run.
+The kernel releases the lock when the process exits.
+
+Before building, the generator reads both sources, the license and the CSS and
+requires exactly one ordered pair of CSS markers. It builds from those captured
+bytes in an owned ``homepage/static/.saira-stage-*`` directory, validates all four
+character maps and stages the license and replacement CSS. Outside-marker CSS
+bytes (including line endings) and existing destination permissions are preserved.
+No canonical font, license or CSS is replaced until the complete set is ready.
+
+The generator checks input and output identity/content before publication and
+between replacements. A source, license, CSS or output edit during the build
+refuses publication; review the change and rerun. A late detected edit triggers
+rollback, preserving newer manually edited files. Keep manual edits and static
+collection/deployment idle during the short publication step: separate file
+replacements are not one atomic snapshot for readers or uncooperative writers.
+
+Handled build/validation failures leave the previous set intact. Handled
+publication failures (including KeyboardInterrupt) attempt to restore every
+replaced file, or remove outputs that did not previously exist. If restoration
+fails or would overwrite a newer edit, the original error remains primary and
+stderr reports an incomplete, potentially mixed visible set and the retained
+staging directory. Stop static collection/deployment, review its ``backup-N-name``
+files against the current destinations (the CSS backup belongs in
+``homepage/static/css/``; font/license backups in ``homepage/static/fonts/``),
+and restore the chosen complete set before retrying. Do not discard the recovery
+directory until the set is reconciled. Cleanup failures also report the directory.
+
+This is rollback for handled failures, not a crash-durable multi-file transaction.
+SIGKILL or power loss can leave a partial set and staging backups; inspect and
+reconcile them before using the outputs. No generated assets are changed merely
+by running tests. Synthetic failure/conflict tests run with::
+
+    uv run --locked pytest homepage/tests/test_saira_generator.py
+
+Use a disposable fixture tree when testing actual fontTools generation; never
+point test setup at the canonical outputs.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

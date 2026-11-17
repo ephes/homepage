@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Bound legacy SSH command output and transport deadlines, require one successful
+  backup announcement and a complete verified gzip download, close all transports
+  before publication and preserve existing backups through private no-clobber staging.
+
 - Make the legacy transfer helper inert on import, use literal Docker arguments,
   propagate process failures and delegate local SQL publication to the maintained
   restore with explicit existing-database replacement consent.

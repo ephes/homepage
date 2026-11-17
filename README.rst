@@ -168,3 +168,24 @@ verification and cutover implementation; it never drops the live database first.
 Replacing an existing local ``homepage`` database requires ``--replace-existing``.
 The legacy Docker/media steps still precede local SQL publication and can have
 side effects before a later restore refusal. This helper is not a deployment tool.
+
+The legacy fetch accepts exactly one ``scp homepage:site/backups/<name>.sql.gz
+backups`` announcement (shell quoting is accepted as data), only after a zero
+remote exit status. Combined stdout/stderr is limited to 64 KiB. SSH connection,
+banner and authentication timeouts are ten seconds; the complete remote command
+has 60 seconds, SFTP setup/download has 300 seconds, and channel I/O and each
+transport close have ten seconds. Hard negotiation deadlines require POSIX,
+the main thread and an unused real-time signal timer. Existing signal handlers
+are restored. Unknown SSH host keys remain refused.
+
+Downloads must be nonempty regular remote files of at most 10 GiB, retain their
+size/mtime during transfer, and match the received byte count. A unique private
+stage (directory 0700, file 0600) holds the download. The maintained dump verifier
+requires a complete gzip stream and pg_dump completion marker. All transports
+must close successfully before an atomic, non-overwriting publication under
+``backups/``. Existing files, including symlinks, are refused and preserved;
+remove or move an old backup deliberately before retrying the same name. Failed
+or interrupted downloads remove their owned stage and never start local steps.
+A forced process kill may leave a private ``.legacy-backup-*`` stage; inspect and
+remove it manually. Backup validation establishes transfer completeness, not
+trust in arbitrary SQL; use only the configured trusted backup producer.

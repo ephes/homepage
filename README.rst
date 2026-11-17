@@ -16,6 +16,13 @@ Running Tests
 
     $ pytest
 
+Weeknote conversion
+^^^^^^^^^^^^^^^^^^^
+
+``convert_weeknote_links`` uses bounded invocations and explicit page-ID
+continuation. See ``docs/weeknote_links.rst`` for budgets, partial runs and
+receipt recovery before using ``--write`` or ``--publish``.
+
 Developer quality commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

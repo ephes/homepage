@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Append and fsync one weeknote receipt frame per completed page, then serialize
+  the final JSON array once. Retain private journals and committed IDs on failures;
+  recover validated checkpoints without replay and refuse incomplete frames.
+
+- Bound weeknote conversion inventories by post, stored-body and receipt budgets;
+  traverse uncached page IDs with explicit partial-run continuation and exact
+  committed revision receipts. Guard hydration again during conflict checks.
+
 - Check shared images only once per rendition repair invocation, including
   direct/gallery overlap across posts and blogs; count each repair or incomplete
   outcome once and report the number of unique images checked.

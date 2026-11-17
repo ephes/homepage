@@ -151,3 +151,45 @@ no API migration is needed from the previously locked 6.6. LF-only HTTP header
 endings are scheduled for removal in 6.7. Regression tests check the
 `CVE-2026-126347 triple-slash redirect fix <https://github.com/tornadoweb/tornado/security/advisories/GHSA-5cjw-f85j-cv6r>`_
 and ordinary local substitutions without opening a server socket.
+
+Legacy transfer helper
+^^^^^^^^^^^^^^^^^^^^^^
+
+Prefer ``just production-db-to-local`` for a local SQL restore. The independent
+``scripts/prod_to_local.py`` remains a legacy Docker/media workflow and requires
+Paramiko separately (``uv run --with paramiko python scripts/prod_to_local.py``).
+Only explicit invocation loads dotenv, reads ``PRODUCTION_HOST`` and
+``PRODUCTION_USERNAME`` and starts transfer/local operations; importing it is inert.
+Docker commands receive literal argument lists, including backup names containing
+spaces, quotes or shell punctuation. A failed command stops subsequent steps.
+
+Local SQL publication delegates to ``commands.py``'s maintained staging,
+verification and cutover implementation; it never drops the live database first.
+Replacing an existing local ``homepage`` database requires ``--replace-existing``.
+The maintained restore preconditions (this consent and no leftover staging or
+recovery database from an interrupted restore) are checked before the production
+backup is requested and before any Docker/media step. The maintained restore checks
+them again at the end, so a database created meanwhile still stops the SQL step
+after the legacy Docker/media steps ran. This helper is not a deployment tool.
+
+The legacy fetch accepts exactly one ``scp homepage:site/backups/<name>.sql.gz
+backups`` announcement (shell quoting is accepted as data), only after a zero
+remote exit status. Combined stdout/stderr is limited to 64 KiB. SSH connection,
+banner and authentication timeouts are ten seconds; the complete remote backup
+command has 30 minutes, SFTP setup has 300 seconds, and the prefetched download
+has 300 seconds plus one second per MiB of the announced size (about three hours
+for the 10 GiB maximum). Channel I/O and each transport close have ten seconds. Hard negotiation deadlines require POSIX,
+the main thread and an unused real-time signal timer. Existing signal handlers
+are restored. Unknown SSH host keys remain refused.
+
+Downloads must be nonempty regular remote files of at most 10 GiB, retain their
+size/mtime during transfer, and match the received byte count. A unique private
+stage (directory 0700, file 0600) holds the download. The maintained dump verifier
+requires a complete gzip stream and pg_dump completion marker. All transports
+must close successfully before an atomic, non-overwriting publication under
+``backups/``. Existing files, including symlinks, are refused and preserved;
+remove or move an old backup deliberately before retrying the same name. Failed
+or interrupted downloads remove their owned stage and never start local steps.
+A forced process kill may leave a private ``.legacy-backup-*`` stage; inspect and
+remove it manually. Backup validation establishes transfer completeness, not
+trust in arbitrary SQL; use only the configured trusted backup producer.

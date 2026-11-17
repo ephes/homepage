@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Bound legacy SSH command output and transport deadlines (download deadline scaled
+  with the backup size, prefetching kept), require one successful backup announcement
+  and a complete verified gzip download, close all transports before publication and
+  preserve existing backups through private no-clobber staging.
+
+- Make the legacy transfer helper inert on import, use literal Docker arguments,
+  propagate process failures and delegate local SQL publication to the maintained
+  restore with explicit existing-database replacement consent, checked before any
+  transfer or Docker step.
+
 - Stage and validate the complete Saira font/license/CSS set before publication,
   roll back handled failures (including Ctrl-C, SIGTERM and SIGHUP) and retain
   git-ignored recovery backups if rollback fails or is interrupted.

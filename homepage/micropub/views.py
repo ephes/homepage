@@ -7,6 +7,7 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
@@ -103,8 +104,14 @@ def micropub_preview_view(request):
     if post_type == "article" and request.POST.get("name"):
         properties["name"] = [request.POST.get("name")]
 
-    # Convert content to blocks
-    blocks = handler.converter.convert_content(content, properties)
+    if "location" in request.POST:
+        properties["location"] = [request.POST["location"]]
+
+    # Preview and creation share the same coordinate admission.
+    try:
+        blocks = handler.converter.convert_content(content, properties)
+    except ValueError:
+        return HttpResponseBadRequest("Location coordinates are invalid", content_type="text/plain")
 
     # Format blocks for display. Everything derived from POST data is sanitized or
     # escaped here, so the template does not need (and must not use) ``|safe``.

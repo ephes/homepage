@@ -153,6 +153,18 @@ and blank first/last code lines survive publication, preview and `q=source`.
 Only the fences and their delimiter newlines are removed, matching HTML code
 imports. Surrounding prose still follows the paragraph conversion above.
 
+Locations accept a plain text label, a dictionary with `latitude`/`longitude`
+and optional `name`, an h-geo object with those values in property arrays, or a
+`geo:` URI. Coordinates must be finite decimal numbers or numeric strings in
+the inclusive latitude range -90–90 and longitude range -180–180. Zero is valid.
+Geo-URI altitude/parameters remain ignored. Missing, empty, nonnumeric,
+nonfinite or out-of-range coordinates reject the whole create with
+`400 invalid_request`, without creating a post, revision or tags.
+
+The preview endpoint also accepts an optional plain text/`geo:` URI `location`
+POST field and uses the same converter. Invalid coordinates return a fixed
+`400` text response, `Location coordinates are invalid`.
+
 Only posts created from now on are converted this way. Stored posts are not
 re-converted or migrated.
 

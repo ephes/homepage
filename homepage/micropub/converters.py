@@ -6,7 +6,9 @@ into appropriate Wagtail StreamField blocks.
 """
 
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any
+from urllib.parse import quote, urlencode, urlunsplit
 
 import nh3
 from bs4 import BeautifulSoup, Tag
@@ -95,7 +97,10 @@ class ContentConverter:
 
         # Handle location if present
         location = properties.get("location", [])
-        if location and location[0]:
+        # An empty or whitespace-only plain label (e.g. a blank form field) means
+        # "no location"; every other value, including malformed coordinates, is
+        # formatted or refused.
+        if location and not (isinstance(location[0], str) and not location[0].strip()):
             blocks.append(("paragraph", self._format_location(location[0])))
 
         # Every paragraph block is sanitized as the last step, whatever path produced
@@ -200,7 +205,7 @@ class ContentConverter:
 
             # Add code block
             language = match.group(1) or ""
-            code = match.group(2).strip()
+            code = match.group(2)
             parts.append(("code", {"language": language, "source": code}))
 
             last_end = match.end()
@@ -246,41 +251,74 @@ class ContentConverter:
 
         return blocks
 
-    def _format_location(self, location: Any) -> str:
-        """Format location data for display."""
-        if isinstance(location, dict):
-            # h-geo or geo URI format
-            if "latitude" in location and "longitude" in location:
-                lat = location["latitude"]
-                lon = location["longitude"]
-                name = location.get("name", f"{lat}, {lon}")
-                return (
-                    f'<p>📍 <a href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=15/{lat}/{lon}">{name}'
-                    f"</a></p>"
-                )
-            elif "properties" in location:
-                # h-geo microformat
-                props = location["properties"]
-                lat = props.get("latitude", [None])[0]
-                lon = props.get("longitude", [None])[0]
-                name = props.get("name", [f"{lat}, {lon}"])[0]
-                if lat and lon:
-                    return (
-                        f'<p>📍 <a href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=15/{lat}/{lon}">'
-                        f"{name}</a></p>"
-                    )
-        elif isinstance(location, str):
-            # Check if it's a geo URI
-            if location.startswith("geo:"):
-                parts = location[4:].split(",")
-                if len(parts) >= 2:
-                    lat, lon = parts[0], parts[1].split(";")[0]
-                    return (
-                        f'<p>📍 <a href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=15/{lat}/{lon}">'
-                        "Location</a></p>"
-                    )
-            else:
-                # Plain text location
-                return f"<p>📍 {location}</p>"
+    @staticmethod
+    def _location_coordinate(value: Any, limit: int) -> str:
+        """Admit finite decimal coordinates without rounding across a range edge."""
+        if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+            raise ValueError("Location coordinates are invalid")
+        text = str(value).strip()
+        # Bound the text and the exponent so fixed-point output stays short
+        # (``0e-100000000`` would otherwise expand to a 100 MB string).
+        if len(text) > 32 or not re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", text):
+            raise ValueError("Location coordinates are invalid")
+        try:
+            coordinate = Decimal(text)
+            valid = (
+                coordinate.is_finite()
+                and -32 <= int(coordinate.as_tuple().exponent) <= 32
+                and -limit <= coordinate <= limit
+            )
+        except InvalidOperation:
+            valid = False
+        if not valid:
+            raise ValueError("Location coordinates are invalid")
+        # Fixed-point notation, so tiny values never render as e.g. ``1E-7``.
+        return format(coordinate, "f")
 
-        return f"<p>📍 {str(location)}</p>"
+    def _format_location(self, location: Any) -> str:
+        """Format supported location shapes, refusing malformed coordinates."""
+        name = None
+        if isinstance(location, dict):
+            if "latitude" in location or "longitude" in location:
+                lat, lon = location.get("latitude"), location.get("longitude")
+                name = location.get("name")
+            else:
+                props = location.get("properties")
+                if not isinstance(props, dict):
+                    raise ValueError("Location coordinates are invalid")
+                latitudes, longitudes = props.get("latitude"), props.get("longitude")
+                if (
+                    not isinstance(latitudes, list)
+                    or not latitudes
+                    or not isinstance(longitudes, list)
+                    or not longitudes
+                ):
+                    raise ValueError("Location coordinates are invalid")
+                lat, lon = latitudes[0], longitudes[0]
+                names = props.get("name", [])
+                name = names[0] if isinstance(names, list) and names else None
+        elif isinstance(location, str):
+            if not location.startswith("geo:"):
+                return f"<p>📍 {escape(location)}</p>"
+            parts = location[4:].split(",")
+            if len(parts) < 2:
+                raise ValueError("Location coordinates are invalid")
+            lat, lon = parts[0], parts[1].split(";")[0]
+            name = "Location"
+        else:
+            raise ValueError("Location coordinates are invalid")
+
+        lat = self._location_coordinate(lat, 90)
+        lon = self._location_coordinate(lon, 180)
+        if name is None:
+            name = f"{lat}, {lon}"
+        url = urlunsplit(
+            (
+                "https",
+                "www.openstreetmap.org",
+                "/",
+                urlencode({"mlat": lat, "mlon": lon}),
+                quote(f"map=15/{lat}/{lon}", safe="=/"),
+            )
+        )
+        return f'<p>📍 <a href="{escape(url)}">{escape(name)}</a></p>'

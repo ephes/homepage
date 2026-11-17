@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Escape Micropub location labels as literal text in publication and preview,
+  preserving tags and entities as supplied through source queries. Keep the
+  generated map link and sanitizer; existing posts are unchanged.
+
+- Admit zero-valued Micropub coordinates and validate finite decimal latitude/
+  longitude ranges (at most 32 characters, exponent within ±32) before publication; reject malformed locations without
+  partial writes. Build map URLs with standard URL encoding and share validation
+  with optional preview locations, render coordinates in fixed-point notation
+  and skip blank plain location labels. Existing posts are unchanged.
+
+- Preserve exact source whitespace in Micropub plain-text fenced code through
+  publication, preview and source queries; existing posts are unchanged.
+
 - Append and fsync one weeknote receipt frame per completed page, then serialize
   the final JSON array once. Retain private journals and committed IDs on failures;
   recover validated checkpoints without replay and refuse incomplete frames.

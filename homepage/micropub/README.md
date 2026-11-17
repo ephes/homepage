@@ -148,6 +148,32 @@ content in `<p>...</p>` (or send JSON `html`) for inline markup, and use the
 JSON `text` form for literal text that contains one of the markers. Plain text
 still supports fenced code and Markdown-style headings.
 
+Fenced code keeps its exact source whitespace: indentation, tabs, trailing spaces
+and blank first/last code lines survive publication, preview and `q=source`.
+Only the fences and their delimiter newlines are removed, matching HTML code
+imports. Surrounding prose still follows the paragraph conversion above.
+
+Locations accept a plain text label, a dictionary with `latitude`/`longitude`
+and optional `name`, an h-geo object with those values in property arrays, or a
+`geo:` URI. Coordinates must be finite decimal numbers or numeric strings in
+the inclusive latitude range -90–90 and longitude range -180–180, written in
+at most 32 characters with a decimal exponent between -32 and 32. Zero is valid.
+Generated map links and default labels use fixed-point decimals (`1e-7` becomes
+`0.0000001`). Geo-URI altitude/parameters remain ignored. An empty or
+whitespace-only plain label adds no location. Missing, empty, nonnumeric,
+nonfinite or out-of-range coordinates reject the whole create with
+`400 invalid_request`, without creating a post, revision or tags.
+
+The preview endpoint also accepts an optional plain text/`geo:` URI `location`
+POST field and uses the same converter. Invalid coordinates return a fixed
+`400` text response, `Location coordinates are invalid`.
+
+Plain location labels and coordinate `name` values are literal text, including
+tags, quotes, ampersands and Unicode. They cannot add formatting, links or images;
+coordinate locations retain their one generated OpenStreetMap link. Preview and
+source queries preserve that text. This applies to new creates only; existing
+posts are unchanged.
+
 Only posts created from now on are converted this way. Stored posts are not
 re-converted or migrated.
 

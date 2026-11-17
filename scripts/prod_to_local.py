@@ -15,8 +15,9 @@ from pathlib import Path, PurePosixPath
 
 # The legacy producer announces: scp homepage:site/backups/<name>.sql.gz backups
 CONNECT_TIMEOUT = 10
-COMMAND_TIMEOUT = 60
-TRANSFER_TIMEOUT = 300
+COMMAND_TIMEOUT = 30 * 60  # remote pg_dump plus docker cp
+TRANSFER_TIMEOUT = 300  # SFTP setup plus a fixed transfer allowance
+MIN_TRANSFER_RATE = 1024**2  # bytes per second added to the transfer deadline
 MAX_COMMAND_BYTES = 64 * 1024  # stdout and stderr together
 MAX_BACKUP_BYTES = 10 * 1024**3
 
@@ -100,11 +101,27 @@ def read_remote_result(channel):
             time.sleep(0.01)
 
 
-def verify_backup(path):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from commands import _verify_dump_file
+def maintained_commands():
+    # Also support direct invocation from scripts/, without installing the project.
+    root = str(Path(__file__).resolve().parents[1])
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    import commands
 
-    _verify_dump_file(path)
+    return commands
+
+
+def verify_backup(path):
+    maintained_commands()._verify_dump_file(path)
+
+
+def check_local_restore(replace_existing):
+    """Refuse missing consent or interrupted-restore leftovers before any transfer or Docker step."""
+    maintained_commands()._check_local_restore_preconditions("homepage", replace_existing)
+
+
+def transfer_deadline(size):
+    return TRANSFER_TIMEOUT + size // MIN_TRANSFER_RATE
 
 
 def fetch_backup(host, username, backups_dir):
@@ -142,6 +159,7 @@ def fetch_backup(host, username, backups_dir):
                 before = sftp.lstat(remote)
                 if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= MAX_BACKUP_BYTES:
                     raise ValueError("Backup must be a nonempty regular file within the size allowance")
+            with deadline(transfer_deadline(before.st_size)):
 
                 def progress(transferred, total):
                     if total != before.st_size or transferred > before.st_size:
@@ -149,7 +167,7 @@ def fetch_backup(host, username, backups_dir):
 
                 fd = os.open(stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
                 with os.fdopen(fd, "wb") as target:
-                    copied = sftp.getfo(remote, target, callback=progress, prefetch=False)
+                    copied = sftp.getfo(remote, target, callback=progress, prefetch=True)
                     target.flush()
                     os.fsync(target.fileno())
                 after = sftp.lstat(remote)
@@ -168,16 +186,13 @@ def fetch_backup(host, username, backups_dir):
 
 
 def transfer_and_restore(host, username, backups_dir, *, replace_existing=False):
+    check_local_restore(replace_existing)
     path = fetch_backup(host, username, backups_dir)
     restore_download(path, replace_existing=replace_existing)
 
 
 def restore_local_database(path, *, replace_existing=False):
-    # Also support direct invocation from scripts/, without installing the project.
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from commands import _restore_dump_into_local_database
-
-    _restore_dump_into_local_database(path, "homepage", replace_existing)
+    maintained_commands()._restore_dump_into_local_database(path, "homepage", replace_existing)
 
 
 def restore_download(path, *, replace_existing=False):

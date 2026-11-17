@@ -123,7 +123,7 @@ def transport(helper, monkeypatch, tmp_path):
     sftp.lstat.return_value = SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_size=len(payload), st_mtime=10)
 
     def getfo(remote, target, *, callback, prefetch):
-        assert prefetch is False
+        assert prefetch is True
         assert remote.startswith("site/backups/")
         stages = list(tmp_path.rglob(".legacy-backup-*"))
         assert len(stages) == 1 and stages[0].stat().st_mode & 0o777 == 0o700
@@ -136,8 +136,20 @@ def transport(helper, monkeypatch, tmp_path):
     client = Mock()
     client.exec_command.return_value = streams
     client.open_sftp.return_value = sftp
-    monkeypatch.setitem(sys.modules, "paramiko", SimpleNamespace(SSHClient=Mock(return_value=client)))
-    return SimpleNamespace(client=client, sftp=sftp, channel=channel, streams=streams, payload=payload)
+    ssh_client = Mock(return_value=client)
+    monkeypatch.setitem(sys.modules, "paramiko", SimpleNamespace(SSHClient=ssh_client))
+    # Never consult a real local PostgreSQL from transfer tests.
+    precheck = Mock()
+    monkeypatch.setattr(helper, "check_local_restore", precheck)
+    return SimpleNamespace(
+        client=client,
+        ssh_client=ssh_client,
+        sftp=sftp,
+        channel=channel,
+        streams=streams,
+        payload=payload,
+        precheck=precheck,
+    )
 
 
 def assert_closed(transport):
@@ -357,6 +369,48 @@ def test_success_only_restores_published_artifact(helper, transport, monkeypatch
     monkeypatch.setattr(helper, "restore_download", local)
     helper.transfer_and_restore("host.invalid", "synthetic", tmp_path, replace_existing=True)
     local.assert_called_once()
+    transport.precheck.assert_called_once_with(True)
+
+
+def test_restore_refusal_happens_before_any_transfer_or_docker_step(helper, transport, monkeypatch, tmp_path):
+    import commands
+
+    transport.precheck.side_effect = commands.LocalRestoreError("synthetic missing consent")
+    run = Mock()
+    monkeypatch.setattr(helper.subprocess, "run", run)
+    with pytest.raises(commands.LocalRestoreError):
+        helper.transfer_and_restore("host.invalid", "synthetic", tmp_path / "backups")
+    transport.precheck.assert_called_once_with(False)
+    transport.ssh_client.assert_not_called()
+    transport.client.connect.assert_not_called()
+    run.assert_not_called()
+    assert not (tmp_path / "backups").exists()
+
+
+@pytest.mark.parametrize("replace_existing", [False, True])
+def test_restore_precheck_uses_maintained_preconditions(helper, monkeypatch, replace_existing):
+    import commands
+
+    check = Mock()
+    monkeypatch.setattr(commands, "_check_local_restore_preconditions", check)
+    helper.check_local_restore(replace_existing)
+    check.assert_called_once_with("homepage", replace_existing)
+
+
+def test_transfer_deadline_scales_with_backup_size(helper, transport, monkeypatch, tmp_path):
+    from contextlib import nullcontext
+
+    size = 3 * helper.MIN_TRANSFER_RATE + 7
+    transport.sftp.lstat.return_value.st_size = size
+    transport.sftp.getfo.side_effect = None
+    transport.sftp.getfo.return_value = size
+    seen = []
+    monkeypatch.setattr(helper, "deadline", lambda seconds: seen.append(seconds) or nullcontext())
+    with pytest.raises(ValueError, match="Incomplete"):
+        helper.fetch_backup("host.invalid", "synthetic", tmp_path)
+    assert helper.transfer_deadline(size) in seen
+    assert helper.transfer_deadline(size) == helper.TRANSFER_TIMEOUT + 3
+    assert helper.transfer_deadline(helper.MAX_BACKUP_BYTES) >= helper.MAX_BACKUP_BYTES // helper.MIN_TRANSFER_RATE
 
 
 def test_complete_gzip_without_dump_marker_is_not_published(helper, transport, tmp_path):

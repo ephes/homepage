@@ -166,15 +166,19 @@ spaces, quotes or shell punctuation. A failed command stops subsequent steps.
 Local SQL publication delegates to ``commands.py``'s maintained staging,
 verification and cutover implementation; it never drops the live database first.
 Replacing an existing local ``homepage`` database requires ``--replace-existing``.
-The legacy Docker/media steps still precede local SQL publication and can have
-side effects before a later restore refusal. This helper is not a deployment tool.
+The maintained restore preconditions (this consent and no leftover staging or
+recovery database from an interrupted restore) are checked before the production
+backup is requested and before any Docker/media step. The maintained restore checks
+them again at the end, so a database created meanwhile still stops the SQL step
+after the legacy Docker/media steps ran. This helper is not a deployment tool.
 
 The legacy fetch accepts exactly one ``scp homepage:site/backups/<name>.sql.gz
 backups`` announcement (shell quoting is accepted as data), only after a zero
 remote exit status. Combined stdout/stderr is limited to 64 KiB. SSH connection,
-banner and authentication timeouts are ten seconds; the complete remote command
-has 60 seconds, SFTP setup/download has 300 seconds, and channel I/O and each
-transport close have ten seconds. Hard negotiation deadlines require POSIX,
+banner and authentication timeouts are ten seconds; the complete remote backup
+command has 30 minutes, SFTP setup has 300 seconds, and the prefetched download
+has 300 seconds plus one second per MiB of the announced size (about three hours
+for the 10 GiB maximum). Channel I/O and each transport close have ten seconds. Hard negotiation deadlines require POSIX,
 the main thread and an unused real-time signal timer. Existing signal handlers
 are restored. Unknown SSH host keys remain refused.
 

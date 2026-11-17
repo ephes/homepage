@@ -19,8 +19,14 @@ Run from the repository root:
 
 from __future__ import annotations
 
-import re
+import fcntl
+import os
 import shutil
+import signal
+import stat
+import sys
+import tempfile
+from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
 
@@ -108,37 +114,219 @@ def font_face(file_name: str, style: str, ranges: list[tuple[int, int]]) -> str:
     )
 
 
-def main() -> None:
-    TARGET_DIR.mkdir(parents=True, exist_ok=True)
+def generated_css(css: bytes, faces: list[str]) -> bytes:
+    """Replace one ordered marker pair without changing any outside bytes."""
+    start, end = CSS_START.encode(), CSS_END.encode()
+    if css.count(start) != 1 or css.count(end) != 1 or css.index(start) >= css.index(end):
+        raise ValueError(f"Markers must occur exactly once, in order, in {CSS_FILE}")
+    block = (CSS_START + "\n" + "\n".join(faces) + CSS_END).encode()
+    end_offset = css.index(end) + len(end)
+    return css[: css.index(start)] + block + css[end_offset:]
+
+
+def build_fonts(inputs: dict[Path, bytes], stage: Path) -> dict[Path, Path]:
+    staged: dict[Path, Path] = {}
     faces: list[str] = []
     for prefix, (source_name, style) in STYLES.items():
         # Keep the source's timestamp, so repeated runs write identical files.
-        source = TTFont(SOURCE_DIR / source_name, recalcTimestamp=False)
-        source_cmap = set(source.getBestCmap())
-        pinned = instancer.instantiateVariableFont(source, {"wdth": 100})
+        source = TTFont(BytesIO(inputs[SOURCE_DIR / source_name]), recalcTimestamp=False)
+        pinned = None
+        try:
+            source_cmap = set(source.getBestCmap())
+            pinned = instancer.instantiateVariableFont(source, {"wdth": 100})
+            core = [cp for cp in source_cmap if in_core(cp)]
+            # Private-use code points are left out of the extension file.
+            ext = [cp for cp in source_cmap if not in_core(cp) and not 0xE000 <= cp <= 0xF8FF]
+            for suffix, codepoints in (("latin", core), ("latin-ext", ext)):
+                target = TARGET_DIR / f"{prefix}-{suffix}.woff2"
+                output = stage / target.name
+                font = TTFont(_copy(pinned), recalcTimestamp=False)
+                try:
+                    build_subset(font, codepoints, output)
+                finally:
+                    font.close()
+                check = TTFont(output)
+                try:
+                    built = set(check.getBestCmap())
+                finally:
+                    check.close()
+                if built != set(codepoints):
+                    raise ValueError(f"{target.name} has an unexpected character map")
+                staged[target] = output
+                faces.append(font_face(target.name, style, to_ranges(codepoints)))
+        finally:
+            if pinned is not None and pinned is not source:
+                pinned.close()
+            source.close()
 
-        core = [cp for cp in source_cmap if in_core(cp)]
-        # Private-use code points (icon-font territory) are left out of the extension file.
-        ext = [cp for cp in source_cmap if not in_core(cp) and not 0xE000 <= cp <= 0xF8FF]
-        for suffix, codepoints in (("latin", core), ("latin-ext", ext)):
-            target = TARGET_DIR / f"{prefix}-{suffix}.woff2"
-            build_subset(TTFont(_copy(pinned), recalcTimestamp=False), codepoints, target)
-            built = set(TTFont(target).getBestCmap())
-            missing = set(codepoints) - built
-            if missing:
-                raise SystemExit(f"{target.name} lacks {css_range(to_ranges(sorted(missing)))}")
-            faces.append(font_face(target.name, style, to_ranges(codepoints)))
-            print(f"{target.relative_to(ROOT)}: {len(built)} characters, {target.stat().st_size} bytes")
+    license_target = TARGET_DIR / "SAIRA-LICENSE.txt"
+    staged[license_target] = stage / license_target.name
+    staged[license_target].write_bytes(inputs[SOURCE_DIR / license_target.name])
+    staged[CSS_FILE] = stage / CSS_FILE.name
+    staged[CSS_FILE].write_bytes(generated_css(inputs[CSS_FILE], faces))
+    return staged
 
-    shutil.copy(SOURCE_DIR / "SAIRA-LICENSE.txt", TARGET_DIR / "SAIRA-LICENSE.txt")
 
-    css = CSS_FILE.read_text()
-    block = CSS_START + "\n" + "\n".join(faces) + CSS_END
-    pattern = re.compile(re.escape(CSS_START) + r".*?" + re.escape(CSS_END), re.S)
-    if not pattern.search(css):
-        raise SystemExit(f"Markers not found in {CSS_FILE}")
-    CSS_FILE.write_text(pattern.sub(lambda _: block, css))
-    print(f"Updated {CSS_FILE.relative_to(ROOT)}")
+def file_generation(path: Path) -> tuple[bytes | None, tuple | None]:
+    """Capture content and identity; absent outputs are also an expected generation."""
+    try:
+        before = path.lstat()
+    except FileNotFoundError:
+        return None, None
+    if not stat.S_ISREG(before.st_mode):
+        raise RuntimeError(f"Expected a regular file: {path}")
+    data = path.read_bytes()
+    after = path.lstat()
+
+    def identity(info):
+        return info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+    if identity(before) != identity(after):
+        raise RuntimeError(f"Changed while reading: {path}")
+    return data, identity(after)
+
+
+def require_current(expected: dict[Path, tuple]) -> None:
+    for path, generation in expected.items():
+        if file_generation(path) != generation:
+            raise RuntimeError(f"Changed during font generation; retry after reviewing {path}")
+
+
+def require_installed(expected: dict[Path, tuple]) -> None:
+    for path, (data, identity) in expected.items():
+        current_data, current_identity = file_generation(path)
+        # rename can change ctime; all other metadata and bytes must match.
+        if current_data != data or current_identity is None or current_identity[:-1] != identity[:-1]:
+            raise RuntimeError(f"Changed after publication; preserving newer file: {path}")
+
+
+@contextmanager
+def destination_lock():
+    """Never unlink this stable inode: all generators must share the same lock."""
+    path = TARGET_DIR / ".saira-generation.lock"
+    fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
+            raise RuntimeError(f"Unsafe font generation lock: {path}")
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError(f"Another font generator is active: {path}") from error
+        named = path.lstat()
+        if (named.st_dev, named.st_ino) != (info.st_dev, info.st_ino):
+            raise RuntimeError(f"Font generation lock was replaced: {path}")
+        yield
+    finally:
+        os.close(fd)
+
+
+def generate() -> None:
+    input_paths = [SOURCE_DIR / name for name, _ in STYLES.values()]
+    input_paths.extend([SOURCE_DIR / "SAIRA-LICENSE.txt", CSS_FILE])
+    expected = {path: file_generation(path) for path in input_paths}
+    inputs = {path: generation[0] for path, generation in expected.items()}
+    for path, data in inputs.items():
+        if data is None:
+            raise FileNotFoundError(f"Missing input: {path}")
+    generated_css(inputs[CSS_FILE], [])  # Preflight before staging or final-path writes.
+    targets = [TARGET_DIR / f"{prefix}-{suffix}.woff2" for prefix in STYLES for suffix in ("latin", "latin-ext")]
+    targets.append(TARGET_DIR / "SAIRA-LICENSE.txt")
+    expected.update({path: file_generation(path) for path in targets})
+    stage = Path(tempfile.mkdtemp(prefix=".saira-stage-", dir=TARGET_DIR.parent))
+    published: list[Path] = []
+    installed: dict[Path, tuple] = {}
+    backups: dict[Path, Path | None] = {}
+    keep_stage = False
+    primary = None
+    try:
+        staged = build_fonts(inputs, stage)
+        for index, (target, output) in enumerate(staged.items()):
+            backup = stage / f"backup-{index}-{target.name}"
+            data, identity = expected[target]
+            if data is not None:
+                backup.write_bytes(data)
+                backup.chmod(identity[2] & 0o777)
+                output.chmod(identity[2] & 0o777)
+                backups[target] = backup
+            else:
+                backups[target] = None
+        require_current(expected)
+        # From the first replacement on, the backups are the only recovery copy:
+        # keep them unless publication or rollback provably completes.
+        keep_stage = True
+        for target, output in staged.items():
+            # Recheck even during publication, so a late CSS edit triggers rollback.
+            require_current({path: generation for path, generation in expected.items() if path not in published})
+            require_installed(installed)
+            generation = file_generation(output)
+            # Record intent first: interruption immediately after rename must roll back too.
+            installed[target] = generation
+            published.append(target)
+            output.replace(target)
+        require_installed(installed)
+        require_current({path: expected[path] for path in input_paths if path != CSS_FILE})
+        keep_stage = False
+    except BaseException as error:
+        primary = error
+        complete = False
+        try:
+            rollback_failed = False
+            for target in reversed(published):
+                try:
+                    if file_generation(target) == expected[target]:
+                        continue  # The attempted replacement never became visible.
+                    require_installed({target: installed[target]})
+                    backup = backups[target]
+                    if backup is None:
+                        target.unlink()
+                    else:
+                        backup.replace(target)
+                except (OSError, RuntimeError) as rollback_error:
+                    rollback_failed = True
+                    error.add_note(f"Rollback failed for {target}: {rollback_error}")
+            complete = not rollback_failed
+        finally:
+            # Also reached when a second interrupt escapes mid-rollback.
+            if complete:
+                keep_stage = False
+            elif keep_stage:
+                print(
+                    f"Incomplete rollback: visible files may be mixed; recovery files retained at {stage}",
+                    file=sys.stderr,
+                )
+        raise
+    finally:
+        if not keep_stage:
+            try:
+                shutil.rmtree(stage)
+            except OSError as cleanup_error:
+                if primary is not None:
+                    primary.add_note(f"Staging cleanup failed at {stage}: {cleanup_error}")
+                else:
+                    raise RuntimeError(f"Complete set published; staging cleanup failed at {stage}") from cleanup_error
+    print(f"Published four fonts, license and CSS at {TARGET_DIR.relative_to(ROOT)}")
+
+
+def _terminate(signum: int, _frame) -> None:
+    # Route SIGTERM/SIGHUP through the handled rollback path instead of dying mid-publication.
+    raise SystemExit(128 + signum)
+
+
+def main() -> None:
+    # Respect an inherited SIG_IGN (e.g. nohup) instead of turning it into an abort.
+    previous = {
+        signum: signal.signal(signum, _terminate)
+        for signum in (signal.SIGTERM, signal.SIGHUP)
+        if signal.getsignal(signum) is not signal.SIG_IGN
+    }
+    try:
+        TARGET_DIR.mkdir(parents=True, exist_ok=True)
+        with destination_lock():
+            generate()
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
 
 
 def _copy(font: TTFont) -> BytesIO:

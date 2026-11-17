@@ -148,6 +148,11 @@ content in `<p>...</p>` (or send JSON `html`) for inline markup, and use the
 JSON `text` form for literal text that contains one of the markers. Plain text
 still supports fenced code and Markdown-style headings.
 
+Fenced code keeps its exact source whitespace: indentation, tabs, trailing spaces
+and blank first/last code lines survive publication, preview and `q=source`.
+Only the fences and their delimiter newlines are removed, matching HTML code
+imports. Surrounding prose still follows the paragraph conversion above.
+
 Only posts created from now on are converted this way. Stored posts are not
 re-converted or migrated.
 

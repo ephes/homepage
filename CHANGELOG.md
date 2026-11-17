@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve exact source whitespace in Micropub plain-text fenced code through
+  publication, preview and source queries; existing posts are unchanged.
+
 - Append and fsync one weeknote receipt frame per completed page, then serialize
   the final JSON array once. Retain private journals and committed IDs on failures;
   recover validated checkpoints without replay and refuse incomplete frames.

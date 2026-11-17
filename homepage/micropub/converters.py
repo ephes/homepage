@@ -200,7 +200,7 @@ class ContentConverter:
 
             # Add code block
             language = match.group(1) or ""
-            code = match.group(2).strip()
+            code = match.group(2)
             parts.append(("code", {"language": language, "source": code}))
 
             last_end = match.end()

@@ -156,7 +156,8 @@ imports. Surrounding prose still follows the paragraph conversion above.
 Locations accept a plain text label, a dictionary with `latitude`/`longitude`
 and optional `name`, an h-geo object with those values in property arrays, or a
 `geo:` URI. Coordinates must be finite decimal numbers or numeric strings in
-the inclusive latitude range -90–90 and longitude range -180–180. Zero is valid.
+the inclusive latitude range -90–90 and longitude range -180–180, written in
+at most 32 characters with a decimal exponent between -32 and 32. Zero is valid.
 Generated map links and default labels use fixed-point decimals (`1e-7` becomes
 `0.0000001`). Geo-URI altitude/parameters remain ignored. An empty or
 whitespace-only plain label adds no location. Missing, empty, nonnumeric,

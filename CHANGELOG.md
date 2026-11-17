@@ -7,7 +7,7 @@
   generated map link and sanitizer; existing posts are unchanged.
 
 - Admit zero-valued Micropub coordinates and validate finite decimal latitude/
-  longitude ranges before publication; reject malformed locations without
+  longitude ranges (at most 32 characters, exponent within ±32) before publication; reject malformed locations without
   partial writes. Build map URLs with standard URL encoding and share validation
   with optional preview locations, render coordinates in fixed-point notation
   and skip blank plain location labels. Existing posts are unchanged.

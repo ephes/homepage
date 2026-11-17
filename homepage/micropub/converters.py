@@ -257,11 +257,17 @@ class ContentConverter:
         if isinstance(value, bool) or not isinstance(value, (str, int, float)):
             raise ValueError("Location coordinates are invalid")
         text = str(value).strip()
-        if not re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", text):
+        # Bound the text and the exponent so fixed-point output stays short
+        # (``0e-100000000`` would otherwise expand to a 100 MB string).
+        if len(text) > 32 or not re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", text):
             raise ValueError("Location coordinates are invalid")
         try:
             coordinate = Decimal(text)
-            valid = coordinate.is_finite() and -limit <= coordinate <= limit
+            valid = (
+                coordinate.is_finite()
+                and -32 <= int(coordinate.as_tuple().exponent) <= 32
+                and -limit <= coordinate <= limit
+            )
         except InvalidOperation:
             valid = False
         if not valid:

@@ -247,3 +247,26 @@ def test_coordinates_render_in_fixed_point_notation(latitude, longitude):
     assert_map_link(html, latitude, longitude)
     lat_text, lon_text = BeautifulSoup(html, "html.parser").a.get_text().split(", ")
     assert (Decimal(lat_text), Decimal(lon_text)) == (Decimal(str(latitude)), Decimal(str(longitude)))
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "geo:0e-100000000,0",
+        "geo:1e-999999999999999999,0",
+        "geo:0,0e+100000000",
+        {"latitude": "0." + "0" * 40, "longitude": 0},
+    ],
+)
+def test_oversized_coordinate_text_is_refused_quickly(client, blogs, users, location):  # noqa: F811
+    response = micropub_json(
+        client, users["admin"], {"mp-channel": ["alpha"], "content": ["Synthetic body"], "location": [location]}
+    )
+    assert response.status_code == 400
+    assert b"invalid_request" in response.content
+    assert not Post.objects.exists()
+    if isinstance(location, str):
+        client.force_login(users["admin"])
+        preview = client.post(reverse("micropub-preview"), {"content": "Synthetic body", "location": location})
+        assert preview.status_code == 400
+        assert preview.content == b"Location coordinates are invalid"

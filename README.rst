@@ -151,3 +151,20 @@ no API migration is needed from the previously locked 6.6. LF-only HTTP header
 endings are scheduled for removal in 6.7. Regression tests check the
 `CVE-2026-126347 triple-slash redirect fix <https://github.com/tornadoweb/tornado/security/advisories/GHSA-5cjw-f85j-cv6r>`_
 and ordinary local substitutions without opening a server socket.
+
+Legacy transfer helper
+^^^^^^^^^^^^^^^^^^^^^^
+
+Prefer ``just production-db-to-local`` for a local SQL restore. The independent
+``scripts/prod_to_local.py`` remains a legacy Docker/media workflow and requires
+Paramiko separately (``uv run --with paramiko python scripts/prod_to_local.py``).
+Only explicit invocation loads dotenv, reads ``PRODUCTION_HOST`` and
+``PRODUCTION_USERNAME`` and starts transfer/local operations; importing it is inert.
+Docker commands receive literal argument lists, including backup names containing
+spaces, quotes or shell punctuation. A failed command stops subsequent steps.
+
+Local SQL publication delegates to ``commands.py``'s maintained staging,
+verification and cutover implementation; it never drops the live database first.
+Replacing an existing local ``homepage`` database requires ``--replace-existing``.
+The legacy Docker/media steps still precede local SQL publication and can have
+side effects before a later restore refusal. This helper is not a deployment tool.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Make the legacy transfer helper inert on import, use literal Docker arguments,
+  propagate process failures and delegate local SQL publication to the maintained
+  restore with explicit existing-database replacement consent.
+
 - Stage and validate the complete Saira font/license/CSS set before publication,
   roll back handled failures (including Ctrl-C, SIGTERM and SIGHUP) and retain
   git-ignored recovery backups if rollback fails or is interrupted.

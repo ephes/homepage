@@ -304,6 +304,12 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_ALLOW_REGISTRATION = False
 ACCOUNT_ADAPTER = "homepage.users.adapters.AccountAdapter"
 SOCIALACCOUNT_ADAPTER = "homepage.users.adapters.SocialAccountAdapter"
+# allauth's per-IP rate limits (login, failed login, password reset) must key on
+# the visitor, not on Traefik's local address: otherwise one client exhausts
+# them for everybody. Same knob as REST_FRAMEWORK["NUM_PROXIES"]: Traefik is the
+# only reverse proxy and appends the client address; requests without
+# X-Forwarded-For fall back to REMOTE_ADDR. See docs/admin_login_throttle.rst.
+ALLAUTH_TRUSTED_PROXY_COUNT = env.int("DJANGO_NUM_PROXIES", default=1)
 
 # Custom user app defaults
 # Select the correct user model

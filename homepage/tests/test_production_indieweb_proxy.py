@@ -1,5 +1,5 @@
 """
-django-indieweb proxy setting of ``config.settings.production``.
+django-indieweb and allauth proxy settings of ``config.settings.production``.
 
 The production settings need deploy-only environment variables, so they are
 loaded in a subprocess with dummy values instead of being imported here.
@@ -35,14 +35,20 @@ from django.conf import settings
 print(settings.INDIEWEB_RATE_LIMIT_TRUSTED_PROXY_HOPS)
 """
 
+ALLAUTH_PROBE = """
+from django.conf import settings
 
-def load_production_proxy_hops(tmp_path, **overrides):
+print(settings.ALLAUTH_TRUSTED_PROXY_COUNT)
+"""
+
+
+def load_production_proxy_hops(tmp_path, probe=PROBE, **overrides):
     env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "")}
     env.update(DUMMY_PRODUCTION_ENV)
     env["DJANGO_CACHE_LOCATION"] = str(tmp_path)
     env.update(overrides)
     result = subprocess.run(
-        [sys.executable, "-c", PROBE],
+        [sys.executable, "-c", probe],
         cwd=REPO_ROOT,
         env=env,
         capture_output=True,
@@ -64,3 +70,11 @@ def test_production_proxy_hops_follow_the_shared_proxy_count(tmp_path):
 
 def test_test_settings_keep_the_library_default():
     assert getattr(settings, "INDIEWEB_RATE_LIMIT_TRUSTED_PROXY_HOPS", 0) == 0
+
+
+def test_production_allauth_trusts_the_single_traefik_hop(tmp_path):
+    assert load_production_proxy_hops(tmp_path, probe=ALLAUTH_PROBE) == 1
+
+
+def test_production_allauth_follows_the_shared_proxy_count(tmp_path):
+    assert load_production_proxy_hops(tmp_path, probe=ALLAUTH_PROBE, DJANGO_NUM_PROXIES="2") == 2

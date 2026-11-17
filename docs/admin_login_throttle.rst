@@ -4,7 +4,7 @@ Admin login throttling
 The site has four password login forms:
 
 * allauth's ``/accounts/login/``, limited by allauth's default
-  ``ACCOUNT_RATE_LIMITS``.
+  ``ACCOUNT_RATE_LIMITS`` (see `allauth rate limits behind Traefik`_).
 * the Django admin login, ``<ADMIN_URL>login/``.
 * the Wagtail admin login, ``<WAGTAILADMIN_BASE_URL>login/`` (``/cms/login/``).
 * the Django REST Framework browsable-API login, ``/api-auth/login/``.
@@ -86,6 +86,21 @@ and lock these three logins for that user for up to an hour. To get in anyway:
   ``python manage.py shell -c "from django.core.cache import caches; caches['api_token_auth_throttle'].clear()"``
   on the server.
 
+allauth rate limits behind Traefik
+----------------------------------
+
+allauth's per-IP limits (``login``, ``login_failed``, ``reset_password``,
+``reset_password_from_key``, ``signup``) key on the visitor's address.
+``ALLAUTH_TRUSTED_PROXY_COUNT`` is set from ``DJANGO_NUM_PROXIES`` (default
+``1``), the same knob as ``REST_FRAMEWORK["NUM_PROXIES"]``, so the client
+address is the last ``X-Forwarded-For`` entry, the one Traefik appends.
+Requests without ``X-Forwarded-For`` (local development) use ``REMOTE_ADDR``.
+
+Without this setting allauth ignores ``X-Forwarded-For`` and every visitor
+shares Traefik's local address. One client could then use up the shared
+budget and get ``/accounts/login/`` (and the IndieAuth sign-in, which
+redirects there) refused with ``429`` for everybody.
+
 Token authentication
 --------------------
 
@@ -111,3 +126,5 @@ Change history
   wrapper there.
 * 2026-10-19: removed the unused token issuance endpoint; existing tokens
   and admin login throttling remain supported.
+* 2026-11: allauth's per-IP rate limits use the address Traefik appends
+  (``ALLAUTH_TRUSTED_PROXY_COUNT``) instead of the proxy's address.

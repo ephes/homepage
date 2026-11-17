@@ -95,6 +95,17 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-17 allauth rate limits per client
+-----------------------------------------
+
+``config.settings.base`` sets ``ALLAUTH_TRUSTED_PROXY_COUNT`` from
+``DJANGO_NUM_PROXIES`` (default ``1``). allauth's per-IP rate limits for
+``/accounts/login/``, failed logins, password resets and sign-ups now count the
+client address that Traefik appends to ``X-Forwarded-For``, not Traefik's own
+address, which all visitors used to share. No migration, no new environment
+variable; see :doc:`admin_login_throttle`. Local requests without
+``X-Forwarded-For`` keep using ``REMOTE_ADDR``.
+
 2026-11-17 django-cast develop 93ac6cb4
 ---------------------------------------
 

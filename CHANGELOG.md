@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Key allauth's per-IP rate limits (login, failed login, password reset,
+  signup) on the client address Traefik appends to `X-Forwarded-For`
+  (`ALLAUTH_TRUSTED_PROXY_COUNT`, following `DJANGO_NUM_PROXIES`). Previously
+  all visitors shared the proxy's address, so one client could get
+  `/accounts/login/` refused with 429 for everybody.
+
 - Escape Micropub location labels as literal text in publication and preview,
   preserving tags and entities as supplied through source queries. Keep the
   generated map link and sanitizer; existing posts are unchanged.

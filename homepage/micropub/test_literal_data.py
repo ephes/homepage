@@ -224,3 +224,26 @@ def test_location_labels_remain_literal_through_publication_and_source(
         preview = client.post(reverse("micropub-preview"), {"content": "Synthetic body", "location": label})
         assert preview.status_code == 200
         assert_label(preview.context["preview_html"])
+
+
+@pytest.mark.parametrize("label", ["", "   "])
+def test_blank_plain_location_adds_no_paragraph(client, blogs, users, label):  # noqa: F811
+    handler = CastPostMicropubHandler()
+    handler.create_entry({"mp-channel": ["alpha"], "content": ["Synthetic body"], "location": [label]}, users["admin"])
+    blocks = list(Post.objects.get().body[0].value)
+    assert ["📍" in str(block.value) for block in blocks] == [False]
+    client.force_login(users["admin"])
+    preview = client.post(reverse("micropub-preview"), {"content": "Synthetic body", "location": label})
+    assert preview.status_code == 200
+    assert "📍" not in preview.context["preview_html"]
+
+
+@pytest.mark.parametrize("latitude,longitude", [("1e-7", "12"), (1.5e-07, 0), ("0.0000001", "1E+1")])
+def test_coordinates_render_in_fixed_point_notation(latitude, longitude):
+    html = CastPostMicropubHandler().converter.convert_content(
+        "Synthetic body", {"content": ["Synthetic body"], "location": [{"latitude": latitude, "longitude": longitude}]}
+    )[-1][1]
+    assert "E" not in html.replace("Synthetic", "") and "e-" not in html
+    assert_map_link(html, latitude, longitude)
+    lat_text, lon_text = BeautifulSoup(html, "html.parser").a.get_text().split(", ")
+    assert (Decimal(lat_text), Decimal(lon_text)) == (Decimal(str(latitude)), Decimal(str(longitude)))

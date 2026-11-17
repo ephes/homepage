@@ -157,7 +157,9 @@ Locations accept a plain text label, a dictionary with `latitude`/`longitude`
 and optional `name`, an h-geo object with those values in property arrays, or a
 `geo:` URI. Coordinates must be finite decimal numbers or numeric strings in
 the inclusive latitude range -90–90 and longitude range -180–180. Zero is valid.
-Geo-URI altitude/parameters remain ignored. Missing, empty, nonnumeric,
+Generated map links and default labels use fixed-point decimals (`1e-7` becomes
+`0.0000001`). Geo-URI altitude/parameters remain ignored. An empty or
+whitespace-only plain label adds no location. Missing, empty, nonnumeric,
 nonfinite or out-of-range coordinates reject the whole create with
 `400 invalid_request`, without creating a post, revision or tags.
 

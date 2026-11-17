@@ -9,7 +9,8 @@
 - Admit zero-valued Micropub coordinates and validate finite decimal latitude/
   longitude ranges before publication; reject malformed locations without
   partial writes. Build map URLs with standard URL encoding and share validation
-  with optional preview locations. Existing posts are unchanged.
+  with optional preview locations, render coordinates in fixed-point notation
+  and skip blank plain location labels. Existing posts are unchanged.
 
 - Preserve exact source whitespace in Micropub plain-text fenced code through
   publication, preview and source queries; existing posts are unchanged.

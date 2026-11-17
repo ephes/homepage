@@ -97,7 +97,10 @@ class ContentConverter:
 
         # Handle location if present
         location = properties.get("location", [])
-        if location:
+        # An empty or whitespace-only plain label (e.g. a blank form field) means
+        # "no location"; every other value, including malformed coordinates, is
+        # formatted or refused.
+        if location and not (isinstance(location[0], str) and not location[0].strip()):
             blocks.append(("paragraph", self._format_location(location[0])))
 
         # Every paragraph block is sanitized as the last step, whatever path produced
@@ -263,7 +266,8 @@ class ContentConverter:
             valid = False
         if not valid:
             raise ValueError("Location coordinates are invalid")
-        return str(coordinate)
+        # Fixed-point notation, so tiny values never render as e.g. ``1E-7``.
+        return format(coordinate, "f")
 
     def _format_location(self, location: Any) -> str:
         """Format supported location shapes, refusing malformed coordinates."""

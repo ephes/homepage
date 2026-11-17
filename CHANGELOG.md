@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Escape Micropub location labels as literal text in publication and preview,
+  preserving tags and entities as supplied through source queries. Keep the
+  generated map link and sanitizer; existing posts are unchanged.
+
 - Admit zero-valued Micropub coordinates and validate finite decimal latitude/
   longitude ranges before publication; reject malformed locations without
   partial writes. Build map URLs with standard URL encoding and share validation

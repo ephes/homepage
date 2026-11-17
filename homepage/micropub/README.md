@@ -165,6 +165,12 @@ The preview endpoint also accepts an optional plain text/`geo:` URI `location`
 POST field and uses the same converter. Invalid coordinates return a fixed
 `400` text response, `Location coordinates are invalid`.
 
+Plain location labels and coordinate `name` values are literal text, including
+tags, quotes, ampersands and Unicode. They cannot add formatting, links or images;
+coordinate locations retain their one generated OpenStreetMap link. Preview and
+source queries preserve that text. This applies to new creates only; existing
+posts are unchanged.
+
 Only posts created from now on are converted this way. Stored posts are not
 re-converted or migrated.
 

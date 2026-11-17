@@ -276,15 +276,20 @@ class ContentConverter:
                 props = location.get("properties")
                 if not isinstance(props, dict):
                     raise ValueError("Location coordinates are invalid")
-                coordinates = [props.get(key) for key in ("latitude", "longitude")]
-                if not all(isinstance(values, list) and values for values in coordinates):
+                latitudes, longitudes = props.get("latitude"), props.get("longitude")
+                if (
+                    not isinstance(latitudes, list)
+                    or not latitudes
+                    or not isinstance(longitudes, list)
+                    or not longitudes
+                ):
                     raise ValueError("Location coordinates are invalid")
-                lat, lon = (values[0] for values in coordinates)
+                lat, lon = latitudes[0], longitudes[0]
                 names = props.get("name", [])
                 name = names[0] if isinstance(names, list) and names else None
         elif isinstance(location, str):
             if not location.startswith("geo:"):
-                return f"<p>📍 {location}</p>"
+                return f"<p>📍 {escape(location)}</p>"
             parts = location[4:].split(",")
             if len(parts) < 2:
                 raise ValueError("Location coordinates are invalid")
@@ -306,4 +311,4 @@ class ContentConverter:
                 quote(f"map=15/{lat}/{lon}", safe="=/"),
             )
         )
-        return f'<p>📍 <a href="{escape(url)}">{name}</a></p>'
+        return f'<p>📍 <a href="{escape(url)}">{escape(name)}</a></p>'

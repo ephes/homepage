@@ -176,3 +176,51 @@ def test_preview_uses_coordinate_admission(client, users, location, valid):  # n
     else:
         assert response.content == b"Location coordinates are invalid"
     assert not Post.objects.exists()
+
+
+@pytest.mark.parametrize("shape", ["plain", "direct", "h-geo"])
+@pytest.mark.parametrize(
+    "label",
+    [
+        "<b>literal location</b>",
+        '<a href="https://example.invalid/">link</a><img src="https://example.invalid/a.png">',
+        "\"Quotes\" & 'apostrophes' &amp; 東京 📍",
+    ],
+)
+def test_location_labels_remain_literal_through_publication_and_source(
+    client, blogs, users, source, shape, label  # noqa: F811
+):
+    if shape == "plain":
+        location = label
+    else:
+        location = location_value(shape, 0, 12)
+        if shape == "direct":
+            location["name"] = label
+        else:
+            location["properties"]["name"] = [label]
+    response = micropub_json(
+        client, users["admin"], {"mp-channel": ["alpha"], "content": ["Synthetic body"], "location": [location]}
+    )
+    assert response.status_code == 201
+    post = Post.objects.get()
+
+    def assert_label(html):
+        paragraph = BeautifulSoup(html, "html.parser").find_all("p")[-1]
+        assert paragraph.get_text() == f"📍 {label}"
+        assert [tag.name for tag in paragraph.find_all()] == ([] if shape == "plain" else ["a"])
+        if shape != "plain":
+            assert_map_link(str(paragraph), 0, 12)
+
+    for saved in [post, post.latest_revision.as_object()]:
+        assert_label(str(saved.body[0].value[-1].value))
+    response = source(post)
+    assert response.status_code == 200
+    exported = response.json()["properties"]["content"][0]
+    assert_label(exported["html"])
+    reimported = CastPostMicropubHandler().converter.convert_content(exported["html"], {"content": [exported]})
+    assert_label(reimported[-1][1])
+    if shape == "plain":
+        client.force_login(users["admin"])
+        preview = client.post(reverse("micropub-preview"), {"content": "Synthetic body", "location": label})
+        assert preview.status_code == 200
+        assert_label(preview.context["preview_html"])

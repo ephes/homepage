@@ -249,19 +249,44 @@ conflict/draft skips remain in the report: revisit those separately, since
 continuation moves past every processed page, including skips and warnings.
 
 Report publication and interrupted runs
---------------------------------------
+---------------------------------------
 
-With ``--report``, the command creates a unique sibling ``.pending`` receipt and
-writes/flushes it before making database changes. Each completed page checkpoints
-its revision ID and publication result. On success a same-directory atomic replace
-publishes the JSON report; an existing report is never truncated in place.
+With ``--report``, the command creates a unique private sibling ``.journal``
+(0600), writes a versioned header and flushes/fsyncs it before database changes.
+Each completed page appends one newline-framed JSON record, then flushes/fsyncs
+its revision ID and publication result. Header, page and outcome records are
+command-specific UTF-8 JSONL; embedded newlines are JSON-escaped. Work is linear
+in completed receipt bytes, without rewriting the growing prefix. The bounded
+report list is serialized once at completion to a separate sibling ``.pending``
+file, fsynced, closed and atomically replaced over the target. Published reports
+remain JSON arrays and retain the previous report's mode or the umask-derived
+creation mode. Successful publication removes the redundant journal.
 
-On a handled conversion, write, flush, close or replace failure, the existing report
-survives. The command exits nonzero, retains the staged receipt path, and prints
-every completed revision ID, slug and publication flag on stderr. Inspect both:
-a failed write may leave an incomplete staged JSON file. Database changes already
-committed are not undone by a report failure. Preserve stderr with the receipt,
-inspect the identified revisions, then retry from current page state. Converted
-live content is unchanged on retry, and existing converted drafts are skipped;
-the retry does not republish those revisions. This is recovery evidence for handled
-failures, not a crash-atomic transaction spanning database and report filesystem.
+On a handled conversion, write, flush, close or replace failure, the existing
+report survives. The command exits nonzero, retains the journal (and any staged
+JSON), and prints every committed revision ID, slug and publication flag on
+stderr, including a commit whose checkpoint failed. Database changes already
+committed are not undone. Preserve stderr together with the journal. A hard kill
+between database commit and journal fsync can leave an unacknowledged revision;
+inspect the page's revisions before retrying that boundary. There is no atomic
+transaction spanning PostgreSQL and a local file.
+
+Recover completed receipts without querying, saving or publishing posts::
+
+   uv run python manage.py convert_weeknote_links --recover-receipt /tmp/.report.json.UNIQUE.journal --report /tmp/recovered.json
+
+Recovery validates the format, increasing page IDs, fixed upper bound, outcome
+and invocation post/receipt budgets, then atomically publishes the same JSON array.
+Increase ``--max-posts``/``--max-report-bytes`` explicitly if the original run used
+larger budgets. The original journal remains untouched. Recovery prints the
+original scope/write/publish flags, status and exact continuation IDs. A missing
+outcome is explicitly partial; recovery never replays conversions. A complete
+outcome means traversal finished, not that every conflict/draft/warning was fixed.
+
+An incomplete final frame, invalid sequence or oversized journal is refused
+before replacing the report. Keep the original, inspect complete newline frames
+and stderr/revisions, and if needed make a separate verified copy containing only
+complete frames before recovery. Do not silently discard a tail or infer that an
+unacknowledged revision was never committed. Continuation skips processed page
+IDs, so revisit conflicts and drafts separately and inspect the first unprocessed
+page after an interrupted run before using ``--write --publish`` again.

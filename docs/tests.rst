@@ -289,7 +289,9 @@ images/renditions and counted storage: each unique rendition is checked once per
 invocation, including direct/gallery overlap and duplicate blog arguments.
 Missing, unknown, failed and cache-pending outcomes are counted once; subsequent
 invocations and standalone helper calls recheck independently.
-Weeknote tests fault report preflight, checkpoint writes and
+Weeknote tests bound inventory hydration/retention and measure linear receipt
+serialization at 100/200/400 posts. They fault journal preflight, short writes,
+flush/fsync/close, validate receipt recovery without replay, and fault
 atomic replace, checking preserved old bytes, retained revision identities and
 retry without duplicate revisions. MigrationExecutor tests independently convert
 live/latest content and measure retained large page instances in both directions.

@@ -32,7 +32,8 @@ Cover import failures can retain uncertain storage names (including S3); inspect
 references and object ownership before manual cleanup, as described in
 ``development.rst``. Never infer ownership solely from a prior exists check.
 
-Weeknote conversion reports are atomically replaced from a unique sibling receipt.
-If reporting fails after committed revisions, preserve the retained ``.pending``
-file and stderr revision IDs before retrying. The old report describes the prior
+Weeknote conversion reports are atomically replaced from a unique sibling JSON
+stage, with an append-only journal for recovery. If reporting fails after committed
+revisions, preserve the retained ``.journal``, any ``.pending`` JSON stage and
+stderr revision IDs before retrying. The old report describes the prior
 run, not the partial new one; see ``weeknote_links.rst`` for recovery details.

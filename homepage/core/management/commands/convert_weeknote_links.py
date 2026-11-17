@@ -27,12 +27,14 @@ def _published_mode(target: Path) -> int:
 CHANGED_SINCE_READ = "changed_since_read"
 # PostgreSQL's SQLSTATE for a row lock that NOWAIT could not get.
 LOCK_NOT_AVAILABLE = "55P03"
+RECEIPT_FORMAT = "homepage-weeknote-receipt-v1"
 
 
 class Command(BaseCommand):
     help = "Convert legacy weeknote h2+ul link sections into structured weeknote_links blocks."
 
     def add_arguments(self, parser):
+        parser.add_argument("--recover-receipt", help="Publish a retained journal as JSON without converting posts.")
         parser.add_argument("--after-pk", type=int, default=0, help="Continue after this processed page ID.")
         parser.add_argument("--through-pk", type=int, help="Keep the initial run's inclusive upper page ID.")
         parser.add_argument("--max-posts", type=int, default=100, help="Maximum processed posts (default: 100).")
@@ -62,8 +64,6 @@ class Command(BaseCommand):
         parser.add_argument("--fail-on-warnings", action="store_true", help="Exit non-zero when warnings are found.")
 
     def handle(self, *args, **options):
-        from cast.models import Post
-
         if options["suppress_webmentions"] and not options["publish"]:
             raise CommandError("--suppress-webmentions requires --publish.")
 
@@ -74,6 +74,12 @@ class Command(BaseCommand):
             options["through_pk"] is not None and options["through_pk"] < options["after_pk"]
         ):
             raise CommandError("Require 0 <= --after-pk <= --through-pk.")
+        if options["recover_receipt"]:
+            self._recover_receipt(options)
+            return
+
+        from cast.models import Post
+
         queryset = (
             Post.objects.filter(slug__startswith="weeknotes-")
             .annotate(
@@ -101,7 +107,9 @@ class Command(BaseCommand):
         conflict_count = 0
 
         publish_context = self._suppress_webmentions() if options["suppress_webmentions"] else nullcontext()
-        with self._report_file(options["report"], report) as receipt, publish_context:
+        run = {"after_pk": cursor, "through_pk": through_pk, "status": "partial"}
+        scope = {name: options[name] for name in ("slug", "write", "publish", "suppress_webmentions")}
+        with self._report_file(options["report"], report, run, scope) as receipt, publish_context:
             while (next_pk := queryset.filter(pk__gt=cursor).values_list("pk", flat=True).first()) is not None:
                 if len(report) >= options["max_posts"]:
                     boundary = "post budget"
@@ -119,9 +127,16 @@ class Command(BaseCommand):
                 conversion = convert_body(post.body.raw_data)
                 entry = self._report_entry(post, conversion)
                 entry.update(page_id=post.pk, through_pk=through_pk)
-                # Reserve room for the save result (64-bit revision ID, skip reason,
-                # indentation and commas) before committing anything.
-                entry_bytes = len(json.dumps(entry, indent=2, ensure_ascii=False).encode("utf-8")) + 256
+                # Admit the largest save result and exact outer-list indentation,
+                # including warning-heavy entries, before committing anything.
+                reserved = {
+                    **entry,
+                    "revision_id": 9223372036854775807,
+                    "published": False,
+                    "skipped": "has_unpublished_changes",
+                }
+                payload = json.dumps(reserved, indent=2, ensure_ascii=False)
+                entry_bytes = len(payload.encode("utf-8")) + 2 * (payload.count("\n") + 1) + 2
                 if report_bytes + entry_bytes > options["max_report_bytes"]:
                     boundary = "report budget"
                     break
@@ -143,7 +158,10 @@ class Command(BaseCommand):
                 report.append(entry)
                 cursor = post.pk
                 if receipt is not None:
-                    self._checkpoint_report(receipt, report)
+                    self._checkpoint_report(receipt, entry)
+                run["after_pk"] = cursor
+                del post, source, conversion, entry
+            run["status"] = "partial" if boundary else "complete"
 
         action_count = saved_count if options["write"] else changed_count
         action = "converted" if options["write"] else "would convert"
@@ -166,31 +184,29 @@ class Command(BaseCommand):
             raise CommandError(f"Conversion produced {warning_count} warning(s).")
 
     @contextmanager
-    def _report_file(self, path, report):
+    def _report_file(self, path, report, run, scope):
         if not path:
             yield None
             return
         target = Path(path)
         try:
             stream = tempfile.NamedTemporaryFile(
-                mode="w+",
+                mode="w",
                 encoding="utf-8",
                 dir=target.parent,
                 prefix=f".{target.name}.",
-                suffix=".pending",
+                suffix=".journal",
                 delete=False,
             )
         except OSError as error:
-            raise CommandError(f"Cannot stage conversion report before changes: {error}") from error
+            raise CommandError(f"Cannot stage conversion receipt before changes: {error}") from error
         try:
             with stream:
-                # NamedTemporaryFile is always 0600; publish with the mode a plain
-                # create would give (or the replaced report's mode) so readers keep access.
-                os.chmod(stream.fileno(), _published_mode(target))
-                # Write/flush before any revision; fail early on unavailable report storage.
-                self._checkpoint_report(stream, report)
+                # Private append-only JSONL frames: header, completed pages, outcome.
+                self._append_frame(stream, {"format": RECEIPT_FORMAT, **run, "scope": scope})
                 yield stream
-            os.replace(stream.name, target)
+                self._append_frame(stream, {"outcome": dict(run)})
+            self._publish_report(target, report)
         except Exception as error:
             self.stderr.write(f"Conversion receipt retained at {stream.name!r} (may be incomplete).")
             for entry in report:
@@ -203,15 +219,127 @@ class Command(BaseCommand):
                 f"Conversion/report failed: {error}. Any completed revisions remain committed; "
                 "inspect the retained receipt and reported revision IDs before retrying."
             ) from error
+        try:
+            os.unlink(stream.name)
+        except OSError:
+            self.stderr.write(f"Report published; redundant journal retained at {stream.name!r}.")
 
-    def _checkpoint_report(self, stream, report):
-        stream.seek(0)
-        payload = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+    def _checkpoint_report(self, stream, entry):
+        self._append_frame(stream, {"entry": entry})
+
+    @staticmethod
+    def _append_frame(stream, frame):
+        payload = json.dumps(frame, ensure_ascii=False) + "\n"
         if stream.write(payload) != len(payload):
-            raise OSError("Short conversion report write")
-        stream.truncate()
+            raise OSError("Short conversion receipt write")
         stream.flush()
         os.fsync(stream.fileno())
+
+    def _publish_report(self, target, report):
+        stream = tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=target.parent,
+            prefix=f".{target.name}.",
+            suffix=".pending",
+            delete=False,
+        )
+        try:
+            with stream:
+                os.chmod(stream.fileno(), _published_mode(target))
+                payload = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+                if stream.write(payload) != len(payload):
+                    raise OSError("Short conversion report write")
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(stream.name, target)
+        except Exception:
+            self.stderr.write(f"Staged JSON report retained at {stream.name!r} (may be incomplete).")
+            raise
+
+    def _recover_receipt(self, options):
+        if not options["report"] or any(
+            options[name] for name in ("write", "publish", "suppress_webmentions", "slug", "after_pk", "through_pk")
+        ):
+            raise CommandError("--recover-receipt requires --report and no conversion/scope flags.")
+        source = Path(options["recover_receipt"])
+        target = Path(options["report"])
+        if source.resolve() == target.resolve():
+            raise CommandError("Recovery report must differ from its journal.")
+        try:
+            report, run, scope = self._read_receipt(source, options["max_posts"], options["max_report_bytes"])
+            self._publish_report(target, report)
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            raise CommandError(
+                f"Cannot recover receipt: {error}. Original journal preserved; no posts changed."
+            ) from error
+        self.stdout.write(f"Recovered {len(report)} completed page receipt(s); status={run['status']}; scope={scope}.")
+        self.stdout.write(f"Continuation: --after-pk {run['after_pk']} --through-pk {run['through_pk']}.")
+        self.stderr.write(
+            "Check stderr/revisions from the failed run for a commit after its last durable frame. "
+            "Recovery never retries or publishes database revisions."
+        )
+
+    @staticmethod
+    def _read_receipt(path, max_posts, max_bytes):
+        report = []
+        consumed = 0
+        header = None
+        finished = False
+        # Binary reads cap bytes even for non-ASCII warnings or malformed input.
+        with path.open("rb") as stream:
+            while line := stream.readline(max_bytes - consumed + 1):
+                consumed += len(line)
+                if consumed > max_bytes or not line.endswith(b"\n"):
+                    raise ValueError("Receipt exceeds budget or has an incomplete final frame")
+                frame = json.loads(line)
+                if not isinstance(frame, dict):
+                    raise ValueError("Receipt frame must be an object")
+                if header is None:
+                    if frame["format"] != RECEIPT_FORMAT:
+                        raise ValueError("Unknown receipt format")
+                    header = frame
+                    cursor, through = frame["after_pk"], frame["through_pk"]
+                    if type(cursor) is not int or type(through) is not int or not 0 <= cursor <= through:
+                        raise ValueError("Invalid receipt boundary")
+                elif finished:
+                    raise ValueError("Unexpected frame after outcome")
+                elif "entry" in frame:
+                    entry = frame["entry"]
+                    pk = entry["page_id"]
+                    if (
+                        type(pk) is not int
+                        or not cursor < pk <= through
+                        or entry["through_pk"] != through
+                        or len(report) >= max_posts
+                    ):
+                        raise ValueError("Invalid page order/boundary or receipt post budget exceeded")
+                    # Require the fields needed to inspect committed progress.
+                    for field in (
+                        "slug",
+                        "revision_id",
+                        "published",
+                        "changed",
+                        "warnings",
+                        "skipped",
+                        "converted_sections",
+                    ):
+                        entry[field]
+                    report.append(entry)
+                    cursor = pk
+                else:
+                    outcome = frame["outcome"]
+                    if (
+                        outcome["after_pk"] != cursor
+                        or outcome["through_pk"] != through
+                        or outcome["status"] not in {"partial", "complete"}
+                    ):
+                        raise ValueError("Invalid receipt outcome")
+                    finished = True
+            if header is None:
+                raise ValueError("Missing receipt header")
+        run = {"after_pk": cursor, "through_pk": through, "status": outcome["status"] if finished else "partial"}
+        return report, run, header["scope"]
 
     def _report_entry(self, post, conversion: BodyConversion) -> dict[str, Any]:
         return {

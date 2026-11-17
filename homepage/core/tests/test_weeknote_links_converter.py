@@ -963,19 +963,11 @@ def test_report_failure_preserves_old_report_and_committed_revision(monkeypatch,
         monkeypatch.setattr(os, "replace", fail)
     else:
         # Initial preflight must succeed; fail the checkpoint after a real revision.
-        write = Command._checkpoint_report if hasattr(Command, "_checkpoint_report") else None
+        def late_failure(self, stream, entry):
+            assert entry["revision_id"] is not None
+            fail()
 
-        def late_failure(self, stream, report):
-            if any(entry["revision_id"] for entry in report):
-                fail()
-            return write(self, stream, report)
-
-        if write:
-            monkeypatch.setattr(Command, "_checkpoint_report", late_failure)
-        else:
-            from pathlib import Path
-
-            monkeypatch.setattr(Path, "write_text", fail)
+        monkeypatch.setattr(Command, "_checkpoint_report", late_failure)
     stderr = io.StringIO()
     with pytest.raises(DjangoCommandError, match="report|receipt"):
         call_command("convert_weeknote_links", "--write", "--report", str(path), stdout=io.StringIO(), stderr=stderr)
@@ -1023,8 +1015,10 @@ def test_conversion_failure_retains_completed_checkpoint(monkeypatch, tmp_path):
     assert first.latest_revision_id is not None
     assert second.latest_revision_id is None
     assert path.read_text() == "previous report"
-    (receipt,) = tmp_path.glob(".report.json.*.pending")
-    assert json.loads(receipt.read_text())[0]["revision_id"] == first.latest_revision_id
+    (receipt,) = tmp_path.glob(".report.json.*.journal")
+    recovered, run, _ = Command._read_receipt(receipt, 100, 4 * 1024 * 1024)
+    assert recovered[0]["revision_id"] == first.latest_revision_id
+    assert run == {"after_pk": first.pk, "through_pk": second.pk, "status": "partial"}
     assert str(first.latest_revision_id) in stderr.getvalue()
 
 
@@ -1153,3 +1147,244 @@ def test_database_body_admission_and_pk_continuation(tmp_path):
         stdout=io.StringIO(),
     )
     assert [entry["page_id"] for entry in json.loads(report.read_text())] == [second.pk]
+
+
+@pytest.mark.parametrize("count", [100, 200, 400])
+def test_receipt_serialization_work_is_linear(monkeypatch, tmp_path, count):
+    posts = [FakePost(body=[], slug=f"weeknotes-{i}") for i in range(count)]
+    for pk, post in enumerate(posts, 1):
+        post.pk = pk
+    _patch_post_model(monkeypatch, posts)
+    dumps = json.dumps
+    work = 0
+
+    def measured(value, *args, **kwargs):
+        nonlocal work
+        # Count serialized page entries, including entries inside a full prefix.
+        work += len(value) if isinstance(value, list) else 1
+        return dumps(value, *args, **kwargs)
+
+    monkeypatch.setattr("homepage.core.management.commands.convert_weeknote_links.json.dumps", measured)
+    report = tmp_path / "report.json"
+    call_command("convert_weeknote_links", max_posts=count, report=str(report), stdout=io.StringIO())
+    assert len(json.loads(report.read_text())) == count
+    assert work <= 5 * count + 10
+
+
+@pytest.mark.parametrize("failure", ["short_write", "flush", "fsync", "close", "replace"])
+def test_journal_failure_preserves_previous_report_and_committed_ids(monkeypatch, tmp_path, failure):
+    import os
+
+    post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)))
+    _patch_post_model(monkeypatch, [post])
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+    append = Command._append_frame
+
+    def fail(*args, **kwargs):
+        raise OSError(f"injected {failure}")
+
+    def fault_at_commit(stream, frame):
+        if "entry" in frame:
+            if failure == "short_write":
+                write = stream.write
+
+                def short_write(payload):
+                    return write(payload[: len(payload) // 2])
+
+                monkeypatch.setattr(stream, "write", short_write)
+            elif failure == "flush":
+                monkeypatch.setattr(stream, "flush", fail)
+            elif failure == "fsync":
+                monkeypatch.setattr(os, "fsync", fail)
+            elif failure == "close":
+                close = stream._closer.cleanup
+
+                def fail_close():
+                    monkeypatch.setattr(stream._closer, "cleanup", close)
+                    fail()
+
+                monkeypatch.setattr(stream._closer, "cleanup", fail_close)
+            elif failure == "replace":
+                monkeypatch.setattr(os, "replace", fail)
+        append(stream, frame)
+
+    monkeypatch.setattr(Command, "_append_frame", staticmethod(fault_at_commit))
+    stderr = io.StringIO()
+    with pytest.raises(DjangoCommandError, match="remain committed"):
+        call_command(
+            "convert_weeknote_links", write=True, publish=True, report=str(target), stdout=io.StringIO(), stderr=stderr
+        )
+    assert target.read_text() == "previous report"
+    assert post.saved_revision.published
+    assert f"{post.slug} revision_id=42 published=True" in stderr.getvalue()
+    (journal,) = tmp_path.glob("*.journal")
+    assert journal.stat().st_mode & 0o777 == 0o600
+    if failure == "short_write":
+        with pytest.raises(ValueError, match="incomplete"):
+            Command._read_receipt(journal, 100, 4 * 1024 * 1024)
+
+
+def test_recover_completed_prefix_without_replaying_conversions(monkeypatch, tmp_path):
+    posts = [FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)), slug=f"weeknotes-{i}") for i in (1, 2)]
+    for i, post in enumerate(posts, 1):
+        post.pk = i
+    _patch_post_model(monkeypatch, posts)
+    save = Command._save_conversion
+
+    def fail_second(self, post, *args, **kwargs):
+        if post.pk == 2:
+            raise RuntimeError("conversion failed")
+        return save(self, post, *args, **kwargs)
+
+    monkeypatch.setattr(Command, "_save_conversion", fail_second)
+    target = tmp_path / "report.json"
+    with pytest.raises(DjangoCommandError, match="conversion failed"):
+        call_command("convert_weeknote_links", write=True, publish=True, report=str(target), stdout=io.StringIO())
+    (journal,) = tmp_path.glob("*.journal")
+    original = journal.read_bytes()
+    stdout = io.StringIO()
+    # Recovery must not query, hydrate or save any page.
+    import cast.models
+
+    monkeypatch.setattr(cast.models, "Post", None)
+    call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=stdout)
+    entries = json.loads(target.read_text())
+    assert [(entry["page_id"], entry["revision_id"], entry["published"]) for entry in entries] == [(1, 42, True)]
+    assert "status=partial" in stdout.getvalue()
+    assert "--after-pk 1 --through-pk 2" in stdout.getvalue()
+    assert journal.read_bytes() == original
+    assert posts[1].saved_revision is None
+    # Incomplete tails are refused before replacing even the recovered JSON.
+    journal.write_bytes(original + b'{"entry":')
+    previous = target.read_bytes()
+    with pytest.raises(DjangoCommandError, match="incomplete final frame"):
+        call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=io.StringIO())
+    assert target.read_bytes() == previous
+
+
+@pytest.mark.parametrize("damage", ["format", "order", "outcome", "budget", "rows", "trailing", "empty"])
+def test_receipt_recovery_refuses_invalid_frames(tmp_path, damage):
+    header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 0, "through_pk": 2, "scope": {}}
+    entry = {
+        "page_id": 1,
+        "through_pk": 2,
+        "slug": "weeknotes-test",
+        "revision_id": 42,
+        "published": True,
+        "changed": True,
+        "warnings": [],
+        "skipped": "",
+        "converted_sections": 1,
+    }
+    frames = [header, {"entry": entry}, {"outcome": {"after_pk": 1, "through_pk": 2, "status": "partial"}}]
+    max_bytes, max_posts = 4096, 100
+    if damage == "format":
+        header["format"] = "foreign"
+    elif damage == "order":
+        entry["page_id"] = 0
+    elif damage == "outcome":
+        frames[-1]["outcome"]["after_pk"] = 2
+    elif damage == "budget":
+        max_bytes = 10
+    elif damage == "rows":
+        max_posts = 0
+    elif damage == "trailing":
+        frames.append({"entry": entry})
+    else:
+        frames = []
+    path = tmp_path / "receipt.journal"
+    path.write_text("".join(json.dumps(frame) + "\n" for frame in frames))
+    with pytest.raises(ValueError):
+        Command._read_receipt(path, max_posts, max_bytes)
+
+
+@pytest.mark.django_db
+def test_real_inventory_does_not_retain_previous_hydrated_posts(monkeypatch, tmp_path, django_assert_num_queries):
+    import weakref
+
+    from cast.models import Post
+
+    posts = [_weeknote_post(slug=f"weeknotes-budget-{i}", overview_html=LEGACY_ARTICLES) for i in range(3)]
+    loaded = []
+    from_db = Post.from_db
+
+    def observed_from_db(cls, *args, **kwargs):
+        post = from_db(*args, **kwargs)
+        loaded.append(weakref.ref(post))
+        assert sum(ref() is not None for ref in loaded) == 1
+        return post
+
+    monkeypatch.setattr(Post, "from_db", classmethod(observed_from_db))
+    # Max-ID lookup, three ID lookups and two admitted hydrations.
+    with django_assert_num_queries(6), pytest.raises(DjangoCommandError, match="Partial run"):
+        call_command(
+            "convert_weeknote_links",
+            max_posts=2,
+            report=str(tmp_path / "bounded.json"),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    assert len(loaded) == 2
+    assert [entry["page_id"] for entry in json.loads((tmp_path / "bounded.json").read_text())] == [
+        post.pk for post in posts[:2]
+    ]
+
+
+def test_journal_preflight_failure_precedes_any_save(monkeypatch, tmp_path):
+    post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)))
+    _patch_post_model(monkeypatch, [post])
+
+    def fail_header(*args):
+        raise OSError("journal unavailable")
+
+    monkeypatch.setattr(Command, "_append_frame", staticmethod(fail_header))
+    with pytest.raises(DjangoCommandError, match="journal unavailable"):
+        call_command("convert_weeknote_links", write=True, report=str(tmp_path / "report.json"), stdout=io.StringIO())
+    assert post.saved_revision is None
+
+
+def test_complete_journal_recovery_keeps_json_shape_and_mode(monkeypatch, tmp_path):
+    import os
+
+    post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)))
+    _patch_post_model(monkeypatch, [post])
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+    target.chmod(0o640)
+    replace = os.replace
+    monkeypatch.setattr(os, "replace", Mock(side_effect=OSError("replace failed")))
+    with pytest.raises(DjangoCommandError, match="replace failed"):
+        call_command("convert_weeknote_links", write=True, report=str(target), stdout=io.StringIO())
+    (journal,) = tmp_path.glob("*.journal")
+    (pending,) = tmp_path.glob("*.pending")
+    expected = pending.read_bytes()
+    monkeypatch.setattr(os, "replace", replace)
+    stdout = io.StringIO()
+    call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=stdout)
+    assert target.read_bytes() == expected
+    assert target.stat().st_mode & 0o777 == 0o640
+    assert "status=complete" in stdout.getvalue()
+
+
+def test_warning_heavy_receipts_include_outer_json_indentation_in_budget(monkeypatch, tmp_path):
+    ambiguous = '<h2>Podcasts / Videos</h2><ul><li><a href="https://example.test/a">A</a></li></ul>'
+    post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES + ambiguous * 100)))
+    _patch_post_model(monkeypatch, [post])
+    entry = Command()._report_entry(post, convert_body(post.body.raw_data))
+    entry.update(page_id=post.pk, through_pk=post.pk)
+    # Flat-entry accounting fits, but nesting the many warnings in a JSON array does not.
+    budget = len(json.dumps(entry, indent=2, ensure_ascii=False).encode("utf-8")) + 300
+    assert len(json.dumps([entry], indent=2, ensure_ascii=False).encode("utf-8")) > budget
+    target = tmp_path / "report.json"
+    with pytest.raises(DjangoCommandError, match="report budget"):
+        call_command(
+            "convert_weeknote_links",
+            write=True,
+            max_report_bytes=budget,
+            report=str(target),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    assert post.saved_revision is None
+    assert json.loads(target.read_text()) == []

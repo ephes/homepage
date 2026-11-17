@@ -1388,3 +1388,61 @@ def test_warning_heavy_receipts_include_outer_json_indentation_in_budget(monkeyp
         )
     assert post.saved_revision is None
     assert json.loads(target.read_text()) == []
+
+
+def test_budget_bound_journal_recovers_with_the_same_report_budget(monkeypatch, tmp_path):
+    import os
+
+    post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)))
+    _patch_post_model(monkeypatch, [post])
+    entry = Command()._report_entry(post, convert_body(post.body.raw_data))
+    entry.update(page_id=post.pk, through_pk=post.pk)
+    reserved = {**entry, "revision_id": 9223372036854775807, "published": False, "skipped": "has_unpublished_changes"}
+    # The smallest budget that admits this one receipt (list framing included).
+    budget = str(len(json.dumps([reserved], indent=2, ensure_ascii=False).encode("utf-8")) + 1)
+    target = tmp_path / "report.json"
+    replace = os.replace
+    monkeypatch.setattr(os, "replace", Mock(side_effect=OSError("replace failed")))
+    with pytest.raises(DjangoCommandError, match="replace failed"):
+        call_command(
+            "convert_weeknote_links",
+            "--write",
+            "--slug",
+            post.slug,
+            "--max-report-bytes",
+            budget,
+            "--report",
+            str(target),
+            stdout=io.StringIO(),
+        )
+    assert post.saved_revision is not None
+    (journal,) = tmp_path.glob("*.journal")
+    # Header/outcome frames and the long --slug scope do not count against the receipt budget.
+    assert journal.stat().st_size > int(budget)
+    monkeypatch.setattr(os, "replace", replace)
+    stdout = io.StringIO()
+    call_command(
+        "convert_weeknote_links",
+        "--recover-receipt",
+        str(journal),
+        "--max-report-bytes",
+        budget,
+        "--report",
+        str(target),
+        stdout=stdout,
+    )
+    assert [item["revision_id"] for item in json.loads(target.read_text())] == [42]
+    assert "status=complete" in stdout.getvalue()
+
+
+def test_after_pk_beyond_last_eligible_page_keeps_a_valid_boundary(monkeypatch, tmp_path):
+    posts = [FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)), slug=f"weeknotes-{i}") for i in (1, 2)]
+    for pk, post in enumerate(posts, 1):
+        post.pk = pk
+    _patch_post_model(monkeypatch, posts)
+    target = tmp_path / "report.json"
+    stdout = io.StringIO()
+    call_command("convert_weeknote_links", write=True, after_pk=5, report=str(target), stdout=stdout)
+    assert "Complete through page ID 5." in stdout.getvalue()
+    assert json.loads(target.read_text()) == []
+    assert all(post.saved_revision is None for post in posts)

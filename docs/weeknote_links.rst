@@ -233,7 +233,8 @@ warnings are bounded by the admitted body work; retained receipts by both the
 post and receipt budgets.
 
 Traversal uses increasing page IDs, with the initial maximum eligible ID as a
-fixed inclusive boundary. It no longer uses publication dates. On a budget
+fixed inclusive boundary (never below ``--after-pk``). It no longer uses
+publication dates. On a budget
 boundary the command publishes the completed per-invocation report, prints
 ``Partial run`` with ``--after-pk N --through-pk M``, and exits nonzero. Repeat the
 same scope/write/publish/suppression flags with that continuation, keeping each
@@ -276,7 +277,9 @@ Recover completed receipts without querying, saving or publishing posts::
    uv run python manage.py convert_weeknote_links --recover-receipt /tmp/.report.json.UNIQUE.journal --report /tmp/recovered.json
 
 Recovery validates the format, increasing page IDs, fixed upper bound, outcome
-and invocation post/receipt budgets, then atomically publishes the same JSON array.
+and invocation post/receipt budgets (page frames against ``--max-report-bytes``;
+header and outcome frames get a fixed 64 KiB allowance), then atomically
+publishes the same JSON array.
 Increase ``--max-posts``/``--max-report-bytes`` explicitly if the original run used
 larger budgets. The original journal remains untouched. Recovery prints the
 original scope/write/publish flags, status and exact continuation IDs. A missing

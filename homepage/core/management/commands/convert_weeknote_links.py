@@ -28,6 +28,8 @@ CHANGED_SINCE_READ = "changed_since_read"
 # PostgreSQL's SQLSTATE for a row lock that NOWAIT could not get.
 LOCK_NOT_AVAILABLE = "55P03"
 RECEIPT_FORMAT = "homepage-weeknote-receipt-v1"
+# Header/outcome frames are not part of the per-page receipt budget a run admits.
+RECEIPT_FRAME_ALLOWANCE = 64 * 1024
 
 
 class Command(BaseCommand):
@@ -93,7 +95,9 @@ class Command(BaseCommand):
         cursor = options["after_pk"]
         through_pk = options["through_pk"]
         if through_pk is None:
-            through_pk = queryset.order_by("-pk").values_list("pk", flat=True).first() or cursor
+            last_pk = queryset.order_by("-pk").values_list("pk", flat=True).first()
+            # Never start with an upper bound below the continuation cursor.
+            through_pk = max(last_pk or 0, cursor)
         queryset = queryset.filter(pk__lte=through_pk)
         body_bytes = 0
         report_bytes = 3  # JSON list framing and trailing newline.
@@ -284,13 +288,15 @@ class Command(BaseCommand):
     def _read_receipt(path, max_posts, max_bytes):
         report = []
         consumed = 0
+        entry_bytes = 0
+        limit = max_bytes + RECEIPT_FRAME_ALLOWANCE
         header = None
         finished = False
         # Binary reads cap bytes even for non-ASCII warnings or malformed input.
         with path.open("rb") as stream:
-            while line := stream.readline(max_bytes - consumed + 1):
+            while line := stream.readline(limit - consumed + 1):
                 consumed += len(line)
-                if consumed > max_bytes or not line.endswith(b"\n"):
+                if consumed > limit or not line.endswith(b"\n"):
                     raise ValueError("Receipt exceeds budget or has an incomplete final frame")
                 frame = json.loads(line)
                 if not isinstance(frame, dict):
@@ -305,6 +311,11 @@ class Command(BaseCommand):
                 elif finished:
                     raise ValueError("Unexpected frame after outcome")
                 elif "entry" in frame:
+                    # Compact entry frames are never larger than the indented
+                    # receipt bytes the run charged against --max-report-bytes.
+                    entry_bytes += len(line)
+                    if entry_bytes > max_bytes:
+                        raise ValueError("Receipt exceeds budget")
                     entry = frame["entry"]
                     pk = entry["page_id"]
                     if (

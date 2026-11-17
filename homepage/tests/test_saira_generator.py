@@ -347,3 +347,58 @@ def test_interrupt_immediately_after_rename_still_rolls_back(generator, monkeypa
     with pytest.raises(KeyboardInterrupt):
         generator.main()
     assert_outputs(before)
+
+
+def test_second_interrupt_during_rollback_keeps_recovery_files(generator, monkeypatch, capsys):
+    before = outputs(generator)
+    replace = Path.replace
+
+    def interrupt(source, target):
+        if target == generator.CSS_FILE:
+            raise KeyboardInterrupt()
+        if source.name.startswith("backup-"):
+            raise KeyboardInterrupt()  # A repeated Ctrl-C while restoring.
+        return replace(source, target)
+
+    monkeypatch.setattr(Path, "replace", interrupt)
+    with pytest.raises(KeyboardInterrupt):
+        generator.main()
+    (stage,) = generator.TARGET_DIR.parent.glob(".saira-stage-*")
+    assert f"recovery files retained at {stage}" in capsys.readouterr().err
+    (backup,) = stage.glob("backup-*-SAIRA-LICENSE.txt")
+    assert backup.read_bytes() == before[generator.TARGET_DIR / "SAIRA-LICENSE.txt"]
+
+
+def test_sigterm_during_publication_rolls_back(generator, monkeypatch):
+    import os
+    import signal
+
+    before = outputs(generator)
+    replace = Path.replace
+    previous = signal.getsignal(signal.SIGTERM)
+
+    def terminate(source, target):
+        result = replace(source, target)
+        if target == generator.TARGET_DIR / "SAIRA-LICENSE.txt" and not source.name.startswith("backup-"):
+            os.kill(os.getpid(), signal.SIGTERM)
+        return result
+
+    monkeypatch.setattr(Path, "replace", terminate)
+    with pytest.raises(SystemExit):
+        generator.main()
+    assert_outputs(before)
+    assert not list(generator.TARGET_DIR.parent.glob(".saira-stage-*"))
+    assert signal.getsignal(signal.SIGTERM) is previous
+
+
+def test_ignored_sighup_stays_ignored(generator, monkeypatch):
+    import signal
+
+    previous = signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    try:
+        seen = []
+        monkeypatch.setattr(generator, "generate", lambda: seen.append(signal.getsignal(signal.SIGHUP)))
+        generator.main()
+        assert seen == [signal.SIG_IGN]
+    finally:
+        signal.signal(signal.SIGHUP, previous)

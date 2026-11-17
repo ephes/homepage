@@ -336,3 +336,5 @@ specs
 
 # Stable local Saira generator lock (never remove while running)
 homepage/static/fonts/.saira-generation.lock
+# Recovery directories retained after a failed Saira rollback (review, never commit)
+homepage/static/.saira-stage-*/

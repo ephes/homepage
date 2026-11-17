@@ -397,7 +397,7 @@ collection/deployment idle during the short publication step: separate file
 replacements are not one atomic snapshot for readers or uncooperative writers.
 
 Handled build/validation failures leave the previous set intact. Handled
-publication failures (including KeyboardInterrupt) attempt to restore every
+publication failures (including KeyboardInterrupt, SIGTERM and SIGHUP) attempt to restore every
 replaced file, or remove outputs that did not previously exist. If restoration
 fails or would overwrite a newer edit, the original error remains primary and
 stderr reports an incomplete, potentially mixed visible set and the retained
@@ -409,7 +409,10 @@ directory until the set is reconciled. Cleanup failures also report the director
 
 This is rollback for handled failures, not a crash-durable multi-file transaction.
 SIGKILL or power loss can leave a partial set and staging backups; inspect and
-reconcile them before using the outputs. No generated assets are changed merely
+reconcile them before using the outputs. A second interrupt during rollback
+stops restoration but keeps the git-ignored recovery directory and reports it on
+stderr like a failed rollback. SIGTERM/SIGHUP are only handled when not inherited
+as ignored (``nohup`` keeps ignoring SIGHUP). No generated assets are changed merely
 by running tests. Synthetic failure/conflict tests run with::
 
     uv run --locked pytest homepage/tests/test_saira_generator.py

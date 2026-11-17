@@ -22,6 +22,7 @@ from __future__ import annotations
 import fcntl
 import os
 import shutil
+import signal
 import stat
 import sys
 import tempfile
@@ -251,6 +252,9 @@ def generate() -> None:
             else:
                 backups[target] = None
         require_current(expected)
+        # From the first replacement on, the backups are the only recovery copy:
+        # keep them unless publication or rollback provably completes.
+        keep_stage = True
         for target, output in staged.items():
             # Recheck even during publication, so a late CSS edit triggers rollback.
             require_current({path: generation for path, generation in expected.items() if path not in published})
@@ -262,25 +266,35 @@ def generate() -> None:
             output.replace(target)
         require_installed(installed)
         require_current({path: expected[path] for path in input_paths if path != CSS_FILE})
+        keep_stage = False
     except BaseException as error:
         primary = error
-        for target in reversed(published):
-            try:
-                if file_generation(target) == expected[target]:
-                    continue  # The attempted replacement never became visible.
-                require_installed({target: installed[target]})
-                backup = backups[target]
-                if backup is None:
-                    target.unlink()
-                else:
-                    backup.replace(target)
-            except (OSError, RuntimeError) as rollback_error:
-                keep_stage = True
-                error.add_note(f"Rollback failed for {target}: {rollback_error}")
-        if keep_stage:
-            print(
-                f"Incomplete rollback: visible files may be mixed; recovery files retained at {stage}", file=sys.stderr
-            )
+        complete = False
+        try:
+            rollback_failed = False
+            for target in reversed(published):
+                try:
+                    if file_generation(target) == expected[target]:
+                        continue  # The attempted replacement never became visible.
+                    require_installed({target: installed[target]})
+                    backup = backups[target]
+                    if backup is None:
+                        target.unlink()
+                    else:
+                        backup.replace(target)
+                except (OSError, RuntimeError) as rollback_error:
+                    rollback_failed = True
+                    error.add_note(f"Rollback failed for {target}: {rollback_error}")
+            complete = not rollback_failed
+        finally:
+            # Also reached when a second interrupt escapes mid-rollback.
+            if complete:
+                keep_stage = False
+            elif keep_stage:
+                print(
+                    f"Incomplete rollback: visible files may be mixed; recovery files retained at {stage}",
+                    file=sys.stderr,
+                )
         raise
     finally:
         if not keep_stage:
@@ -294,10 +308,25 @@ def generate() -> None:
     print(f"Published four fonts, license and CSS at {TARGET_DIR.relative_to(ROOT)}")
 
 
+def _terminate(signum: int, _frame) -> None:
+    # Route SIGTERM/SIGHUP through the handled rollback path instead of dying mid-publication.
+    raise SystemExit(128 + signum)
+
+
 def main() -> None:
-    TARGET_DIR.mkdir(parents=True, exist_ok=True)
-    with destination_lock():
-        generate()
+    # Respect an inherited SIG_IGN (e.g. nohup) instead of turning it into an abort.
+    previous = {
+        signum: signal.signal(signum, _terminate)
+        for signum in (signal.SIGTERM, signal.SIGHUP)
+        if signal.getsignal(signum) is not signal.SIG_IGN
+    }
+    try:
+        TARGET_DIR.mkdir(parents=True, exist_ok=True)
+        with destination_lock():
+            generate()
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
 
 
 def _copy(font: TTFont) -> BytesIO:

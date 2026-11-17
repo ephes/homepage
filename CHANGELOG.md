@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Stage and validate the complete Saira font/license/CSS set before publication,
-  roll back handled failures and retain recovery backups if rollback fails.
+  roll back handled failures (including Ctrl-C, SIGTERM and SIGHUP) and retain
+  git-ignored recovery backups if rollback fails or is interrupted.
 - Serialize Saira generation with a stable local lock and refuse changed source,
   license, stylesheet or output generations; preserve CSS outside the markers.
 

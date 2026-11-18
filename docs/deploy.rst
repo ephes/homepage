@@ -113,9 +113,10 @@ variable; see :doc:`admin_login_throttle`. Local requests without
 ``>=8.1,<8.2``), django-cast ``develop`` from ``93ac6cb4`` to ``e0c632ad``
 (release 0.2.68 plus the 0.2.69 version bump) and draftjs-exporter from 7.1.0
 to 7.3.1, which Wagtail 8.1 requires. No other locked package changed. Neither
-package adds migrations in this range: the 207 numbered migration files of Wagtail's
-installed apps are byte-identical between the 8.0.1 and 8.1 wheels (only
-Wagtail's own bundled test app squashed its migrations), and django-cast stays
+package adds migrations in this range: the 196 numbered migration files of the Wagtail
+apps this site installs are byte-identical between the 8.0.1 and 8.1 wheels
+(only Wagtail's own bundled test app, which the site does not install,
+squashed its migrations), and django-cast stays
 at ``cast.0094``. Deploying
 the previous lock again therefore needs no database step.
 
@@ -146,8 +147,9 @@ files are unchanged.
 
 Local gates on Python 3.15.2 with PostgreSQL 17: the full suite ran 1178
 passed and 1 failed; the failure was a timing assertion in
-``homepage/tests/test_dev_runner.py`` ("Synthetic trees did not start"), and
-that file passed three times in a row when run alone. The migration (8) and
+``homepage/tests/test_dev_runner.py`` ("Synthetic trees did not start", one
+parameter case), and the whole file (50 tests, all three parameter cases of
+that test included) passed in each of three consecutive runs on its own. The migration (8) and
 browser (49) regressions, ``makemigrations --check``, prek and the dependency
 audit passed. A database migrated and seeded with synthetic blog, podcast,
 image and gallery content under the old lock migrated with "No migrations to
@@ -156,16 +158,23 @@ responses for pages, feeds and the admin. In a browser, the admin page explorer
 loaded its pages from the new ``/cms/api/explorer/<id>/`` endpoint without
 JavaScript errors or missing static files.
 
-Rollback: deploy the previous commit; no database step is needed. Then run
-``collectstatic --noinput --clear`` as the ``homepage`` user (with ``.env`` and
-``config.settings.production``) and restart ``homepage.service``. The deploy's
-plain ``collectstatic`` skips a source file that is not newer than the
-collected copy. The site's virtualenv hardlinks files from the uv cache, so the
-older packages carry the cache's older timestamps, and a rollback would keep
-the Wagtail 8.1 and django-cast static files, including
-``cast/vite/manifest.json``, next to a ``staticfiles.json`` for the old lock.
-The forward deploy is not affected, because Wagtail 8.1 and django-cast
-``e0c632ad`` are unpacked into the cache freshly.
+Rollback: deploy the previous commit; no database step is needed. Then, as
+root, stop ``homepage.service``, run ``collectstatic --noinput --clear`` as
+the ``homepage`` user (with ``.env`` and ``config.settings.production``) and
+start the service again. The deploy's plain ``collectstatic`` skips a source
+file that is not newer than the collected copy. The site's virtualenv
+hardlinks files from the uv cache, so the older packages carry the cache's
+older timestamps, and a rollback would keep the Wagtail 8.1 and django-cast
+static files, including ``cast/vite/manifest.json``, next to a
+``staticfiles.json`` for the old lock. The service stays stopped while the
+directory is rebuilt, because WhiteNoise indexes the static files at startup
+and fails on a file removed under it.
+
+The first forward deploy is not affected: Wagtail 8.1 and django-cast
+``e0c632ad`` were never installed for this user, so they are unpacked into
+the cache freshly and are newer than the collected files. A forward deploy
+after a rollback is affected the same way (the cached 8.1 files are older
+than the rebuilt 8.0.1 copies), so it needs the same clean rebuild.
 
 2026-11-17 django-cast develop 93ac6cb4
 ---------------------------------------

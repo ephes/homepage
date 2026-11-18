@@ -167,9 +167,11 @@ nested ``just deploy-one`` accepts it, release afterwards):
 1. As root stop ``homepage.service`` and ``homepage-db-worker.service``.
 2. As the ``homepage`` user empty ``/home/homepage/site/staticfiles`` (what
    ``collectstatic --clear`` does; it only holds collected files).
-3. ``just deploy-one homepage`` from a clean checkout of the previous commit.
-   Its ``collectstatic`` fills the empty directory from the old packages, and
-   the deploy starts both units again.
+3. In ops-control run ``just deploy-one homepage production`` with
+   ``PROJECTS_ROOT`` set to a directory whose ``homepage`` subdirectory is a
+   clean checkout of the previous commit. Its ``collectstatic`` fills the
+   empty directory from the old packages, and the deploy starts both units
+   again. Check each unit with its own ``systemctl is-active``.
 
 The deploy's plain ``collectstatic`` skips a source file that is not newer
 than the collected copy. The site's virtualenv hardlinks files from the uv

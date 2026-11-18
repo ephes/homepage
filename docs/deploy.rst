@@ -158,23 +158,33 @@ responses for pages, feeds and the admin. In a browser, the admin page explorer
 loaded its pages from the new ``/cms/api/explorer/<id>/`` endpoint without
 JavaScript errors or missing static files.
 
-Rollback: deploy the previous commit; no database step is needed. Then, as
-root, stop ``homepage.service``, run ``collectstatic --noinput --clear`` as
-the ``homepage`` user (with ``.env`` and ``config.settings.production``) and
-start the service again. The deploy's plain ``collectstatic`` skips a source
-file that is not newer than the collected copy. The site's virtualenv
-hardlinks files from the uv cache, so the older packages carry the cache's
-older timestamps, and a rollback would keep the Wagtail 8.1 and django-cast
-static files, including ``cast/vite/manifest.json``, next to a
-``staticfiles.json`` for the old lock. The service stays stopped while the
-directory is rebuilt, because WhiteNoise indexes the static files at startup
-and fails on a file removed under it.
+Rollback: redeploy the previous commit with a clean static rebuild; no
+database step is needed. Hold the shared deploy lock on the host for the whole
+sequence (``python -m pyinfra_support.deploy_lock acquire production`` in
+ops-control, export ``OPS_CONTROL_DEPLOY_LOCK=production=<token>`` so the
+nested ``just deploy-one`` accepts it, release afterwards):
+
+1. As root stop ``homepage.service`` and ``homepage-db-worker.service``.
+2. As the ``homepage`` user empty ``/home/homepage/site/staticfiles`` (what
+   ``collectstatic --clear`` does; it only holds collected files).
+3. ``just deploy-one homepage`` from a clean checkout of the previous commit.
+   Its ``collectstatic`` fills the empty directory from the old packages, and
+   the deploy starts both units again.
+
+The deploy's plain ``collectstatic`` skips a source file that is not newer
+than the collected copy. The site's virtualenv hardlinks files from the uv
+cache, so the older packages carry the cache's older timestamps. Without the
+clean rebuild a rollback would keep the Wagtail 8.1 and django-cast static
+files, including ``cast/vite/manifest.json``, next to a ``staticfiles.json``
+for the old lock. The units stay stopped until the deploy starts them, because
+WhiteNoise indexes the static files at startup and fails on a file removed
+under it.
 
 The first forward deploy is not affected: Wagtail 8.1 and django-cast
 ``e0c632ad`` were never installed for this user, so they are unpacked into
 the cache freshly and are newer than the collected files. A forward deploy
 after a rollback is affected the same way (the cached 8.1 files are older
-than the rebuilt 8.0.1 copies), so it needs the same clean rebuild.
+than the rebuilt 8.0.1 copies), so it needs the same sequence.
 
 2026-11-17 django-cast develop 93ac6cb4
 ---------------------------------------

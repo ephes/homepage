@@ -106,6 +106,51 @@ address, which all visitors used to share. No migration, no new environment
 variable; see :doc:`admin_login_throttle`. Local requests without
 ``X-Forwarded-For`` keep using ``REMOTE_ADDR``.
 
+2026-11-18 Wagtail 8.1 and django-cast e0c632ad
+------------------------------------------------
+
+``uv.lock`` moves Wagtail from 8.0.1 to 8.1 (``pyproject.toml`` now allows
+``>=8.1,<8.2``), django-cast ``develop`` from ``93ac6cb4`` to ``e0c632ad``
+(release 0.2.68 plus the 0.2.69 version bump) and draftjs-exporter from 7.1.0
+to 7.3.1, which Wagtail 8.1 requires. No other locked package changed. Neither
+package adds migrations in this range: the Wagtail 8.1 wheel ships the same
+migration files as 8.0.1, and django-cast stays at ``cast.0094``. Deploying
+the previous lock again therefore needs no database step.
+
+Wagtail 8.1 upgrade considerations, checked for this site:
+
+* Python 3.10 support is dropped; the site runs on Python 3.15.2.
+* The internal admin API ``/cms/api/main/`` and the ``construct_admin_api``
+  hook are replaced by ``/cms/api/explorer/<id>/``. This site does not use
+  either; its only ``wagtail_hooks.py`` (portfolio) does not touch them.
+* Pages with an ``ajax_template`` now send ``Vary: X-Requested-With``. No page
+  model of this site or django-cast defines one.
+* Sitemaps include all locales when ``WAGTAIL_I18N_ENABLED`` is on. It is off
+  here, and the site serves no Wagtail sitemap.
+* Redirects are only auto-created when live pages move or are renamed, not
+  drafts (``WAGTAILREDIRECTS_AUTO_CREATE = "always"`` restores the old
+  behaviour). The default is kept.
+* On Django 6.1 Wagtail now sends admin mail through ``mailers.default``.
+  Without ``MAILERS``, Django builds that mailer from the existing
+  ``EMAIL_BACKEND`` settings, so production keeps the Mailgun backend. Moving
+  to ``MAILERS`` (deprecation of the ``EMAIL_*`` settings in Django 2028) is
+  separate work.
+
+django-cast 0.2.68 upgrade actions, checked for this site: no
+``cast/audio``, ``cast/video`` or ``cast/transcript`` ``confirm_delete.html``
+overrides exist, so the new delete confirmation field needs no template
+change. New transcript uploads need ``.json`` or ``.vtt`` extensions; existing
+files are unchanged.
+
+Local gates: the PostgreSQL 17 test suite on Python 3.15.2, the migration and
+browser regressions, ``makemigrations --check`` and prek passed. A database
+migrated and seeded with synthetic blog, podcast, image and gallery content
+under the old lock migrated with "No migrations to apply" under the new one,
+with an identical ``showmigrations`` and the same responses for pages, feeds and
+the admin.
+
+Rollback: deploy the previous commit; no database step is needed.
+
 2026-11-17 django-cast develop 93ac6cb4
 ---------------------------------------
 

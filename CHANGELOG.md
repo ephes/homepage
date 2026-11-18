@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Upgrade Wagtail 8.0.1 to 8.1 (range `>=8.1,<8.2`) and relock django-cast to
+  develop e0c632ad (release 0.2.68 plus the 0.2.69 version bump; from
+  93ac6cb4), which carries the Wagtail 8 hook order and media chooser fixes.
+  draftjs-exporter moves to 7.3.1 with Wagtail. Neither Wagtail nor django-cast
+  adds migrations in this range.
+
 - Key allauth's per-IP rate limits (login, failed login, password reset,
   signup) on the client address Traefik appends to `X-Forwarded-For`
   (`ALLAUTH_TRUSTED_PROXY_COUNT`, following `DJANGO_NUM_PROXIES`). Previously

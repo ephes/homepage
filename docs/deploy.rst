@@ -95,6 +95,26 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-18 owner security decisions
+-----------------------------------
+
+From the 2026-11-17 audit, as recommended: ``INDIEWEB_BIND_ME_TO_USER`` is on
+(:doc:`indieweb`), Wagtail's admin password reset is off
+(:doc:`admin_login_throttle`), the development server binds ``127.0.0.1``
+(:doc:`development`), and a report-only Content-Security-Policy with the
+``/csp-report/`` endpoint is added (:doc:`csp`). No migration, no new static
+files and no new required environment variable (``INDIEWEB_BIND_ME_TO_USER``
+and ``CSP_REPORT_LOG_LIMIT_PER_MINUTE`` are optional overrides).
+
+Before the deploy, a read-only check on production and staging found the
+``jochen`` account's django-indieweb profile URL exactly
+``https://wersdoerfer.de/jochen/``; the other accounts have no profile, and the
+only IndieAuth token on each host belongs to ``jochen``. Existing tokens are not
+affected by the binding.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``251d723``). No database step and no static rebuild are needed.
+
 2026-11-17 allauth rate limits per client
 -----------------------------------------
 

@@ -24,6 +24,17 @@ Quick Start
 
 This starts PostgreSQL and Django. Use ``just dev-all`` for the full ``Procfile``.
 
+The development server listens on ``127.0.0.1:8000`` only, and the local
+settings accept the host names ``localhost``, ``127.0.0.1``, ``[::1]`` and
+``*.localhost`` (for example ``design.localhost`` for the portfolio host). Other
+machines on the network cannot reach it, and DNS-rebinding pages cannot use it.
+To test from a phone or another computer, opt in for that session::
+
+    DJANGO_RUNSERVER_ADDR=0.0.0.0 DJANGO_ALLOWED_HOSTS=192.168.1.20,localhost just dev
+
+Never do that with a production database copy loaded (``just production-db-to-local``):
+the local settings run with ``DEBUG`` and a public default ``SECRET_KEY``.
+
 Using the Justfile
 ------------------
 

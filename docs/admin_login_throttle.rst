@@ -101,6 +101,18 @@ shares Traefik's local address. One client could then use up the shared
 budget and get ``/accounts/login/`` (and the IndieAuth sign-in, which
 redirects there) refused with ``429`` for everybody.
 
+Password reset
+--------------
+
+Wagtail's own password reset (``/cms/password_reset/`` on the main and the
+portfolio host) is turned off with ``WAGTAIL_PASSWORD_RESET_ENABLED = False``:
+it had no rate limit, so anyone knowing an address could make the site send it
+reset mail without end. The routes answer ``404`` and the Wagtail login page no
+longer links them. Use allauth's reset on the main site,
+``https://wersdoerfer.de/accounts/password/reset/`` (the portfolio host has no
+allauth routes), which is limited per client and per address (``reset_password`` in
+``ACCOUNT_RATE_LIMITS``, see above).
+
 Token authentication
 --------------------
 

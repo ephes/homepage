@@ -20,6 +20,7 @@ Contents:
    seo
    indieweb
    admin_login_throttle
+   csp
    fediverse
    deploy
    tests

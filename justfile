@@ -75,7 +75,7 @@ postgres: db-init
 
 django:
     @echo "Starting Django development server..."
-    PYTHONUNBUFFERED=true uv run python manage.py runserver 0.0.0.0:8000
+    PYTHONUNBUFFERED=true uv run python manage.py runserver ${DJANGO_RUNSERVER_ADDR:-127.0.0.1}:8000
 
 jupyter:
     @echo "Starting JupyterLab..."

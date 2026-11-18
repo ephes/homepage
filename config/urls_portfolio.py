@@ -16,6 +16,7 @@ from wagtail.admin.views import account as wagtailadmin_account
 from wagtail.documents import urls as wagtaildocs_urls
 
 from config import urls as main_urls
+from homepage.core import csp
 from homepage.core import views as core_views
 from homepage.portfolio import views as portfolio_views
 from homepage.users import login_throttle
@@ -29,6 +30,7 @@ handler500 = portfolio_views.server_error
 urlpatterns = [
     path("robots.txt", core_views.robots_txt, name="robots_txt"),
     path("favicon.ico", core_views.favicon),
+    path("csp-report/", csp.csp_report),
     path("impressum/", portfolio_views.imprint, name="portfolio_imprint"),
     path("datenschutz/", portfolio_views.privacy, name="portfolio_privacy"),
     path("portfolio/", include("homepage.portfolio.urls", namespace="portfolio")),

@@ -104,6 +104,20 @@ Unsupported actions
    report a deletion that did not happen. Edit or unpublish posts in the
    Wagtail admin instead.
 
+IndieAuth sign-in
+-----------------
+
+``/indieweb/auth/`` is the IndieAuth authorization endpoint for
+``https://wersdoerfer.de/jochen/`` (``INDIEWEB_ME_URL``). With
+``INDIEWEB_BIND_ME_TO_USER`` (on by default; the environment variable of the same
+name can turn it off) a sign-in may only claim the logged-in account's own
+profile URL, the django-indieweb ``Profile.url``. Another logged-in account that
+starts a sign-in elsewhere with Jochen's ``me`` gets ``400 invalid me``, and so
+does an account without a profile URL. Jochen's profile URL must therefore stay
+exactly ``https://wersdoerfer.de/jochen/`` (checked read-only on production and
+staging on 2026-11-18). The check runs when a sign-in is started and confirmed;
+tokens that already exist keep working.
+
 Outgoing webmentions
 --------------------
 

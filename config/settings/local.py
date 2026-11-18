@@ -120,11 +120,11 @@ LOGGING = {
 # ------------------------------------------------------------------------------
 # Hosts/domain names that are valid for this site
 # See https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
+# Local names only (".localhost" covers design.localhost for the portfolio host).
+# Set DJANGO_ALLOWED_HOSTS (and DJANGO_RUNSERVER_ADDR=0.0.0.0) to test from another device.
 ALLOWED_HOSTS = env.list(
     "DJANGO_ALLOWED_HOSTS",
-    default=[
-        "*",
-    ],
+    default=["localhost", "127.0.0.1", "[::1]", ".localhost"],
 )
 # END SITE CONFIGURATION
 

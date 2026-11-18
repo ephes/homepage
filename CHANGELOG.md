@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Security (owner decisions from the 2026-11-17 audit): IndieAuth sign-ins may
+  only claim the logged-in account's own profile URL
+  (`INDIEWEB_BIND_ME_TO_USER`, on by default), so no other account can sign in
+  elsewhere as `https://wersdoerfer.de/jochen/`. Wagtail's unthrottled admin
+  password reset (`/cms/password_reset/`) is off; allauth's rate-limited reset
+  stays. The development server binds `127.0.0.1` (opt in with
+  `DJANGO_RUNSERVER_ADDR`) and local `ALLOWED_HOSTS` default to local names.
+  A first `Content-Security-Policy-Report-Only` policy reports violations to
+  `/csp-report/`, which logs bounded, query-free lines (docs/csp.rst).
+
 - Upgrade Wagtail 8.0.1 to 8.1 (range `>=8.1,<8.2`) and relock django-cast to
   develop e0c632ad (release 0.2.68 plus the 0.2.69 version bump; from
   93ac6cb4), which carries the Wagtail 8 hook order and media chooser fixes.

@@ -1,4 +1,4 @@
 postgres: just db-init && exec postgres -D databases/postgres
-django: PYTHONUNBUFFERED=true .venv/bin/python manage.py runserver 0.0.0.0:8000
+django: PYTHONUNBUFFERED=true .venv/bin/python manage.py runserver ${DJANGO_RUNSERVER_ADDR:-127.0.0.1}:8000
 jupyterlab: .venv/bin/python commands.py jupyterlab
 vite: cd ../django-cast/javascript && npx vite

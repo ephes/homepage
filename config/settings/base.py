@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 """
 
 import environ
+from django.utils.csp import CSP
 
 ROOT_DIR = environ.Path(__file__) - 3  # (homepage/config/settings/base.py - 3 = homepage/)
 APPS_DIR = ROOT_DIR.path("homepage")
@@ -113,6 +114,8 @@ TASKS = {
 MIDDLEWARE = [
     # "django.middleware.cache.UpdateCacheMiddleware",  # caching
     "django.middleware.security.SecurityMiddleware",
+    # Content-Security-Policy-Report-Only (SECURE_CSP_REPORT_ONLY below)
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "homepage.portfolio.hosts.PortfolioHostMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -543,6 +546,10 @@ CAST_POST_BODY_BLOCKS = {
 # IndieAuth and Micropub Configuration
 # ------------------------------------------------------------------------------
 INDIEWEB_ME_URL = env("INDIEWEB_ME_URL", default="http://localhost:8000")  # Your domain
+# An IndieAuth sign-in may only claim the logged-in account's own profile URL
+# (django-indieweb Profile.url), so no other account can sign in elsewhere as
+# INDIEWEB_ME_URL. Accounts without a profile URL get "invalid me" (docs/indieweb.rst).
+INDIEWEB_BIND_ME_TO_USER = env.bool("INDIEWEB_BIND_ME_TO_USER", default=True)
 INDIEWEB_MICROPUB_HANDLER = "homepage.micropub.handler.CastPostMicropubHandler"
 # Blog (slug) that Micropub posts go to when the client does not select one via mp-channel.
 # The posting user still needs Wagtail add + publish permission on that blog.
@@ -563,6 +570,37 @@ INDIEWEB_RATE_LIMITS = {
     "webmention": {"limit": 60, "window": 300},
     "webmention_status": {"limit": 120, "window": 300},
 }
+
+# Wagtail admin
+# ------------------------------------------------------------------------------
+# Wagtail's own password reset (/cms/password_reset/) has no rate limit, so it
+# could be used to flood an address with mail. allauth's rate-limited reset at
+# /accounts/password/reset/ stays available (docs/admin_login_throttle.rst).
+WAGTAIL_PASSWORD_RESET_ENABLED = False
+
+# Content-Security-Policy (report-only)
+# ------------------------------------------------------------------------------
+# A first, measured policy: browsers report violations to /csp-report/
+# (homepage.core.csp) and block nothing. Tighten it from the logged reports
+# before switching any directive to SECURE_CSP (docs/csp.rst).
+SECURE_CSP_REPORT_ONLY = {
+    "default-src": [CSP.SELF],
+    "script-src": [CSP.SELF, "https://plausible.io", "https://cdn.jsdelivr.net"],
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE, "https://cdn.jsdelivr.net"],
+    "img-src": [CSP.SELF, "data:", "https:"],
+    "media-src": [CSP.SELF, f"https://{AWS_S3_CUSTOM_DOMAIN}", "https://s3.amazonaws.com"],
+    "font-src": [CSP.SELF, "data:", "https://cdn.jsdelivr.net"],
+    "connect-src": [CSP.SELF, "https://plausible.io"],
+    "object-src": [CSP.NONE],
+    "base-uri": [CSP.SELF],
+    # Wagtail's page preview frames the site from its own origin.
+    "frame-ancestors": [CSP.SELF],
+    "form-action": [CSP.SELF],
+    "report-uri": ["/csp-report/"],
+}
+# Violation log lines per minute and worker process (counted in memory);
+# further reports in that minute are dropped after one notice.
+CSP_REPORT_LOG_LIMIT_PER_MINUTE = env.int("CSP_REPORT_LOG_LIMIT_PER_MINUTE", default=30)
 
 # django-resume JSON Resume render themes
 # ------------------------------------------------------------------------------

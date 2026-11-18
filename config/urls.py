@@ -10,6 +10,7 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.admin.views import account as wagtailadmin_account
 from wagtail.documents import urls as wagtaildocs_urls
 
+from homepage.core import csp
 from homepage.core import views as core_views
 from homepage.portfolio import views as portfolio_views
 from homepage.users import login_throttle
@@ -24,6 +25,8 @@ urlpatterns = [
     path("", core_views.home, name="home"),
     path("robots.txt", core_views.robots_txt, name="robots_txt"),
     path("favicon.ico", core_views.favicon),
+    # Content-Security-Policy-Report-Only reports (docs/csp.rst)
+    path("csp-report/", csp.csp_report, name="csp_report"),
     path("impressum/", portfolio_views.imprint, name="portfolio_imprint"),
     path("datenschutz/", portfolio_views.privacy, name="portfolio_privacy"),
     path(

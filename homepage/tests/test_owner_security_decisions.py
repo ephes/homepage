@@ -208,7 +208,10 @@ def test_responses_carry_report_only_csp(themed_site, client):
 @override_settings(PORTFOLIO_HOSTS=["design.example.test"], ALLOWED_HOSTS=["design.example.test", "testserver"])
 def test_portfolio_host_routes_csp_reports(client):
     response = client.post(
-        "/csp-report/", data=b"{}", content_type="application/csp-report", HTTP_HOST="design.example.test"
+        "/csp-report/",
+        data=b'{"csp-report": {}}',
+        content_type="application/csp-report",
+        HTTP_HOST="design.example.test",
     )
     assert response.status_code == 204
 
@@ -277,6 +280,31 @@ def test_reporting_api_format_is_accepted(client, csp_log):
     assert "SECRET" not in record.getMessage()
 
 
+@pytest.mark.parametrize(
+    ("media_type", "legacy_shape", "status"),
+    [
+        ("application/csp-report; charset=UTF-8", True, 204),
+        ("application/reports+json; charset=UTF-8", False, 204),
+        ("application/csp-report", False, 400),
+        ("application/reports+json", True, 400),
+        ("application/json", True, 415),
+    ],
+)
+def test_csp_report_shape_matches_media_type(client, csp_log, media_type, legacy_shape, status):
+    payload = (
+        {"csp-report": {"effective-directive": "script-src"}}
+        if legacy_shape
+        else [{"type": "csp-violation", "body": {"effectiveDirective": "script-src"}}]
+    )
+    assert _report(client, payload, media_type).status_code == status
+    assert len(csp_log.records) == (1 if status == 204 else 0)
+
+
+def test_empty_reporting_api_batch_is_accepted(client, csp_log):
+    assert _report(client, [], "application/reports+json").status_code == 204
+    assert csp_log.records == []
+
+
 def test_reporting_api_stops_reading_after_five_supported_reports(client, csp_log, monkeypatch):
     from homepage.core import csp
 
@@ -342,9 +370,9 @@ def test_csp_report_endpoint_rejects_other_methods(client, csp_log):
 
 
 @pytest.mark.parametrize("body", [b"not json", b"[1, 2]", b'"x"', b"{" * 5000], ids=["text", "list", "string", "deep"])
-def test_invalid_reports_are_ignored(client, csp_log, body):
+def test_invalid_reports_are_rejected(client, csp_log, body):
     response = client.post(reverse("csp_report"), data=body, content_type="application/csp-report")
-    assert response.status_code in {204, 400}
+    assert response.status_code == 400
     assert csp_log.records == []
 
 

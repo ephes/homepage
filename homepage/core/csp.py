@@ -25,6 +25,9 @@ from django.views.decorators.http import require_POST
 
 logger = logging.getLogger("homepage.csp")
 
+_LEGACY_MEDIA_TYPE = "application/csp-report"
+_REPORTING_MEDIA_TYPE = "application/reports+json"
+
 MAX_BODY_BYTES = 16 * 1024
 MAX_REPORTS_PER_REQUEST = 5
 _FIELD_MAX = 200
@@ -161,6 +164,9 @@ _budget = _MinuteBudget()
 @csrf_exempt
 @require_POST
 def csp_report(request: HttpRequest) -> HttpResponse:
+    media_type = request.content_type
+    if media_type not in {_LEGACY_MEDIA_TYPE, _REPORTING_MEDIA_TYPE}:
+        return HttpResponse(status=415)
     try:
         declared = int(request.headers.get("content-length") or 0)
     except ValueError:
@@ -173,6 +179,11 @@ def csp_report(request: HttpRequest) -> HttpResponse:
     try:
         payload = json.loads(body)
     except (ValueError, RecursionError):
+        return HttpResponse(status=400)
+    if media_type == _LEGACY_MEDIA_TYPE:
+        if not isinstance(payload, dict) or not isinstance(payload.get("csp-report"), dict):
+            return HttpResponse(status=400)
+    elif not isinstance(payload, list):
         return HttpResponse(status=400)
     request_origin = _origin_key(request.scheme, request.get_host().lower())
     for report in islice(_reports(payload), MAX_REPORTS_PER_REQUEST):

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Validate CSP report body shapes against their browser media types before
+  logging, while accepting empty Reporting API batches.
 - Limit CSP report logs to reviewed same-origin route prefixes and show only
   origins for other HTTP(S) locations.
 - Stop scanning Reporting API batches after the first five supported CSP reports.

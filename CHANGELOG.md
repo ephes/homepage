@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Limit CSP report logs to reviewed same-origin route prefixes and show only
+  origins for other HTTP(S) locations.
+- Stop scanning Reporting API batches after the first five supported CSP reports.
+
 - Security (owner decisions from the 2026-11-17 audit): IndieAuth sign-ins may
   only claim the logged-in account's own profile URL
   (`INDIEWEB_BIND_ME_TO_USER`, on by default), so no other account can sign in

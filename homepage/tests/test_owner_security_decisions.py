@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from cast.models import TemplateBaseDirectory
@@ -232,17 +233,17 @@ def csp_log(db, caplog):
 
 
 def _report(client, payload, content_type="application/csp-report"):
-    return client.post(reverse("csp_report"), data=json.dumps(payload), content_type=content_type)
+    return client.post(reverse("csp_report"), data=json.dumps(payload), content_type=content_type, secure=True)
 
 
 def test_csp_report_is_logged_without_queries(client, csp_log):
     payload = {
         "csp-report": {
-            "document-uri": "https://wersdoerfer.de/indieweb/auth/?code=SECRET-CODE&state=x",
+            "document-uri": "https://testserver/indieweb/auth/?code=SECRET-CODE&state=x",
             "violated-directive": "script-src-elem",
             "effective-directive": "script-src-elem",
             "blocked-uri": "https://evil.example/x.js?token=SECRET-TOKEN",
-            "source-file": "https://wersdoerfer.de/static/app.js?v=SECRET-V",
+            "source-file": "https://testserver/static/app.js?v=SECRET-V",
             "line-number": 12,
         }
     }
@@ -251,8 +252,8 @@ def test_csp_report_is_logged_without_queries(client, csp_log):
     message = record.getMessage()
     assert "script-src-elem" in message
     assert "https://evil.example" in message
-    assert "document=wersdoerfer.de/indieweb/ " in message
-    assert "source=wersdoerfer.de/static/:12" in message
+    assert "document=testserver/indieweb/ " in message
+    assert "source=testserver/static/:12" in message
     assert "SECRET" not in message
 
 
@@ -260,9 +261,9 @@ def test_reporting_api_format_is_accepted(client, csp_log):
     payload = [
         {
             "type": "csp-violation",
-            "url": "https://wersdoerfer.de/blogs/?q=SECRET",
+            "url": "https://testserver/blogs/?q=SECRET",
             "body": {
-                "documentURL": "https://wersdoerfer.de/blogs/?q=SECRET",
+                "documentURL": "https://testserver/blogs/?q=SECRET",
                 "effectiveDirective": "img-src",
                 "blockedURL": "data",
             },
@@ -272,7 +273,58 @@ def test_reporting_api_format_is_accepted(client, csp_log):
     assert _report(client, payload, "application/reports+json").status_code == 204
     (record,) = csp_log.records
     assert "img-src" in record.getMessage()
+    assert "document=testserver/blogs/ " in record.getMessage()
     assert "SECRET" not in record.getMessage()
+
+
+def test_reporting_api_stops_reading_after_five_supported_reports(client, csp_log, monkeypatch):
+    from homepage.core import csp
+
+    class CountingBatch(list):
+        reads = 0
+
+        def __iter__(self):
+            for item in super().__iter__():
+                self.reads += 1
+                yield item
+
+    def violation(line):
+        return {"type": "csp-violation", "body": {"lineNumber": line}}
+
+    batch = CountingBatch(
+        [
+            None,
+            violation(1),
+            {"type": "deprecation", "body": {}},
+            violation(2),
+            {"type": "csp-violation", "body": []},
+            violation(3),
+            violation(4),
+            violation(5),
+            violation(6),
+        ]
+    )
+    monkeypatch.setattr(csp, "json", SimpleNamespace(loads=lambda body: batch))
+
+    assert _report(client, [], "application/reports+json").status_code == 204
+    assert [record.getMessage().rsplit(":", 1)[1] for record in csp_log.records] == ["1", "2", "3", "4", "5"]
+    assert batch.reads == 8
+
+
+@pytest.mark.parametrize("reporting_api", [False, True], ids=["legacy", "reporting-api"])
+def test_csp_reports_omit_opaque_document_and_external_source_paths(client, csp_log, reporting_api):
+    document = "https://testserver/opaque-document-id/private"
+    source = "https://assets.example.test/static/opaque-source-id/app.js"
+    if reporting_api:
+        payload = [{"type": "csp-violation", "body": {"documentURL": document, "sourceFile": source}}]
+        response = _report(client, payload, "application/reports+json")
+    else:
+        response = _report(client, {"csp-report": {"document-uri": document, "source-file": source}})
+
+    assert response.status_code == 204
+    (record,) = csp_log.records
+    assert "document=https://testserver source=https://assets.example.test:-" in record.getMessage()
+    assert "opaque-" not in record.getMessage()
 
 
 @pytest.mark.parametrize("value", ["inline", "eval", "data", "", "wasm-eval"])
@@ -373,20 +425,23 @@ def test_production_settings_carry_the_owner_decisions(tmp_path):
     [
         ("https://testserver/accounts/confirm-email/SECRET-CONFIRMATION-KEY/", "testserver/accounts/"),
         ("https://testserver/accounts/password/reset/key/SECRET-uid-SECRET-key/", "testserver/accounts/"),
-        ("https://testserver/accounts%2Fconfirm-email%2FSECRET-KEY/", "testserver/?"),
-        ("https://testserver/SECRET-FIRST/", "testserver/?"),
+        ("https://testserver/accounts%2Fconfirm-email%2FSECRET-KEY/", "https://testserver"),
+        ("https://testserver/SECRET-FIRST/", "https://testserver"),
         ("https://testserver/static/js/app.js", "testserver/static/"),
-        ("https://cdn.example/static/SECRET-TOKEN/lib.js", "cdn.example/static/"),
+        ("https://cdn.example/static/SECRET-TOKEN/lib.js", "https://cdn.example"),
         ("https://testserver/static/../accounts/SECRET/", "testserver/static/"),
         ("https://testserver/static/%2e%2e/SECRET", "testserver/static/"),
-        ("https://foreign.example/private/SECRET-PATH/", "foreign.example/private/"),
+        ("https://foreign.example/private/SECRET-PATH/", "https://foreign.example"),
         ("https://user:SECRET-PW@testserver/blogs/", "testserver/blogs/"),
-        ("http://[::1]:8000/blogs/a-post/", "[::1]:8000/blogs/"),
-        ("https://testserver/", "testserver/"),
+        ("http://[::1]:8000/blogs/a-post/", "http://[::1]:8000"),
+        ("http://testserver/blogs/a-post/", "http://testserver"),
+        ("https://testserver:444/blogs/a-post/", "https://testserver:444"),
+        ("https://testserver:443/blogs/a-post/", "testserver:443/blogs/"),
+        ("https://testserver/", "https://testserver"),
         ("https://testserver:99999/", "invalid"),
     ],
 )
-def test_locations_keep_only_host_and_first_segment(client, csp_log, document, expected):
+def test_locations_keep_only_known_same_origin_prefixes(client, csp_log, document, expected):
     payload = {"csp-report": {"document-uri": document, "effective-directive": "script-src"}}
     assert _report(client, payload).status_code == 204
     message = csp_log.records[0].getMessage()

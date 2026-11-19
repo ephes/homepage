@@ -34,21 +34,24 @@ both the main and the portfolio host. The endpoint accepts POSTs only, is
 CSRF-exempt, refuses bodies over 16 KiB with ``413`` and invalid JSON with
 ``400``, and handles at most five reports per request. It understands the
 classic ``application/csp-report`` body and the Reporting API list format.
+After parsing the bounded JSON body, it stops scanning the list once it has
+accepted five CSP violations. Unsupported entries are skipped without using
+the allowance.
 
 Each report becomes one WARNING line on the ``homepage.csp`` logger (the
 gunicorn journal in production)::
 
-    CSP report-only violation directive=script-src-elem blocked=https://cdn.example document=wersdoerfer.de/blogs/ source=wersdoerfer.de/static/:12
+    CSP report-only violation directive=script-src-elem blocked=https://cdn.example document=site.example/blogs/ source=site.example/static/:12
 
 The line holds the directive, the blocked origin (or a keyword such as
 ``inline``, ``eval`` or ``data``), and where the violation happened. URLs can
 carry secrets (IndieAuth codes in query strings, allauth confirmation and reset
-keys in paths, possibly percent-encoded), so a document or script location is
-only the host plus the first path segment, and only when that segment is a plain
-word of ``a-z``, digits, ``_`` and ``-`` (otherwise ``?``):
-``wersdoerfer.de/accounts/`` for any allauth page, ``wersdoerfer.de/blogs/`` for
-any blog page, ``wersdoerfer.de/static/`` for any static script. User info, query strings and fragments are never logged; the blocked
-resource is logged as its origin only. Every logged field is restricted to a
+keys in paths, possibly percent-encoded). For documents and source files on the
+report endpoint's origin (same scheme, host and port), a fixed allowlist keeps
+the first segment of recognized routes, for example ``site.example/accounts/``,
+``site.example/blogs/`` or ``site.example/static/``. Unlisted paths, external
+documents and source files, and blocked HTTP(S) resources are logged only as
+origins. User info, query strings and fragments are never logged. Every logged field is restricted to a
 fixed character set and length. Each worker process logs at most ``CSP_REPORT_LOG_LIMIT_PER_MINUTE``
 reports per minute (default 30; production runs four gunicorn workers, so at
 most 120 violation lines plus four suppression notices a minute); one notice

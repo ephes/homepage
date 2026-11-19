@@ -3,10 +3,8 @@
 Browsers POST reports here for ``SECURE_CSP_REPORT_ONLY`` (config/settings/base.py).
 Each report becomes one compact WARNING line on the ``homepage.csp`` logger:
 directive, blocked origin (or keyword such as ``inline``), and where it happened.
-URLs can carry secrets (IndieAuth codes in queries, allauth confirmation and
-reset keys in paths, possibly percent-encoded), so a location is only the host
-plus the first path segment, and only when that segment is a plain word
-(``[a-z0-9_-]``, otherwise ``?``). Bodies are
+URLs can carry secrets, so locations are reduced to origins. Only reviewed
+same-origin route prefixes can appear for documents and source files. Bodies are
 capped, fields truncated, and each worker process logs at most
 ``CSP_REPORT_LOG_LIMIT_PER_MINUTE`` reports per minute. See docs/csp.rst.
 """
@@ -16,6 +14,8 @@ import logging
 import re
 import threading
 import time
+from collections.abc import Iterator
+from itertools import islice
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -30,8 +30,24 @@ MAX_REPORTS_PER_REQUEST = 5
 _FIELD_MAX = 200
 _KEYWORD = re.compile(r"[a-z][a-z-]{0,29}")
 _DIRECTIVE = re.compile(r"[a-z][a-z-]{0,39}")
-_SEGMENT = re.compile(r"[a-z0-9_-]{1,40}")
 _HOST = re.compile(r"[a-z0-9.-]{1,253}|[0-9a-f:.]{2,45}")
+# Fixed route families from the site URLconfs, plus locally served static assets.
+_ROUTE_PREFIXES = frozenset(
+    {
+        "accounts",
+        "api-auth",
+        "blogs",
+        "cms",
+        "datenschutz",
+        "documents",
+        "impressum",
+        "indieweb",
+        "portfolio",
+        "resume",
+        "static",
+        "users",
+    }
+)
 
 
 def _netloc(parts) -> str | None:
@@ -47,8 +63,13 @@ def _netloc(parts) -> str | None:
     return f"{host}:{port}" if port is not None else host
 
 
-def _location(value: object, *, origin_only: bool) -> str:
-    """Reduce a reported URL to an origin or ``host/first-segment/``; keep CSP keywords."""
+def _origin_key(scheme: str, netloc: str) -> tuple[str, str]:
+    default_port = ":443" if scheme == "https" else ":80"
+    return scheme, netloc.removesuffix(default_port)
+
+
+def _location(value: object, *, request_origin: tuple[str, str] | None = None) -> str:
+    """Keep CSP keywords, URL origins and reviewed same-origin route prefixes."""
     if not isinstance(value, str) or not value.strip():
         return "-"
     value = value.strip()
@@ -63,12 +84,11 @@ def _location(value: object, *, origin_only: bool) -> str:
     netloc = _netloc(parts)
     if netloc is None:
         return "invalid"
-    if origin_only:
-        return f"{parts.scheme}://{netloc}"
-    first = (parts.path or "/").lstrip("/").split("/", 1)[0]
-    if not first:
-        return f"{netloc}/"
-    return f"{netloc}/{first}/" if _SEGMENT.fullmatch(first) else f"{netloc}/?"
+    if request_origin == _origin_key(parts.scheme, netloc):
+        first = parts.path.removeprefix("/").partition("/")[0]
+        if first in _ROUTE_PREFIXES:
+            return f"{netloc}/{first}/"
+    return f"{parts.scheme}://{netloc}"
 
 
 def _directive(value: object) -> str:
@@ -81,38 +101,31 @@ def _line(value: object) -> str:
     return str(value) if isinstance(value, int) and not isinstance(value, bool) and 0 <= value < 10**9 else "-"
 
 
-def _reports(payload: object) -> list[dict[str, object]]:
+def _reports(payload: object) -> Iterator[dict[str, object]]:
     """Normalize ``application/csp-report`` and Reporting API (``reports+json``) bodies."""
     if isinstance(payload, dict) and isinstance(payload.get("csp-report"), dict):
         report = payload["csp-report"]
-        return [
-            {
-                "directive": report.get("effective-directive") or report.get("violated-directive"),
-                "blocked": report.get("blocked-uri"),
-                "document": report.get("document-uri"),
-                "source": report.get("source-file"),
-                "line": report.get("line-number"),
-            }
-        ]
-    if isinstance(payload, list):
-        reports = []
+        yield {
+            "directive": report.get("effective-directive") or report.get("violated-directive"),
+            "blocked": report.get("blocked-uri"),
+            "document": report.get("document-uri"),
+            "source": report.get("source-file"),
+            "line": report.get("line-number"),
+        }
+    elif isinstance(payload, list):
         for item in payload:
             if not isinstance(item, dict) or item.get("type") != "csp-violation":
                 continue
             body = item.get("body")
             if not isinstance(body, dict):
                 continue
-            reports.append(
-                {
-                    "directive": body.get("effectiveDirective"),
-                    "blocked": body.get("blockedURL"),
-                    "document": body.get("documentURL"),
-                    "source": body.get("sourceFile"),
-                    "line": body.get("lineNumber"),
-                }
-            )
-        return reports
-    return []
+            yield {
+                "directive": body.get("effectiveDirective"),
+                "blocked": body.get("blockedURL"),
+                "document": body.get("documentURL"),
+                "source": body.get("sourceFile"),
+                "line": body.get("lineNumber"),
+            }
 
 
 class _MinuteBudget:
@@ -161,15 +174,16 @@ def csp_report(request: HttpRequest) -> HttpResponse:
         payload = json.loads(body)
     except (ValueError, RecursionError):
         return HttpResponse(status=400)
-    for report in _reports(payload)[:MAX_REPORTS_PER_REQUEST]:
+    request_origin = _origin_key(request.scheme, request.get_host().lower())
+    for report in islice(_reports(payload), MAX_REPORTS_PER_REQUEST):
         log_it, notice = _budget.admit()
         if log_it:
             logger.warning(
                 "CSP report-only violation directive=%s blocked=%s document=%s source=%s:%s",
                 _directive(report["directive"]),
-                _location(report["blocked"], origin_only=True),
-                _location(report["document"], origin_only=False),
-                _location(report["source"], origin_only=False),
+                _location(report["blocked"]),
+                _location(report["document"], request_origin=request_origin),
+                _location(report["source"], request_origin=request_origin),
                 _line(report["line"]),
             )
         elif notice:

@@ -34,6 +34,9 @@ both the main and the portfolio host. The endpoint accepts POSTs only, is
 CSRF-exempt, refuses bodies over 16 KiB with ``413`` and invalid JSON with
 ``400``, and handles at most five reports per request. It understands the
 classic ``application/csp-report`` body and the Reporting API list format.
+After parsing the bounded JSON body, it stops scanning the list once it has
+accepted five CSP violations. Unsupported entries are skipped without using
+the allowance.
 
 Each report becomes one WARNING line on the ``homepage.csp`` logger (the
 gunicorn journal in production)::

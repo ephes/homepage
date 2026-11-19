@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from cast.models import TemplateBaseDirectory
@@ -274,6 +275,40 @@ def test_reporting_api_format_is_accepted(client, csp_log):
     assert "img-src" in record.getMessage()
     assert "document=testserver/blogs/ " in record.getMessage()
     assert "SECRET" not in record.getMessage()
+
+
+def test_reporting_api_stops_reading_after_five_supported_reports(client, csp_log, monkeypatch):
+    from homepage.core import csp
+
+    class CountingBatch(list):
+        reads = 0
+
+        def __iter__(self):
+            for item in super().__iter__():
+                self.reads += 1
+                yield item
+
+    def violation(line):
+        return {"type": "csp-violation", "body": {"lineNumber": line}}
+
+    batch = CountingBatch(
+        [
+            None,
+            violation(1),
+            {"type": "deprecation", "body": {}},
+            violation(2),
+            {"type": "csp-violation", "body": []},
+            violation(3),
+            violation(4),
+            violation(5),
+            violation(6),
+        ]
+    )
+    monkeypatch.setattr(csp, "json", SimpleNamespace(loads=lambda body: batch))
+
+    assert _report(client, [], "application/reports+json").status_code == 204
+    assert [record.getMessage().rsplit(":", 1)[1] for record in csp_log.records] == ["1", "2", "3", "4", "5"]
+    assert batch.reads == 8
 
 
 @pytest.mark.parametrize("reporting_api", [False, True], ids=["legacy", "reporting-api"])

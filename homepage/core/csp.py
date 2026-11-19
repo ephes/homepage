@@ -14,6 +14,8 @@ import logging
 import re
 import threading
 import time
+from collections.abc import Iterator
+from itertools import islice
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -99,38 +101,31 @@ def _line(value: object) -> str:
     return str(value) if isinstance(value, int) and not isinstance(value, bool) and 0 <= value < 10**9 else "-"
 
 
-def _reports(payload: object) -> list[dict[str, object]]:
+def _reports(payload: object) -> Iterator[dict[str, object]]:
     """Normalize ``application/csp-report`` and Reporting API (``reports+json``) bodies."""
     if isinstance(payload, dict) and isinstance(payload.get("csp-report"), dict):
         report = payload["csp-report"]
-        return [
-            {
-                "directive": report.get("effective-directive") or report.get("violated-directive"),
-                "blocked": report.get("blocked-uri"),
-                "document": report.get("document-uri"),
-                "source": report.get("source-file"),
-                "line": report.get("line-number"),
-            }
-        ]
-    if isinstance(payload, list):
-        reports = []
+        yield {
+            "directive": report.get("effective-directive") or report.get("violated-directive"),
+            "blocked": report.get("blocked-uri"),
+            "document": report.get("document-uri"),
+            "source": report.get("source-file"),
+            "line": report.get("line-number"),
+        }
+    elif isinstance(payload, list):
         for item in payload:
             if not isinstance(item, dict) or item.get("type") != "csp-violation":
                 continue
             body = item.get("body")
             if not isinstance(body, dict):
                 continue
-            reports.append(
-                {
-                    "directive": body.get("effectiveDirective"),
-                    "blocked": body.get("blockedURL"),
-                    "document": body.get("documentURL"),
-                    "source": body.get("sourceFile"),
-                    "line": body.get("lineNumber"),
-                }
-            )
-        return reports
-    return []
+            yield {
+                "directive": body.get("effectiveDirective"),
+                "blocked": body.get("blockedURL"),
+                "document": body.get("documentURL"),
+                "source": body.get("sourceFile"),
+                "line": body.get("lineNumber"),
+            }
 
 
 class _MinuteBudget:
@@ -180,7 +175,7 @@ def csp_report(request: HttpRequest) -> HttpResponse:
     except (ValueError, RecursionError):
         return HttpResponse(status=400)
     request_origin = _origin_key(request.scheme, request.get_host().lower())
-    for report in _reports(payload)[:MAX_REPORTS_PER_REQUEST]:
+    for report in islice(_reports(payload), MAX_REPORTS_PER_REQUEST):
         log_it, notice = _budget.admit()
         if log_it:
             logger.warning(

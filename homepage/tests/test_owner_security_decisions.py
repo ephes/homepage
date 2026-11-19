@@ -358,10 +358,40 @@ def test_csp_reports_omit_opaque_document_and_external_source_paths(client, csp_
 @pytest.mark.parametrize("value", ["inline", "eval", "data", "", "wasm-eval"])
 def test_keyword_blocked_uris_are_kept(client, csp_log, value):
     payload = {
-        "csp-report": {"document-uri": "https://wersdoerfer.de/", "effective-directive": "x", "blocked-uri": value}
+        "csp-report": {
+            "document-uri": "https://wersdoerfer.de/",
+            "effective-directive": "script-src",
+            "blocked-uri": value,
+        }
     }
     assert _report(client, payload).status_code == 204
-    assert f"blocked={value or '-'}" in csp_log.records[0].getMessage()
+    (record,) = csp_log.records
+    assert f"directive=script-src blocked={value or '-'} " in record.getMessage()
+
+
+def test_csp_report_reduces_known_non_http_urls_to_their_scheme(client, csp_log):
+    payload = {"csp-report": {"blocked-uri": "blob:https://example.test/private-value"}}
+    assert _report(client, payload).status_code == 204
+    (record,) = csp_log.records
+    assert "blocked=blob " in record.getMessage()
+    assert "private-value" not in record.getMessage()
+
+
+@pytest.mark.parametrize("blocked", ["synthetic-label", "synthetic-label:opaque"])
+def test_csp_report_logs_only_known_labels(client, csp_log, blocked):
+    payload = {
+        "csp-report": {
+            "effective-directive": "synthetic-directive",
+            "blocked-uri": blocked,
+            "document-uri": "synthetic-document",
+            "source-file": "synthetic-source:opaque",
+        }
+    }
+    assert _report(client, payload).status_code == 204
+    (record,) = csp_log.records
+    message = record.getMessage()
+    assert "directive=other blocked=other document=other source=other:-" in message
+    assert "synthetic-" not in message
 
 
 def test_csp_report_endpoint_rejects_other_methods(client, csp_log):

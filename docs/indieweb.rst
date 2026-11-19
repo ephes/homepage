@@ -137,11 +137,9 @@ Only public pages
 
 Only committed publications
    The ``page_published`` receiver does not render or send anything itself. It
-   registers the delivery with ``transaction.on_commit``, and the delivery runs
-   in the same process when the outermost database transaction that is open at
-   that moment commits; no queue is involved. For a publication inside a
-   transaction this means that nothing is rendered or sent before the commit.
-   Which transaction that is depends on the caller, not on this module:
+   registers the delivery with ``transaction.on_commit`` on the publishing
+   database. The delivery runs in the same process after the outermost open
+   transaction on that database commits. The caller controls that transaction.
 
    * a Micropub post is published inside the handler's own transaction, so its
      webmentions leave after that transaction has committed;
@@ -151,7 +149,7 @@ Only committed publications
      not set ``ATOMIC_REQUESTS``, so in production it is the transaction the
      publishing code itself opened, and the delivery can run before the admin
      request has finished;
-   * when no transaction is open at all (autocommit), ``on_commit`` calls the
+   * when the publishing connection is in autocommit, ``on_commit`` calls the
      delivery at once, so it runs inside the signal receiver, after Wagtail has
      saved the page as live. There is nothing left to roll back in that case.
 

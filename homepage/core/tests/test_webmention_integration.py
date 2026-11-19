@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from cast.models import Blog, Post
 from django.db import transaction
+from django.test import override_settings
 from wagtail.models import Locale, Page, PageViewRestriction, Site
 
 from homepage.core.webmention_integration import (
@@ -153,6 +154,10 @@ LINKING_BODY = json.dumps(
 
 @pytest.fixture
 def blog(db):
+    return create_blog()
+
+
+def create_blog():
     root = Page.get_first_root_node()
     if root is None:
         Locale.objects.get_or_create(language_code="en")
@@ -363,3 +368,28 @@ class TestCommitBoundary:
 
         assert len(outbound.sent) == 1
         assert Post.objects.get(pk=post.pk).live is True
+
+
+class PublishingDatabaseRouter:
+    """Route Wagtail's publication queries to the synthetic secondary database."""
+
+    def db_for_read(self, model, **hints):
+        return "legacy"
+
+    def db_for_write(self, model, **hints):
+        return "legacy"
+
+
+@pytest.mark.django_db(transaction=True, databases=["default", "legacy"])
+def test_secondary_publication_rollback_discards_delivery():
+    with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
+        post = draft_post(create_blog())
+        with patch("homepage.core.webmention_integration._deliver_webmentions") as deliver:
+            with transaction.atomic(using="legacy"):
+                post.save_revision().publish()
+                assert Post.objects.using("legacy").get(pk=post.pk).live
+                transaction.set_rollback(True, using="legacy")
+
+            deliver.assert_not_called()
+
+    assert not Post.objects.using("legacy").get(pk=post.pk).live

@@ -21,7 +21,7 @@ import logging
 from functools import partial
 from urllib.parse import urlsplit, urlunsplit
 
-from django.db import transaction
+from django.db import DEFAULT_DB_ALIAS, transaction
 from django.dispatch import receiver
 from wagtail.signals import page_published
 
@@ -61,10 +61,10 @@ def send_webmentions_on_publish(sender, **kwargs):
     if not _is_publicly_accessible(post):
         return
 
-    # Only ids cross the commit boundary: the page is read again afterwards, so
-    # the delivery sees what was committed rather than this in-memory instance.
-    deliver = partial(_deliver_webmentions, post.pk, post.live_revision_id)
-    transaction.on_commit(deliver)
+    # Capture only identifiers so delivery can reload the committed publication.
+    database = page._state.db or DEFAULT_DB_ALIAS
+    deliver = partial(_deliver_webmentions, post.pk, post.live_revision_id, database)
+    transaction.on_commit(deliver, using=database)
 
 
 def _load_post_models() -> bool:
@@ -90,7 +90,7 @@ def _is_publicly_accessible(page) -> bool:
     return not page.get_view_restrictions().exists()
 
 
-def _deliver_webmentions(page_id, live_revision_id) -> None:
+def _deliver_webmentions(page_id, live_revision_id, database) -> None:
     """Send the webmentions of a committed publication; never raises.
 
     Runs after the publishing transaction committed. The publication is done at

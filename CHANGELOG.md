@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Schedule Webmention delivery on the publishing database so a rollback on
+  that connection discards the delivery.
 - Log only allowlisted CSP directive names, violation keywords and non-HTTP(S)
   schemes, grouping unknown names under `other`.
 - Validate CSP report body shapes against their browser media types before

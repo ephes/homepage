@@ -95,6 +95,26 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-19 CSP report log scope
+-------------------------------
+
+Deployed ``17c83d1``: the ``/csp-report/`` endpoint keeps a first path segment
+only for reviewed route prefixes on the request's own origin and logs every
+other location as its origin (:doc:`csp`), and it stops reading a Reporting API
+batch after five accepted reports. No migration, no new static files and no
+settings or environment change.
+
+Verified after the deploy: sha256 of the tracked ``homepage/`` and ``config/``
+sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals ``17c83d1``;
+both units stayed on the same PID for 120 seconds; the front page, the blog RSS
+feed and the portfolio host answered 200. A synthetic report with an unlisted
+same-origin document and a ``/static/`` source was logged as
+``document=https://wersdoerfer.de source=wersdoerfer.de/static/:<line>``, which
+also shows that Django sees these requests as HTTPS behind Traefik.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``f201a37``). No database step and no static rebuild are needed.
+
 2026-11-18 owner security decisions
 -----------------------------------
 

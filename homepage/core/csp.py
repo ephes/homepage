@@ -3,10 +3,8 @@
 Browsers POST reports here for ``SECURE_CSP_REPORT_ONLY`` (config/settings/base.py).
 Each report becomes one compact WARNING line on the ``homepage.csp`` logger:
 directive, blocked origin (or keyword such as ``inline``), and where it happened.
-URLs can carry secrets (IndieAuth codes in queries, allauth confirmation and
-reset keys in paths, possibly percent-encoded), so a location is only the host
-plus the first path segment, and only when that segment is a plain word
-(``[a-z0-9_-]``, otherwise ``?``). Bodies are
+URLs can carry secrets, so locations are reduced to origins. Only reviewed
+same-origin route prefixes can appear for documents and source files. Bodies are
 capped, fields truncated, and each worker process logs at most
 ``CSP_REPORT_LOG_LIMIT_PER_MINUTE`` reports per minute. See docs/csp.rst.
 """
@@ -30,8 +28,24 @@ MAX_REPORTS_PER_REQUEST = 5
 _FIELD_MAX = 200
 _KEYWORD = re.compile(r"[a-z][a-z-]{0,29}")
 _DIRECTIVE = re.compile(r"[a-z][a-z-]{0,39}")
-_SEGMENT = re.compile(r"[a-z0-9_-]{1,40}")
 _HOST = re.compile(r"[a-z0-9.-]{1,253}|[0-9a-f:.]{2,45}")
+# Fixed route families from the site URLconfs, plus locally served static assets.
+_ROUTE_PREFIXES = frozenset(
+    {
+        "accounts",
+        "api-auth",
+        "blogs",
+        "cms",
+        "datenschutz",
+        "documents",
+        "impressum",
+        "indieweb",
+        "portfolio",
+        "resume",
+        "static",
+        "users",
+    }
+)
 
 
 def _netloc(parts) -> str | None:
@@ -47,8 +61,13 @@ def _netloc(parts) -> str | None:
     return f"{host}:{port}" if port is not None else host
 
 
-def _location(value: object, *, origin_only: bool) -> str:
-    """Reduce a reported URL to an origin or ``host/first-segment/``; keep CSP keywords."""
+def _origin_key(scheme: str, netloc: str) -> tuple[str, str]:
+    default_port = ":443" if scheme == "https" else ":80"
+    return scheme, netloc.removesuffix(default_port)
+
+
+def _location(value: object, *, request_origin: tuple[str, str] | None = None) -> str:
+    """Keep CSP keywords, URL origins and reviewed same-origin route prefixes."""
     if not isinstance(value, str) or not value.strip():
         return "-"
     value = value.strip()
@@ -63,12 +82,11 @@ def _location(value: object, *, origin_only: bool) -> str:
     netloc = _netloc(parts)
     if netloc is None:
         return "invalid"
-    if origin_only:
-        return f"{parts.scheme}://{netloc}"
-    first = (parts.path or "/").lstrip("/").split("/", 1)[0]
-    if not first:
-        return f"{netloc}/"
-    return f"{netloc}/{first}/" if _SEGMENT.fullmatch(first) else f"{netloc}/?"
+    if request_origin == _origin_key(parts.scheme, netloc):
+        first = parts.path.removeprefix("/").partition("/")[0]
+        if first in _ROUTE_PREFIXES:
+            return f"{netloc}/{first}/"
+    return f"{parts.scheme}://{netloc}"
 
 
 def _directive(value: object) -> str:
@@ -161,15 +179,16 @@ def csp_report(request: HttpRequest) -> HttpResponse:
         payload = json.loads(body)
     except (ValueError, RecursionError):
         return HttpResponse(status=400)
+    request_origin = _origin_key(request.scheme, request.get_host().lower())
     for report in _reports(payload)[:MAX_REPORTS_PER_REQUEST]:
         log_it, notice = _budget.admit()
         if log_it:
             logger.warning(
                 "CSP report-only violation directive=%s blocked=%s document=%s source=%s:%s",
                 _directive(report["directive"]),
-                _location(report["blocked"], origin_only=True),
-                _location(report["document"], origin_only=False),
-                _location(report["source"], origin_only=False),
+                _location(report["blocked"]),
+                _location(report["document"], request_origin=request_origin),
+                _location(report["source"], request_origin=request_origin),
                 _line(report["line"]),
             )
         elif notice:

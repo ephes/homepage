@@ -277,21 +277,21 @@ class TestPublicVisibility:
     ):
         """The delivery reads the page twice (base row, specific row); the second read decides."""
         post = draft_post(blog)
-        load_specific = Page.specific.func
+        specific_queryset = Post.objects.using
 
-        def changed_before_specific_is_loaded(page):
+        def changed_before_specific_is_loaded(database):
             if change == "unpublish":
-                Page.objects.filter(pk=page.pk).update(live=False)
+                Page.objects.filter(pk=post.pk).update(live=False)
             else:
-                Page.objects.filter(pk=page.pk).update(live_revision=newer)
-            return load_specific(page)
+                Page.objects.filter(pk=post.pk).update(live_revision=newer)
+            return specific_queryset(database)
 
         with django_capture_on_commit_callbacks() as callbacks:
             post.save_revision().publish()
         (deliver,) = deliveries(callbacks)
         newer = Post.objects.get(pk=post.pk).save_revision()
 
-        with patch.object(Page, "specific", property(changed_before_specific_is_loaded)):
+        with patch.object(Post.objects, "using", changed_before_specific_is_loaded):
             deliver()
 
         assert (outbound.rendered, outbound.sent) == ([], [])
@@ -393,3 +393,28 @@ def test_secondary_publication_rollback_discards_delivery():
             deliver.assert_not_called()
 
     assert not Post.objects.using("legacy").get(pk=post.pk).live
+
+
+@pytest.mark.django_db(transaction=True, databases=["default", "legacy"])
+@pytest.mark.parametrize("restricted", [False, True], ids=["public", "restricted-before-commit"])
+def test_secondary_delivery_reloads_the_publication_from_its_database(restricted):
+    page_id = 12345
+    default_post = create_blog().add_child(instance=Post(pk=page_id, title="Default", slug="default", live=True))
+    with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
+        secondary_blog = create_blog()
+        secondary_post = secondary_blog.add_child(
+            instance=Post(pk=page_id, title="Secondary", slug="secondary", live=False)
+        )
+    assert default_post.pk == secondary_post.pk == page_id
+
+    with patch("homepage.core.webmention_integration._send_webmentions_for") as send:
+        with transaction.atomic(using="legacy"):
+            with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
+                secondary_post.save_revision().publish()
+            send.assert_not_called()
+
+    send.assert_called_once()
+    (delivered,) = send.call_args.args
+    assert delivered._state.db == "legacy"
+    assert delivered.title == "Secondary"
+    assert delivered.live

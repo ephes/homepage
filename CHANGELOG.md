@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reload the live Webmention post and check its access restrictions on the
+  publishing database.
 - Schedule Webmention delivery on the publishing database so a rollback on
   that connection discards the delivery.
 - Log only allowlisted CSP directive names, violation keywords and non-HTTP(S)

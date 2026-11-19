@@ -154,9 +154,10 @@ Only committed publications
      saved the page as live. There is nothing left to roll back in that case.
 
    A publication that is rolled back announces nothing. At delivery time the
-   page is read again from the database and is skipped when it was deleted,
-   unpublished, restricted or replaced by a newer live revision in the
-   meantime (the newer publication has its own delivery).
+   specific page and access restrictions are read from the publishing database.
+   Delivery skips pages that were deleted, unpublished, restricted or replaced
+   by a newer live revision in the meantime. A newer publication has its own
+   delivery callback.
 
 Delivery is best effort. A failure while rendering or sending does not fail or
 undo the publication: it is logged as

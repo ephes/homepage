@@ -109,6 +109,28 @@ def test_weeknote_links_block_context_groups_by_fixed_category_order_and_omits_e
     ]
 
 
+def test_weeknote_links_group_items_in_one_pass():
+    class CountedItems(list):
+        iterations = 0
+
+        def __iter__(self):
+            self.iterations += 1
+            return super().__iter__()
+
+    items = CountedItems(
+        link_item(category=category, title=f"Link {index}")
+        for index in range(300)
+        for category in ("retired", "software", "articles")
+    )
+
+    groups = WeeknoteLinksBlock().get_context(items)["grouped_categories"]
+
+    assert items.iterations == 1
+    assert [group["key"] for group in groups] == ["articles", "software", "other"]
+    for group in groups:
+        assert [item["title"] for item in group["items"]] == [f"Link {index}" for index in range(300)]
+
+
 def test_weeknote_links_block_get_prep_value_uses_list_block_item_wrapper_shape():
     block = WeeknoteLinksBlock()
 

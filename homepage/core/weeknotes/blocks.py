@@ -56,12 +56,20 @@ class WeeknoteLinksBlock(blocks.ListBlock):
 
     def get_context(self, value: Any, parent_context: dict[str, Any] | None = None) -> dict[str, Any]:
         context = super().get_context(value, parent_context=parent_context)
-        grouped_categories = []
-        for category_key, category_label in CATEGORY_CHOICES:
-            items = [item for item in value if item.get("category") == category_key]
-            if items:
-                grouped_categories.append({"key": category_key, "label": category_label, "items": items})
-        legacy_items = [item for item in value if item.get("category") not in CATEGORY_LABELS]
+        items_by_category: dict[str, list[blocks.StructValue]] = {key: [] for key, _ in CATEGORY_CHOICES}
+        legacy_items = []
+        for item in value:
+            category = item.get("category")
+            if category in CATEGORY_LABELS:
+                items_by_category[category].append(item)
+            else:
+                legacy_items.append(item)
+
+        grouped_categories = [
+            {"key": category, "label": label, "items": items_by_category[category]}
+            for category, label in CATEGORY_CHOICES
+            if items_by_category[category]
+        ]
         if legacy_items:
             grouped_categories.append({"key": "other", "label": "Other links", "items": legacy_items})
         context.update(

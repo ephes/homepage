@@ -73,7 +73,7 @@ KIND_CHOICES = [
 - `grouped_categories`: a list of `{key, label, items}` in fixed display order, with empty categories omitted. Stored rows with retired categories appear in a final **Other links** group in their original order.
 - `category_labels`: the stable category label mapping, for tests and any theme-specific template.
 
-Grouping in Python avoids brittle Django-template-only grouping logic.
+Group items in a single pass in Python, then emit nonempty groups in display order.
 
 Factory:
 

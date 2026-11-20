@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Group weeknote links in one pass while preserving display order.
+
 - Render stored weeknote links with retired categories in a final Other links group.
 
 - Require the database alias reported by rendition repair when retrying a cache purge.

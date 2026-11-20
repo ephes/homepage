@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+from django.template import Context, Template
 from django.test import override_settings
 from wagtail.images.models import ResponsiveImage
 from wagtail.images.rect import Rect
@@ -31,6 +33,36 @@ def test_versioned_static_uses_source_mtime_in_debug(tmp_path):
         result = versioned_static("portfolio/portfolio.css")
 
     assert result == (f"/static/portfolio/portfolio.css?v={stylesheet.stat().st_mtime_ns}")
+
+
+@override_settings(DEBUG=True)
+def test_versioned_static_renders_base_url_when_the_source_disappears(tmp_path, monkeypatch):
+    stylesheet = tmp_path / "portfolio.css"
+    stylesheet.touch()
+
+    def find_source(path):
+        assert path == "portfolio/portfolio.css"
+        stylesheet.unlink()
+        return str(stylesheet)
+
+    monkeypatch.setattr("homepage.portfolio.templatetags.portfolio_content.finders.find", find_source)
+    monkeypatch.setattr("homepage.portfolio.templatetags.portfolio_content.static", lambda path: f"/static/{path}")
+    template = Template('{% load portfolio_content %}{% versioned_static "portfolio/portfolio.css" %}')
+
+    assert template.render(Context()) == "/static/portfolio/portfolio.css"
+
+
+@override_settings(DEBUG=True)
+def test_versioned_static_propagates_permission_errors(tmp_path, monkeypatch):
+    stylesheet = tmp_path / "portfolio.css"
+    monkeypatch.setattr("homepage.portfolio.templatetags.portfolio_content.finders.find", lambda path: str(stylesheet))
+    with (
+        patch("homepage.portfolio.templatetags.portfolio_content.static"),
+        patch("homepage.portfolio.templatetags.portfolio_content.Path") as source_path,
+    ):
+        source_path.return_value.stat.side_effect = PermissionError("source is inaccessible")
+        with pytest.raises(PermissionError, match="source is inaccessible"):
+            versioned_static("portfolio/portfolio.css")
 
 
 def test_versioned_static_keeps_manifest_url_unchanged_outside_debug():

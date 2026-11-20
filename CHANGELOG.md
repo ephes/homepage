@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Use the base portfolio static URL in debug mode if an asset source disappears
+  during a local rebuild.
+
 - Hide optional portfolio rich-text blocks containing only encoded whitespace
   or starter placeholders, and treat plain-text fields literally.
 

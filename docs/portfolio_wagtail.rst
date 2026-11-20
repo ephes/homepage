@@ -222,7 +222,9 @@ collected like any other app static files:
 
 Templates must reference assets through ``{% static %}`` (or the ``versioned_static``
 tag for stylesheets, which appends the file's modification time in ``DEBUG``), so
-hashed ``collectstatic`` output works in production. Page stylesheets go into the
+hashed ``collectstatic`` output works in production. If a local rebuild removes
+the source before its modification time can be read, the tag uses the base static
+URL. Page stylesheets go into the
 ``extra_styles`` block of ``portfolio/base.html``, deferred scripts into
 ``extra_scripts``.
 

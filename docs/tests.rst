@@ -228,6 +228,9 @@ Synthetic sites sharing a hostname have distinct roots and colliding slugs:
 explicit ports select their own root, omitted HTTP/HTTPS ports select 80/443,
 and malformed ports fail lookup. Wagtail's default-site and unique-hostname
 fallbacks are intentional; ambiguous hosts without a default return no page.
+Cross-host tests resolve absolute URLs using the target hostname's URLconf:
+portfolio hosts serve the page tree from ``/``, and the main host serves it
+from ``/blogs/``, regardless of the current request's URLconf.
 
 Generic specific page instances are resolved below nested site roots using the
 full ancestor path, including decoded Unicode. Query strings and fragments do

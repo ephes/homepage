@@ -446,6 +446,43 @@ def test_repair_refuses_a_row_replaced_during_generation(monkeypatch, repair_sto
     assert allocated and not repair_storage.exists(allocated[0])
 
 
+@pytest.mark.parametrize("restored", [True, False], ids=["restored", "unknown"])
+def test_repair_rechecks_original_file_after_rendering(monkeypatch, repair_storage, restored):
+    from django.core.files.base import ContentFile
+
+    image, rendition = missing_legacy_rendition()
+    original = rendition.file.name
+    save, exists = repair_storage.save, repair_storage.exists
+    allocated = []
+
+    def write_replacement(*args, **kwargs):
+        allocated.append(save(*args, **kwargs))
+        if restored:
+            assert save(original, ContentFile(b"restored original")) == original
+        return allocated[0]
+
+    def check_file(name):
+        if name == original and allocated and not restored:
+            raise StorageError(503)
+        return exists(name)
+
+    monkeypatch.setattr(repair_storage, "save", write_replacement)
+    monkeypatch.setattr(repair_storage, "exists", check_file)
+
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert stored(rendition).file.name == original
+    assert not result.regenerated
+    assert len(allocated) == 1 and not exists(allocated[0])
+    if restored:
+        assert not result.unknown and "reappeared" in result.failed[0][2]
+        with repair_storage.open(original) as file:
+            assert file.read() == b"restored original"
+    else:
+        assert not result.failed and "storage answered 503" in result.unknown[0][2]
+        assert not exists(original)
+
+
 def test_two_repairs_keep_the_winner_and_compensate_the_loser(monkeypatch, repair_storage):
     image, rendition = missing_legacy_rendition()
     save = repair_storage.save

@@ -59,6 +59,8 @@ def regenerate_renditions_for_image(image) -> RepairResult:
         allocated_name = None
         owned_output = False
         storage = rendition.file.storage
+        failures = result.failed
+        failure_context = "regeneration failed"
         try:
             # A distinct name keeps the missing row's old path and existing objects intact.
             with image.generate_rendition_file(rendition.filter) as new_file:
@@ -84,12 +86,20 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                 )
                 if identity != observed:
                     raise RuntimeError("Rendition changed during regeneration; current row was left unchanged")
+                try:
+                    original_exists = storage.exists(stored_name)
+                except Exception:  # noqa: BLE001 - an inconclusive check must refuse attachment
+                    failures = result.unknown
+                    failure_context = "storage recheck failed"
+                    raise
+                if original_exists:
+                    raise RuntimeError("Original rendition file reappeared during regeneration")
                 current.file.name = rendition.file.name
                 current.width, current.height = rendition.width, rendition.height
                 current.save(update_fields=["file", "width", "height"])
                 rendition = current
         except Exception as error:  # noqa: BLE001 - report and keep going with the other renditions
-            reason = f"regeneration failed: {error!r}"
+            reason = f"{failure_context}: {error!r}"
             if allocated_name:
                 if not owned_output:
                     reason += f"; retained {allocated_name!r}: storage changed the name; ownership is uncertain"
@@ -102,7 +112,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                             storage.delete(allocated_name)
                     except Exception as cleanup_error:  # noqa: BLE001 - preserve the primary failure
                         reason += f"; cleanup failed for {allocated_name!r}: {cleanup_error!r}"
-            result.failed.append((rendition.pk, stored_name, reason))
+            failures.append((rendition.pk, stored_name, reason))
             continue
         result.regenerated.append(rendition)
         try:

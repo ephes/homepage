@@ -34,7 +34,7 @@ to that row. Repairs use a distinct ``repair-<random-id>`` filename, preserving
 existing storage objects. The row save runs inside a database savepoint, so even
 a save hook that writes and then raises leaves the old row intact.
 
-After a failed row save, the command deletes only the newly allocated name whose
+If attaching the replacement fails, the command deletes only the newly allocated name whose
 ownership it established before writing, and only after checking that no rendition
 row references it. A storage backend that returns a different name makes ownership
 uncertain: that object is retained and its name is reported for recovery. Failed
@@ -45,9 +45,11 @@ object behind; this is compensation for reported save failures, not a crash-atom
 storage/database transaction. At attachment the rendition row is locked and its
 observed file, image, filter, focal point and dimensions are compared with current
 values. A concurrent replacement wins; the losing repair reports a conflict and
-compensates its own unreferenced output. This fence protects database attachment;
-run repairs without concurrent storage writers, since arbitrary external writes to
-the same object key cannot be fenced by a database lock.
+compensates its own unreferenced output. After the row comparison, the command
+checks the original storage key again under the row lock. If the original file
+has returned or storage cannot confirm absence, the row stays unchanged and the
+same cleanup rules apply. External storage writers can still change an object
+after that final check.
 
 The command exits with an error when a rendition could not be checked or regenerated.
 Those renditions are listed on stderr and left unchanged, so it is safe to simply run

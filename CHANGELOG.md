@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep the original rendition link when the file reappears or storage cannot
+  confirm it is still absent during repair.
+
 - Fetch post and gallery image relationships in batches during rendition repair.
 
 - Resolve Wagtail page URLs using the target host’s portfolio or main URL routes.

@@ -143,7 +143,9 @@ placeholder (``[Name]``, ``[Optionales Kundenstatement zum Projekt.]`` …) is n
 rendered, together with its row or section; the case-study section disappears when none
 of its blocks is filled. The check decodes HTML entities in rich text, so an
 encoded nonbreaking space or bracketed placeholder also counts as empty.
-Plain-text fields are checked and displayed literally.
+Plain-text fields are checked and displayed literally. Project detail context
+checks each block once and uses those results to set section flags and keep
+filled case-study blocks in editorial order.
 
 Fixed presentation elements such as ``Moin`` and the handwritten phrases are not
 editable, because their SVG path data is generated for exactly those words
@@ -316,8 +318,8 @@ admin thumbnails) are excluded. Missing derivatives still use Wagtail's normal g
 filters, alt text and responsive sizing are unchanged. Card lists defer case-study
 content, conclusion and teaser text, while the current project retains its full
 content. Utility/legal menus load only project titles and routing fields in public
-tree order. Detail pages use the same lightweight projection for their menu and project
-counter and load card data only for up to two recommendations. The two cards
+tree order. Detail pages reuse that menu list for the project counter and
+recommendations, loading card data only for up to two recommendations. The two cards
 follow public tree order, wrapping at the end. In a draft preview the menu and
 recommendations use public projects, and the counter includes the current
 draft. The 501 page loads card data separately for its first two projects.

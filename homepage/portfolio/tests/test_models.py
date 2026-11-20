@@ -16,6 +16,7 @@ from homepage.portfolio.models import (
     LegalPageSettings,
     PortfolioAboutItem,
     PortfolioClient,
+    PortfolioContextMixin,
     PortfolioIndexPage,
     PortfolioService,
     PortfolioSiteSettings,
@@ -454,6 +455,45 @@ def test_homepage_portrait_alt_validation_honors_form_exclusions():
     index.about_portrait_image = make_image("Porträt mit Formularfehler")
 
     index.full_clean(exclude={"about_portrait_image_alt"})
+
+
+def test_detail_reuses_the_materialized_navigation(monkeypatch):
+    index = make_portfolio_tree()
+    first = add_project(index, "Synthetic first")
+    draft = add_project(index, "Synthetic draft", publish=False)
+    remaining = [add_project(index, f"Synthetic public {number:02}") for number in range(25)]
+
+    class Navigation(list):
+        visited = 0
+
+        def __iter__(self):
+            for project in super().__iter__():
+                self.visited += 1
+                yield project
+
+    base_context = PortfolioContextMixin.get_context
+
+    def track_navigation(page, *args, **kwargs):
+        context = base_context(page, *args, **kwargs)
+        context["portfolio_projects"] = Navigation(context["portfolio_projects"])
+        return context
+
+    monkeypatch.setattr(PortfolioContextMixin, "get_context", track_navigation)
+    request = RequestFactory().get("/")
+
+    context = first.get_context(request)
+    menu = context["portfolio_projects"]
+    # Each lookup finds the first project immediately, without copying the menu.
+    assert menu.visited == 2
+    assert (context["project_number"], context["project_total"]) == (1, 26)
+    assert context["other_projects"] == remaining[:2]
+
+    context = draft.get_context(request)
+    assert (context["project_number"], context["project_total"]) == (2, 27)
+    assert context["other_projects"] == [first, remaining[0]]
+
+    queryset = index.get_portfolio_navigation_projects()
+    assert remaining[-1].get_other_projects(queryset) == [first, remaining[0]]
 
 
 def test_draft_project_context_has_a_complete_project_counter():

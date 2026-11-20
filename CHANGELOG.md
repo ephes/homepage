@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reuse portfolio detail navigation for recommendations and the project counter.
+
+- Check each project content block once when preparing case-study sections.
+
 - Skip deleted rendition rows during cache purge retry and report only renewed
   purge failures in the next retry command.
 

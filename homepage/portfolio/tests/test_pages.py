@@ -1,5 +1,6 @@
 import base64
 import re
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from wagtail.images import get_image_model
 from wagtail.images.models import Filter
 from wagtail.models import Collection, Locale, Page, Site
 
+from homepage.portfolio import models as portfolio_models
 from homepage.portfolio.models import (
     LegalPageSettings,
     PortfolioIndexPage,
@@ -379,6 +381,49 @@ def test_project_context_reports_populated_case_study_region(client):
     assert response.status_code == 200
     assert response.context["project_has_case_study"] is True
     assert 'id="case-study"' in response.content.decode()
+
+
+def test_project_checks_each_block_once_and_renders_filled_sections(client, monkeypatch):
+    index = make_portfolio_tree()
+    project = add_project(index)
+    project.content = [
+        {"type": "challenge_solution", "value": {"challenge": "", "solution": ""}},
+        {"type": "statement", "value": {"text": "<p>Synthetic statement.</p>"}},
+        {"type": "statement", "value": {"text": "<p>&#91;Placeholder&#93;</p>"}},
+        {"type": "challenge_solution", "value": {"challenge": "<p>Synthetic challenge.</p>", "solution": ""}},
+        {
+            "type": "full_width_image",
+            "value": stream_image(make_image("synthetic-editorial-media"), "Synthetic image"),
+        },
+        {"type": "stats", "value": {"items": [{"label": "Synthetic result", "value": "42"}]}},
+        {"type": "testimonial", "value": {"quote": "[Placeholder]", "name": "", "role": ""}},
+    ]
+    project.save_revision().publish()
+    checked = Counter()
+    block_is_filled = portfolio_models.block_is_filled
+
+    def track_block(block):
+        checked[block.id] += 1
+        return block_is_filled(block)
+
+    monkeypatch.setattr(portfolio_models, "block_is_filled", track_block)
+    response = client.get(project.url)
+
+    assert response.status_code == 200
+    context = response.context
+    assert checked == Counter(block.id for block in context["page"].content)
+    assert [block.block_type for block in context["case_study_blocks"]] == ["statement", "challenge_solution"]
+    assert context["project_has_case_study"]
+    assert context["project_has_statement"]
+    assert context["project_has_editorial_media"]
+    assert context["project_has_results"]
+    soup = BeautifulSoup(response.content, "html.parser")
+    case_study = soup.select_one("#case-study").get_text(" ", strip=True)
+    assert case_study.index("Synthetic statement.") < case_study.index("Synthetic challenge.")
+    assert "Placeholder" not in case_study
+    assert soup.select_one("#galerie img")["alt"] == "Synthetic image"
+    assert "Synthetic result" in soup.select_one("#ergebnisse").get_text()
+    assert soup.select_one(".project-testimonial") is None
 
 
 def test_project_gallery_fallback_uses_the_editable_navigation_label(client):

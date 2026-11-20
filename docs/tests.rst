@@ -223,7 +223,8 @@ Page lookup identity contracts
 ------------------------------
 
 ``uv run --locked pytest homepage/core/tests/test_page_lookup.py`` directly
-checks the shared Webmention/Micropub helper, independently of wrapper policy.
+checks Wagtail site selection shared by Webmention and Micropub, along with
+Micropub's generic page lookup independently of its edit permission checks.
 Synthetic sites sharing a hostname have distinct roots and colliding slugs:
 explicit ports select their own root, omitted HTTP/HTTPS ports select 80/443,
 and malformed ports fail lookup. Wagtail's default-site and unique-hostname
@@ -236,6 +237,11 @@ Generic specific page instances are resolved below nested site roots using the
 full ancestor path, including decoded Unicode. Query strings and fragments do
 not change identity, and application routes are excluded. Draft and restricted
 pages remain available to callers; lookup itself grants no visibility or access.
+The route probe selects only the page ID and content type ID. The content type
+and fully loaded page are read on the selected site's database. A removed model
+still resolves to a full base Page. Micropub tests check the probe for a custom
+page that is ineligible for editing through this endpoint. Webmention uses
+direct Cast blog and post lookups and also rejects that custom page type.
 
 Rendition repair and signup admission
 -------------------------------------

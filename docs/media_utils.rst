@@ -57,8 +57,9 @@ The command exits with an error when a rendition could not be checked or regener
 Those renditions are listed on stderr and left unchanged, so it is safe to simply run
 the command again.
 
-Cache invalidation is a separate post-save outcome. If a purge fails, the usable
-replacement stays committed and counts as regenerated; independent repairs continue.
+Cache invalidation runs after commit on the rendition’s database alias. If a
+purge fails, the usable replacement stays committed and counts as regenerated.
+Independent repairs continue.
 The command exits nonzero and reports the database alias and ID for each
 ``cache purge pending`` rendition. The retry purges cache keys without allocating
 files::
@@ -70,6 +71,13 @@ current rows on that alias and purges their cache keys. Group IDs by alias and
 retry each alias separately. Deleted rows are reported and skipped. The retry
 exits nonzero only for renewed purge failures and lists those IDs with the alias
 for the next attempt. Retry accepts no blog slugs or limit.
+
+When the repair helper runs inside a caller’s transaction, replacements are
+provisional until the outer transaction commits and a rollback discards the
+scheduled cache purge. Storage writes can outlive a database rollback. If a
+deferred purge fails after commit, a warning reports the rendition ID and
+database alias for a cache-only retry. This later failure is reported through
+logging because the helper has already returned.
 
 Video width and height
 ======================

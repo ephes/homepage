@@ -11,6 +11,7 @@ from django.contrib.sites.models import Site
 from wagtail.models import Locale, Page, PageViewRestriction
 from wagtail.models import Site as WagtailSite
 
+from homepage.portfolio.models import PortfolioIndexPage
 from homepage.webmention_config import CastURLResolver
 
 pytestmark = pytest.mark.django_db
@@ -111,6 +112,12 @@ def test_unknown_post_and_invalid_paths_do_not_resolve(tree):
     assert resolve("/") is None
     assert resolve("/something/else/") is None
     assert CastURLResolver().resolve("not-a-url") is None
+
+
+def test_non_cast_page_below_a_blog_is_not_a_webmention_target(tree):
+    tree["alpha"].add_child(instance=PortfolioIndexPage(title="Synthetic portfolio", slug="portfolio"))
+
+    assert resolve("/blogs/alpha/portfolio/") is None
 
 
 def test_wrong_domain_does_not_resolve(tree):

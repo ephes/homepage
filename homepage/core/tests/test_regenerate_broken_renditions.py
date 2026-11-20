@@ -7,6 +7,7 @@ import pytest
 from cast.models import Blog, Gallery, Post
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import transaction
 from wagtail.images import get_image_model
 from wagtail.images.models import Filter
 from wagtail.images.tests.utils import get_test_image_file
@@ -523,6 +524,45 @@ def test_two_repairs_keep_the_winner_and_compensate_the_loser(monkeypatch, repai
     assert not repair_storage.exists(allocated[0])
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("outcome", ["rollback", "commit", "purge-failure"])
+def test_cache_purge_follows_the_outer_commit(monkeypatch, caplog, outcome):
+    image = make_image("outer-commit")
+    rendition = make_rendition(image)
+    remove_file(rendition)
+    model = type(rendition)
+    # Simulate stale dimensions in the old row so the callback can distinguish it.
+    model.objects.filter(pk=rendition.pk).update(width=1, height=1)
+    purged = []
+
+    def purge(self):
+        fresh = stored(self)
+        purged.append((transaction.get_autocommit(), fresh.file.name, fresh.width, fresh.height))
+        if outcome == "purge-failure":
+            raise RuntimeError("cache unavailable")
+
+    monkeypatch.setattr(model, "purge_from_cache", purge)
+    with transaction.atomic():
+        result = repair.regenerate_renditions_for_image(image)
+        [replacement] = result.regenerated
+        assert replacement.width > 1 and replacement.height > 1
+        assert purged == []
+        if outcome == "rollback":
+            transaction.set_rollback(True)
+
+    if outcome == "rollback":
+        assert purged == []
+        fresh = stored(rendition)
+        assert (fresh.file.name, fresh.width, fresh.height) == (rendition.file.name, 1, 1)
+    else:
+        assert purged == [(True, replacement.file.name, replacement.width, replacement.height)]
+        assert file_exists(replacement)
+    assert not result.incomplete
+    retry = f"--retry-cache-purge {rendition.pk} --database=default"
+    assert (retry in caplog.text) == (outcome == "purge-failure")
+
+
+@pytest.mark.django_db(transaction=True)
 def test_cache_failure_keeps_committed_repairs_and_continues(monkeypatch, repair_storage):
     image = make_image("purge-failure")
     first = make_rendition(image)
@@ -636,6 +676,7 @@ def test_cache_purge_rejects_invalid_alias_usage(args, message, django_assert_nu
         run_command(*args)
 
 
+@pytest.mark.django_db(transaction=True)
 def test_command_reports_cache_pending_separately(site_root, monkeypatch):
     blog = site_root.add_child(instance=Blog(title="Purge", slug="purge"))
     rendition = make_rendition(make_image("pending"))
@@ -692,6 +733,7 @@ def test_command_batches_relationship_queries_and_checks_shared_images_once(
 
 
 @pytest.mark.parametrize("outcome", ["missing", "unknown", "failed", "cache_pending"])
+@pytest.mark.django_db(transaction=True)
 def test_command_accounts_shared_image_outcome_once(site_root, monkeypatch, outcome):
     blog = site_root.add_child(instance=Blog(title="Shared outcome", slug="shared-outcome"))
     image = make_image("shared-outcome")

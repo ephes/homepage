@@ -95,6 +95,35 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-20 portfolio detail context, seed scope and rendition retry fixes
+-------------------------------------------------------------------------
+
+Deployed ``1046691``: portfolio project detail pages reuse the already loaded
+menu list for the two recommendations and the project counter and check each
+content block once (:doc:`portfolio_wagtail`). The operator commands changed
+too: ``regenerate_broken_renditions --retry-cache-purge`` skips rendition rows
+that no longer exist and lists only renewed purge failures, an ambiguous blog
+slug is refused before any repair (:doc:`media_utils`), and ``seed_portfolio``
+works on the requested hostname and port or default-site path. No migration, no
+new static files and no settings or environment change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``1046691``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200. A read-only ``manage.py shell`` probe (``PGOPTIONS`` with
+``default_transaction_read_only=on``, ``python -B``, inside a rolled-back
+transaction, cache purge patched out) ran a purge retry for a rendition ID that
+does not exist: before the deploy it failed and asked for the same retry again,
+afterwards it reported the row as skipped and completed. The portfolio index,
+the two legal pages and all nine linked project pages were fetched before and
+after the deploy, directly from the gunicorn origin (checked to be the restarted
+``homepage.service``) and through public HTTPS: all answered 200 with identical
+HTML.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``de18414``). No database step and no static rebuild are needed.
+
 2026-11-20 weeknote links with retired categories and webmention alias guards
 -----------------------------------------------------------------------------
 

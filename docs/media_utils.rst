@@ -14,7 +14,8 @@ The command checks every post of each blog, including gallery images, and prints
 summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` posts
 of each blog; without it nothing is skipped.
 
-An image shared by direct slots, galleries, posts or requested blogs is checked
+The scan fetches direct images, galleries and gallery images in post batches of
+up to 100. An image shared by direct slots, galleries, posts or requested blogs is checked
 only once in the complete invocation, using its database alias and primary key.
 Rendition queries and storage checks therefore scale with unique images and their
 renditions, rather than repeated references. The final ``checked images`` count

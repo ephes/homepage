@@ -192,7 +192,11 @@ class Command(BaseCommand):
         seen_images = set()
         for blog in blogs:
             self.stdout.write(f"Blog: {blog.slug} {blog.title}")
-            post_queryset = Post.objects.descendant_of(blog).order_by("-visible_date", "-pk")
+            post_queryset = (
+                Post.objects.descendant_of(blog)
+                .order_by("-visible_date", "-pk")
+                .prefetch_related("images", "galleries__images")
+            )
             if limit is not None:
                 post_queryset = post_queryset[:limit]
             blog_result = RepairResult()

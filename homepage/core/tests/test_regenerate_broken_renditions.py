@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 from collections import Counter
-from types import SimpleNamespace
 
 import pytest
 from cast.models import Blog, Gallery, Post
@@ -515,32 +514,21 @@ def test_command_reports_cache_pending_separately(site_root, monkeypatch):
     assert f"--retry-cache-purge {rendition.pk}" in stderr.getvalue()
 
 
-def test_command_checks_shared_images_once_across_all_blogs(site_root, monkeypatch):
+def test_command_batches_relationship_queries_and_checks_shared_images_once(
+    site_root, monkeypatch, django_assert_max_num_queries
+):
     first = site_root.add_child(instance=Blog(title="Shared first", slug="shared-first"))
-    site_root.add_child(instance=Blog(title="Shared second", slug="shared-second"))
+    second = site_root.add_child(instance=Blog(title="Shared second", slug="shared-second"))
     image = make_image("shared")
     renditions = [make_rendition(image, f"width-{width}") for width in range(1, 21)]
     distinct = make_rendition(make_image("distinct"))
+    gallery = Gallery.objects.create()
+    gallery.images.add(image, distinct.image)
+    for blog in (first, second):
+        for index in range(6):
+            post = make_post(blog, f"shared-post-{index}", images=[image])
+            post.galleries.add(gallery)
 
-    def related(*items):
-        return SimpleNamespace(all=lambda: items)
-
-    # Synthetic posts retain real image/rendition managers and storage calls.
-    # Separate model instances with the same PK must share the identity too.
-    posts = [
-        SimpleNamespace(
-            pk=index,
-            images=related(get_image_model().objects.get(pk=image.pk)),
-            galleries=related(SimpleNamespace(images=related(image, distinct.image))),
-        )
-        for index in range(100)
-    ]
-
-    def descendant_of(blog):
-        selected = posts[:50] if blog.pk == first.pk else posts[50:]
-        return SimpleNamespace(order_by=lambda *args: SimpleNamespace(iterator=lambda **kwargs: iter(selected)))
-
-    monkeypatch.setattr(Post.objects, "descendant_of", descendant_of)
     storage = distinct.file.storage
     exists = storage.exists
     checked = []
@@ -550,10 +538,14 @@ def test_command_checks_shared_images_once_across_all_blogs(site_root, monkeypat
         return exists(name)
 
     monkeypatch.setattr(storage, "exists", count_exists)
-    for _ in range(2):  # A new invocation must check everything again.
+    # Three blog lookups, three post scans, three relationship queries per scan,
+    # and two rendition queries for distinct image identities.
+    for limit in ("1", "6"):
         checked.clear()
-        stdout, stderr = run_command("shared-first", "shared-second", "shared-first")
+        with django_assert_max_num_queries(17):
+            stdout, stderr = run_command("shared-first", "shared-second", "shared-first", "--limit", limit)
         assert Counter(checked) == Counter({r.file.name: 1 for r in [*renditions, distinct]})
+        assert f"Blog shared-first: checked {limit} posts" in stdout
         assert "checked images: 2" in stdout
         assert "generated renditions: 0" in stdout
         assert stderr == ""

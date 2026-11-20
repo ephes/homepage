@@ -25,11 +25,46 @@ from django.views.decorators.http import require_POST
 
 logger = logging.getLogger("homepage.csp")
 
+_LEGACY_MEDIA_TYPE = "application/csp-report"
+_REPORTING_MEDIA_TYPE = "application/reports+json"
+
 MAX_BODY_BYTES = 16 * 1024
 MAX_REPORTS_PER_REQUEST = 5
 _FIELD_MAX = 200
-_KEYWORD = re.compile(r"[a-z][a-z-]{0,29}")
-_DIRECTIVE = re.compile(r"[a-z][a-z-]{0,39}")
+# CSP Level 3 directives, plus mixed-content and Trusted Types directives.
+_DIRECTIVES = frozenset(
+    {
+        "base-uri",
+        "block-all-mixed-content",
+        "child-src",
+        "connect-src",
+        "default-src",
+        "font-src",
+        "form-action",
+        "frame-ancestors",
+        "frame-src",
+        "img-src",
+        "manifest-src",
+        "media-src",
+        "object-src",
+        "report-to",
+        "report-uri",
+        "require-trusted-types-for",
+        "sandbox",
+        "script-src",
+        "script-src-attr",
+        "script-src-elem",
+        "style-src",
+        "style-src-attr",
+        "style-src-elem",
+        "trusted-types",
+        "upgrade-insecure-requests",
+        "webrtc",
+        "worker-src",
+    }
+)
+_RESOURCE_KEYWORDS = frozenset({"inline", "eval", "wasm-eval", "trusted-types-policy", "trusted-types-sink"})
+_RESOURCE_SCHEMES = frozenset({"about", "blob", "data", "file", "filesystem", "javascript", "ws", "wss"})
 _HOST = re.compile(r"[a-z0-9.-]{1,253}|[0-9a-f:.]{2,45}")
 # Fixed route families from the site URLconfs, plus locally served static assets.
 _ROUTE_PREFIXES = frozenset(
@@ -73,14 +108,14 @@ def _location(value: object, *, request_origin: tuple[str, str] | None = None) -
     if not isinstance(value, str) or not value.strip():
         return "-"
     value = value.strip()
-    if _KEYWORD.fullmatch(value):
-        return value  # inline, eval, data, wasm-eval, blob, ...
+    if value in _RESOURCE_KEYWORDS or value in _RESOURCE_SCHEMES:
+        return value
     try:
         parts = urlsplit(value)
     except ValueError:
         return "invalid"
     if parts.scheme not in {"http", "https"}:
-        return parts.scheme if _KEYWORD.fullmatch(parts.scheme) else "other"
+        return parts.scheme if parts.scheme in _RESOURCE_SCHEMES else "other"
     netloc = _netloc(parts)
     if netloc is None:
         return "invalid"
@@ -92,9 +127,10 @@ def _location(value: object, *, request_origin: tuple[str, str] | None = None) -
 
 
 def _directive(value: object) -> str:
-    if isinstance(value, str) and _DIRECTIVE.fullmatch(value.strip()):
-        return value.strip()
-    return "-"
+    if not isinstance(value, str) or not value.strip():
+        return "-"
+    name = value.strip()
+    return name if name in _DIRECTIVES else "other"
 
 
 def _line(value: object) -> str:
@@ -161,6 +197,9 @@ _budget = _MinuteBudget()
 @csrf_exempt
 @require_POST
 def csp_report(request: HttpRequest) -> HttpResponse:
+    media_type = request.content_type
+    if media_type not in {_LEGACY_MEDIA_TYPE, _REPORTING_MEDIA_TYPE}:
+        return HttpResponse(status=415)
     try:
         declared = int(request.headers.get("content-length") or 0)
     except ValueError:
@@ -173,6 +212,11 @@ def csp_report(request: HttpRequest) -> HttpResponse:
     try:
         payload = json.loads(body)
     except (ValueError, RecursionError):
+        return HttpResponse(status=400)
+    if media_type == _LEGACY_MEDIA_TYPE:
+        if not isinstance(payload, dict) or not isinstance(payload.get("csp-report"), dict):
+            return HttpResponse(status=400)
+    elif not isinstance(payload, list):
         return HttpResponse(status=400)
     request_origin = _origin_key(request.scheme, request.get_host().lower())
     for report in islice(_reports(payload), MAX_REPORTS_PER_REQUEST):

@@ -33,7 +33,11 @@ Reports
 both the main and the portfolio host. The endpoint accepts POSTs only, is
 CSRF-exempt, refuses bodies over 16 KiB with ``413`` and invalid JSON with
 ``400``, and handles at most five reports per request. It understands the
-classic ``application/csp-report`` body and the Reporting API list format.
+classic ``application/csp-report`` object with a nested ``csp-report`` object
+and the ``application/reports+json`` Reporting API array, including an empty
+array. Media type parameters are accepted. An unsupported media type receives
+``415`` and a body with the wrong shape receives ``400``, before either can
+consume the log budget. Accepted requests receive ``204``.
 After parsing the bounded JSON body, it stops scanning the list once it has
 accepted five CSP violations. Unsupported entries are skipped without using
 the allowance.
@@ -44,8 +48,14 @@ gunicorn journal in production)::
     CSP report-only violation directive=script-src-elem blocked=https://cdn.example document=site.example/blogs/ source=site.example/static/:12
 
 The line holds the directive, the blocked origin (or a keyword such as
-``inline``, ``eval`` or ``data``), and where the violation happened. URLs can
-carry secrets (IndieAuth codes in query strings, allauth confirmation and reset
+``inline``, ``eval`` or ``data``), and where the violation happened. Fixed
+allowlists govern directive names, violation keywords and non-HTTP(S) schemes.
+An allowlisted scheme such as ``blob`` is logged by name only. Unknown labels
+and schemes become ``other``, and missing fields are shown as ``-``. The
+allowlists include names defined in the
+`CSP Level 3 specification <https://www.w3.org/TR/CSP3/>`_.
+
+URLs can carry secrets (IndieAuth codes in query strings, allauth confirmation and reset
 keys in paths, possibly percent-encoded). For documents and source files on the
 report endpoint's origin (same scheme, host and port), a fixed allowlist keeps
 the first segment of recognized routes, for example ``site.example/accounts/``,

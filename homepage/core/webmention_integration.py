@@ -21,7 +21,7 @@ import logging
 from functools import partial
 from urllib.parse import urlsplit, urlunsplit
 
-from django.db import transaction
+from django.db import DEFAULT_DB_ALIAS, transaction
 from django.dispatch import receiver
 from wagtail.signals import page_published
 
@@ -58,13 +58,13 @@ def send_webmentions_on_publish(sender, **kwargs):
     if not isinstance(post, (Post, Episode)):
         return
 
-    if not _is_publicly_accessible(post):
+    database = page._state.db or DEFAULT_DB_ALIAS
+    if not _is_publicly_accessible(post, database):
         return
 
-    # Only ids cross the commit boundary: the page is read again afterwards, so
-    # the delivery sees what was committed rather than this in-memory instance.
-    deliver = partial(_deliver_webmentions, post.pk, post.live_revision_id)
-    transaction.on_commit(deliver)
+    # Capture only identifiers so delivery can reload the committed publication.
+    deliver = partial(_deliver_webmentions, post.pk, post.live_revision_id, database)
+    transaction.on_commit(deliver, using=database)
 
 
 def _load_post_models() -> bool:
@@ -81,16 +81,25 @@ def _load_post_models() -> bool:
     return True
 
 
-def _is_publicly_accessible(page) -> bool:
-    """Return whether anonymous visitors may view ``page``.
+def _is_publicly_accessible(page, database) -> bool:
+    """Check the page and its ancestors for restrictions on the publishing database."""
+    from wagtail.models import Page, PageViewRestriction
 
-    Wagtail view restrictions (login, password, groups) apply to a page and to
-    everything below it, so the page's ancestors are checked as well.
-    """
-    return not page.get_view_restrictions().exists()
+    # Wagtail checks restrictions on the source of each alias.
+    pages = Page.objects.using(database).only("alias_of")
+
+    def restriction_page_id(candidate):
+        if candidate.alias_of_id is None:
+            return candidate.pk
+        return restriction_page_id(pages.get(pk=candidate.alias_of_id))
+
+    ancestors = page.get_ancestors().using(database).only("alias_of")
+    page_ids = {restriction_page_id(page)}
+    page_ids.update(restriction_page_id(ancestor) for ancestor in ancestors)
+    return not PageViewRestriction.objects.using(database).filter(page_id__in=page_ids).exists()
 
 
-def _deliver_webmentions(page_id, live_revision_id) -> None:
+def _deliver_webmentions(page_id, live_revision_id, database) -> None:
     """Send the webmentions of a committed publication; never raises.
 
     Runs after the publishing transaction committed. The publication is done at
@@ -99,14 +108,14 @@ def _deliver_webmentions(page_id, live_revision_id) -> None:
     logged, because the message can quote URLs from the post content.
     """
     try:
-        post = _committed_public_post(page_id, live_revision_id)
+        post = _committed_public_post(page_id, live_revision_id, database)
         if post is not None:
             _send_webmentions_for(post)
     except Exception as exc:
         logger.warning("Webmention delivery failed for page %s: %s", page_id, type(exc).__name__)
 
 
-def _committed_public_post(page_id, live_revision_id):
+def _committed_public_post(page_id, live_revision_id, database):
     """Return the committed post to announce, or ``None`` when there is none.
 
     The page is skipped when it no longer exists or is no longer live, when a
@@ -115,18 +124,17 @@ def _committed_public_post(page_id, live_revision_id):
     """
     from wagtail.models import Page
 
-    page = Page.objects.filter(pk=page_id).first()
+    page = Page.objects.using(database).select_related("content_type").filter(pk=page_id).first()
     if page is None:
         return None
-    # Loading the specific page reads the database again. Every decision below is
-    # made on that one instance, which is also the one that gets rendered, so the
-    # checks cannot pass on an older read of the page than the content comes from.
-    post = page.specific
-    if not isinstance(post, (Post, Episode)):
+    # Wagtail's specific lookup does not carry the alias from the base page.
+    model = page.content_type.model_class()
+    if model is None or not issubclass(model, (Post, Episode)):
         return None
-    if not post.live or post.live_revision_id != live_revision_id:
+    post = model.objects.using(database).filter(pk=page_id).first()
+    if post is None or not post.live or post.live_revision_id != live_revision_id:
         return None
-    if not _is_publicly_accessible(post):
+    if not _is_publicly_accessible(post, database):
         return None
     return post
 

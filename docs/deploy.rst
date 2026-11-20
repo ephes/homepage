@@ -95,6 +95,31 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-20 rendition purge after commit and narrow route lookup
+---------------------------------------------------------------
+
+Deployed ``e22de29``: the Micropub route lookup (``find_page_for_url``) probes
+the Wagtail page tree with only the page ID and content type and then loads the
+specific page once on the site's database. ``regenerate_broken_renditions``
+purges the cache of a repaired rendition only after the write transaction
+commits (:doc:`media_utils`). Public page rendering, Webmention resolution and
+the portfolio are unchanged. No migration, no new static files and no settings
+or environment change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``e22de29``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200. A read-only ``manage.py shell`` probe (``PGOPTIONS`` with
+``default_transaction_read_only=on``, ``python -B``, inside a rolled-back
+transaction) resolved the live blog URL and a missing path through
+``find_page_for_url``: the same results before and after (the specific ``Blog``,
+fully loaded, and ``None``), with the route probe query reading 29 page columns
+before the deploy and 2 afterwards.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``55c7f97``). No database step and no static rebuild are needed.
+
 2026-11-20 portfolio detail context, seed scope and rendition retry fixes
 -------------------------------------------------------------------------
 

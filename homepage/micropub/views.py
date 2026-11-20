@@ -13,6 +13,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_POST
 
 from .converters import ContentConverter
 from .forms import MicropubPostForm
@@ -94,6 +95,7 @@ def micropub_form_view(request):
 
 
 @login_required
+@require_POST
 def micropub_preview_view(request):
     """Preview how content will be converted."""
     content = request.POST.get("content", "")

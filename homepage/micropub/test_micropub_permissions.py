@@ -13,7 +13,7 @@ from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
 from django.db import connection
 from django.template.loader import render_to_string
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from indieweb.models import Token
@@ -22,6 +22,7 @@ from wagtail.models import Site as WagtailSite
 
 from homepage.portfolio.models import PortfolioIndexPage
 
+from .converters import ContentConverter
 from .forms import MicropubPostForm
 from .handler import CastPostMicropubHandler, MicropubPermissionError, MicropubTargetError
 
@@ -350,6 +351,33 @@ def test_preview_escapes_code_and_sanitizes_paragraphs(client, users):
     assert "onerror" not in html
     assert "<script>alert(2)</script>" not in html
     assert "&lt;script&gt;alert(2)&lt;/script&gt;" in html
+
+
+@pytest.mark.parametrize("method", ["GET", "HEAD", "OPTIONS"])
+def test_preview_rejects_non_post_without_conversion(client, users, method):
+    client.force_login(users["nobody"])
+
+    with patch.object(ContentConverter, "convert_content") as convert:
+        response = client.generic(method, reverse("micropub-preview"))
+
+    assert response.status_code == 405
+    assert response.headers["Allow"] == "POST"
+    convert.assert_not_called()
+
+
+def test_preview_renders_post_with_valid_csrf_token(users):
+    client = Client(enforce_csrf_checks=True)
+    client.force_login(users["publisher"])
+    preview_url = reverse("micropub-preview")
+    data = {"content": "Synthetic preview.", "post_type": "note"}
+
+    assert client.post(preview_url, data).status_code == 403
+    form = client.get(reverse("micropub-form"))
+    token = form.cookies["csrftoken"].value
+    response = client.post(preview_url, data, headers={"X-CSRFToken": token})
+
+    assert response.status_code == 200
+    assert b"<p>Synthetic preview.</p>" in response.content
 
 
 def test_preview_escapes_code_language(client, users):

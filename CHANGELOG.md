@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Require POST for the authenticated local Micropub preview.
+
 - Preserve the local Micropub form's redirect and success message if logging
   fails after post creation.
 

@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, create_autospec
 
 import pytest
 
@@ -122,17 +122,19 @@ def transport(helper, monkeypatch, tmp_path):
     sftp = Mock()
     sftp.lstat.return_value = SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_size=len(payload), st_mtime=10)
 
-    def getfo(remote, target, *, callback, prefetch):
-        assert prefetch is True
+    def getfo(remote, target, *, callback, prefetch, max_concurrent_prefetch_requests=None):
         assert remote.startswith("site/backups/")
         stages = list(tmp_path.rglob(".legacy-backup-*"))
         assert len(stages) == 1 and stages[0].stat().st_mode & 0o777 == 0o700
         assert os.fstat(target.fileno()).st_mode & 0o777 == 0o600
-        target.write(payload)
-        callback(len(payload), len(payload))
+        size = 0
+        for offset in range(0, len(payload), 32):
+            end = offset + 32
+            size += target.write(payload[offset:end])
+            callback(size, len(payload))
         return len(payload)
 
-    sftp.getfo.side_effect = getfo
+    sftp.getfo = create_autospec(getfo, side_effect=getfo)
     client = Mock()
     client.exec_command.return_value = streams
     client.open_sftp.return_value = sftp
@@ -173,6 +175,28 @@ def test_complete_private_download_and_deadlines(helper, transport, tmp_path):
     assert transport.sftp.get_channel.return_value.settimeout.call_args.args[0] > 0
     transport.sftp.close.assert_called_once()
     assert_closed(transport)
+
+
+def test_prefetch_has_a_finite_request_limit(helper, transport, tmp_path):
+    path = helper.fetch_backup("host.invalid", "synthetic", tmp_path)
+
+    kwargs = transport.sftp.getfo.call_args.kwargs
+    assert kwargs["prefetch"] is True
+    assert 0 < kwargs["max_concurrent_prefetch_requests"] <= 64
+    assert path.read_bytes() == transport.payload
+
+
+def test_prefetch_is_disabled_with_older_paramiko(helper, transport, tmp_path):
+    getfo = transport.sftp.getfo
+
+    def legacy_getfo(remote, target, *, callback, prefetch):
+        return getfo(remote, target, callback=callback, prefetch=prefetch)
+
+    transport.sftp.getfo = create_autospec(legacy_getfo, side_effect=legacy_getfo)
+    path = helper.fetch_backup("host.invalid", "synthetic", tmp_path)
+
+    assert transport.sftp.getfo.call_args.kwargs["prefetch"] is False
+    assert path.read_bytes() == transport.payload
 
 
 @pytest.mark.parametrize(

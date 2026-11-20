@@ -189,6 +189,11 @@ for the 10 GiB maximum). Channel I/O and each transport close have ten seconds. 
 the main thread and an unused real-time signal timer. Existing signal handlers
 are restored. Unknown SSH host keys remain refused.
 
+The helper caps SFTP prefetch at 64 concurrent requests with Paramiko 3.3 and
+later. With Paramiko 2.8 through 3.2, it disables prefetch and reads
+sequentially. See the
+`Paramiko SFTP documentation <https://docs.paramiko.org/en/3.3/api/sftp.html#paramiko.sftp_client.SFTPClient.getfo>`_.
+
 Downloads must be nonempty regular remote files of at most 10 GiB, retain their
 size/mtime during transfer, and match the received byte count. A unique private
 stage (directory 0700, file 0600) holds the download. The maintained dump verifier

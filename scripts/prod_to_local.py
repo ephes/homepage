@@ -1,6 +1,7 @@
 """Legacy Docker/media transfer helper; prefer commands.py production-db-to-local."""
 
 import argparse
+import inspect
 import os
 import re
 import shlex
@@ -20,6 +21,7 @@ TRANSFER_TIMEOUT = 300  # SFTP setup plus a fixed transfer allowance
 MIN_TRANSFER_RATE = 1024**2  # bytes per second added to the transfer deadline
 MAX_COMMAND_BYTES = 64 * 1024  # stdout and stderr together
 MAX_BACKUP_BYTES = 10 * 1024**3
+MAX_PREFETCH_REQUESTS = 64
 
 
 @contextmanager
@@ -167,7 +169,18 @@ def fetch_backup(host, username, backups_dir):
 
                 fd = os.open(stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
                 with os.fdopen(fd, "wb") as target:
-                    copied = sftp.getfo(remote, target, callback=progress, prefetch=True)
+                    # Paramiko 2.8–3.2 can disable prefetch but cannot bound it.
+                    getfo = sftp.getfo
+                    if "max_concurrent_prefetch_requests" in inspect.signature(getfo).parameters:
+                        copied = getfo(
+                            remote,
+                            target,
+                            callback=progress,
+                            prefetch=True,
+                            max_concurrent_prefetch_requests=MAX_PREFETCH_REQUESTS,
+                        )
+                    else:
+                        copied = getfo(remote, target, callback=progress, prefetch=False)
                     target.flush()
                     os.fsync(target.fileno())
                 after = sftp.lstat(remote)

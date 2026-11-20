@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Cap legacy backup SFTP prefetch at 64 requests and disable it with older
+  Paramiko versions that lack a request limit.
+
 - Probe Wagtail routes using only page identity and load the full page from the
   selected site's database.
 

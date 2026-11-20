@@ -250,6 +250,22 @@ class TestPublicVisibility:
         assert outbound.rendered == [post.pk]
         assert len(outbound.sent) == 1
 
+    def test_cyclic_ancestor_alias_does_not_schedule_delivery(
+        self, blog, outbound, django_capture_on_commit_callbacks
+    ):
+        post = draft_post(blog)
+        source = blog.get_parent()
+        # Restore a cycle without going through Wagtail's alias creation API.
+        Page.objects.filter(pk=blog.pk).update(alias_of_id=source.pk)
+        Page.objects.filter(pk=source.pk).update(alias_of_id=blog.pk)
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            post.save_revision().publish()
+
+        assert Post.objects.get(pk=post.pk).live is True
+        assert deliveries(callbacks) == []
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
     def test_restriction_added_before_commit_stops_the_delivery(
         self, blog, outbound, django_capture_on_commit_callbacks
     ):

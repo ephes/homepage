@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Skip outgoing webmentions for publications with cyclic page aliases.
+
 - Group weeknote links in one pass while preserving display order.
 
 - Render stored weeknote links with retired categories in a final Other links group.

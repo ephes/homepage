@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Hide optional portfolio rich-text blocks containing only encoded whitespace
+  or starter placeholders, and treat plain-text fields literally.
+
 - Reload the live Webmention post and check its access restrictions on the
   publishing database.
 - Schedule Webmention delivery on the publishing database so a rollback on

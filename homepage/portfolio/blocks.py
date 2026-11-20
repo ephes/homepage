@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from wagtail import blocks
 from wagtail.blocks import StructBlockValidationError
 from wagtail.images.blocks import ImageBlock
+from wagtail.rich_text import RichText, get_text_for_indexing
 
 INLINE_RICH_TEXT_FEATURES = ["bold", "italic", "link", "no-break"]
 BODY_RICH_TEXT_FEATURES = ["bold", "italic", "ol", "ul", "link", "no-break"]
@@ -26,8 +27,7 @@ def is_filled(value):
     "[Optionales Kundenstatement zum Projekt.]") count as not filled, so their block
     is not rendered.
     """
-    source = getattr(value, "source", value)
-    text = re.sub(r"<[^>]*>", " ", str(source or ""))
+    text = get_text_for_indexing(value.source) if isinstance(value, RichText) else str(value or "")
     text = " ".join(text.replace("\xa0", " ").split())
     return bool(text) and not PLACEHOLDER_PATTERN.match(text)
 

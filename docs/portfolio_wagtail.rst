@@ -140,7 +140,9 @@ Statement, challenge, solution, the stats entries and the testimonial quote, nam
 role may be left empty. A text that is empty or consists only of a bracketed starter
 placeholder (``[Name]``, ``[Optionales Kundenstatement zum Projekt.]`` …) is not
 rendered, together with its row or section; the case-study section disappears when none
-of its blocks is filled.
+of its blocks is filled. The check decodes HTML entities in rich text, so an
+encoded nonbreaking space or bracketed placeholder also counts as empty.
+Plain-text fields are checked and displayed literally.
 
 Fixed presentation elements such as ``Moin`` and the handwritten phrases are not
 editable, because their SVG path data is generated for exactly those words

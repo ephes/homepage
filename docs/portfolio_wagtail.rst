@@ -143,7 +143,9 @@ placeholder (``[Name]``, ``[Optionales Kundenstatement zum Projekt.]`` …) is n
 rendered, together with its row or section; the case-study section disappears when none
 of its blocks is filled. The check decodes HTML entities in rich text, so an
 encoded nonbreaking space or bracketed placeholder also counts as empty.
-Plain-text fields are checked and displayed literally.
+Plain-text fields are checked and displayed literally. Project detail context
+checks each block once and uses those results to set section flags and keep
+filled case-study blocks in editorial order.
 
 Fixed presentation elements such as ``Moin`` and the handwritten phrases are not
 editable, because their SVG path data is generated for exactly those words
@@ -252,11 +254,17 @@ Create the page in the Wagtail admin, or let the seed command create it::
     uv run python manage.py seed_portfolio --create --hostname design.localhost --port 8000
 
 ``seed_portfolio`` creates the project categories and, with ``--create``, an empty,
-unpublished portfolio page if none exists. It never changes an existing page and can be
-run repeatedly. With ``--hostname`` the page becomes the root page of a new Wagtail site
-for that hostname (next to the main site's tree), with ``--port`` as the site's port
-(default 443, so Wagtail renders ``https://`` URLs); without it, it is created below the
-default site's root page.
+unpublished portfolio page at the requested target. Run it again to reuse the
+matching page without changing its content or revision. Without ``--hostname``,
+the command uses the default site's root if it is already a portfolio, or looks
+for the requested ``--slug`` (default ``portfolio``) immediately beneath that root.
+
+With ``--hostname``, the target is the exact hostname and ``--port`` pair
+(default 443 for HTTPS). A new pair gets its own Wagtail site and portfolio root.
+If the pair already exists, its root must be a portfolio and must match
+``--slug`` when supplied. An occupied pair with a different root is refused.
+When ``--slug`` is omitted for a new dedicated site, Wagtail derives a unique
+sibling slug from the page title.
 
 The code holds no editorial content. Texts, services, about items, clients, projects,
 legal texts and images are entered in the Wagtail admin and live in the database (images
@@ -316,8 +324,8 @@ admin thumbnails) are excluded. Missing derivatives still use Wagtail's normal g
 filters, alt text and responsive sizing are unchanged. Card lists defer case-study
 content, conclusion and teaser text, while the current project retains its full
 content. Utility/legal menus load only project titles and routing fields in public
-tree order. Detail pages use the same lightweight projection for their menu and project
-counter and load card data only for up to two recommendations. The two cards
+tree order. Detail pages reuse that menu list for the project counter and
+recommendations, loading card data only for up to two recommendations. The two cards
 follow public tree order, wrapping at the end. In a draft preview the menu and
 recommendations use public projects, and the counter includes the current
 draft. The 501 page loads card data separately for its first two projects.

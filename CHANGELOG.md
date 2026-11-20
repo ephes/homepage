@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Scope portfolio seeding to the requested site root or default-site path.
+
+- Allow portfolio sites on distinct ports of the same hostname while rejecting
+  an occupied hostname and port with a mismatched root.
+
+- Reuse portfolio detail navigation for recommendations and the project counter.
+
+- Check each project content block once when preparing case-study sections.
+
+- Skip deleted rendition rows during cache purge retry and report only renewed
+  purge failures in the next retry command.
+
+- Refuse ambiguous blog slugs before repairing any rendition and report the
+  matching Wagtail page IDs and tree paths.
+
 - Skip outgoing webmentions when an alias source disappears during publication.
 
 - Skip outgoing webmentions for publications with cyclic page aliases.

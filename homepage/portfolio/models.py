@@ -1,4 +1,5 @@
 import re
+from collections.abc import Sequence
 from datetime import date
 
 from django.core.exceptions import ValidationError
@@ -1259,14 +1260,17 @@ class ProjectPage(PortfolioContextMixin, Page):
     def get_other_projects(self, projects=None):
         """Return the next two public projects in tree order, with wraparound."""
 
-        projects = list(self.get_portfolio_projects() if projects is None else projects)
+        if projects is None:
+            projects = self.get_portfolio_projects()
+        if not isinstance(projects, Sequence):
+            projects = list(projects)
         if len(projects) <= 1:
             return []
 
         try:
             current_index = next(index for index, project in enumerate(projects) if project.pk == self.pk)
         except StopIteration:
-            return [project for project in projects if project.pk != self.pk][:2]
+            return list(projects[:2])
 
         count = min(2, len(projects) - 1)
         return [projects[(current_index + offset) % len(projects)] for offset in range(1, count + 1)]
@@ -1284,46 +1288,36 @@ class ProjectPage(PortfolioContextMixin, Page):
             )
         context["other_projects"] = [cards[project.pk] for project in recommendations if project.pk in cards]
         # Leere Blöcke und unveränderte Platzhalter der Projektvorlage zählen nicht.
-        project_block_types = {block.block_type for block in self.content if block_is_filled(block)}
-        numbered_projects = list(context["portfolio_projects"])
+        filled_blocks = [block for block in self.content if block_is_filled(block)]
+        project_block_types = {block.block_type for block in filled_blocks}
+        case_study_blocks = [
+            block
+            for block in filled_blocks
+            if get_project_block_region(block.block_type) == PROJECT_BLOCK_REGION_CASE_STUDY
+        ]
+        numbered_projects = context["portfolio_projects"]
+        project_total = len(numbered_projects)
         try:
             project_number = next(
                 index for index, project in enumerate(numbered_projects, start=1) if project.pk == self.pk
             )
         except StopIteration:
-            # Preview the current draft in its public context without letting
-            # unrelated drafts change the counter visitors will eventually see.
-            numbered_projects = sorted([*numbered_projects, self], key=lambda project: project.path)
-            project_number = next(
-                (index for index, project in enumerate(numbered_projects, start=1) if project.pk == self.pk),
-                1,
-            )
+            # Insert the current draft conceptually at its tree position without
+            # including any unrelated drafts in the public count.
+            project_number = 1 + sum(project.path <= self.path for project in numbered_projects)
+            project_total += 1
         context.update(
             {
-                "project_has_case_study": bool(
-                    any(
-                        get_project_block_region(block_type) == PROJECT_BLOCK_REGION_CASE_STUDY
-                        for block_type in project_block_types
-                    )
-                ),
-                "project_has_editorial_media": bool(
-                    any(
-                        get_project_block_region(block_type) == PROJECT_BLOCK_REGION_MEDIA
-                        for block_type in project_block_types
-                    )
+                "project_has_case_study": bool(case_study_blocks),
+                "project_has_editorial_media": any(
+                    get_project_block_region(block_type) == PROJECT_BLOCK_REGION_MEDIA
+                    for block_type in project_block_types
                 ),
                 "project_has_results": "stats" in project_block_types,
                 "project_has_statement": "statement" in project_block_types,
-                # Gefüllte Fallstudien-Blöcke in Seitenreihenfolge; jeder Abschnitt wird auf
-                # breiten Screens ein eigener View.
-                "case_study_blocks": [
-                    block
-                    for block in self.content
-                    if block_is_filled(block)
-                    and get_project_block_region(block.block_type) == PROJECT_BLOCK_REGION_CASE_STUDY
-                ],
+                "case_study_blocks": case_study_blocks,
                 "project_number": project_number,
-                "project_total": len(numbered_projects),
+                "project_total": project_total,
             }
         )
         return context

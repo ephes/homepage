@@ -193,7 +193,12 @@ class Command(BaseCommand):
             pending = []
             for pk in dict.fromkeys(options["retry_cache_purge"]):
                 try:
-                    renditions.get(pk=pk).purge_from_cache()
+                    rendition = renditions.get(pk=pk)
+                except Rendition.DoesNotExist:
+                    self.stderr.write(f"rendition {pk} on database {alias!r}: row no longer exists; skipped")
+                    continue
+                try:
+                    rendition.purge_from_cache()
                 except Exception as error:
                     pending.append(pk)
                     self.stderr.write(f"rendition {pk} on database {alias!r}: cache purge failed: {repr(error)[:300]}")
@@ -212,6 +217,14 @@ class Command(BaseCommand):
                 blogs.append(Blog.objects.get(slug=slug))
             except Blog.DoesNotExist as error:
                 raise CommandError(f"Blog with slug {slug!r} does not exist; nothing was changed") from error
+
+            except Blog.MultipleObjectsReturned as error:
+                matches = Blog.objects.filter(slug=slug).values_list("pk", "url_path")
+                candidates = ", ".join(f"page {pk} ({path})" for pk, path in matches)
+                raise CommandError(
+                    f"Blog slug {slug!r} is ambiguous: {candidates}. "
+                    "Identify the intended blog in the Wagtail page tree and use a unique slug; nothing was changed."
+                ) from error
 
         total = RepairResult()
         seen_images = set()

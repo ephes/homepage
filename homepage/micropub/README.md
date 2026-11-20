@@ -85,6 +85,9 @@ Use any Micropub client (like Quill, Indigenous, etc.) with:
 3. Fill in content and optional fields
 4. Click "Publish"
 
+After creating a post, the form redirects back and shows a confirmation with a
+link to the post. The confirmation still appears if writing the success log fails.
+
 ### Via Management Command
 
 ```bash

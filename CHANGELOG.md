@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve the local Micropub form's redirect and success message if logging
+  fails after post creation.
+
 - Sync legacy backup publication and staging cleanup before starting restore.
   Preserve the named backup and report its path if durability is uncertain.
 

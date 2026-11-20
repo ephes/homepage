@@ -289,6 +289,22 @@ def test_form_creates_post_and_renders_escaped_link_message(client, blogs, users
     assert 'Post created successfully! <a href="http://testserver/blogs/alpha/' in content
 
 
+def test_form_keeps_success_receipt_when_logging_fails(client, blogs, users):
+    client.force_login(users["publisher"])
+    form_url = reverse("micropub-form")
+
+    with patch("homepage.micropub.views.logger.info", side_effect=RuntimeError("synthetic logging failure")) as log:
+        response = client.post(
+            form_url, {"blog": "alpha", "post_type": "note", "content": "Synthetic note"}, follow=True
+        )
+
+    log.assert_called_once()
+    assert response.redirect_chain == [(form_url, 302)]
+    post = Post.objects.get()
+    assert post.get_parent().pk == blogs["alpha"].pk
+    assert f'Post created successfully! <a href="http://testserver{post.get_url()}"' in response.content.decode()
+
+
 def test_form_does_not_echo_exception_text(client, blogs, users):
     client.force_login(users["publisher"])
 

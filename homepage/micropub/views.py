@@ -3,6 +3,7 @@ Views for local micropub posting interface.
 """
 
 import logging
+from contextlib import suppress
 
 from django.conf import settings
 from django.contrib import messages
@@ -72,7 +73,9 @@ def micropub_form_view(request):
                         post_url,
                     ),
                 )
-                logger.info("Micropub form: post created by user %s", request.user.pk)
+                # A success logging failure must not interrupt the receipt or roll back the request.
+                with suppress(Exception):
+                    logger.info("Micropub form: post created by user %s", request.user.pk)
 
                 # Redirect to create another post
                 return redirect("micropub-form")

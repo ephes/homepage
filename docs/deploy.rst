@@ -95,6 +95,33 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-20 weeknote links with retired categories and webmention alias guards
+-----------------------------------------------------------------------------
+
+Deployed ``af821a6``: stored weeknote links whose category is no longer a
+configured choice render in a final **Other links** group instead of
+disappearing, and grouping runs in one pass (:doc:`weeknote_links`). Publishing
+a post whose page or ancestor has a cyclic alias chain, or an alias source that
+no longer exists, now proceeds without scheduling webmention delivery instead
+of failing in the ``page_published`` receiver (:doc:`indieweb`). No migration,
+no new static files and no settings or environment change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``af821a6``; both units got new PIDs and stayed on them for 120 seconds; the
+front page, the blog RSS feed and the portfolio host answered 200. A read-only
+``manage.py shell`` probe (``PGOPTIONS`` with
+``default_transaction_read_only=on``, ``python -B``, inside a rolled-back
+transaction) rendered an in-memory weeknote block with one retired and one
+current category: before the deploy the retired link was missing, afterwards it
+appeared under **Other links**. The same probe gave an unsaved copy of the main
+blog page an alias to a non-existent page ID: before the deploy the visibility
+check raised ``Page.DoesNotExist``, afterwards it returned ``False``; the blog
+page itself stayed public both times.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``f665dee``). No database step and no static rebuild are needed.
+
 2026-11-20 page lookup by target host and rendition repair fences
 -----------------------------------------------------------------
 

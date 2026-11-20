@@ -95,6 +95,32 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-20 page lookup by target host and rendition repair fences
+-----------------------------------------------------------------
+
+Deployed ``34744f6``: Micropub source queries resolve a page URL with the
+URL routes of its target host, so portfolio-host URLs such as
+``https://design.wersdoerfer.de/<project>/`` now find their page (:doc:`indieweb`).
+``regenerate_broken_renditions`` batches post image and gallery lookups, keeps
+the original rendition when its file reappears or storage cannot confirm it is
+missing, and ``--retry-cache-purge`` requires the reported ``--database``
+alias (:doc:`media_utils`). No migration, no new static files and no settings
+or environment change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``34744f6``; both units got new PIDs and stayed on them for 120 seconds; the
+front page, the blog RSS feed and the portfolio host answered 200. A read-only
+``manage.py shell`` probe (inside a rolled-back transaction) of the page lookup
+returned ``None`` for ``https://design.wersdoerfer.de/`` and
+``https://design.wersdoerfer.de/eine-schule-wird-sichtbar/`` before the deploy,
+and afterwards exactly the portfolio index page and that project page read
+from the portfolio site; the main blog URL resolved to the same blog both
+times. ``manage.py help regenerate_broken_renditions`` lists ``--database``.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``31c6b39``). No database step and no static rebuild are needed.
+
 2026-11-20 CSP report shapes and portfolio copy checks
 ------------------------------------------------------
 

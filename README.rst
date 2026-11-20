@@ -199,7 +199,12 @@ size/mtime during transfer, and match the received byte count. A unique private
 stage (directory 0700, file 0600) holds the download. The maintained dump verifier
 requires a complete gzip stream and pg_dump completion marker. All transports
 must close successfully before an atomic, non-overwriting publication under
-``backups/``. Existing files, including symlinks, are refused and preserved;
+``backups/``. The helper syncs the backup directory after linking the final
+name and again after removing the private stage. It also syncs the parents of
+newly created backup directories. If a sync fails after publication, the
+helper reports the path with uncertain durability, preserves the named backup,
+and stops before starting local restore steps.
+Existing files, including symlinks, are refused and preserved;
 remove or move an old backup deliberately before retrying the same name. Failed
 or interrupted downloads remove their owned stage and never start local steps.
 A forced process kill may leave a private ``.legacy-backup-*`` stage; inspect and

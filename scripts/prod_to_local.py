@@ -126,13 +126,28 @@ def transfer_deadline(size):
     return TRANSFER_TIMEOUT + size // MIN_TRANSFER_RATE
 
 
+def sync_directory(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def fetch_backup(host, username, backups_dir):
     import paramiko
 
+    # New directory entries also need to survive a crash.
+    parents_to_sync = []
+    directory = backups_dir
+    while not directory.exists():
+        directory = directory.parent
+        parents_to_sync.append(directory)
     backups_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     # The only reusable name is published after validation AND transport cleanup.
-    with tempfile.TemporaryDirectory(prefix=".legacy-backup-", dir=backups_dir) as staging:
-        stage = Path(staging) / "download.sql.gz"
+    staging = tempfile.TemporaryDirectory(prefix=".legacy-backup-", dir=backups_dir)
+    with staging as staging_path:
+        stage = Path(staging_path) / "download.sql.gz"
         with ExitStack() as resources:
             with deadline(CONNECT_TIMEOUT):
                 client = paramiko.SSHClient()
@@ -195,7 +210,15 @@ def fetch_backup(host, username, backups_dir):
         final = backups_dir / PurePosixPath(remote).name
         # Atomic no-clobber publication: an existing file/symlink is never replaced.
         os.link(stage, final)
-        return final
+        try:
+            sync_directory(backups_dir)
+            staging.cleanup()
+            sync_directory(backups_dir)
+            for parent in parents_to_sync:
+                sync_directory(parent)
+        except OSError as error:
+            raise OSError(f"Backup durability is uncertain for {final}: {error}") from error
+    return final
 
 
 def transfer_and_restore(host, username, backups_dir, *, replace_existing=False):

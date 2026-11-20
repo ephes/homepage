@@ -306,6 +306,57 @@ def test_existing_backup_bytes_are_never_overwritten(helper, transport, tmp_path
     assert_closed(transport)
 
 
+def test_backup_directory_sync_brackets_stage_retirement(helper, transport, monkeypatch, tmp_path):
+    import os
+    import stat
+
+    backups = tmp_path / "new" / "backups"
+    published = backups / "example.sql.gz"
+    synced = []
+    fsync = os.fsync
+
+    def record_sync(fd):
+        info = os.fstat(fd)
+        if stat.S_ISDIR(info.st_mode):
+            assert published.read_bytes() == transport.payload
+            synced.append((info.st_ino, bool(list(backups.glob(".legacy-backup-*")))))
+        fsync(fd)
+
+    monkeypatch.setattr(helper.os, "fsync", record_sync)
+    assert helper.fetch_backup("host.invalid", "synthetic", backups) == published
+    assert synced == [
+        (backups.stat().st_ino, True),
+        (backups.stat().st_ino, False),
+        (backups.parent.stat().st_ino, False),
+        (tmp_path.stat().st_ino, False),
+    ]
+
+
+@pytest.mark.parametrize("stage_present", [True, False])
+def test_uncertain_backup_durability_preserves_named_file(helper, transport, monkeypatch, tmp_path, stage_present):
+    import os
+    import stat
+
+    path = tmp_path / "example.sql.gz"
+    fsync = os.fsync
+
+    def fail_directory_sync(fd):
+        if stat.S_ISDIR(os.fstat(fd).st_mode) and bool(list(tmp_path.glob(".legacy-backup-*"))) == stage_present:
+            raise OSError("synthetic directory sync failure")
+        fsync(fd)
+
+    restore = Mock()
+    monkeypatch.setattr(helper, "restore_download", restore)
+    monkeypatch.setattr(helper.os, "fsync", fail_directory_sync)
+    with pytest.raises(OSError, match="durability.*uncertain") as error:
+        helper.transfer_and_restore("host.invalid", "synthetic", tmp_path)
+    assert str(path) in str(error.value)
+    assert path.read_bytes() == transport.payload
+    assert list(tmp_path.iterdir()) == [path]
+    restore.assert_not_called()
+    assert_closed(transport)
+
+
 @pytest.mark.parametrize("resource", ["client", "sftp", "channel", "stdin", "stdout", "stderr"])
 def test_cleanup_failure_prevents_publication_and_local_steps(helper, transport, monkeypatch, tmp_path, resource):
     objects = dict(client=transport.client, sftp=transport.sftp, channel=transport.channel)

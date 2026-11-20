@@ -1,14 +1,14 @@
 """
 Helpers for mapping public URLs back to Wagtail pages.
 
-Used by the Webmention URL resolver and the Micropub handler so both resolve
-URLs through the Wagtail page tree (site root -> blog -> post) instead of
-matching bare slugs across all blogs.
+Micropub uses the generic route lookup. Webmention shares the site selection
+and URL path parsing, and looks up Cast blogs and posts directly.
 """
 
 from urllib.parse import ParseResult, unquote, urlparse
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.urls import Resolver404, resolve
 from wagtail.models import Page
 from wagtail.models import Site as WagtailSite
@@ -69,5 +69,13 @@ def find_page_for_url(url: str) -> Page | None:
     url_path = site.root_page.url_path
     if relative_path:
         url_path = f"{url_path}{relative_path}/"
-    page = Page.objects.filter(url_path=url_path).first()
-    return page.specific if page is not None else None
+    alias = site._state.db
+    identity = Page.objects.using(alias).filter(url_path=url_path).values_list("pk", "content_type_id").first()
+    if identity is None:
+        return None
+
+    page_id, content_type_id = identity
+    content_type = ContentType.objects.db_manager(alias).get_for_id(content_type_id)
+    # Match Wagtail's fallback for a content type whose model is unavailable.
+    model = content_type.model_class() or Page
+    return model._default_manager.using(alias).get(pk=page_id)

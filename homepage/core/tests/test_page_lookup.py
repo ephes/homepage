@@ -3,6 +3,9 @@
 from urllib.parse import urlparse
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
+from django.db import connections
+from django.test.utils import CaptureQueriesContext
 from django.urls import get_urlconf, set_urlconf
 from wagtail.models import Locale, Page, PageViewRestriction, Site
 
@@ -128,3 +131,70 @@ def test_resolves_each_target_from_the_other_hosts_request_urlconf(sites, settin
             assert get_urlconf() == active_urlconf
     finally:
         set_urlconf(original_urlconf)
+
+
+@pytest.mark.django_db(databases=["default", "legacy"])
+def test_route_lookup_projects_identity_and_loads_full_page_on_the_site_alias(settings):
+    class SiteRouter:
+        def db_for_read(self, model, **hints):
+            if model is Site:
+                return "legacy"
+            return None
+
+    class FixtureRouter:
+        def db_for_read(self, model, **hints):
+            return "legacy"
+
+        def db_for_write(self, model, **hints):
+            return "legacy"
+
+    settings.DATABASE_ROUTERS = [FixtureRouter()]
+    Locale.objects.get_or_create(language_code="en")
+    root = Page.get_first_root_node() or Page.add_root(instance=Page(title="Root", slug="root"))
+    home = root.add_child(instance=Page(title="Home", slug="legacy-home"))
+    specific = home.add_child(
+        instance=PortfolioIndexPage(title="Synthetic portfolio", slug="portfolio", hero_intro="Synthetic introduction")
+    )
+    Site.objects.create(hostname="secondary.example", port=443, root_page=home)
+
+    settings.DATABASE_ROUTERS = [SiteRouter()]
+    ContentType.objects.clear_cache()
+    legacy = connections["legacy"]
+    with CaptureQueriesContext(connections["default"]) as default_queries, CaptureQueriesContext(legacy) as queries:
+        found = find_page_for_url("https://secondary.example/blogs/portfolio/")
+
+        assert type(found) is PortfolioIndexPage
+        assert found.pk == specific.pk
+        assert found._state.db == "legacy"
+        assert not found.get_deferred_fields()
+        assert found.title == "Synthetic portfolio"
+        assert found.hero_intro == "Synthetic introduction"
+
+    assert len(default_queries) == 0
+    page_queries = [q["sql"] for q in queries if ' FROM "wagtailcore_page" ' in q["sql"]]
+    [probe] = page_queries
+    columns = probe.removeprefix("SELECT ").split(" FROM ", 1)[0].split(", ")
+    assert [column.split(" AS ", 1)[0] for column in columns] == [
+        '"wagtailcore_page"."id"',
+        '"wagtailcore_page"."content_type_id"',
+    ]
+    assert len(queries) == 4  # site, page identity, cold content type, specific model
+
+
+def test_route_lookup_keeps_full_base_pages_for_unavailable_types(sites, request):
+    request.addfinalizer(ContentType.objects.clear_cache)
+    home = sites[1][0].root_page
+    page = home.add_child(instance=Page(title="Plain page", slug="plain"))
+    url = "https://lookup.example/blogs/plain/"
+
+    for content_type in (
+        ContentType.objects.get_for_model(Page),
+        ContentType.objects.create(app_label="synthetic", model="removedpage"),
+    ):
+        Page.objects.filter(pk=page.pk).update(content_type=content_type)
+        found = find_page_for_url(url)
+
+        assert type(found) is Page
+        assert found.pk == page.pk
+        assert found.title == "Plain page"
+        assert not found.get_deferred_fields()

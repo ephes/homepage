@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Probe Wagtail routes using only page identity and load the full page from the
+  selected site's database.
+
 - Purge repaired rendition cache entries after the outer transaction commits.
 
 - Scope portfolio seeding to the requested site root or default-site path.

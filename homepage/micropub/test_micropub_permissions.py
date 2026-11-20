@@ -11,12 +11,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
+from django.db import connection
 from django.template.loader import render_to_string
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from indieweb.models import Token
 from wagtail.models import GroupPagePermission, Locale, Page
 from wagtail.models import Site as WagtailSite
+
+from homepage.portfolio.models import PortfolioIndexPage
 
 from .forms import MicropubPostForm
 from .handler import CastPostMicropubHandler, MicropubPermissionError, MicropubTargetError
@@ -211,6 +215,22 @@ def test_get_entry_denied_for_owner_without_page_permissions(existing_post, user
 )
 def test_get_entry_returns_none_for_non_post_urls(existing_post, users, url):
     assert CastPostMicropubHandler().get_entry(url, users["admin"]) is None
+
+
+def test_get_entry_rejects_a_custom_page_after_a_narrow_route_probe(blogs, users):
+    blogs["alpha"].add_child(instance=PortfolioIndexPage(title="Synthetic portfolio", slug="portfolio"))
+    handler = CastPostMicropubHandler()
+
+    with CaptureQueriesContext(connection) as queries:
+        assert handler.get_entry(f"http://{HOST}/blogs/alpha/portfolio/", users["admin"]) is None
+
+    page_queries = [q["sql"] for q in queries if ' FROM "wagtailcore_page" ' in q["sql"]]
+    [probe] = page_queries
+    columns = probe.removeprefix("SELECT ").split(" FROM ", 1)[0].split(", ")
+    assert [column.split(" AS ", 1)[0] for column in columns] == [
+        '"wagtailcore_page"."id"',
+        '"wagtailcore_page"."content_type_id"',
+    ]
 
 
 # Micropub endpoint (IndieAuth token path)

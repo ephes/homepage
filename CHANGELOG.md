@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Require POST for the authenticated local Micropub preview.
+
+- Preserve the local Micropub form's redirect and success message if logging
+  fails after post creation.
+
+- Sync legacy backup publication and staging cleanup before starting restore.
+  Preserve the named backup and report its path if durability is uncertain.
+
+- Cap legacy backup SFTP prefetch at 64 requests and disable it with older
+  Paramiko versions that lack a request limit.
+
 - Probe Wagtail routes using only page identity and load the full page from the
   selected site's database.
 

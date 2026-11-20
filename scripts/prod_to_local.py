@@ -1,6 +1,7 @@
 """Legacy Docker/media transfer helper; prefer commands.py production-db-to-local."""
 
 import argparse
+import inspect
 import os
 import re
 import shlex
@@ -20,6 +21,7 @@ TRANSFER_TIMEOUT = 300  # SFTP setup plus a fixed transfer allowance
 MIN_TRANSFER_RATE = 1024**2  # bytes per second added to the transfer deadline
 MAX_COMMAND_BYTES = 64 * 1024  # stdout and stderr together
 MAX_BACKUP_BYTES = 10 * 1024**3
+MAX_PREFETCH_REQUESTS = 64
 
 
 @contextmanager
@@ -124,65 +126,103 @@ def transfer_deadline(size):
     return TRANSFER_TIMEOUT + size // MIN_TRANSFER_RATE
 
 
+def sync_directory(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def fetch_backup(host, username, backups_dir):
     import paramiko
 
+    # New directory entries also need to survive a crash.
+    parents_to_sync = []
+    directory = backups_dir
+    while not directory.exists():
+        directory = directory.parent
+        parents_to_sync.append(directory)
     backups_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     # The only reusable name is published after validation AND transport cleanup.
-    with tempfile.TemporaryDirectory(prefix=".legacy-backup-", dir=backups_dir) as staging:
-        stage = Path(staging) / "download.sql.gz"
-        with ExitStack() as resources:
-            with deadline(CONNECT_TIMEOUT):
-                client = paramiko.SSHClient()
-                resources.callback(close_resource, client)
-                client.load_system_host_keys()  # Retain Paramiko's reject-unknown-host policy.
-                client.connect(
-                    host,
-                    username=username,
-                    timeout=CONNECT_TIMEOUT,
-                    banner_timeout=CONNECT_TIMEOUT,
-                    auth_timeout=CONNECT_TIMEOUT,
-                    channel_timeout=CONNECT_TIMEOUT,
-                )
-            with deadline(COMMAND_TIMEOUT):
-                streams = client.exec_command("cd site && python scripts/prod_backup.py", timeout=COMMAND_TIMEOUT)
-                for stream in streams:
-                    resources.callback(close_resource, stream)
-                channel = streams[1].channel
-                resources.callback(close_resource, channel)
-                channel.settimeout(CONNECT_TIMEOUT)
-                remote = backup_announcement(read_remote_result(channel))
-            with deadline(TRANSFER_TIMEOUT):
-                sftp = client.open_sftp()
-                resources.callback(close_resource, sftp)
-                sftp.get_channel().settimeout(CONNECT_TIMEOUT)
-                before = sftp.lstat(remote)
-                if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= MAX_BACKUP_BYTES:
-                    raise ValueError("Backup must be a nonempty regular file within the size allowance")
-            with deadline(transfer_deadline(before.st_size)):
+    published = None
+    try:
+        with tempfile.TemporaryDirectory(prefix=".legacy-backup-", dir=backups_dir) as staging:
+            stage = Path(staging) / "download.sql.gz"
+            with ExitStack() as resources:
+                with deadline(CONNECT_TIMEOUT):
+                    client = paramiko.SSHClient()
+                    resources.callback(close_resource, client)
+                    client.load_system_host_keys()  # Retain Paramiko's reject-unknown-host policy.
+                    client.connect(
+                        host,
+                        username=username,
+                        timeout=CONNECT_TIMEOUT,
+                        banner_timeout=CONNECT_TIMEOUT,
+                        auth_timeout=CONNECT_TIMEOUT,
+                        channel_timeout=CONNECT_TIMEOUT,
+                    )
+                with deadline(COMMAND_TIMEOUT):
+                    streams = client.exec_command("cd site && python scripts/prod_backup.py", timeout=COMMAND_TIMEOUT)
+                    for stream in streams:
+                        resources.callback(close_resource, stream)
+                    channel = streams[1].channel
+                    resources.callback(close_resource, channel)
+                    channel.settimeout(CONNECT_TIMEOUT)
+                    remote = backup_announcement(read_remote_result(channel))
+                with deadline(TRANSFER_TIMEOUT):
+                    sftp = client.open_sftp()
+                    resources.callback(close_resource, sftp)
+                    sftp.get_channel().settimeout(CONNECT_TIMEOUT)
+                    before = sftp.lstat(remote)
+                    if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= MAX_BACKUP_BYTES:
+                        raise ValueError("Backup must be a nonempty regular file within the size allowance")
+                with deadline(transfer_deadline(before.st_size)):
 
-                def progress(transferred, total):
-                    if total != before.st_size or transferred > before.st_size:
-                        raise ValueError("Backup size changed during transfer")
+                    def progress(transferred, total):
+                        if total != before.st_size or transferred > before.st_size:
+                            raise ValueError("Backup size changed during transfer")
 
-                fd = os.open(stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-                with os.fdopen(fd, "wb") as target:
-                    copied = sftp.getfo(remote, target, callback=progress, prefetch=True)
-                    target.flush()
-                    os.fsync(target.fileno())
-                after = sftp.lstat(remote)
-                if (
-                    not stat.S_ISREG(after.st_mode)
-                    or (after.st_size, after.st_mtime) != (before.st_size, before.st_mtime)
-                    or copied != before.st_size
-                    or stage.stat().st_size != before.st_size
-                ):
-                    raise ValueError("Incomplete or changed backup transfer")
-        verify_backup(stage)
-        final = backups_dir / PurePosixPath(remote).name
-        # Atomic no-clobber publication: an existing file/symlink is never replaced.
-        os.link(stage, final)
-        return final
+                    fd = os.open(stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    with os.fdopen(fd, "wb") as target:
+                        # Paramiko 2.8–3.2 can disable prefetch but cannot bound it.
+                        getfo = sftp.getfo
+                        if "max_concurrent_prefetch_requests" in inspect.signature(getfo).parameters:
+                            copied = getfo(
+                                remote,
+                                target,
+                                callback=progress,
+                                prefetch=True,
+                                max_concurrent_prefetch_requests=MAX_PREFETCH_REQUESTS,
+                            )
+                        else:
+                            copied = getfo(remote, target, callback=progress, prefetch=False)
+                        target.flush()
+                        os.fsync(target.fileno())
+                    after = sftp.lstat(remote)
+                    if (
+                        not stat.S_ISREG(after.st_mode)
+                        or (after.st_size, after.st_mtime) != (before.st_size, before.st_mtime)
+                        or copied != before.st_size
+                        or stage.stat().st_size != before.st_size
+                    ):
+                        raise ValueError("Incomplete or changed backup transfer")
+            verify_backup(stage)
+            final = backups_dir / PurePosixPath(remote).name
+            # Atomic no-clobber publication: an existing file/symlink is never replaced.
+            os.link(stage, final)
+            published = final
+            sync_directory(backups_dir)
+        # Leaving the block retired the private stage; persist that and new parents.
+        sync_directory(backups_dir)
+        for parent in parents_to_sync:
+            sync_directory(parent)
+    except OSError as error:
+        # A stage-cleanup or sync failure after publication keeps the named backup.
+        if published is None:
+            raise
+        raise OSError(f"Backup durability is uncertain for {published}: {error}") from error
+    return published
 
 
 def transfer_and_restore(host, username, backups_dir, *, replace_existing=False):

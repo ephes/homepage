@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, create_autospec
 
 import pytest
 
@@ -122,17 +122,19 @@ def transport(helper, monkeypatch, tmp_path):
     sftp = Mock()
     sftp.lstat.return_value = SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_size=len(payload), st_mtime=10)
 
-    def getfo(remote, target, *, callback, prefetch):
-        assert prefetch is True
+    def getfo(remote, target, *, callback, prefetch, max_concurrent_prefetch_requests=None):
         assert remote.startswith("site/backups/")
         stages = list(tmp_path.rglob(".legacy-backup-*"))
         assert len(stages) == 1 and stages[0].stat().st_mode & 0o777 == 0o700
         assert os.fstat(target.fileno()).st_mode & 0o777 == 0o600
-        target.write(payload)
-        callback(len(payload), len(payload))
+        size = 0
+        for offset in range(0, len(payload), 32):
+            end = offset + 32
+            size += target.write(payload[offset:end])
+            callback(size, len(payload))
         return len(payload)
 
-    sftp.getfo.side_effect = getfo
+    sftp.getfo = create_autospec(getfo, side_effect=getfo)
     client = Mock()
     client.exec_command.return_value = streams
     client.open_sftp.return_value = sftp
@@ -173,6 +175,28 @@ def test_complete_private_download_and_deadlines(helper, transport, tmp_path):
     assert transport.sftp.get_channel.return_value.settimeout.call_args.args[0] > 0
     transport.sftp.close.assert_called_once()
     assert_closed(transport)
+
+
+def test_prefetch_has_a_finite_request_limit(helper, transport, tmp_path):
+    path = helper.fetch_backup("host.invalid", "synthetic", tmp_path)
+
+    kwargs = transport.sftp.getfo.call_args.kwargs
+    assert kwargs["prefetch"] is True
+    assert 0 < kwargs["max_concurrent_prefetch_requests"] <= 64
+    assert path.read_bytes() == transport.payload
+
+
+def test_prefetch_is_disabled_with_older_paramiko(helper, transport, tmp_path):
+    getfo = transport.sftp.getfo
+
+    def legacy_getfo(remote, target, *, callback, prefetch):
+        return getfo(remote, target, callback=callback, prefetch=prefetch)
+
+    transport.sftp.getfo = create_autospec(legacy_getfo, side_effect=legacy_getfo)
+    path = helper.fetch_backup("host.invalid", "synthetic", tmp_path)
+
+    assert transport.sftp.getfo.call_args.kwargs["prefetch"] is False
+    assert path.read_bytes() == transport.payload
 
 
 @pytest.mark.parametrize(
@@ -279,6 +303,81 @@ def test_existing_backup_bytes_are_never_overwritten(helper, transport, tmp_path
         helper.fetch_backup("host.invalid", "synthetic", tmp_path)
     assert path.read_bytes() == b"existing synthetic backup"
     assert list(tmp_path.iterdir()) == [path]
+    assert_closed(transport)
+
+
+def test_backup_directory_sync_brackets_stage_retirement(helper, transport, monkeypatch, tmp_path):
+    import os
+    import stat
+
+    backups = tmp_path / "new" / "backups"
+    published = backups / "example.sql.gz"
+    synced = []
+    fsync = os.fsync
+
+    def record_sync(fd):
+        info = os.fstat(fd)
+        if stat.S_ISDIR(info.st_mode):
+            assert published.read_bytes() == transport.payload
+            synced.append((info.st_ino, bool(list(backups.glob(".legacy-backup-*")))))
+        fsync(fd)
+
+    monkeypatch.setattr(helper.os, "fsync", record_sync)
+    assert helper.fetch_backup("host.invalid", "synthetic", backups) == published
+    assert synced == [
+        (backups.stat().st_ino, True),
+        (backups.stat().st_ino, False),
+        (backups.parent.stat().st_ino, False),
+        (tmp_path.stat().st_ino, False),
+    ]
+
+
+@pytest.mark.parametrize("stage_present", [True, False])
+def test_uncertain_backup_durability_preserves_named_file(helper, transport, monkeypatch, tmp_path, stage_present):
+    import os
+    import stat
+
+    path = tmp_path / "example.sql.gz"
+    fsync = os.fsync
+
+    def fail_directory_sync(fd):
+        if stat.S_ISDIR(os.fstat(fd).st_mode) and bool(list(tmp_path.glob(".legacy-backup-*"))) == stage_present:
+            raise OSError("synthetic directory sync failure")
+        fsync(fd)
+
+    restore = Mock()
+    monkeypatch.setattr(helper, "restore_download", restore)
+    monkeypatch.setattr(helper.os, "fsync", fail_directory_sync)
+    with pytest.raises(OSError, match="durability.*uncertain") as error:
+        helper.transfer_and_restore("host.invalid", "synthetic", tmp_path)
+    assert str(path) in str(error.value)
+    assert path.read_bytes() == transport.payload
+    assert list(tmp_path.iterdir()) == [path]
+    restore.assert_not_called()
+    assert_closed(transport)
+
+
+def test_stage_cleanup_failure_after_publication_reports_named_backup(helper, transport, monkeypatch, tmp_path):
+    import tempfile
+
+    path = tmp_path / "example.sql.gz"
+    attempts = []
+
+    class FailingStage(tempfile.TemporaryDirectory):
+        def cleanup(self):
+            attempts.append(self.name)
+            raise OSError("synthetic stage cleanup failure")
+
+    restore = Mock()
+    monkeypatch.setattr(helper, "restore_download", restore)
+    monkeypatch.setattr(helper.tempfile, "TemporaryDirectory", FailingStage)
+    with pytest.raises(OSError, match="durability.*uncertain") as error:
+        helper.transfer_and_restore("host.invalid", "synthetic", tmp_path)
+    assert str(path) in str(error.value)
+    assert "synthetic stage cleanup failure" in str(error.value)
+    assert path.read_bytes() == transport.payload
+    assert len(attempts) == 1
+    restore.assert_not_called()
     assert_closed(transport)
 
 

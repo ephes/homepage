@@ -16,7 +16,7 @@ The app integrates with both django-indieweb and provides its own local interfac
 
 - `/indieweb/micropub/` - The Micropub API endpoint (provided by django-indieweb)
 - `/indieweb/micropub-form/` - Local form interface for creating posts
-- `/indieweb/micropub-form/preview/` - Preview endpoint for content conversion
+- `/indieweb/micropub-form/preview/` - Preview endpoint for content conversion (POST)
 
 ## Configuration
 
@@ -85,6 +85,9 @@ Use any Micropub client (like Quill, Indigenous, etc.) with:
 3. Fill in content and optional fields
 4. Click "Publish"
 
+After creating a post, the form redirects back and shows a confirmation with a
+link to the post. The confirmation still appears if writing the success log fails.
+
 ### Via Management Command
 
 ```bash
@@ -124,7 +127,10 @@ sanitized with `nh3`, a runtime dependency, against the converter's tag
 allow-list before it is stored; scripts, event handlers and `javascript:` URLs
 are removed. There is no unsanitized fallback.
 
-The preview page (`/indieweb/micropub-form/preview/`) escapes code blocks and
+The preview page (`/indieweb/micropub-form/preview/`) requires a logged-in
+session and a valid CSRF token on the POST request. For logged-in clients,
+unsupported methods that pass middleware checks return `405 Method Not Allowed`
+with `Allow: POST` before content conversion. The preview escapes code blocks and
 sanitizes paragraph HTML against the converter's tag allow-list before
 rendering; form messages are rendered with autoescaping.
 

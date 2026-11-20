@@ -189,12 +189,24 @@ for the 10 GiB maximum). Channel I/O and each transport close have ten seconds. 
 the main thread and an unused real-time signal timer. Existing signal handlers
 are restored. Unknown SSH host keys remain refused.
 
+The helper caps SFTP prefetch at 64 concurrent requests with Paramiko 3.3 and
+later. With Paramiko 2.8 through 3.2, it disables prefetch and reads
+sequentially. Sequential reads are slower on high-latency links, so a large
+backup can reach the transfer deadline; use Paramiko 3.3 or later for large
+backups. See the
+`Paramiko SFTP documentation <https://docs.paramiko.org/en/3.3/api/sftp.html#paramiko.sftp_client.SFTPClient.getfo>`_.
+
 Downloads must be nonempty regular remote files of at most 10 GiB, retain their
 size/mtime during transfer, and match the received byte count. A unique private
 stage (directory 0700, file 0600) holds the download. The maintained dump verifier
 requires a complete gzip stream and pg_dump completion marker. All transports
 must close successfully before an atomic, non-overwriting publication under
-``backups/``. Existing files, including symlinks, are refused and preserved;
+``backups/``. The helper syncs the backup directory after linking the final
+name and again after removing the private stage. It also syncs the parents of
+newly created backup directories. If a sync fails after publication, the
+helper reports the path with uncertain durability, preserves the named backup,
+and stops before starting local restore steps.
+Existing files, including symlinks, are refused and preserved;
 remove or move an old backup deliberately before retrying the same name. Failed
 or interrupted downloads remove their owned stage and never start local steps.
 A forced process kill may leave a private ``.legacy-backup-*`` stage; inspect and

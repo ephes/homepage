@@ -13,7 +13,7 @@ from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
 from django.db import connection
 from django.template.loader import render_to_string
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from indieweb.models import Token
@@ -22,6 +22,7 @@ from wagtail.models import Site as WagtailSite
 
 from homepage.portfolio.models import PortfolioIndexPage
 
+from .converters import ContentConverter
 from .forms import MicropubPostForm
 from .handler import CastPostMicropubHandler, MicropubPermissionError, MicropubTargetError
 
@@ -289,6 +290,22 @@ def test_form_creates_post_and_renders_escaped_link_message(client, blogs, users
     assert 'Post created successfully! <a href="http://testserver/blogs/alpha/' in content
 
 
+def test_form_keeps_success_receipt_when_logging_fails(client, blogs, users):
+    client.force_login(users["publisher"])
+    form_url = reverse("micropub-form")
+
+    with patch("homepage.micropub.views.logger.info", side_effect=RuntimeError("synthetic logging failure")) as log:
+        response = client.post(
+            form_url, {"blog": "alpha", "post_type": "note", "content": "Synthetic note"}, follow=True
+        )
+
+    log.assert_called_once()
+    assert response.redirect_chain == [(form_url, 302)]
+    post = Post.objects.get()
+    assert post.get_parent().pk == blogs["alpha"].pk
+    assert f'Post created successfully! <a href="http://testserver{post.get_url()}"' in response.content.decode()
+
+
 def test_form_does_not_echo_exception_text(client, blogs, users):
     client.force_login(users["publisher"])
 
@@ -334,6 +351,33 @@ def test_preview_escapes_code_and_sanitizes_paragraphs(client, users):
     assert "onerror" not in html
     assert "<script>alert(2)</script>" not in html
     assert "&lt;script&gt;alert(2)&lt;/script&gt;" in html
+
+
+@pytest.mark.parametrize("method", ["GET", "HEAD", "OPTIONS"])
+def test_preview_rejects_non_post_without_conversion(client, users, method):
+    client.force_login(users["nobody"])
+
+    with patch.object(ContentConverter, "convert_content") as convert:
+        response = client.generic(method, reverse("micropub-preview"))
+
+    assert response.status_code == 405
+    assert response.headers["Allow"] == "POST"
+    convert.assert_not_called()
+
+
+def test_preview_renders_post_with_valid_csrf_token(users):
+    client = Client(enforce_csrf_checks=True)
+    client.force_login(users["publisher"])
+    preview_url = reverse("micropub-preview")
+    data = {"content": "Synthetic preview.", "post_type": "note"}
+
+    assert client.post(preview_url, data).status_code == 403
+    form = client.get(reverse("micropub-form"))
+    token = form.cookies["csrftoken"].value
+    response = client.post(preview_url, data, headers={"X-CSRFToken": token})
+
+    assert response.status_code == 200
+    assert b"<p>Synthetic preview.</p>" in response.content
 
 
 def test_preview_escapes_code_language(client, users):

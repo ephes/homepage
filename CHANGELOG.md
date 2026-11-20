@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Skip deleted rendition rows during cache purge retry and report only renewed
+  purge failures in the next retry command.
+
+- Refuse ambiguous blog slugs before repairing any rendition and report the
+  matching Wagtail page IDs and tree paths.
+
 - Skip outgoing webmentions when an alias source disappears during publication.
 
 - Skip outgoing webmentions for publications with cyclic page aliases.

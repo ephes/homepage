@@ -12,7 +12,10 @@ When rendition files were deleted from s3, regenerate them for one or more blogs
 
 The command checks every post of each blog, including gallery images, and prints a
 summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` posts
-of each blog; without it nothing is skipped.
+of each blog; without it nothing is skipped. Before accessing storage, the command
+checks that every requested slug identifies exactly one blog. If a slug is shared
+across page trees, use the reported Wagtail page IDs and tree paths to identify
+the intended blog in the admin. Repair by slug requires a unique blog slug.
 
 The scan fetches direct images, galleries and gallery images in post batches of
 up to 100. An image shared by direct slots, galleries, posts or requested blogs
@@ -64,8 +67,9 @@ files::
 
 Use the explicit ``--database`` alias reported by repair. The retry reads the
 current rows on that alias and purges their cache keys. Group IDs by alias and
-retry each alias separately. Missing rows and renewed cache failures are reported
-nonzero. Retry accepts no blog slugs or limit.
+retry each alias separately. Deleted rows are reported and skipped. The retry
+exits nonzero only for renewed purge failures and lists those IDs with the alias
+for the next attempt. Retry accepts no blog slugs or limit.
 
 Video width and height
 ======================

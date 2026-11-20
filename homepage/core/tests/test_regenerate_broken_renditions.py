@@ -10,7 +10,7 @@ from django.core.management.base import CommandError
 from wagtail.images import get_image_model
 from wagtail.images.models import Filter
 from wagtail.images.tests.utils import get_test_image_file
-from wagtail.models import Collection, Locale, Page
+from wagtail.models import Collection, Locale, Page, Site
 
 from homepage.core.management.commands import regenerate_broken_renditions as repair
 
@@ -230,6 +230,24 @@ def test_command_rejects_unknown_blog_before_changing_anything(site_root):
         run_command("known", "nope")
 
     assert not file_exists(rendition)
+
+
+def test_command_rejects_ambiguous_blog_before_checking_storage(site_root, monkeypatch):
+    other_root = Page.get_first_root_node().add_child(instance=Page(title="Other", slug="other-repair-home"))
+    Site.objects.create(hostname="repair-one.example", root_page=site_root)
+    Site.objects.create(hostname="repair-two.example", root_page=other_root)
+    first = site_root.add_child(instance=Blog(title="First duplicate", slug="duplicate"))
+    second = other_root.add_child(instance=Blog(title="Second duplicate", slug="duplicate"))
+    known = site_root.add_child(instance=Blog(title="Known", slug="known"))
+    rendition = make_rendition(make_image("known-ambiguous"))
+    make_post(known, "known-post", images=[rendition.image])
+    monkeypatch.setattr(rendition.file.storage, "exists", lambda *args: pytest.fail("storage was checked"))
+
+    with pytest.raises(CommandError, match="Blog slug 'duplicate' is ambiguous") as error:
+        run_command("known", "duplicate")
+
+    for blog in (first, second):
+        assert f"page {blog.pk} ({blog.url_path})" in str(error.value)
 
 
 @pytest.mark.parametrize("limit", ["0", "-1"])
@@ -531,6 +549,42 @@ def test_cache_failure_keeps_committed_repairs_and_continues(monkeypatch, repair
     )
     run_command("--retry-cache-purge", str(first.pk), "--database", "default")
     assert stored(first).file.name == repaired_name
+
+
+def test_cache_purge_retry_retires_missing_rows(monkeypatch, forbid_regeneration):
+    image = make_image("purge-mixed")
+    deleted = make_rendition(image)
+    deleted_id = deleted.pk
+    deleted.delete()
+    successful = make_rendition(image, "width-50")
+    failing = make_rendition(image, "width-25")
+    purged = []
+
+    def purge(rendition):
+        purged.append(rendition.pk)
+        if rendition.pk == failing.pk:
+            raise RuntimeError("cache unavailable")
+
+    monkeypatch.setattr(type(successful), "purge_from_cache", purge)
+    forbid_regeneration()
+    stderr = io.StringIO()
+    with pytest.raises(CommandError) as error:
+        call_command(
+            "regenerate_broken_renditions",
+            "--retry-cache-purge",
+            str(deleted_id),
+            str(successful.pk),
+            str(failing.pk),
+            "--database",
+            "default",
+            stderr=stderr,
+        )
+
+    assert purged == [successful.pk, failing.pk]
+    assert f"rendition {deleted_id} on database 'default': row no longer exists; skipped" in stderr.getvalue()
+    assert str(error.value) == f"Retry with --retry-cache-purge {failing.pk} --database=default"
+    _, skipped = run_command("--retry-cache-purge", str(deleted_id), "--database", "default")
+    assert "row no longer exists; skipped" in skipped
 
 
 @pytest.mark.django_db(databases=["default", "legacy"])

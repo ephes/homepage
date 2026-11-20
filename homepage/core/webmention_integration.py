@@ -97,7 +97,10 @@ def _is_publicly_accessible(page, database) -> bool:
             if candidate.pk in visited:
                 return False
             visited.add(candidate.pk)
-            candidate = pages.get(pk=candidate.alias_of_id)
+            try:
+                candidate = pages.get(pk=candidate.alias_of_id)
+            except Page.DoesNotExist:
+                return False
         page_ids.add(candidate.pk)
     return not PageViewRestriction.objects.using(database).filter(page_id__in=page_ids).exists()
 

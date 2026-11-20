@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Skip outgoing webmentions when an alias source disappears during publication.
+
 - Skip outgoing webmentions for publications with cyclic page aliases.
 
 - Group weeknote links in one pass while preserving display order.

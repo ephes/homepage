@@ -133,8 +133,9 @@ Only public pages
    for example a private blog. Such a page is not rendered for link discovery
    and no request leaves the server. Publishing it again after the restriction
    has been removed sends its webmentions; removing the restriction alone does
-   not. A cycle in the alias sources of the page or an ancestor leaves
-   visibility unresolved. Publication proceeds without scheduling delivery.
+   not. Cycles and missing source pages in the alias chains of the page or
+   its ancestors leave visibility unresolved. Publication proceeds without
+   scheduling delivery.
 
 Only committed publications
    The ``page_published`` receiver does not render or send anything itself. It

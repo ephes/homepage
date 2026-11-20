@@ -266,6 +266,29 @@ class TestPublicVisibility:
         assert deliveries(callbacks) == []
         assert (outbound.rendered, outbound.sent) == ([], [])
 
+    def test_missing_ancestor_alias_source_does_not_schedule_delivery(
+        self, blog, outbound, django_capture_on_commit_callbacks, monkeypatch
+    ):
+        post = draft_post(blog)
+        source = blog.get_parent()
+        Page.objects.filter(pk=blog.pk).update(alias_of_id=source.pk)
+        page_queryset_class = type(Page.objects.all())
+        original_get = page_queryset_class.get
+
+        def get_after_source_disappears(queryset, *args, **kwargs):
+            if queryset.model is Page and kwargs == {"pk": source.pk}:
+                raise Page.DoesNotExist
+            return original_get(queryset, *args, **kwargs)
+
+        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+            revision = post.save_revision()
+            monkeypatch.setattr(page_queryset_class, "get", get_after_source_disappears)
+            revision.publish()
+
+        assert Post.objects.get(pk=post.pk).live is True
+        assert deliveries(callbacks) == []
+        assert (outbound.rendered, outbound.sent) == ([], [])
+
     def test_restriction_added_before_commit_stops_the_delivery(
         self, blog, outbound, django_capture_on_commit_callbacks
     ):

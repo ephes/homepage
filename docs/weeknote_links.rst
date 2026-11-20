@@ -86,6 +86,10 @@ Category choices, in display order:
 * ``papers`` — Papers
 * ``links`` — Links
 
+Rows already stored with retired category values appear together under
+**Other links**, after the configured categories and in their original order.
+New submissions must use a configured category.
+
 Kind choices:
 
 * ``article`` — Article

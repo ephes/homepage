@@ -61,6 +61,9 @@ class WeeknoteLinksBlock(blocks.ListBlock):
             items = [item for item in value if item.get("category") == category_key]
             if items:
                 grouped_categories.append({"key": category_key, "label": category_label, "items": items})
+        legacy_items = [item for item in value if item.get("category") not in CATEGORY_LABELS]
+        if legacy_items:
+            grouped_categories.append({"key": "other", "label": "Other links", "items": legacy_items})
         context.update(
             {
                 "category_labels": CATEGORY_LABELS,

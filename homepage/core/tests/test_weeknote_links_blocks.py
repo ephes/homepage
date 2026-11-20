@@ -162,6 +162,27 @@ def test_weeknote_links_block_renders_grouped_plain_markup():
     assert "Useful <b>tool</b>." in html or "Useful <strong>tool</strong>." in html
 
 
+def test_weeknote_links_render_stored_items_with_retired_categories():
+    block = WeeknoteLinksBlock()
+    stored_items = [
+        link_item(category="retired", title="First archive", url="https://example.test/first"),
+        link_item(title="Current article", url="https://example.test/current"),
+        link_item(category="also-retired", title="Second archive", url="https://example.test/second"),
+    ]
+    value = block.to_python([{"type": "item", "id": str(uuid.uuid4()), "value": item} for item in stored_items])
+
+    html = block.render(value)
+
+    assert html.index('<h2 class="weeknote-link-heading">Articles</h2>') < html.index(
+        '<h2 class="weeknote-link-heading">Other links</h2>'
+    )
+    assert (
+        html.index('href="https://example.test/current">Current article</a>')
+        < html.index('href="https://example.test/first">First archive</a>')
+        < html.index('href="https://example.test/second">Second archive</a>')
+    )
+
+
 def _post_body_with_weeknote_links(items):
     body_block = blocks.StreamBlock(
         [

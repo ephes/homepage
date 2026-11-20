@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Render stored weeknote links with retired categories in a final Other links group.
+
 - Require the database alias reported by rendition repair when retrying a cache purge.
 
 - Keep the original rendition link when the file reappears or storage cannot

@@ -315,7 +315,11 @@ admin thumbnails) are excluded. Missing derivatives still use Wagtail's normal g
 filters, alt text and responsive sizing are unchanged. Card lists defer case-study
 content, conclusion and teaser text, while the current project retains its full
 content. Utility/legal menus load only project titles and routing fields in public
-tree order. The 501 page loads card data separately for its first two projects.
+tree order. Detail pages use the same lightweight projection for their menu and project
+counter and load card data only for up to two recommendations. The two cards
+follow public tree order, wrapping at the end. In a draft preview the menu and
+recommendations use public projects, and the counter includes the current
+draft. The 501 page loads card data separately for its first two projects.
 
 ``homepage/portfolio/tests/test_read_queries.py`` renders the actual card and shell
 templates with 1 and 20 synthetic projects. Its cold image/rendition-cache budget

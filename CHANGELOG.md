@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Limit portfolio detail pages' teaser image and rendition loads to their
+  recommendations.
+
 - Use the base portfolio static URL in debug mode if an asset source disappears
   during a local rebuild.
 

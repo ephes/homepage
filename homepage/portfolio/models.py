@@ -721,11 +721,14 @@ class PortfolioContextMixin:
         )
 
     def get_portfolio_navigation_projects(self):
-        """Load only titles and routing fields for utility-page menus."""
+        """Load only titles and routing fields for menus."""
 
         return (
             ProjectPage.objects.child_of(self.get_portfolio_index()).live().public().only("title", "url_path", "path")
         )
+
+    def get_portfolio_context_projects(self, index):
+        return self.get_portfolio_projects(index)
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
@@ -734,7 +737,7 @@ class PortfolioContextMixin:
         context["portfolio_index"] = portfolio_index
         # /impressum/ and /datenschutz/ only exist on a site whose root page is the portfolio.
         context["portfolio_legal_available"] = site is not None and site.root_page_id == portfolio_index.pk
-        context["portfolio_projects"] = list(self.get_portfolio_projects(portfolio_index))
+        context["portfolio_projects"] = list(self.get_portfolio_context_projects(portfolio_index))
         context["portfolio_site_settings"] = get_site_setting_or_default(PortfolioSiteSettings, site)
         context["portfolio_legal_settings"] = get_site_setting_or_default(
             LegalPageSettings,
@@ -1268,9 +1271,18 @@ class ProjectPage(PortfolioContextMixin, Page):
         count = min(2, len(projects) - 1)
         return [projects[(current_index + offset) % len(projects)] for offset in range(1, count + 1)]
 
+    def get_portfolio_context_projects(self, index):
+        return index.get_portfolio_navigation_projects()
+
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-        context["other_projects"] = self.get_other_projects(context["portfolio_projects"])
+        recommendations = self.get_other_projects(context["portfolio_projects"])
+        cards = {}
+        if recommendations:
+            cards = self.get_portfolio_projects(context["portfolio_index"]).in_bulk(
+                [project.pk for project in recommendations]
+            )
+        context["other_projects"] = [cards[project.pk] for project in recommendations if project.pk in cards]
         # Leere Blöcke und unveränderte Platzhalter der Projektvorlage zählen nicht.
         project_block_types = {block.block_type for block in self.content if block_is_filled(block)}
         numbered_projects = list(context["portfolio_projects"])

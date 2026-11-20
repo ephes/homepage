@@ -95,6 +95,33 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-20 POST-only Micropub preview and best-effort success log
+-----------------------------------------------------------------
+
+Deployed ``266b1d3``: the logged-in local Micropub preview
+(``/indieweb/micropub-form/preview/``) accepts only POST; other methods get
+``405`` with ``Allow: POST`` before any content conversion, anonymous requests
+still redirect to login. The local Micropub form keeps its success message and
+redirect if writing the success log line fails. The legacy
+``scripts/prod_to_local.py`` helper (bounded SFTP prefetch, directory syncs)
+runs only on a developer machine. No migration, no new static files and no
+settings or environment change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``266b1d3``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200. A read-only ``manage.py shell`` probe (``PGOPTIONS`` with
+``default_transaction_read_only=on``, ``python -B``, inside a rolled-back
+transaction, no table access) called the preview view in-process with a
+``RequestFactory`` request, an in-memory logged-in stand-in user and template
+rendering stubbed: a GET returned 200 with an empty conversion before the deploy
+and 405 with ``Allow: POST`` and no conversion afterwards; a POST rendered the
+same escaped preview before and after.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``e22de29``). No database step and no static rebuild are needed.
+
 2026-11-20 rendition purge after commit and narrow route lookup
 ---------------------------------------------------------------
 

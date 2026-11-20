@@ -254,11 +254,17 @@ Create the page in the Wagtail admin, or let the seed command create it::
     uv run python manage.py seed_portfolio --create --hostname design.localhost --port 8000
 
 ``seed_portfolio`` creates the project categories and, with ``--create``, an empty,
-unpublished portfolio page if none exists. It never changes an existing page and can be
-run repeatedly. With ``--hostname`` the page becomes the root page of a new Wagtail site
-for that hostname (next to the main site's tree), with ``--port`` as the site's port
-(default 443, so Wagtail renders ``https://`` URLs); without it, it is created below the
-default site's root page.
+unpublished portfolio page at the requested target. Run it again to reuse the
+matching page without changing its content or revision. Without ``--hostname``,
+the command uses the default site's root if it is already a portfolio, or looks
+for the requested ``--slug`` (default ``portfolio``) immediately beneath that root.
+
+With ``--hostname``, the target is the exact hostname and ``--port`` pair
+(default 443 for HTTPS). A new pair gets its own Wagtail site and portfolio root.
+If the pair already exists, its root must be a portfolio and must match
+``--slug`` when supplied. An occupied pair with a different root is refused.
+When ``--slug`` is omitted for a new dedicated site, Wagtail derives a unique
+sibling slug from the page title.
 
 The code holds no editorial content. Texts, services, about items, clients, projects,
 legal texts and images are entered in the Wagtail admin and live in the database (images

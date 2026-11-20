@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Scope portfolio seeding to the requested site root or default-site path.
+
+- Allow portfolio sites on distinct ports of the same hostname while rejecting
+  an occupied hostname and port with a mismatched root.
+
 - Reuse portfolio detail navigation for recommendations and the project counter.
 
 - Check each project content block once when preparing case-study sections.

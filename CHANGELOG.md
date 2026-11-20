@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Purge repaired rendition cache entries after the outer transaction commits.
+
 - Scope portfolio seeding to the requested site root or default-site path.
 
 - Allow portfolio sites on distinct ports of the same hostname while rejecting

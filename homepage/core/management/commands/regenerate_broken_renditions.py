@@ -1,4 +1,6 @@
+import logging
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from shlex import quote
 from uuid import uuid4
@@ -6,6 +8,8 @@ from uuid import uuid4
 from cast.models import Blog, Post
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections, transaction
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,6 +34,22 @@ class RepairResult:
         return bool(self.unknown or self.failed or self.cache_pending)
 
 
+def _purge_repaired_rendition(rendition, alias, synchronous_result: RepairResult | None) -> None:
+    try:
+        rendition.purge_from_cache()
+    except Exception as error:  # noqa: BLE001 - cache failure cannot undo a committed repair
+        if synchronous_result is not None:
+            synchronous_result.cache_pending.append((alias, rendition.pk, rendition.file.name, repr(error)[:300]))
+        else:
+            logger.warning(
+                "Rendition %s repaired; cache purge pending (%s). Retry with --retry-cache-purge %s --database=%s",
+                rendition.pk,
+                type(error).__name__,
+                rendition.pk,
+                quote(alias),
+            )
+
+
 def regenerate_renditions_for_image(image) -> RepairResult:
     """
     Regenerate the renditions of an image whose file is definitely missing from storage.
@@ -39,6 +59,8 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     is reported as unknown and left alone. A missing rendition keeps its database row:
     the new file is generated first and then attached inside a database savepoint.
     Failed saves retain the old row and compensate only owned, unreferenced output.
+    Cache invalidation waits for the write transaction to commit. Within a caller's
+    transaction, regenerated rows are provisional and later purge failures are logged.
     """
     result = RepairResult()
     for rendition in image.renditions.all():
@@ -77,6 +99,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                 owned_output = allocated_name == expected_name and allocated_name != stored_name
             # Roll back even a save hook that writes the row and then raises. Cleanup queries
             # run after the savepoint exits, so a database failure cannot poison them.
+            synchronous_result = result if transaction.get_autocommit(using=alias) else None
             with transaction.atomic(using=alias):
                 current = type(rendition).objects.using(alias).select_for_update().get(pk=rendition.pk)
                 identity = (
@@ -100,6 +123,9 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                 current.file.name = rendition.file.name
                 current.width, current.height = rendition.width, rendition.height
                 current.save(using=alias, update_fields=["file", "width", "height"])
+                transaction.on_commit(
+                    partial(_purge_repaired_rendition, current, alias, synchronous_result), using=alias
+                )
                 rendition = current
         except Exception as error:  # noqa: BLE001 - report and keep going with the other renditions
             reason = f"{failure_context}: {error!r}"
@@ -116,10 +142,6 @@ def regenerate_renditions_for_image(image) -> RepairResult:
             failures.append((rendition.pk, stored_name, reason))
             continue
         result.regenerated.append(rendition)
-        try:
-            rendition.purge_from_cache()
-        except Exception as error:  # the replacement is already committed
-            result.cache_pending.append((alias, rendition.pk, rendition.file.name, repr(error)[:300]))
     return result
 
 

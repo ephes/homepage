@@ -109,6 +109,28 @@ def test_weeknote_links_block_context_groups_by_fixed_category_order_and_omits_e
     ]
 
 
+def test_weeknote_links_group_items_in_one_pass():
+    class CountedItems(list):
+        iterations = 0
+
+        def __iter__(self):
+            self.iterations += 1
+            return super().__iter__()
+
+    items = CountedItems(
+        link_item(category=category, title=f"Link {index}")
+        for index in range(300)
+        for category in ("retired", "software", "articles")
+    )
+
+    groups = WeeknoteLinksBlock().get_context(items)["grouped_categories"]
+
+    assert items.iterations == 1
+    assert [group["key"] for group in groups] == ["articles", "software", "other"]
+    for group in groups:
+        assert [item["title"] for item in group["items"]] == [f"Link {index}" for index in range(300)]
+
+
 def test_weeknote_links_block_get_prep_value_uses_list_block_item_wrapper_shape():
     block = WeeknoteLinksBlock()
 
@@ -160,6 +182,27 @@ def test_weeknote_links_block_renders_grouped_plain_markup():
     assert "weeknote-link-separator" not in html
     assert '<div class="weeknote-link-description">' in html
     assert "Useful <b>tool</b>." in html or "Useful <strong>tool</strong>." in html
+
+
+def test_weeknote_links_render_stored_items_with_retired_categories():
+    block = WeeknoteLinksBlock()
+    stored_items = [
+        link_item(category="retired", title="First archive", url="https://example.test/first"),
+        link_item(title="Current article", url="https://example.test/current"),
+        link_item(category="also-retired", title="Second archive", url="https://example.test/second"),
+    ]
+    value = block.to_python([{"type": "item", "id": str(uuid.uuid4()), "value": item} for item in stored_items])
+
+    html = block.render(value)
+
+    assert html.index('<h2 class="weeknote-link-heading">Articles</h2>') < html.index(
+        '<h2 class="weeknote-link-heading">Other links</h2>'
+    )
+    assert (
+        html.index('href="https://example.test/current">Current article</a>')
+        < html.index('href="https://example.test/first">First archive</a>')
+        < html.index('href="https://example.test/second">Second archive</a>')
+    )
 
 
 def _post_body_with_weeknote_links(items):

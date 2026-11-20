@@ -19,6 +19,7 @@ publication has been committed:
 
 import logging
 from functools import partial
+from itertools import chain
 from urllib.parse import urlsplit, urlunsplit
 
 from django.db import DEFAULT_DB_ALIAS, transaction
@@ -88,14 +89,19 @@ def _is_publicly_accessible(page, database) -> bool:
     # Wagtail checks restrictions on the source of each alias.
     pages = Page.objects.using(database).only("alias_of")
 
-    def restriction_page_id(candidate):
-        if candidate.alias_of_id is None:
-            return candidate.pk
-        return restriction_page_id(pages.get(pk=candidate.alias_of_id))
-
     ancestors = page.get_ancestors().using(database).only("alias_of")
-    page_ids = {restriction_page_id(page)}
-    page_ids.update(restriction_page_id(ancestor) for ancestor in ancestors)
+    page_ids = set()
+    for candidate in chain((page,), ancestors):
+        visited = set()
+        while candidate.alias_of_id is not None:
+            if candidate.pk in visited:
+                return False
+            visited.add(candidate.pk)
+            try:
+                candidate = pages.get(pk=candidate.alias_of_id)
+            except Page.DoesNotExist:
+                return False
+        page_ids.add(candidate.pk)
     return not PageViewRestriction.objects.using(database).filter(page_id__in=page_ids).exists()
 
 

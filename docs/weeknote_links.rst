@@ -12,7 +12,7 @@ rendered consistently across themes, and generated deterministically by daybook.
 The logical author-facing value is a flat list of link items. Wagtail stores the
 prepared ``ListBlock`` value with internal ``type: item`` wrappers and generated
 item IDs, but clients should not construct that internal shape. Rendering groups
-items by category in a fixed display order, so authors and automation do not
+items in a single pass and displays categories in a fixed order, so authors and automation do not
 need to construct nested section objects.
 
 Daybook author-facing JSON
@@ -85,6 +85,10 @@ Category choices, in display order:
 * ``books`` — Books
 * ``papers`` — Papers
 * ``links`` — Links
+
+Rows already stored with retired category values appear together under
+**Other links**, after the configured categories and in their original order.
+New submissions must use a configured category.
 
 Kind choices:
 

@@ -70,10 +70,10 @@ KIND_CHOICES = [
 
 `WeeknoteLinksBlock` is a flat `ListBlock(WeeknoteLinkItemBlock(), min_num=1)` with `Meta.template = "cast/weeknotes/links.html"` and `Meta.label = "Weeknote links"`. It implements `get_context()` to expose pre-grouped data to the template:
 
-- `grouped_categories`: a list of `{key, label, items}` in fixed display order, with empty categories omitted.
+- `grouped_categories`: a list of `{key, label, items}` in fixed display order, with empty categories omitted. Stored rows with retired categories appear in a final **Other links** group in their original order.
 - `category_labels`: the stable category label mapping, for tests and any theme-specific template.
 
-Grouping in Python avoids brittle Django-template-only grouping logic.
+Group items in a single pass in Python, then emit nonempty groups in display order.
 
 Factory:
 

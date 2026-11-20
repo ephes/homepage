@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Skip outgoing webmentions when an alias source disappears during publication.
+
+- Skip outgoing webmentions for publications with cyclic page aliases.
+
+- Group weeknote links in one pass while preserving display order.
+
+- Render stored weeknote links with retired categories in a final Other links group.
+
 - Require the database alias reported by rendition repair when retrying a cache purge.
 
 - Keep the original rendition link when the file reappears or storage cannot

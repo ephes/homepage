@@ -357,6 +357,30 @@ def test_uncertain_backup_durability_preserves_named_file(helper, transport, mon
     assert_closed(transport)
 
 
+def test_stage_cleanup_failure_after_publication_reports_named_backup(helper, transport, monkeypatch, tmp_path):
+    import tempfile
+
+    path = tmp_path / "example.sql.gz"
+    attempts = []
+
+    class FailingStage(tempfile.TemporaryDirectory):
+        def cleanup(self):
+            attempts.append(self.name)
+            raise OSError("synthetic stage cleanup failure")
+
+    restore = Mock()
+    monkeypatch.setattr(helper, "restore_download", restore)
+    monkeypatch.setattr(helper.tempfile, "TemporaryDirectory", FailingStage)
+    with pytest.raises(OSError, match="durability.*uncertain") as error:
+        helper.transfer_and_restore("host.invalid", "synthetic", tmp_path)
+    assert str(path) in str(error.value)
+    assert "synthetic stage cleanup failure" in str(error.value)
+    assert path.read_bytes() == transport.payload
+    assert len(attempts) == 1
+    restore.assert_not_called()
+    assert_closed(transport)
+
+
 @pytest.mark.parametrize("resource", ["client", "sftp", "channel", "stdin", "stdout", "stderr"])
 def test_cleanup_failure_prevents_publication_and_local_steps(helper, transport, monkeypatch, tmp_path, resource):
     objects = dict(client=transport.client, sftp=transport.sftp, channel=transport.channel)

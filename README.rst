@@ -191,7 +191,9 @@ are restored. Unknown SSH host keys remain refused.
 
 The helper caps SFTP prefetch at 64 concurrent requests with Paramiko 3.3 and
 later. With Paramiko 2.8 through 3.2, it disables prefetch and reads
-sequentially. See the
+sequentially. Sequential reads are slower on high-latency links, so a large
+backup can reach the transfer deadline; use Paramiko 3.3 or later for large
+backups. See the
 `Paramiko SFTP documentation <https://docs.paramiko.org/en/3.3/api/sftp.html#paramiko.sftp_client.SFTPClient.getfo>`_.
 
 Downloads must be nonempty regular remote files of at most 10 GiB, retain their

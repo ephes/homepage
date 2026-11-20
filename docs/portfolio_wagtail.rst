@@ -87,8 +87,9 @@ Site settings (``Settings`` in the Wagtail admin, one set per site):
     sections contain placeholders instead of the postal address (``[Name]``,
     ``[Straße und Hausnummer]``, ``[PLZ Ort]``); enter the real address in the Wagtail
     admin before the portfolio goes live. Opening the settings form saves these defaults
-    for the site. Paragraph and address blocks accept stored ``<br>`` line breaks and
-    hand them to the editor as ``<br/>``.
+    for the site. Paragraph and address blocks hand stored attribute-free line
+    breaks such as ``<br>``, ``<BR>`` and ``<Br >`` to Draftail as ``<br/>``.
+    The conversion happens when the editor opens the stored text.
 
 ``ErrorPageSettings``
     Copy of the 501 placeholder page.

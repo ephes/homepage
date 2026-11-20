@@ -51,11 +51,11 @@ class LineBreakRichTextBlock(blocks.RichTextBlock):
     """Rich text that also opens stored HTML5 line breaks (``<br>``) in the editor.
 
     Wagtail's Draftail converter only accepts the self-closing ``<br/>`` it writes itself;
-    an unclosed ``<br>`` makes the edit form fail with a server error.
+    an unclosed ``<br>`` in any letter case makes the edit form fail with a server error.
     """
 
     def value_for_form(self, value):
-        return re.sub(r"<br\s*>", "<br/>", super().value_for_form(value))
+        return re.sub(r"<br\s*>", "<br/>", super().value_for_form(value), flags=re.IGNORECASE)
 
 
 class LegalContactBlock(blocks.StructBlock):

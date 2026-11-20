@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Open legal settings in Draftail when stored text contains uppercase or mixed-case
+  HTML line breaks.
+
 - Limit portfolio detail pages' teaser image and rendition loads to their
   recommendations.
 

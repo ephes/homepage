@@ -27,7 +27,8 @@ already-applied database; see ``portfolio_wagtail.rst`` before planning a repair
 
 For missing rendition repair, preserve stderr and distinguish unchanged failures
 from committed replacements with cache purge pending. Retry only those cache IDs
-with ``regenerate_broken_renditions --retry-cache-purge``; see ``media_utils.rst``.
+with ``regenerate_broken_renditions --retry-cache-purge`` and the reported
+``--database`` alias. See ``media_utils.rst``.
 Cover import failures can retain uncertain storage names (including S3); inspect
 references and object ownership before manual cleanup, as described in
 ``development.rst``. Never infer ownership solely from a prior exists check.

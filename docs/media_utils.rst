@@ -15,10 +15,10 @@ summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` 
 of each blog; without it nothing is skipped.
 
 The scan fetches direct images, galleries and gallery images in post batches of
-up to 100. An image shared by direct slots, galleries, posts or requested blogs is checked
-only once in the complete invocation, using its database alias and primary key.
-Rendition queries and storage checks therefore scale with unique images and their
-renditions, rather than repeated references. The final ``checked images`` count
+up to 100. An image shared by direct slots, galleries, posts or requested blogs
+is checked once per invocation, using its database alias and primary key.
+Rendition queries and storage checks scale with unique images and their
+renditions. The final ``checked images`` count
 reports unique images attempted. Repair/error/cache-pending counts belong to the
 first post/blog that encounters the image; later references add no duplicate
 outcomes. Unknown and failed images are not retried within the same run. A new
@@ -34,9 +34,8 @@ to that row. Repairs use a distinct ``repair-<random-id>`` filename, preserving
 existing storage objects. The row save runs inside a database savepoint, so even
 a save hook that writes and then raises leaves the old row intact.
 
-If attaching the replacement fails, the command deletes only the newly allocated name whose
-ownership it established before writing, and only after checking that no rendition
-row references it. A storage backend that returns a different name makes ownership
+If attaching the replacement fails, the command deletes the newly allocated file
+only after establishing ownership and checking that no rendition row references it. A storage backend that returns a different name makes ownership
 uncertain: that object is retained and its name is reported for recovery. Failed
 reference checks or deletion also retain the primary error and report the cleanup
 name/error. Inspect those named objects before removing them manually. An interrupted
@@ -57,13 +56,16 @@ the command again.
 
 Cache invalidation is a separate post-save outcome. If a purge fails, the usable
 replacement stays committed and counts as regenerated; independent repairs continue.
-The command exits nonzero and lists ``cache purge pending`` IDs separately from
-unchanged/failed repairs. Retry only invalidation, without allocating any files::
+The command exits nonzero and reports the database alias and ID for each
+``cache purge pending`` rendition. The retry purges cache keys without allocating
+files::
 
-    uv run python manage.py regenerate_broken_renditions --retry-cache-purge 123 456
+    uv run python manage.py regenerate_broken_renditions --retry-cache-purge 123 456 --database=default
 
-This reads the current rows and purges their cache keys. Missing rows and renewed
-cache failures are reported nonzero; the option accepts no blog slugs or limit.
+Use the explicit ``--database`` alias reported by repair. The retry reads the
+current rows on that alias and purges their cache keys. Group IDs by alias and
+retry each alias separately. Missing rows and renewed cache failures are reported
+nonzero. Retry accepts no blog slugs or limit.
 
 Video width and height
 ======================

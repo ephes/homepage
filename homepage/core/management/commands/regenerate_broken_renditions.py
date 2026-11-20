@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+from shlex import quote
 from uuid import uuid4
 
 from cast.models import Blog, Post
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import connections, transaction
 
 
 @dataclass
@@ -15,6 +16,7 @@ class RepairResult:
     # (rendition pk, stored file name, reason) for renditions whose database row was left as it was
     unknown: list = field(default_factory=list)
     failed: list = field(default_factory=list)
+    # (database alias, rendition pk, replacement file name, reason)
     cache_pending: list = field(default_factory=list)
 
     def extend(self, other: "RepairResult") -> None:
@@ -40,6 +42,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     """
     result = RepairResult()
     for rendition in image.renditions.all():
+        alias = rendition._state.db
         stored_name = rendition.file.name
         observed = (
             stored_name,
@@ -74,8 +77,8 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                 owned_output = allocated_name == expected_name and allocated_name != stored_name
             # Roll back even a save hook that writes the row and then raises. Cleanup queries
             # run after the savepoint exits, so a database failure cannot poison them.
-            with transaction.atomic(using=rendition._state.db):
-                current = type(rendition).objects.using(rendition._state.db).select_for_update().get(pk=rendition.pk)
+            with transaction.atomic(using=alias):
+                current = type(rendition).objects.using(alias).select_for_update().get(pk=rendition.pk)
                 identity = (
                     current.file.name,
                     current.image_id,
@@ -96,7 +99,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                     raise RuntimeError("Original rendition file reappeared during regeneration")
                 current.file.name = rendition.file.name
                 current.width, current.height = rendition.width, rendition.height
-                current.save(update_fields=["file", "width", "height"])
+                current.save(using=alias, update_fields=["file", "width", "height"])
                 rendition = current
         except Exception as error:  # noqa: BLE001 - report and keep going with the other renditions
             reason = f"{failure_context}: {error!r}"
@@ -105,9 +108,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                     reason += f"; retained {allocated_name!r}: storage changed the name; ownership is uncertain"
                 else:
                     try:
-                        referenced = (
-                            type(rendition).objects.using(rendition._state.db).filter(file=allocated_name).exists()
-                        )
+                        referenced = type(rendition).objects.using(alias).filter(file=allocated_name).exists()
                         if not referenced:
                             storage.delete(allocated_name)
                     except Exception as cleanup_error:  # noqa: BLE001 - preserve the primary failure
@@ -118,7 +119,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
         try:
             rendition.purge_from_cache()
         except Exception as error:  # the replacement is already committed
-            result.cache_pending.append((rendition.pk, rendition.file.name, repr(error)[:300]))
+            result.cache_pending.append((alias, rendition.pk, rendition.file.name, repr(error)[:300]))
     return result
 
 
@@ -159,7 +160,12 @@ class Command(BaseCommand):
             nargs="+",
             type=int,
             metavar="RENDITION_ID",
-            help="Retry cache invalidation of current rows only; never generate files.",
+            help="Retry cache invalidation of current rows on --database; never generate files.",
+        )
+        parser.add_argument(
+            "--database",
+            metavar="ALIAS",
+            help="Database alias reported by repair (required for --retry-cache-purge).",
         )
         parser.add_argument(
             "--limit",
@@ -172,23 +178,32 @@ class Command(BaseCommand):
         limit = options["limit"]
         if limit is not None and limit < 1:
             raise CommandError("--limit must be a positive number")
+        alias = options["database"]
         if options["retry_cache_purge"]:
             if options["blog_slugs"] or limit is not None:
                 raise CommandError("--retry-cache-purge is used without blog slugs or --limit")
+            if alias is None:
+                raise CommandError("--retry-cache-purge requires the reported --database alias")
+            if alias not in connections:
+                raise CommandError(f"Unknown database alias: {alias!r}")
             from wagtail.images import get_image_model
 
             Rendition = get_image_model().get_rendition_model()
+            renditions = Rendition.objects.using(alias).select_related("image")
             pending = []
             for pk in dict.fromkeys(options["retry_cache_purge"]):
                 try:
-                    Rendition.objects.get(pk=pk).purge_from_cache()
+                    renditions.get(pk=pk).purge_from_cache()
                 except Exception as error:
                     pending.append(pk)
-                    self.stderr.write(f"rendition {pk}: cache purge failed: {repr(error)[:300]}")
+                    self.stderr.write(f"rendition {pk} on database {alias!r}: cache purge failed: {repr(error)[:300]}")
             if pending:
-                raise CommandError(f"Retry cache purge for rendition IDs: {pending}")
+                ids = " ".join(map(str, pending))
+                raise CommandError(f"Retry with --retry-cache-purge {ids} --database={quote(alias)}")
             self.stdout.write("Cache purge completed; no rendition files were generated.")
             return
+        if alias is not None:
+            raise CommandError("--database requires --retry-cache-purge")
         if not options["blog_slugs"]:
             raise CommandError("Provide blog slugs or --retry-cache-purge")
         blogs = []
@@ -225,10 +240,10 @@ class Command(BaseCommand):
                 f"Blog {blog.slug}: checked {post_count} posts, regenerated {len(blog_result.regenerated)}, "
                 f"unknown {len(blog_result.unknown)}, failed {len(blog_result.failed)}"
             )
-            for pk, stored_name, reason in blog_result.cache_pending:
+            for alias, pk, stored_name, reason in blog_result.cache_pending:
                 self.stderr.write(
                     f"rendition {pk} ({stored_name}) repaired; cache purge pending: {reason}. "
-                    f"Retry with --retry-cache-purge {pk}"
+                    f"Retry with --retry-cache-purge {pk} --database={quote(alias)}"
                 )
             total.extend(blog_result)
         self.stdout.write(f"checked images: {len(seen_images)}")
@@ -238,5 +253,5 @@ class Command(BaseCommand):
                 f"{len(total.unknown)} renditions could not be checked and {len(total.failed)} could not be "
                 f"regenerated. They were left unchanged; rerun the command to retry. "
                 f"{len(total.cache_pending)} committed repairs have cache purge pending; "
-                "use --retry-cache-purge with the reported IDs."
+                "use --retry-cache-purge with the reported IDs and --database alias."
             )

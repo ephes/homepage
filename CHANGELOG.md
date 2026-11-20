@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Require the database alias reported by rendition repair when retrying a cache purge.
+
 - Keep the original rendition link when the file reappears or storage cannot
   confirm it is still absent during repair.
 

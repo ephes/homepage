@@ -523,14 +523,63 @@ def test_cache_failure_keeps_committed_repairs_and_continues(monkeypatch, repair
     assert {r.pk for r in result.regenerated} == {first.pk, second.pk}
     assert file_exists(first) and file_exists(second)
     assert result.incomplete and not result.failed
-    assert result.cache_pending[0][0] == first.pk
+    assert result.cache_pending[0][:2] == ("default", first.pk)
     repaired_name = stored(first).file.name
     monkeypatch.setattr(type(first), "purge_from_cache", purge)
     monkeypatch.setattr(
         get_image_model(), "generate_rendition_file", lambda *a, **k: pytest.fail("purge must not regenerate")
     )
-    call_command("regenerate_broken_renditions", "--retry-cache-purge", str(first.pk), stdout=io.StringIO())
+    run_command("--retry-cache-purge", str(first.pk), "--database", "default")
     assert stored(first).file.name == repaired_name
+
+
+@pytest.mark.django_db(databases=["default", "legacy"])
+def test_cache_purge_retry_only_loads_the_explicit_alias(forbid_regeneration):
+    default = make_rendition(make_image("default-alias"))
+    collection = Collection.get_first_root_node()
+    Collection.objects.using("legacy").create(
+        pk=collection.pk, name=collection.name, path=collection.path, depth=collection.depth
+    )
+    image_model = get_image_model()
+    legacy_image = image_model.objects.using("legacy").create(
+        title="legacy-alias", file=get_test_image_file(filename="legacy-alias.png"), collection_id=collection.pk
+    )
+    legacy_image.file_hash = "a" * 40
+    legacy_image.save(using="legacy", update_fields=["file_hash"])
+    model = type(default)
+    legacy = model.objects.using("legacy").create(
+        pk=default.pk,
+        image=legacy_image,
+        file="images/legacy-alias.png",
+        filter_spec=default.filter_spec,
+        focal_point_key=default.focal_point_key,
+        width=default.width,
+        height=default.height,
+    )
+    default_key, legacy_key = default.get_cache_key(), legacy.get_cache_key()
+    assert default_key != legacy_key
+    cache = default.cache_backend
+    cache.set_many({default_key: "default rendition", legacy_key: "legacy rendition"})
+    forbid_regeneration()
+
+    stdout, stderr = run_command("--retry-cache-purge", str(default.pk), str(default.pk), "--database", "legacy")
+
+    assert cache.get_many([default_key, legacy_key]) == {default_key: "default rendition"}
+    assert "no rendition files were generated" in stdout
+    assert stderr == ""
+
+
+@pytest.mark.parametrize(
+    "args, message",
+    [
+        (("--retry-cache-purge", "1"), "requires the reported --database"),
+        (("--retry-cache-purge", "1", "--database", "missing"), "Unknown database alias"),
+        (("some-blog", "--database", "default"), "--database requires --retry-cache-purge"),
+    ],
+)
+def test_cache_purge_rejects_invalid_alias_usage(args, message, django_assert_num_queries):
+    with django_assert_num_queries(0), pytest.raises(CommandError, match=message):
+        run_command(*args)
 
 
 def test_command_reports_cache_pending_separately(site_root, monkeypatch):
@@ -548,7 +597,7 @@ def test_command_reports_cache_pending_separately(site_root, monkeypatch):
         call_command("regenerate_broken_renditions", "purge", stdout=stdout, stderr=stderr)
     assert file_exists(rendition)
     assert "generated renditions: 1" in stdout.getvalue()
-    assert f"--retry-cache-purge {rendition.pk}" in stderr.getvalue()
+    assert f"--retry-cache-purge {rendition.pk} --database=default" in stderr.getvalue()
 
 
 def test_command_batches_relationship_queries_and_checks_shared_images_once(

@@ -95,6 +95,32 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-20 CSP report shapes and portfolio copy checks
+------------------------------------------------------
+
+Deployed ``31c6b39``, which also brings ``5e23ecb`` live: ``/csp-report/``
+answers 415 for other media types and 400 for a JSON root that does not match
+the media type, and logs directive names, violation keywords and non-HTTP(S)
+schemes only from fixed allowlists (:doc:`csp`). Webmentions are scheduled and
+reloaded on the publishing database (:doc:`indieweb`). Optional portfolio copy
+counts as empty when its displayed text is only whitespace or a starter
+placeholder, project detail pages load teaser images only for the two
+recommended projects, and the legal settings editor accepts ``<BR>`` in any
+letter case (:doc:`portfolio_wagtail`). No migration, no new static files and
+no settings or environment change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``31c6b39``; both units got new PIDs and stayed on them for 120 seconds; the
+front page, the blog RSS feed and the portfolio host answered 200. A report
+sent as ``application/json`` got 415, and a synthetic report with an unknown
+directive and scheme was logged as ``directive=other blocked=other``. The
+landing page, the legal pages and all nine project pages of the portfolio host
+rendered byte-identical to before the deploy (after removing nonces).
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``91850a6``). No database step and no static rebuild are needed.
+
 2026-11-19 CSP report log scope
 -------------------------------
 

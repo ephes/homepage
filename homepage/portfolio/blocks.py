@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from wagtail import blocks
 from wagtail.blocks import StructBlockValidationError
 from wagtail.images.blocks import ImageBlock
+from wagtail.rich_text import RichText, get_text_for_indexing
 
 INLINE_RICH_TEXT_FEATURES = ["bold", "italic", "link", "no-break"]
 BODY_RICH_TEXT_FEATURES = ["bold", "italic", "ol", "ul", "link", "no-break"]
@@ -26,8 +27,7 @@ def is_filled(value):
     "[Optionales Kundenstatement zum Projekt.]") count as not filled, so their block
     is not rendered.
     """
-    source = getattr(value, "source", value)
-    text = re.sub(r"<[^>]*>", " ", str(source or ""))
+    text = get_text_for_indexing(value.source) if isinstance(value, RichText) else str(value or "")
     text = " ".join(text.replace("\xa0", " ").split())
     return bool(text) and not PLACEHOLDER_PATTERN.match(text)
 
@@ -51,11 +51,11 @@ class LineBreakRichTextBlock(blocks.RichTextBlock):
     """Rich text that also opens stored HTML5 line breaks (``<br>``) in the editor.
 
     Wagtail's Draftail converter only accepts the self-closing ``<br/>`` it writes itself;
-    an unclosed ``<br>`` makes the edit form fail with a server error.
+    an unclosed ``<br>`` in any letter case makes the edit form fail with a server error.
     """
 
     def value_for_form(self, value):
-        return re.sub(r"<br\s*>", "<br/>", super().value_for_form(value))
+        return re.sub(r"<br\s*>", "<br/>", super().value_for_form(value), flags=re.IGNORECASE)
 
 
 class LegalContactBlock(blocks.StructBlock):

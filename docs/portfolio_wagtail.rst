@@ -87,8 +87,9 @@ Site settings (``Settings`` in the Wagtail admin, one set per site):
     sections contain placeholders instead of the postal address (``[Name]``,
     ``[Straße und Hausnummer]``, ``[PLZ Ort]``); enter the real address in the Wagtail
     admin before the portfolio goes live. Opening the settings form saves these defaults
-    for the site. Paragraph and address blocks accept stored ``<br>`` line breaks and
-    hand them to the editor as ``<br/>``.
+    for the site. Paragraph and address blocks hand stored attribute-free line
+    breaks such as ``<br>``, ``<BR>`` and ``<Br >`` to Draftail as ``<br/>``.
+    The conversion happens when the editor opens the stored text.
 
 ``ErrorPageSettings``
     Copy of the 501 placeholder page.
@@ -140,7 +141,9 @@ Statement, challenge, solution, the stats entries and the testimonial quote, nam
 role may be left empty. A text that is empty or consists only of a bracketed starter
 placeholder (``[Name]``, ``[Optionales Kundenstatement zum Projekt.]`` …) is not
 rendered, together with its row or section; the case-study section disappears when none
-of its blocks is filled.
+of its blocks is filled. The check decodes HTML entities in rich text, so an
+encoded nonbreaking space or bracketed placeholder also counts as empty.
+Plain-text fields are checked and displayed literally.
 
 Fixed presentation elements such as ``Moin`` and the handwritten phrases are not
 editable, because their SVG path data is generated for exactly those words
@@ -220,7 +223,9 @@ collected like any other app static files:
 
 Templates must reference assets through ``{% static %}`` (or the ``versioned_static``
 tag for stylesheets, which appends the file's modification time in ``DEBUG``), so
-hashed ``collectstatic`` output works in production. Page stylesheets go into the
+hashed ``collectstatic`` output works in production. If a local rebuild removes
+the source before its modification time can be read, the tag uses the base static
+URL. Page stylesheets go into the
 ``extra_styles`` block of ``portfolio/base.html``, deferred scripts into
 ``extra_scripts``.
 
@@ -311,7 +316,11 @@ admin thumbnails) are excluded. Missing derivatives still use Wagtail's normal g
 filters, alt text and responsive sizing are unchanged. Card lists defer case-study
 content, conclusion and teaser text, while the current project retains its full
 content. Utility/legal menus load only project titles and routing fields in public
-tree order. The 501 page loads card data separately for its first two projects.
+tree order. Detail pages use the same lightweight projection for their menu and project
+counter and load card data only for up to two recommendations. The two cards
+follow public tree order, wrapping at the end. In a draft preview the menu and
+recommendations use public projects, and the counter includes the current
+draft. The 501 page loads card data separately for its first two projects.
 
 ``homepage/portfolio/tests/test_read_queries.py`` renders the actual card and shell
 templates with 1 and 20 synthetic projects. Its cold image/rendition-cache budget

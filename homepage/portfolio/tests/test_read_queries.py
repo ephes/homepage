@@ -1,11 +1,14 @@
 """Cold-cache budgets around the real project-card and shell templates."""
 
+from unittest.mock import patch
+
 import pytest
 from bs4 import BeautifulSoup
 from cast.models import TemplateBaseDirectory
 from django.core.cache import caches
 from django.template.loader import render_to_string
 from django.test import RequestFactory
+from wagtail.images import get_image_model
 from wagtail.images.models import Filter
 from wagtail.models import PageViewRestriction, Site
 
@@ -135,6 +138,47 @@ def test_shell_and_card_queries_omit_case_study_content(count, django_assert_num
     PageViewRestriction.objects.create(page=restricted, restriction_type="login")
     for queryset in (index.get_portfolio_navigation_projects(), index.get_portfolio_projects()):
         assert {draft.pk, restricted.pk}.isdisjoint({p.pk for p in queryset})
+
+
+@pytest.mark.parametrize("count", [3, 50])
+def test_detail_loads_only_recommended_project_teasers(count):
+    index, expected, request = prepare_projects(count)
+    projects = list(ProjectPage.objects.child_of(index))
+    draft = add_project(index, title="Synthetic draft", publish=False)
+    add_project(index, title="Unrelated synthetic draft", publish=False)
+    image_model = get_image_model()
+    rendition_model = image_model.get_rendition_model()
+    recommended_image_ids = {project.teaser_image_id for project in projects[:2]}
+
+    def record_ids(model, field, loaded):
+        from_db = model.from_db
+
+        def track(cls, db, fields, values, **kwargs):
+            loaded.add(values[fields.index(field)])
+            return from_db(db, fields, values, **kwargs)
+
+        return patch.object(model, "from_db", classmethod(track))
+
+    for page, number, total in ((projects[-1], count, count), (draft, count + 1, count + 1)):
+        for cache in caches.all():
+            cache.clear()
+        image_ids, rendition_image_ids = set(), set()
+        with (
+            record_ids(image_model, "id", image_ids),
+            record_ids(rendition_model, "image_id", rendition_image_ids),
+        ):
+            response = page.serve(request).render()
+
+        assert image_ids == recommended_image_ids
+        assert rendition_image_ids == recommended_image_ids
+        assert response.context_data["project_number"] == number
+        assert response.context_data["project_total"] == total
+
+        soup = BeautifulSoup(response.content, "html.parser")
+        assert [(a.get_text(strip=True), a["href"]) for a in soup.select(".project-menu-links a")] == expected
+        cards = soup.select(".related-project-card")
+        assert [(a.h3.get_text(strip=True), a["href"]) for a in cards] == expected[:2]
+        assert all(card.img and "420w" in card.img["srcset"] for card in cards)
 
 
 def test_card_prefetch_still_creates_missing_small_source_renditions():

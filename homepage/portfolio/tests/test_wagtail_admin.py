@@ -223,11 +223,20 @@ def test_unsaved_portfolio_settings_open_in_the_admin(client, setting):
 
 @pytest.mark.django_db
 def test_legal_settings_with_stored_html5_line_breaks_open_in_the_admin(client):
-    """Rows saved before the defaults used ``<br/>`` still hold ``<br>`` and must stay editable."""
+    """Legacy line breaks load in the real settings view and round-trip through Draftail."""
     site = make_portfolio_tree().get_site()
     legal = LegalPageSettings.for_site(site)
     legal.imprint_sections = [
-        ("section", {"heading": "Anbieterin", "copy": [("address", "<p>A<br>B<br >C</p>")]}),
+        (
+            "section",
+            {
+                "heading": "Synthetic section",
+                "copy": [
+                    ("address", "<p>A<br>B<BR >C<Br>D<br/>E</p>"),
+                    ("paragraph", "<p>A<br>B<BR >C<Br>D<br/><b>E</b></p>"),
+                ],
+            },
+        ),
     ]
     legal.save()
     client.force_login(make_admin_request().user)
@@ -235,3 +244,15 @@ def test_legal_settings_with_stored_html5_line_breaks_open_in_the_admin(client):
     response = client.get(reverse("wagtailsettings:edit", args=("portfolio", "legalpagesettings", site.pk)))
 
     assert response.status_code == 200
+    legal.refresh_from_db()
+    for item in legal.imprint_sections[0].value["copy"]:
+        assert "<BR >" in item.value.source
+        draftail_value = item.block.get_form_state(item.value)
+        saved = item.block.value_from_datadict({"copy": draftail_value}, {}, "copy")
+        expected_end = "<b>E</b>" if item.block_type == "paragraph" else "E"
+        assert saved.source.startswith('<p data-block-key="')
+        assert saved.source.partition(">")[2] == f"A<br/>B<br/>C<br/>D<br/>{expected_end}</p>"
+
+    block = legal.imprint_sections[0].value["copy"][0].block
+    other_markup = '<p>A<br data-example="value">B<br />C&lt;BR&gt;</p>'
+    assert block.value_for_form(block.to_python(other_markup)) == other_markup

@@ -1043,6 +1043,30 @@ def test_unchanged_template_placeholders_are_not_rendered(client):
     assert document.select_one("#case-study") is None
 
 
+@pytest.mark.parametrize("statement", ["<p>&nbsp;&#160;&#xA0;</p>", "<p>&#91;Projektstatement&#93;</p>"])
+@pytest.mark.parametrize(
+    "quote, expected_quote", [("[Zitat]", None), ("<Projekt>", "<Projekt>"), ("&nbsp;", "&nbsp;")]
+)
+def test_optional_project_text_uses_rich_text_or_literal_plain_text(client, statement, quote, expected_quote):
+    index = make_portfolio_tree()
+    project = add_project(index, title="Synthetic Project")
+    project.content = [
+        ("statement", {"text": statement}),
+        ("testimonial", {"quote": quote, "name": "", "role": ""}),
+    ]
+    project.save_revision().publish()
+
+    response = client.get(project.url)
+    assert response.status_code == 200
+    document = BeautifulSoup(response.content, "html.parser")
+    assert document.select_one("#case-study") is None
+    testimonial = document.select_one(".project-testimonial blockquote")
+    if expected_quote is None:
+        assert testimonial is None
+    else:
+        assert testimonial.get_text(strip=True) == f"„{expected_quote}“"
+
+
 def test_empty_case_texts_hide_only_their_own_rows(client):
     index = make_portfolio_tree()
     project = add_project(index, title="Teilweise ausgefüllt")
@@ -1061,6 +1085,19 @@ def test_empty_case_texts_hide_only_their_own_rows(client):
     assert [item.get_text(" ", strip=True) for item in document.select(".result")] == ["3 Kampagnen"]
     assert document.select_one(".project-testimonial blockquote").get_text(strip=True) == "„Sehr gern wieder.“"
     assert document.select_one(".project-testimonial figcaption") is None
+
+
+def test_entity_only_project_conclusion_is_hidden(client):
+    project = add_project(make_portfolio_tree(), title="Synthetic Project")
+    project.content = [("challenge_solution", {"challenge": "", "solution": "<p>Synthetic solution.</p>"})]
+    project.conclusion = "<p>&nbsp;</p>"
+    project.save_revision().publish()
+
+    response = client.get(project.url)
+    assert response.status_code == 200
+    document = BeautifulSoup(response.content, "html.parser")
+    assert "Synthetic solution." in document.select_one("#case-study").get_text()
+    assert document.select_one(".case-conclusion") is None
 
 
 def test_keep_together_wraps_no_break_space_groups_softly_and_escapes_the_rest():

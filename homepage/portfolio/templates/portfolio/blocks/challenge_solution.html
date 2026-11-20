@@ -8,6 +8,6 @@
 {% if value.solution|filled %}
   <div class="case-row motion-reveal">
     <h2 class="case-label">{{ portfolio_site_settings.project_solution_heading }}</h2>
-    <div class="case-copy rich-text">{{ value.solution|richtext }}{% if page.conclusion|filled %}<div class="case-conclusion">{{ page.conclusion|richtext }}</div>{% endif %}</div>
+    <div class="case-copy rich-text">{{ value.solution|richtext }}{% if page.conclusion|richtext_plaintext|filled %}<div class="case-conclusion">{{ page.conclusion|richtext }}</div>{% endif %}</div>
   </div>
 {% endif %}

@@ -281,7 +281,10 @@ def test_project_context_materializes_the_shared_project_collection_once():
     ]
 
     assert isinstance(context["portfolio_projects"], list)
-    assert len(project_rows) == 1
+    assert len(project_rows) == 2
+    navigation_query, recommendation_query = project_rows
+    assert '"teaser_image_id"' not in navigation_query
+    assert '"teaser_image_id"' in recommendation_query
     assert [item.pk for item in context["portfolio_projects"]] == [
         project.pk,
         context["other_projects"][0].pk,

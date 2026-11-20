@@ -28,7 +28,11 @@ def versioned_static(path):
     if not source_path:
         return url
 
-    return f"{url}?v={Path(source_path).stat().st_mtime_ns}"
+    try:
+        mtime_ns = Path(source_path).stat().st_mtime_ns
+    except FileNotFoundError:
+        return url
+    return f"{url}?v={mtime_ns}"
 
 
 @register.filter

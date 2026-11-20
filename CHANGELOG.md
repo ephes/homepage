@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Open legal settings in Draftail when stored text contains uppercase or mixed-case
+  HTML line breaks.
+
+- Limit portfolio detail pages' teaser image and rendition loads to their
+  recommendations.
+
+- Use the base portfolio static URL in debug mode if an asset source disappears
+  during a local rebuild.
+
+- Hide optional portfolio rich-text blocks containing only encoded whitespace
+  or starter placeholders, and treat plain-text fields literally.
+
 - Reload the live Webmention post and check its access restrictions on the
   publishing database.
 - Schedule Webmention delivery on the publishing database so a rollback on

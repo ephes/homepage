@@ -383,7 +383,9 @@ class PublishingDatabaseRouter:
 @pytest.mark.django_db(transaction=True, databases=["default", "legacy"])
 def test_secondary_publication_rollback_discards_delivery():
     with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
-        post = draft_post(create_blog())
+        # Treebeard locks the parent row, so routed tree writes need a transaction there.
+        with transaction.atomic(using="legacy"):
+            post = draft_post(create_blog())
         with patch("homepage.core.webmention_integration._deliver_webmentions") as deliver:
             with transaction.atomic(using="legacy"):
                 post.save_revision().publish()
@@ -400,19 +402,31 @@ def test_secondary_publication_rollback_discards_delivery():
 def test_secondary_delivery_reloads_the_publication_from_its_database(restricted):
     page_id = 12345
     default_post = create_blog().add_child(instance=Post(pk=page_id, title="Default", slug="default", live=True))
-    with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
+    with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]), transaction.atomic(using="legacy"):
         secondary_blog = create_blog()
         secondary_post = secondary_blog.add_child(
             instance=Post(pk=page_id, title="Secondary", slug="secondary", live=False)
         )
     assert default_post.pk == secondary_post.pk == page_id
 
+    # Only the publishing database decides: a restriction on the same page id
+    # in the default database must not suppress the delivery.
+    PageViewRestriction.objects.using("default").create(page=default_post, restriction_type=PageViewRestriction.LOGIN)
+
     with patch("homepage.core.webmention_integration._send_webmentions_for") as send:
         with transaction.atomic(using="legacy"):
             with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
                 secondary_post.save_revision().publish()
+                if restricted:
+                    # Restricted after scheduling but before the commit: delivery must re-check it.
+                    PageViewRestriction.objects.using("legacy").create(
+                        page=secondary_blog, restriction_type=PageViewRestriction.LOGIN
+                    )
             send.assert_not_called()
 
+    if restricted:
+        send.assert_not_called()
+        return
     send.assert_called_once()
     (delivered,) = send.call_args.args
     assert delivered._state.db == "legacy"

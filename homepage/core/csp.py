@@ -59,6 +59,7 @@ _DIRECTIVES = frozenset(
         "style-src-elem",
         "trusted-types",
         "upgrade-insecure-requests",
+        "webrtc",
         "worker-src",
     }
 )

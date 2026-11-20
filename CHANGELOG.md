@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Require the database alias reported by rendition repair when retrying a cache purge.
+
+- Keep the original rendition link when the file reappears or storage cannot
+  confirm it is still absent during repair.
+
+- Fetch post and gallery image relationships in batches during rendition repair.
+
+- Resolve Wagtail page URLs using the target host’s portfolio or main URL routes.
+
 - Open legal settings in Draftail when stored text contains uppercase or mixed-case
   HTML line breaks.
 

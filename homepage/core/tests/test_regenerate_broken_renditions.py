@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 from collections import Counter
-from types import SimpleNamespace
 
 import pytest
 from cast.models import Blog, Gallery, Post
@@ -447,6 +446,43 @@ def test_repair_refuses_a_row_replaced_during_generation(monkeypatch, repair_sto
     assert allocated and not repair_storage.exists(allocated[0])
 
 
+@pytest.mark.parametrize("restored", [True, False], ids=["restored", "unknown"])
+def test_repair_rechecks_original_file_after_rendering(monkeypatch, repair_storage, restored):
+    from django.core.files.base import ContentFile
+
+    image, rendition = missing_legacy_rendition()
+    original = rendition.file.name
+    save, exists = repair_storage.save, repair_storage.exists
+    allocated = []
+
+    def write_replacement(*args, **kwargs):
+        allocated.append(save(*args, **kwargs))
+        if restored:
+            assert save(original, ContentFile(b"restored original")) == original
+        return allocated[0]
+
+    def check_file(name):
+        if name == original and allocated and not restored:
+            raise StorageError(503)
+        return exists(name)
+
+    monkeypatch.setattr(repair_storage, "save", write_replacement)
+    monkeypatch.setattr(repair_storage, "exists", check_file)
+
+    result = repair.regenerate_renditions_for_image(image)
+
+    assert stored(rendition).file.name == original
+    assert not result.regenerated
+    assert len(allocated) == 1 and not exists(allocated[0])
+    if restored:
+        assert not result.unknown and "reappeared" in result.failed[0][2]
+        with repair_storage.open(original) as file:
+            assert file.read() == b"restored original"
+    else:
+        assert not result.failed and "storage answered 503" in result.unknown[0][2]
+        assert not exists(original)
+
+
 def test_two_repairs_keep_the_winner_and_compensate_the_loser(monkeypatch, repair_storage):
     image, rendition = missing_legacy_rendition()
     save = repair_storage.save
@@ -487,14 +523,63 @@ def test_cache_failure_keeps_committed_repairs_and_continues(monkeypatch, repair
     assert {r.pk for r in result.regenerated} == {first.pk, second.pk}
     assert file_exists(first) and file_exists(second)
     assert result.incomplete and not result.failed
-    assert result.cache_pending[0][0] == first.pk
+    assert result.cache_pending[0][:2] == ("default", first.pk)
     repaired_name = stored(first).file.name
     monkeypatch.setattr(type(first), "purge_from_cache", purge)
     monkeypatch.setattr(
         get_image_model(), "generate_rendition_file", lambda *a, **k: pytest.fail("purge must not regenerate")
     )
-    call_command("regenerate_broken_renditions", "--retry-cache-purge", str(first.pk), stdout=io.StringIO())
+    run_command("--retry-cache-purge", str(first.pk), "--database", "default")
     assert stored(first).file.name == repaired_name
+
+
+@pytest.mark.django_db(databases=["default", "legacy"])
+def test_cache_purge_retry_only_loads_the_explicit_alias(forbid_regeneration):
+    default = make_rendition(make_image("default-alias"))
+    collection = Collection.get_first_root_node()
+    Collection.objects.using("legacy").create(
+        pk=collection.pk, name=collection.name, path=collection.path, depth=collection.depth
+    )
+    image_model = get_image_model()
+    legacy_image = image_model.objects.using("legacy").create(
+        title="legacy-alias", file=get_test_image_file(filename="legacy-alias.png"), collection_id=collection.pk
+    )
+    legacy_image.file_hash = "a" * 40
+    legacy_image.save(using="legacy", update_fields=["file_hash"])
+    model = type(default)
+    legacy = model.objects.using("legacy").create(
+        pk=default.pk,
+        image=legacy_image,
+        file="images/legacy-alias.png",
+        filter_spec=default.filter_spec,
+        focal_point_key=default.focal_point_key,
+        width=default.width,
+        height=default.height,
+    )
+    default_key, legacy_key = default.get_cache_key(), legacy.get_cache_key()
+    assert default_key != legacy_key
+    cache = default.cache_backend
+    cache.set_many({default_key: "default rendition", legacy_key: "legacy rendition"})
+    forbid_regeneration()
+
+    stdout, stderr = run_command("--retry-cache-purge", str(default.pk), str(default.pk), "--database", "legacy")
+
+    assert cache.get_many([default_key, legacy_key]) == {default_key: "default rendition"}
+    assert "no rendition files were generated" in stdout
+    assert stderr == ""
+
+
+@pytest.mark.parametrize(
+    "args, message",
+    [
+        (("--retry-cache-purge", "1"), "requires the reported --database"),
+        (("--retry-cache-purge", "1", "--database", "missing"), "Unknown database alias"),
+        (("some-blog", "--database", "default"), "--database requires --retry-cache-purge"),
+    ],
+)
+def test_cache_purge_rejects_invalid_alias_usage(args, message, django_assert_num_queries):
+    with django_assert_num_queries(0), pytest.raises(CommandError, match=message):
+        run_command(*args)
 
 
 def test_command_reports_cache_pending_separately(site_root, monkeypatch):
@@ -512,35 +597,24 @@ def test_command_reports_cache_pending_separately(site_root, monkeypatch):
         call_command("regenerate_broken_renditions", "purge", stdout=stdout, stderr=stderr)
     assert file_exists(rendition)
     assert "generated renditions: 1" in stdout.getvalue()
-    assert f"--retry-cache-purge {rendition.pk}" in stderr.getvalue()
+    assert f"--retry-cache-purge {rendition.pk} --database=default" in stderr.getvalue()
 
 
-def test_command_checks_shared_images_once_across_all_blogs(site_root, monkeypatch):
+def test_command_batches_relationship_queries_and_checks_shared_images_once(
+    site_root, monkeypatch, django_assert_max_num_queries
+):
     first = site_root.add_child(instance=Blog(title="Shared first", slug="shared-first"))
-    site_root.add_child(instance=Blog(title="Shared second", slug="shared-second"))
+    second = site_root.add_child(instance=Blog(title="Shared second", slug="shared-second"))
     image = make_image("shared")
     renditions = [make_rendition(image, f"width-{width}") for width in range(1, 21)]
     distinct = make_rendition(make_image("distinct"))
+    gallery = Gallery.objects.create()
+    gallery.images.add(image, distinct.image)
+    for blog in (first, second):
+        for index in range(6):
+            post = make_post(blog, f"shared-post-{index}", images=[image])
+            post.galleries.add(gallery)
 
-    def related(*items):
-        return SimpleNamespace(all=lambda: items)
-
-    # Synthetic posts retain real image/rendition managers and storage calls.
-    # Separate model instances with the same PK must share the identity too.
-    posts = [
-        SimpleNamespace(
-            pk=index,
-            images=related(get_image_model().objects.get(pk=image.pk)),
-            galleries=related(SimpleNamespace(images=related(image, distinct.image))),
-        )
-        for index in range(100)
-    ]
-
-    def descendant_of(blog):
-        selected = posts[:50] if blog.pk == first.pk else posts[50:]
-        return SimpleNamespace(order_by=lambda *args: SimpleNamespace(iterator=lambda **kwargs: iter(selected)))
-
-    monkeypatch.setattr(Post.objects, "descendant_of", descendant_of)
     storage = distinct.file.storage
     exists = storage.exists
     checked = []
@@ -550,10 +624,14 @@ def test_command_checks_shared_images_once_across_all_blogs(site_root, monkeypat
         return exists(name)
 
     monkeypatch.setattr(storage, "exists", count_exists)
-    for _ in range(2):  # A new invocation must check everything again.
+    # Three blog lookups, three post scans, three relationship queries per scan,
+    # and two rendition queries for distinct image identities.
+    for limit in ("1", "6"):
         checked.clear()
-        stdout, stderr = run_command("shared-first", "shared-second", "shared-first")
+        with django_assert_max_num_queries(17):
+            stdout, stderr = run_command("shared-first", "shared-second", "shared-first", "--limit", limit)
         assert Counter(checked) == Counter({r.file.name: 1 for r in [*renditions, distinct]})
+        assert f"Blog shared-first: checked {limit} posts" in stdout
         assert "checked images: 2" in stdout
         assert "generated renditions: 0" in stdout
         assert stderr == ""

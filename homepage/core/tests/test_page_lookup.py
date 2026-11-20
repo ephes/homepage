@@ -3,6 +3,7 @@
 from urllib.parse import urlparse
 
 import pytest
+from django.urls import get_urlconf, set_urlconf
 from wagtail.models import Locale, Page, PageViewRestriction, Site
 
 from homepage.core.page_lookup import find_page_for_url, get_wagtail_site
@@ -104,3 +105,26 @@ def test_application_and_missing_routes_have_no_page(sites, path):
     # A matching page name must not turn an application route into a CMS route.
     sites[1][0].root_page.add_child(instance=Page(title="Users", slug="users"))
     assert find_page_for_url(f"https://lookup.example{path}") is None
+
+
+def test_resolves_each_target_from_the_other_hosts_request_urlconf(sites, settings):
+    portfolio_host = "portfolio.lookup.example"
+    settings.PORTFOLIO_HOSTS = [portfolio_host]
+    portfolio_site, portfolio_page = sites[2]
+    portfolio_site.hostname = portfolio_host
+    portfolio_site.port = 443
+    portfolio_site.save(update_fields=["hostname", "port"])
+    main_page = sites[1][1]
+
+    original_urlconf = get_urlconf()
+    try:
+        for active_urlconf, url, expected in (
+            (settings.ROOT_URLCONF, f"https://{portfolio_host}/shared/", portfolio_page),
+            ("config.urls_portfolio", "https://lookup.example/blogs/shared/", main_page),
+        ):
+            set_urlconf(active_urlconf)
+            found = find_page_for_url(url)
+            assert found is not None and found.pk == expected.pk
+            assert get_urlconf() == active_urlconf
+    finally:
+        set_urlconf(original_urlconf)

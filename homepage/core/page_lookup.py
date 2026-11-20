@@ -8,10 +8,13 @@ matching bare slugs across all blogs.
 
 from urllib.parse import ParseResult, unquote, urlparse
 
+from django.conf import settings
 from django.urls import Resolver404, resolve
 from wagtail.models import Page
 from wagtail.models import Site as WagtailSite
 from wagtail.models.sites import get_site_for_hostname
+
+from homepage.portfolio.hosts import PORTFOLIO_URLCONF, is_portfolio_host
 
 
 def get_wagtail_site(parsed_url: ParseResult) -> WagtailSite | None:
@@ -41,17 +44,18 @@ def url_path_parts(parsed_url: ParseResult) -> list[str]:
 def find_page_for_url(url: str) -> Page | None:
     """Return the specific Wagtail page that ``url`` would be served from, or ``None``.
 
-    Only URLs routed to Wagtail's ``serve`` view are considered. The page is looked
-    up by its ``url_path`` below the matching site's root page, so the lookup is
-    scoped to the full parent chain rather than the last path segment. Visibility
+    The target hostname selects the URLconf. Only URLs routed to Wagtail's
+    ``serve`` view are considered. The page is looked up by its ``url_path`` below the
+    matching site's root page, so the lookup uses the full parent chain. Visibility
     (live / public) and permissions are left to the caller.
     """
     parsed = urlparse(url)
     if not parsed.path:
         return None
+    urlconf = PORTFOLIO_URLCONF if is_portfolio_host(parsed.hostname) else settings.ROOT_URLCONF
     try:
         # Wagtail emits percent-encoded URLs for Unicode slugs; Django resolves decoded paths.
-        match = resolve(unquote(parsed.path))
+        match = resolve(unquote(parsed.path), urlconf=urlconf)
     except Resolver404:
         return None
     if match.url_name != "wagtail_serve" or not match.args:

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Paginate the staff account directory by username and keep the profile links
+  on every page.
+
 - Save only the display name from a profile edit and return 404 if the account
   disappeared before saving.
 

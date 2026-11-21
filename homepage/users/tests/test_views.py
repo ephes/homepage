@@ -6,6 +6,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from test_plus.test import TestCase
 
+from ..models import User
 from ..views import UserDetailView, UserListView, UserRedirectView, UserUpdateView
 from .factories import UserFactory
 
@@ -135,6 +136,36 @@ class TestUserDirectoryAccess:
         response = user_list_view(self._get(request_factory, "/users/", staff))
         assert response.status_code == 200
         assert list(response.context_data["object_list"]) == [other, staff]
+
+    def test_staff_list_renders_one_page_at_a_time(self, client, staff):
+        usernames = [f"member-{number:03}" for number in range(104)]
+        User.objects.bulk_create([User(username=username) for username in reversed(usernames)])
+        usernames.append(staff.username)
+        client.force_login(staff)
+        url = reverse("users:list")
+
+        for page, expected in enumerate([usernames[:50], usernames[50:100], usernames[100:]], start=1):
+            response = client.get(url) if page == 1 else client.get(url, {"page": page})
+            assert response.status_code == 200
+            assert [user.username for user in response.context["user_list"]] == expected
+            content = response.content.decode()
+            assert content.count('class="list-group-item"') == len(expected)
+            for username in expected:
+                profile = reverse("users:detail", kwargs={"username": username})
+                assert f'href="{profile}"' in content
+            if page > 1:
+                assert f'href="?page={page - 1}"' in content
+            if page < 3:
+                assert f'href="?page={page + 1}"' in content
+
+        assert client.get(url, {"page": 4}).status_code == 404
+
+    def test_staff_list_handles_empty_directory(self, request_factory):
+        response = user_list_view(self._get(request_factory, "/users/", User(is_staff=True)))
+        assert response.status_code == 200
+        assert list(response.context_data["user_list"]) == []
+        assert response.context_data["page_obj"].number == 1
+        assert not response.context_data["is_paginated"]
 
     def test_detail_redirects_anonymous_to_login(self, request_factory, other):
         path = f"/users/{other.username}/"

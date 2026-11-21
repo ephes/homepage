@@ -95,6 +95,33 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-21 Webmention section ordering
+--------------------------------------
+
+Deployed ``8d5093f``: the webmention section of post pages shows each legacy
+mention type as one section after likes, reposts, replies and mentions, and
+places mentions without any date last in input order instead of sorting them by
+the current time (``docs/indieweb.rst``, "Displaying webmentions"). The deploy
+also ships the earlier merged changes to the manually run
+``regenerate_broken_renditions`` and ``convert_weeknote_links`` commands (not
+run by the deploy). Production has only the four preferred mention types and no
+undated verified mention, so no rendered webmention section changed. No
+migration, no new static files and no settings or environment change.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``8d5093f``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200; the journal since the deploy holds no traceback. A read-only
+``manage.py shell`` probe (same isolation as the previous deploy) rendered the
+webmention section of all 18 targets with verified webmentions: same counts and
+same digest before and after, and the order equals the new rule already before
+the deploy. Unsaved synthetic mentions showed the old ordering before and the
+new grouping and stable undated placement afterwards.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``e8d6b6d``). No database step and no static rebuild are needed.
+
 2026-11-21 Micropub source lookup races and image database
 ----------------------------------------------------------
 

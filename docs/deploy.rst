@@ -95,6 +95,34 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-21 webmention publish lookup and nonfatal delivery log
+--------------------------------------------------------------
+
+Deployed ``7752b77``: the ``page_published`` webmention receiver resolves a
+base page to its Post or Episode explicitly on the publishing database instead
+of through ``page.specific``, and the post-commit delivery callback keeps
+running later commit callbacks if both delivery and its warning log fail. On
+production only the ``default`` alias holds pages, so publishing behaves as
+before. No migration, no new static files and no settings or environment
+change.
+
+Verified after the deploy: sha256 of the 258 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``7752b77``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200; the journal since the deploy holds no traceback. A read-only
+``manage.py shell`` probe (``PGOPTIONS`` with ``default_transaction_read_only=on``,
+``python -B``, inside a rolled-back transaction, sending stubbed) gave the
+receiver the base ``Page`` of the live public post 801: it queued exactly one
+delivery callback (removed again, never run) before and after the deploy, and
+afterwards through the new resolver on ``default``. The real committed lookup
+returned post 801 for its live revision and nothing for a stale one. A direct
+call of the delivery callback with a failing lookup and a failing warning log
+raised ``OSError`` before the deploy and returned afterwards.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``9e658f8``). No database step and no static rebuild are needed.
+
 2026-11-20 POST-only Micropub preview and best-effort success log
 -----------------------------------------------------------------
 

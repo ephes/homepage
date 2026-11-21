@@ -4,6 +4,8 @@
 
 - Display each legacy webmention type in one section after the preferred types.
 
+- Keep undated webmentions at the end of each section in input order.
+
 - Recover weeknote receipts only from bounded regular files that stay unchanged while being read.
 
 - Sync the weeknote receipt directory before page writes and keep the journal until report publication is durable.

@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Any
 
 from django import template
-from django.utils import timezone
 
 register = template.Library()
 
@@ -28,11 +27,10 @@ def _type_for_sorting(webmention: Any) -> tuple[int, str]:
     return MENTION_TYPE_ORDER.get(mention_type, len(MENTION_TYPE_ORDER)), mention_type
 
 
-def _timestamp_for_sorting(webmention: Any) -> datetime:
-    """Return the datetime used for ordering (published fallback to created)."""
-    published = getattr(webmention, "published", None)
-    created = getattr(webmention, "created", None)
-    return published or created or timezone.now()
+def _timestamp_for_sorting(webmention: Any) -> tuple[bool, datetime | None]:
+    """Rank dated mentions first when sorting newest first."""
+    timestamp = getattr(webmention, "published", None) or getattr(webmention, "created", None)
+    return timestamp is not None, timestamp
 
 
 @register.filter
@@ -41,8 +39,8 @@ def sort_webmentions_for_grouping(webmentions: Iterable[Any]) -> list[Any]:
     Sort webmentions so regrouping by mention_type yields a single block per type.
 
     The data is first ordered newest-first so each block preserves reverse-chronological
-    order, then stably sorted by type, with legacy types ordered by their type key
-    after the preferred types.
+    order, with undated mentions last and ties in input order. A stable type sort
+    then groups legacy types by their type key after the preferred types.
     """
     sorted_mentions = list(webmentions)
     if not sorted_mentions:

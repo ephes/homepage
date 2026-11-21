@@ -3,7 +3,7 @@ Integration tests for webmentions functionality
 """
 
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from html.parser import HTMLParser
 
 import pytest
@@ -16,6 +16,7 @@ from django.utils import timezone
 from indieweb.models import Webmention
 from wagtail.models import Locale, Page
 
+from homepage.core.templatetags.webmention_filters import sort_webmentions_for_grouping
 from homepage.webmention_config import CastURLResolver
 
 
@@ -334,3 +335,41 @@ def test_webmentions_container_groups_legacy_types_after_preferred_types():
         rendered.index(f'href="https://remote.example/source-{day}"') for day in (4, 2, 3, 1)
     )
     assert mention < bookmark < newer_trackback < older_trackback
+
+
+def test_undated_webmentions_stay_last_in_input_order_as_clock_advances(monkeypatch):
+    older = datetime(2026, 1, 1, tzinfo=UTC)
+    newer = datetime(2026, 1, 2, tzinfo=UTC)
+    now = older - timedelta(days=1)
+
+    def advancing_now():
+        nonlocal now
+        now += timedelta(microseconds=1)
+        return now
+
+    monkeypatch.setattr(timezone, "now", advancing_now)
+    webmentions = [
+        Webmention(mention_type="trackback", author_name="Trackback undated"),
+        Webmention(mention_type="bookmark", author_name="First undated"),
+        Webmention(mention_type="bookmark", author_name="Created tie", created=newer),
+        Webmention(mention_type="bookmark", author_name="Older publication", published=older, created=newer),
+        Webmention(mention_type="trackback", author_name="Trackback dated", published=newer),
+        Webmention(mention_type="bookmark", author_name="Second undated"),
+        Webmention(mention_type="bookmark", author_name="Published tie", published=newer),
+    ]
+
+    first = sort_webmentions_for_grouping(webmentions)
+    now = newer + timedelta(days=1)
+    second = sort_webmentions_for_grouping(webmentions)
+
+    expected = [
+        "Created tie",
+        "Published tie",
+        "Older publication",
+        "First undated",
+        "Second undated",
+        "Trackback dated",
+        "Trackback undated",
+    ]
+    assert [webmention.author_name for webmention in first] == expected
+    assert [webmention.author_name for webmention in second] == expected

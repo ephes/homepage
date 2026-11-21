@@ -1,4 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, RedirectView, UpdateView
 
@@ -35,7 +37,6 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
     fields = ["name"]
 
-    # we already imported User in the view code above, remember?
     model = User
 
     # send the user back to their own page after a successful update
@@ -43,12 +44,17 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         return reverse("users:detail", kwargs={"username": self.request.user.username})
 
     def get_object(self):
-        # Only get the User record for the user making the request
-        return User.objects.get(username=self.request.user.username)
+        return get_object_or_404(User, pk=self.request.user.pk)
+
+    def form_valid(self, form):
+        updated = User.objects.filter(pk=self.request.user.pk).update(name=form.cleaned_data["name"])
+        if not updated:
+            raise Http404
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class UserListView(UserPassesTestMixin, ListView):
-    """List all accounts. Staff only.
+    """List accounts by username, one page at a time. Staff only.
 
     Anonymous visitors are redirected to the login page; logged-in non-staff
     users get a 403.
@@ -56,6 +62,7 @@ class UserListView(UserPassesTestMixin, ListView):
 
     model = User
     ordering = "username"
+    paginate_by = 50
 
     def test_func(self):
         return self.request.user.is_staff

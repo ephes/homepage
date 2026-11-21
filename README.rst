@@ -66,7 +66,13 @@ User pages under ``/users/`` are not a public member directory. The list at
 logged-in non-staff users get a 403. A profile at ``/users/<username>/`` is shown
 to its owner and to staff. Anonymous visitors are sent to the login page; any
 other logged-in user gets a 404, so the page does not reveal whether a username
-exists.
+exists. The staff directory lists 50 accounts per page in username order and
+links to each profile. Use Previous and Next to move through the directory.
+Invalid or out-of-range page requests return 404.
+
+The profile form at ``/users/~update/`` saves only the signed-in user's display
+name, preserving concurrent changes to other account fields. If the account
+is deleted before the name is saved, the request returns a 404.
 
 Public routes
 ^^^^^^^^^^^^^

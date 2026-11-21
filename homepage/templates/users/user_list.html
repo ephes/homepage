@@ -11,7 +11,21 @@
         <a href="{% url 'users:detail' user.username %}" class="list-group-item">
           <h4 class="list-group-item-heading">{{ user.username }}</h4>
         </a>
+      {% empty %}
+        <p>{% translate "No users found." %}</p>
       {% endfor %}
     </div>
+
+    {% if is_paginated %}
+      <nav class="mt-3" aria-label="{% translate 'User directory pages' %}">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a>
+        {% endif %}
+        {% blocktranslate with page=page_obj.number total=page_obj.paginator.num_pages %}Page {{ page }} of {{ total }}{% endblocktranslate %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}">{% translate "Next" %}</a>
+        {% endif %}
+      </nav>
+    {% endif %}
   </div>
 {% endblock content %}

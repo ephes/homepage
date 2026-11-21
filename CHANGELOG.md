@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fetch unresolved Micropub source images from the post's database for both
+  live and draft content.
+
 - Return the normal missing-target response when a Micropub source page or its
   content type disappears during URL resolution.
 

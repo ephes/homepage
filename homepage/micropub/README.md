@@ -217,7 +217,8 @@ escaped `<pre><code>` HTML with its language and exact source whitespace. Image 
 export their original file URL and alternative text, without fetching media or
 generating renditions. Resolved chooser instances are reused; the pinned cast
 chooser's unresolved integer IDs are fetched in one batch across overview/detail
-sections. Source reads create no page revisions.
+sections from the persisted page's database, including when exporting a draft.
+Source reads create no page revisions.
 
 After checking edit permission on the persisted page, source queries return
 Wagtail's latest saved draft (title, body, tags and publication date) when one

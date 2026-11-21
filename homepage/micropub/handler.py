@@ -418,10 +418,11 @@ class CastPostMicropubHandler(MicropubContentHandler):
         if not page.permissions_for_user(user).can_edit():
             return None
         return MicropubEntry(
-            url=page.get_full_url(), properties=self._post_to_properties(page.get_latest_revision_as_object())
+            url=page.get_full_url(),
+            properties=self._post_to_properties(page.get_latest_revision_as_object(), using=page._state.db),
         )
 
-    def _post_to_properties(self, post: Post) -> dict[str, list[Any]]:
+    def _post_to_properties(self, post: Post, *, using: str | None) -> dict[str, list[Any]]:
         """Convert a Post object back to micropub properties."""
         properties = {
             "name": [post.title],
@@ -441,7 +442,7 @@ class CastPostMicropubHandler(MicropubContentHandler):
         image_model = get_image_model()
         # Cast's pinned chooser leaves IDs unresolved; ordinary Wagtail choosers
         # may already supply instances. Fetch only the former, once per source.
-        unresolved_images = image_model.objects.in_bulk(
+        unresolved_images = image_model.objects.using(using).in_bulk(
             {block.value for block in blocks if block.block_type == "image" and isinstance(block.value, int)}
         )
         content_parts = []

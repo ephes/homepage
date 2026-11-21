@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Verify the stored replacement name and available size before attaching a repaired rendition.
+
 - Fetch unresolved Micropub source images from the post's database for both
   live and draft content.
 

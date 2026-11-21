@@ -33,11 +33,13 @@ A rendition is only regenerated when the storage backend reports that its file d
 not exist. If the storage cannot answer (throttling, an outage, denied access), the
 rendition is reported as ``unknown`` and neither deleted nor replaced. A missing
 rendition keeps its database row: the new file is generated first and then attached
-to that row. Repairs use a distinct ``repair-<random-id>`` filename, preserving
+to that row. Before attachment the storage backend must confirm the saved
+name exists and, when it exposes sizes, that the byte count matches the
+generated file. A failed check leaves the row unchanged. Repairs use a distinct ``repair-<random-id>`` filename, preserving
 existing storage objects. The row save runs inside a database savepoint, so even
 a save hook that writes and then raises leaves the old row intact.
 
-If attaching the replacement fails, the command deletes the newly allocated file
+If verification or attachment fails, the command deletes the newly allocated file
 only after establishing ownership and checking that no rendition row references it. A storage backend that returns a different name makes ownership
 uncertain: that object is retained and its name is reported for recovery. Failed
 reference checks or deletion also retain the primary error and report the cleanup

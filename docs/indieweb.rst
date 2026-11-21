@@ -246,6 +246,12 @@ with the same slug in another blog are not valid targets.
 Displaying webmentions
 ----------------------
 
+The display groups likes, reposts, replies and mentions in that order. Each
+legacy type gets one section after the preferred types, ordered by its type
+key. Within a section, entries appear newest first by publication date,
+falling back to creation date. Entries without either date appear last.
+Entries with equal dates and entries without dates keep their input order.
+
 The templates in ``homepage/templates/indieweb/webmention_types/`` override
 django-indieweb's per-type templates (like, reply, repost, mention). Like the
 upstream templates, they must keep this policy for remote content:

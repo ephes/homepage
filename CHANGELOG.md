@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept HEAD on `/favicon.ico` with the same file metadata and cache policy as GET.
+
 - Resolve the published Post or Episode on the publishing database before
   scheduling outgoing webmentions.
 

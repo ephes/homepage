@@ -68,6 +68,13 @@ to its owner and to staff. Anonymous visitors are sent to the login page; any
 other logged-in user gets a 404, so the page does not reveal whether a username
 exists.
 
+Public routes
+^^^^^^^^^^^^^
+
+``/favicon.ico`` serves the shipped PNG on the main and portfolio hosts. A
+``HEAD`` request returns the same media type, file length and one-day public
+cache policy as ``GET`` with an empty body.
+
 Docs
 ^^^^
 

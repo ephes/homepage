@@ -5,15 +5,18 @@ from django.contrib.auth import get_user_model
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import cache_control
-from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.http import require_http_methods
 
 User = get_user_model()
 
 
-@require_GET
+@require_http_methods(["GET", "HEAD"])
 @cache_control(max_age=60 * 60 * 24, immutable=True, public=True)  # one day
 def favicon(request: HttpRequest) -> HttpResponse:
     file = (Path(settings.ROOT_DIR) / "homepage" / "static" / "images" / "favicon.png").open("rb")
+    if request.method == "HEAD":
+        with file:
+            return HttpResponse(headers=FileResponse(file).headers)
     return FileResponse(file)
 
 

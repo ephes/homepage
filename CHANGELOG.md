@@ -5,6 +5,9 @@
 - Resolve the published Post or Episode on the publishing database before
   scheduling outgoing webmentions.
 
+- Keep committed publications and later commit callbacks running if both
+  webmention delivery and its warning log fail.
+
 - Require POST for the authenticated local Micropub preview.
 
 - Preserve the local Micropub form's redirect and success message if logging

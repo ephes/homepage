@@ -13,11 +13,12 @@ publication has been committed:
 * the outbound work runs in an ``on_commit`` callback, so a publication inside
   a transaction that is rolled back announces nothing. Without an open
   transaction Django calls the callback at once, inside the signal receiver;
-* delivery is best effort: a failure is logged and never undoes or fails the
-  committed publication.
+* delivery and its failure logging are best effort and never fail the committed
+  publication.
 """
 
 import logging
+from contextlib import suppress
 from functools import partial
 from itertools import chain
 from urllib.parse import urlsplit, urlunsplit
@@ -105,7 +106,7 @@ def _deliver_webmentions(page_id, live_revision_id, database) -> None:
     """Send the webmentions of a committed publication; never raises.
 
     Runs after the publishing transaction committed. The publication is done at
-    this point, so a failure here is reported and swallowed: it must not turn a
+    this point, so a failure here is swallowed: it must not turn a
     successful publication into an error response. Only the exception class is
     logged, because the message can quote URLs from the post content.
     """
@@ -114,7 +115,9 @@ def _deliver_webmentions(page_id, live_revision_id, database) -> None:
         if post is not None:
             _send_webmentions_for(post)
     except Exception as exc:
-        logger.warning("Webmention delivery failed for page %s: %s", page_id, type(exc).__name__)
+        # A failing logging handler must not prevent later commit callbacks.
+        with suppress(Exception):
+            logger.warning("Webmention delivery failed for page %s: %s", page_id, type(exc).__name__)
 
 
 def _committed_public_post(page_id, live_revision_id, database):

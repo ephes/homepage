@@ -163,9 +163,10 @@ Only committed publications
    delivery callback.
 
 Delivery is best effort. A failure while rendering or sending does not fail or
-undo the publication: it is logged as
-``Webmention delivery failed for page <id>: <exception class>`` at ``WARNING``
-and there is no automatic retry. Publish the page again to resend.
+undo the publication. The receiver attempts to log
+``Webmention delivery failed for page <id>: <exception class>`` at ``WARNING``.
+If logging fails, publication still succeeds and later commit callbacks can
+run. There is no automatic retry. Publish the page again to resend.
 
 Receiving webmentions
 ---------------------

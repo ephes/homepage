@@ -1,4 +1,5 @@
 import json
+import logging
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -392,6 +393,24 @@ class TestCommitBoundary:
         messages = [record.getMessage() for record in caplog.records if record.name.startswith("homepage")]
         assert messages == [f"Webmention delivery failed for page {post.pk}: RuntimeError"]
         assert "SECRET-MARKER" not in caplog.text
+
+    def test_delivery_logging_failure_does_not_interrupt_commit_callbacks(self, blog, outbound):
+        class FailingHandler(logging.Handler):
+            def emit(self, record):
+                raise OSError("logging unavailable")
+
+        post = draft_post(blog)
+        outbound.error = RuntimeError("delivery unavailable")
+        later_callback = Mock()
+        logger = logging.getLogger("homepage.core.webmention_integration")
+
+        with patch.object(logger, "handlers", [FailingHandler()]), transaction.atomic():
+            post.save_revision().publish()
+            transaction.on_commit(later_callback)
+
+        assert Post.objects.get(pk=post.pk).live is True
+        assert len(outbound.sent) == 1
+        later_callback.assert_called_once_with()
 
     def test_publication_outside_a_transaction_survives_a_sender_failure(self, blog, outbound):
         post = draft_post(blog)

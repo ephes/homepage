@@ -58,6 +58,41 @@ class TestUserUpdateView(BaseUserTestCase):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("delete_account", [False, True], ids=["admin-edit", "account-deleted"])
+def test_profile_post_preserves_other_account_changes(monkeypatch, delete_account):
+    user = UserFactory(name="Original Name", email="old@example.com")
+    get_object = UserUpdateView.get_object
+
+    def interleave_account_change(view):
+        profile = get_object(view)
+        account = type(user).objects.filter(pk=user.pk)
+        if delete_account:
+            account.delete()
+        else:
+            account.update(email="new@example.com", is_staff=True)
+        return profile
+
+    monkeypatch.setattr(UserUpdateView, "get_object", interleave_account_change)
+    # Call the view directly so ATOMIC_REQUESTS cannot roll back the simulated admin action.
+    request = RequestFactory().post(reverse("users:update"), {"name": "  New Name  "})
+    request.user = user
+    update_view = UserUpdateView.as_view()
+
+    if delete_account:
+        with pytest.raises(Http404):
+            update_view(request)
+        assert not type(user).objects.filter(pk=user.pk).exists()
+    else:
+        response = update_view(request)
+        assert response.status_code == 302
+        assert response.url == reverse("users:detail", kwargs={"username": user.username})
+        user.refresh_from_db()
+        assert user.name == "New Name"
+        assert user.email == "new@example.com"
+        assert user.is_staff
+
+
+@pytest.mark.django_db
 class TestUserDirectoryAccess:
     """Logged-in users must not be able to enumerate other accounts.
 

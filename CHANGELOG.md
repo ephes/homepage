@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Save only the display name from a profile edit and return 404 if the account
+  disappeared before saving.
+
 - Display each legacy webmention type in one section after the preferred types.
 
 - Keep undated webmentions at the end of each section in input order.

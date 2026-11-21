@@ -68,6 +68,10 @@ to its owner and to staff. Anonymous visitors are sent to the login page; any
 other logged-in user gets a 404, so the page does not reveal whether a username
 exists.
 
+The profile form at ``/users/~update/`` saves only the signed-in user's display
+name, preserving concurrent changes to other account fields. If the account
+is deleted before the name is saved, the request returns a 404.
+
 Public routes
 ^^^^^^^^^^^^^
 

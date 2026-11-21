@@ -101,7 +101,12 @@ edge like a window over the stacked icons, then slides the menu out to the right
 reveal the words (word left, icon right); closing runs backwards. On phones only the icon
 in the narrow margin is visible, the tap area stays 44 px; ``theme-switch.js`` stores the choice in the browser (``portfolio-theme``) and an
 inline script in ``base.html`` applies it before the first paint (``data-theme-choice``,
-``data-theme``). Without JavaScript the switch is hidden and the page follows the system.
+``data-theme``). Open portfolio tabs on the same origin update their appearance,
+checked option and switch label when the saved choice changes. Resetting to System
+removes the saved override. A missing or unsupported choice follows the system.
+Without JavaScript the switch is hidden and the page follows the system.
+The menu uses the current reduced-motion preference on every close. Enabling
+reduced motion while the menu is closing finishes that close immediately.
 Over the landing-page hero the corner fields and the scroll cue invert themselves
 (``mix-blend-mode: difference``) so they stay visible on the revealed image.
 

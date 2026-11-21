@@ -214,7 +214,9 @@ frame queues and pointer capture. They cover framebuffer/filter admission, tall 
 wide texture budgets, context loss before/after startup, idle cursor retirement,
 stale font generations, live motion retirement, intrinsic reel resync, pointer
 ownership, optional text work bounds and competing navigation flights in both
-homepage and shared-shell scripts. They require neither a database nor Chromium;
+homepage and shared-shell scripts. Theme menu tests exercise same-origin storage
+events and changes to reduced motion with a controlled close timer.
+They require neither a database nor Chromium;
 they do not establish browser layout, GPU output or performance correctness.
 The Chromium gate remains required and includes the new hero resource regressions.
 No workflow is added for these local checks.

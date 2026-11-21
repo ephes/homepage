@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
@@ -41,13 +42,15 @@ def _purge_repaired_rendition(rendition, alias, synchronous_result: RepairResult
         if synchronous_result is not None:
             synchronous_result.cache_pending.append((alias, rendition.pk, rendition.file.name, repr(error)[:300]))
         else:
-            logger.warning(
-                "Rendition %s repaired; cache purge pending (%s). Retry with --retry-cache-purge %s --database=%s",
-                rendition.pk,
-                type(error).__name__,
-                rendition.pk,
-                quote(alias),
-            )
+            # A failed log handler must let later on-commit callbacks run.
+            with suppress(Exception):
+                logger.warning(
+                    "Rendition %s repaired; cache purge pending (%s). Retry with --retry-cache-purge %s --database=%s",
+                    rendition.pk,
+                    type(error).__name__,
+                    rendition.pk,
+                    quote(alias),
+                )
 
 
 def regenerate_renditions_for_image(image) -> RepairResult:

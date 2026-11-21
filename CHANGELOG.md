@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve rendition repairs and later commit callbacks when a deferred cache purge and its warning both fail.
+
 - Verify the stored replacement name and available size before attaching a repaired rendition.
 
 - Fetch unresolved Micropub source images from the post's database for both

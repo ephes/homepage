@@ -598,6 +598,38 @@ def test_cache_purge_follows_the_outer_commit(monkeypatch, caplog, outcome):
 
 
 @pytest.mark.django_db(transaction=True)
+def test_deferred_purge_warning_failure_keeps_repair_and_later_callback(monkeypatch):
+    image = make_image("failed-warning")
+    rendition = make_rendition(image)
+    remove_file(rendition)
+    warnings = []
+    sibling = []
+
+    def fail_purge(self):
+        raise RuntimeError("private cache details")
+
+    def fail_warning(message, *args):
+        warnings.append(message % args)
+        raise OSError("log sink unavailable")
+
+    monkeypatch.setattr(type(rendition), "purge_from_cache", fail_purge)
+    monkeypatch.setattr(repair.logger, "warning", fail_warning)
+
+    with transaction.atomic():
+        result = repair.regenerate_renditions_for_image(image)
+        transaction.on_commit(lambda: sibling.append("ran"))
+
+    [replacement] = result.regenerated
+    assert replacement.file.name != rendition.file.name
+    assert stored(rendition).file.name == replacement.file.name
+    assert file_exists(rendition)
+    assert sibling == ["ran"]
+    [warning] = warnings
+    assert f"cache purge pending (RuntimeError). Retry with --retry-cache-purge {rendition.pk}" in warning
+    assert "private cache details" not in warning
+
+
+@pytest.mark.django_db(transaction=True)
 def test_cache_failure_keeps_committed_repairs_and_continues(monkeypatch, repair_storage):
     image = make_image("purge-failure")
     first = make_rendition(image)

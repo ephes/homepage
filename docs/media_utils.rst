@@ -78,8 +78,9 @@ When the repair helper runs inside a caller’s transaction, replacements are
 provisional until the outer transaction commits and a rollback discards the
 scheduled cache purge. Storage writes can outlive a database rollback. If a
 deferred purge fails after commit, a warning reports the rendition ID and
-database alias for a cache-only retry. This later failure is reported through
-logging because the helper has already returned.
+database alias for a cache-only retry, with the exception class as the only
+error detail. The warning is best effort: a failed log handler leaves the
+committed repair intact and subsequent commit callbacks still run.
 
 Video width and height
 ======================

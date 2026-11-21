@@ -75,6 +75,10 @@ Public routes
 ``HEAD`` request returns the same media type, file length and one-day public
 cache policy as ``GET`` with an empty body.
 
+The homepage at ``/`` loads the two featured user records in one database
+query. A missing record leaves its template context entry empty and the page
+still renders.
+
 Docs
 ^^^^
 

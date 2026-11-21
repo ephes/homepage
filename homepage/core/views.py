@@ -35,19 +35,10 @@ def robots_txt(request: HttpRequest) -> HttpResponse:
 
 def home(request: HttpRequest) -> HttpResponse:
     """View for the homepage with user profiles."""
-    try:
-        jochen = User.objects.get(username="jochen")
-    except User.DoesNotExist:
-        jochen = None
-
-    try:
-        katharina = User.objects.get(username="katharina")
-    except User.DoesNotExist:
-        katharina = None
-
+    profiles = User.objects.in_bulk(["jochen", "katharina"], field_name="username")
     context = {
-        "jochen": jochen,
-        "katharina": katharina,
+        "jochen": profiles.get("jochen"),
+        "katharina": profiles.get("katharina"),
         "cast_base_template": "cast/bootstrap5/base.html",
     }
     return render(request, "pages/home.html", context)

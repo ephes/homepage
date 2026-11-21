@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Display each legacy webmention type in one section after the preferred types.
+
 - Recover weeknote receipts only from bounded regular files that stay unchanged while being read.
 
 - Sync the weeknote receipt directory before page writes and keep the journal until report publication is durable.

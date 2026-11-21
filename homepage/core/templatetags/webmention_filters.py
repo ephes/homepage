@@ -23,6 +23,11 @@ MENTION_TYPE_ORDER: dict[str, int] = {
 }
 
 
+def _type_for_sorting(webmention: Any) -> tuple[int, str]:
+    mention_type = getattr(webmention, "mention_type", "")
+    return MENTION_TYPE_ORDER.get(mention_type, len(MENTION_TYPE_ORDER)), mention_type
+
+
 def _timestamp_for_sorting(webmention: Any) -> datetime:
     """Return the datetime used for ordering (published fallback to created)."""
     published = getattr(webmention, "published", None)
@@ -36,14 +41,13 @@ def sort_webmentions_for_grouping(webmentions: Iterable[Any]) -> list[Any]:
     Sort webmentions so regrouping by mention_type yields a single block per type.
 
     The data is first ordered newest-first so each block preserves reverse-chronological
-    order, then stably sorted by mention type using the preferred ordering above.
+    order, then stably sorted by type, with legacy types ordered by their type key
+    after the preferred types.
     """
     sorted_mentions = list(webmentions)
     if not sorted_mentions:
         return sorted_mentions
 
     sorted_mentions.sort(key=_timestamp_for_sorting, reverse=True)
-    sorted_mentions.sort(
-        key=lambda wm: MENTION_TYPE_ORDER.get(getattr(wm, "mention_type", ""), len(MENTION_TYPE_ORDER))
-    )
+    sorted_mentions.sort(key=_type_for_sorting)
     return sorted_mentions

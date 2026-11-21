@@ -2,6 +2,8 @@
 Integration tests for webmentions functionality
 """
 
+import re
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 
 import pytest
@@ -307,3 +309,28 @@ def test_webmentions_container_applies_remote_link_policy_to_all_types():
     for image in collector.images:
         assert image.get("referrerpolicy") == "no-referrer"
         assert image.get("loading") == "lazy"
+
+
+def test_webmentions_container_groups_legacy_types_after_preferred_types():
+    """Interleaved dates still produce one section per legacy type."""
+    webmentions = [
+        _remote_webmention(t) for t in ("trackback", "bookmark", "trackback", "mention", "reply", "repost", "like")
+    ]
+    for day, webmention in enumerate(webmentions, start=1):
+        webmention.published = datetime(2026, 1, day, tzinfo=UTC)
+        webmention.source_url = f"https://remote.example/source-{day}"
+
+    rendered = render_to_string("indieweb/webmentions.html", {"webmentions": webmentions})
+
+    assert re.findall(r"<h4>(.*?)</h4>", rendered) == [
+        "Likes (1)",
+        "Reposts (1)",
+        "Replies (1)",
+        "Mentions (1)",
+        "Mentions (1)",
+        "Mentions (2)",
+    ]
+    mention, bookmark, newer_trackback, older_trackback = (
+        rendered.index(f'href="https://remote.example/source-{day}"') for day in (4, 2, 3, 1)
+    )
+    assert mention < bookmark < newer_trackback < older_trackback

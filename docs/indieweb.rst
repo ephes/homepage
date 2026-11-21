@@ -138,10 +138,11 @@ Only public pages
    scheduling delivery.
 
 Only committed publications
-   The ``page_published`` receiver does not render or send anything itself. It
-   registers the delivery with ``transaction.on_commit`` on the publishing
-   database. The delivery runs in the same process after the outermost open
-   transaction on that database commits. The caller controls that transaction.
+   The ``page_published`` receiver uses the publishing database to resolve a
+   base page to its Post or Episode and check access restrictions before
+   registering delivery with ``transaction.on_commit``. Rendering and sending
+   run in the same process after the outermost open transaction on that
+   database commits. The caller controls that transaction.
 
    * a Micropub post is published inside the handler's own transaction, so its
      webmentions leave after that transaction has committed;

@@ -54,13 +54,9 @@ def send_webmentions_on_publish(sender, **kwargs):
         # django-cast not installed
         return
 
-    # Only process Post and Episode pages
-    post = page.specific
-    if not isinstance(post, (Post, Episode)):
-        return
-
     database = page._state.db or DEFAULT_DB_ALIAS
-    if not _is_publicly_accessible(post, database):
+    post = page if isinstance(page, (Post, Episode)) else _load_specific_post(page.pk, database)
+    if post is None or not _is_publicly_accessible(post, database):
         return
 
     # Capture only identifiers so delivery can reload the committed publication.
@@ -128,6 +124,16 @@ def _committed_public_post(page_id, live_revision_id, database):
     different revision went live in the meantime (that publication schedules its
     own delivery) and when it is not publicly accessible now.
     """
+    post = _load_specific_post(page_id, database)
+    if post is None or not post.live or post.live_revision_id != live_revision_id:
+        return None
+    if not _is_publicly_accessible(post, database):
+        return None
+    return post
+
+
+def _load_specific_post(page_id, database):
+    """Resolve a Post or Episode on the publishing database."""
     from wagtail.models import Page
 
     page = Page.objects.using(database).select_related("content_type").filter(pk=page_id).first()
@@ -137,12 +143,7 @@ def _committed_public_post(page_id, live_revision_id, database):
     model = page.content_type.model_class()
     if model is None or not issubclass(model, (Post, Episode)):
         return None
-    post = model.objects.using(database).filter(pk=page_id).first()
-    if post is None or not post.live or post.live_revision_id != live_revision_id:
-        return None
-    if not _is_publicly_accessible(post, database):
-        return None
-    return post
+    return model.objects.using(database).filter(pk=page_id).first()
 
 
 def _send_webmentions_for(post) -> None:

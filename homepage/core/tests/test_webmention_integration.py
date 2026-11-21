@@ -72,17 +72,11 @@ class TestWebmentionIntegration:
             html_content="<p>This is a test post with a <a href='https://external.com'>link</a>.</p>",
         )
 
-    def test_send_webmentions_on_non_post_instance(self, mock_webmention_sender):
-        """Test that non-Post instances are ignored."""
-        # Create a Page with non-Post specific
-        page = Mock()
-        page.specific = Mock()  # Not a Post instance
+    def test_send_webmentions_on_non_post_instance(self, blog, django_capture_on_commit_callbacks):
+        with django_capture_on_commit_callbacks() as callbacks:
+            send_webmentions_on_publish(sender=Blog, instance=blog, revision=None)
 
-        # Call the signal handler
-        send_webmentions_on_publish(sender=Mock, instance=page, revision=None)
-
-        # Verify WebmentionSender was not called
-        mock_webmention_sender.assert_not_called()
+        assert not deliveries(callbacks)
 
     def test_send_webmentions_with_no_links(self, mock_page_with_post, mock_webmention_sender):
         """Test behavior when post has no external links."""
@@ -417,6 +411,30 @@ class PublishingDatabaseRouter:
 
     def db_for_write(self, model, **hints):
         return "legacy"
+
+
+@pytest.mark.django_db(transaction=True, databases=["default", "legacy"])
+def test_base_page_publication_schedules_delivery_on_writer(django_capture_on_commit_callbacks):
+    with patch("homepage.core.webmention_integration._send_webmentions_for") as send:
+        with transaction.atomic(using="legacy"):
+            with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
+                post = draft_post(create_blog())
+                revision = post.save_revision()
+                revision.publish()
+
+            # Exercise the receiver with a base Page and the default read routing.
+            base_page = Page.objects.using("legacy").get(pk=post.pk)
+            assert not Page.objects.using("default").filter(pk=post.pk).exists()
+            with (
+                django_capture_on_commit_callbacks(using="legacy") as writer_callbacks,
+                django_capture_on_commit_callbacks(using="default") as default_callbacks,
+            ):
+                send_webmentions_on_publish(sender=Post, instance=base_page, revision=revision)
+
+            assert len(deliveries(writer_callbacks)) == 1
+            assert deliveries(writer_callbacks)[0].args == (post.pk, revision.pk, "legacy")
+            assert not deliveries(default_callbacks)
+            send.assert_not_called()
 
 
 @pytest.mark.django_db(transaction=True, databases=["default", "legacy"])

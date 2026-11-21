@@ -95,6 +95,36 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-21 Portfolio theme sync across tabs and live reduced motion
+------------------------------------------------------------------
+
+Deployed ``8e49e38``: the theme menu script of the portfolio site
+(``homepage/portfolio/static/portfolio/prototype/theme-switch.js``) follows a
+theme choice made in another open tab, including the reset to System, and reads
+the reduced-motion preference at every menu close. The runtime change is this
+one static file; collectstatic writes the new hashed name
+``theme-switch.49648f0d94ae.js`` next to the old ``theme-switch.19e947e72adf.js``,
+which stays in the static directory. No Python, template, migration, settings
+or environment change.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``8e49e38``; the deploy log shows the source sync, collectstatic and both unit
+restarts in that order; both units got new PIDs and stayed on them for 120
+seconds; the front page, the blog RSS feed and the portfolio host answered
+200; the journal since the deploy holds no traceback. Two read-only HTTP
+checks against ``https://design.wersdoerfer.de``: the index, the legal pages
+and the 9 project pages each reference exactly the new hashed script, which is
+served byte-identical to the committed file plain and gzip with the immutable
+cache header; headless Chromium (off-origin requests, CSP reports and any
+non-GET aborted) showed a second tab following dark, system, light (before the
+deploy it stayed on system) and an immediate menu close under reduced motion
+(before: delayed).
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``b410c92``). No database step is needed; the deploy's
+collectstatic points the pages back to the old hashed file.
+
 2026-11-21 Profile name save and staff account directory pages
 --------------------------------------------------------------
 

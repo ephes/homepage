@@ -105,6 +105,8 @@ inline script in ``base.html`` applies it before the first paint (``data-theme-c
 checked option and switch label when the saved choice changes. Resetting to System
 removes the saved override. A missing or unsupported choice follows the system.
 Without JavaScript the switch is hidden and the page follows the system.
+The menu uses the current reduced-motion preference on every close. Enabling
+reduced motion while the menu is closing finishes that close immediately.
 Over the landing-page hero the corner fields and the scroll cue invert themselves
 (``mix-blend-mode: difference``) so they stay visible on the revealed image.
 

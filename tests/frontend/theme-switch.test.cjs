@@ -59,3 +59,55 @@ test('theme changes reach another same-origin document, including reset to syste
   await update(() => peer.localStorage.clear());
   assertChoice(r.d, 'system', null, 'System');
 });
+
+test('enabling reduced motion finishes a pending close and leaves a reopened menu open', t => {
+  const r = runtime({html: themeMenu});
+  t.after(() => r.w.close());
+  r.run('theme-switch.js');
+  const switcher = r.d.querySelector('[data-theme-switch]');
+  const toggle = switcher.querySelector('.theme-switch__toggle');
+  const menu = switcher.querySelector('.theme-switch__menu');
+
+  toggle.click();
+  toggle.click();
+  assert.equal(menu.hidden, true);
+  assert(switcher.classList.contains('is-open'));
+  assert.equal(r.timers.size, 1);
+  r.motion(true);
+  assert(!switcher.classList.contains('is-open'));
+  assert.equal(r.timers.size, 0);
+
+  r.motion(false);
+  toggle.click();
+  toggle.click();
+  assert.equal(r.timers.size, 1);
+  toggle.click();
+  assert.equal(r.timers.size, 0);
+  r.motion(true);
+  assert(switcher.classList.contains('is-open'));
+  assert.equal(menu.hidden, false);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+});
+
+test('each close uses the current reduced-motion preference', t => {
+  const r = runtime({html: themeMenu});
+  t.after(() => r.w.close());
+  r.motion(true);
+  r.run('theme-switch.js');
+  const switcher = r.d.querySelector('[data-theme-switch]');
+  const toggle = switcher.querySelector('.theme-switch__toggle');
+
+  toggle.click();
+  toggle.click();
+  assert(!switcher.classList.contains('is-open'));
+  assert.equal(r.timers.size, 0);
+
+  r.motion(false);
+  toggle.click();
+  toggle.click();
+  assert(switcher.classList.contains('is-open'));
+  const [timer] = r.timers.values();
+  assert.equal(timer.delay, 510);
+  timer.cb();
+  assert(!switcher.classList.contains('is-open'));
+});

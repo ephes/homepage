@@ -63,6 +63,8 @@ bounded SQL and preserves denied branches and ambiguous-slug exclusion.
 
 `q=source` lookups resolve the URL through the Wagtail page tree and require
 Wagtail **edit** permission on the post (not mere ownership).
+A post or content type that disappears after the route lookup receives the
+ordinary missing-target response (`400 invalid_request`).
 
 Only creating posts and `q=source` lookups are supported. The Micropub
 `update`, `delete` and `undelete` actions are rejected with
@@ -215,7 +217,8 @@ escaped `<pre><code>` HTML with its language and exact source whitespace. Image 
 export their original file URL and alternative text, without fetching media or
 generating renditions. Resolved chooser instances are reused; the pinned cast
 chooser's unresolved integer IDs are fetched in one batch across overview/detail
-sections. Source reads create no page revisions.
+sections from the persisted page's database, including when exporting a draft.
+Source reads create no page revisions.
 
 After checking edit permission on the persisted page, source queries return
 Wagtail's latest saved draft (title, body, tags and publication date) when one

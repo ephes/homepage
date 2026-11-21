@@ -75,7 +75,13 @@ def find_page_for_url(url: str) -> Page | None:
         return None
 
     page_id, content_type_id = identity
-    content_type = ContentType.objects.db_manager(alias).get_for_id(content_type_id)
+    try:
+        content_type = ContentType.objects.db_manager(alias).get_for_id(content_type_id)
+    except ContentType.DoesNotExist:
+        return None
     # Match Wagtail's fallback for a content type whose model is unavailable.
     model = content_type.model_class() or Page
-    return model._default_manager.using(alias).get(pk=page_id)
+    try:
+        return model._default_manager.using(alias).get(pk=page_id)
+    except model.DoesNotExist:
+        return None

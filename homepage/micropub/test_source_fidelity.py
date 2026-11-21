@@ -12,10 +12,10 @@ from django_vite.core.asset_loader import DjangoViteAssetLoader
 from indieweb.models import Token
 from PIL import Image as PillowImage
 from wagtail.images import get_image_model
-from wagtail.models import Collection, Page, Revision
+from wagtail.models import Collection, Page, Revision, Site
 
 from .handler import CastPostMicropubHandler
-from .test_micropub_permissions import blogs, users  # noqa: F401
+from .test_micropub_permissions import blogs, get_or_create_root, users  # noqa: F401
 
 pytestmark = pytest.mark.django_db
 
@@ -46,6 +46,26 @@ def make_post(blog, blocks):
     post.save_revision().publish()
     post.refresh_from_db()
     return post
+
+
+@pytest.mark.parametrize("missing", ["post", "content_type"])
+def test_source_target_disappears_after_route_probe(source, blogs, monkeypatch, missing):  # noqa: F811
+    post = make_post(blogs["alpha"], [{"type": "paragraph", "value": "<p>Synthetic content</p>"}])
+    manager_class = type(ContentType.objects)
+    get_for_id = manager_class.get_for_id
+
+    def after_route_probe(manager, content_type_id):
+        assert content_type_id == post.content_type_id
+        if missing == "content_type":
+            raise ContentType.DoesNotExist
+        with patch.object(manager_class, "get_for_id", get_for_id):
+            Post.objects.get(pk=post.pk).delete()
+        return get_for_id(manager, content_type_id)
+
+    monkeypatch.setattr(manager_class, "get_for_id", after_route_probe)
+    response = source(post)
+    assert response.status_code == 400
+    assert response.content == b"invalid_request"
 
 
 def test_source_html_discriminator_and_real_creation_round_trip(source, blogs, users):  # noqa: F811
@@ -110,6 +130,56 @@ def test_source_keeps_headings_lists_code_and_image_in_order(source, blogs, synt
     assert soup.img["src"] == synthetic_image.file.url
     assert soup.img["alt"] == synthetic_image.default_alt_text
     assert soup.find_all("li")[1].get_text() == "Second"
+
+
+@pytest.mark.django_db(databases=["default", "legacy"])
+@pytest.mark.parametrize("has_draft", [False, True])
+def test_source_images_use_the_page_database(settings, users, synthetic_image, has_draft):  # noqa: F811
+    image_model = get_image_model()
+
+    class LegacyRouter:
+        def db_for_read(self, model, **hints):
+            return "legacy"
+
+        def db_for_write(self, model, **hints):
+            return "legacy"
+
+    class DefaultImageReads:
+        def db_for_read(self, model, **hints):
+            if model is image_model:
+                return "default"
+            return None
+
+    settings.DATABASE_ROUTERS = [LegacyRouter()]
+    home = get_or_create_root().add_child(instance=Page(title="Secondary home", slug="secondary-home"))
+    Site.objects.create(hostname="secondary.example", port=443, root_page=home)
+    blog = home.add_child(instance=Blog(title="Synthetic blog", slug="secondary-blog"))
+    collection = Collection.get_first_root_node() or Collection.add_root(instance=Collection(name="Secondary root"))
+    image = image_model.objects.create(
+        pk=synthetic_image.pk,
+        title="Secondary image",
+        description="Secondary alt",
+        collection=collection,
+        file=SimpleUploadedFile("secondary-synthetic.png", synthetic_image.file.read(), content_type="image/png"),
+        width=2,
+        height=2,
+    )
+    post = make_post(blog, [{"type": "image", "value": image.pk}])
+    expected_title = post.title
+    if has_draft:
+        draft = post.live_revision.as_object()
+        expected_title = draft.title = "Synthetic draft"
+        draft.save_revision()
+
+    settings.DATABASE_ROUTERS = [DefaultImageReads(), LegacyRouter()]
+    entry = CastPostMicropubHandler().get_entry(
+        "https://secondary.example/blogs/secondary-blog/synthetic-source/", users["admin"]
+    )
+    assert entry is not None
+    assert entry.properties["name"] == [expected_title]
+    soup = BeautifulSoup(entry.properties["content"][0]["html"], "html.parser")
+    assert soup.img["src"] == image.file.url
+    assert soup.img["alt"] == image.default_alt_text
 
 
 def test_unsupported_source_is_explicit_and_read_only(source, blogs):  # noqa: F811
@@ -238,7 +308,7 @@ def test_source_image_queries_reuse_wagtail_chooser_resolution(
             block.value = image
     # One tag query plus, for an unresolved saved body, one bulk image query.
     with django_assert_num_queries(1 if resolved else 2):
-        properties = CastPostMicropubHandler()._post_to_properties(post)
+        properties = CastPostMicropubHandler()._post_to_properties(post, using=post._state.db)
     soup = BeautifulSoup(properties["content"][0]["html"], "html.parser")
     assert [img["src"] for img in soup.select("img")] == [image.file.url for image in images]
     assert [img["alt"] for img in soup.select("img")] == [image.default_alt_text for image in images]

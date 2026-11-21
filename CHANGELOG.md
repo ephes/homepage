@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fetch unresolved Micropub source images from the post's database for both
+  live and draft content.
+
+- Return the normal missing-target response when a Micropub source page or its
+  content type disappears during URL resolution.
+
 - Load both homepage users with one query and preserve the missing-user fallback.
 
 - Accept HEAD on `/favicon.ico` with the same file metadata and cache policy as GET.

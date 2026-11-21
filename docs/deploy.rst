@@ -95,6 +95,29 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-21 favicon HEAD and single-query homepage profiles
+----------------------------------------------------------
+
+Deployed ``234da06``: ``/favicon.ico`` accepts ``HEAD`` on the main and
+portfolio hosts and answers it with the same media type, length, disposition
+and one-day public cache policy as ``GET`` and an empty body (before: 405 with
+``Allow: GET``). The homepage at ``/`` loads both featured user records with
+one query; the rendered page is unchanged. No migration, no new static files
+and no settings or environment change.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``234da06``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200; the journal since the deploy holds no traceback. A public
+probe with a unique query string per request showed ``HEAD /favicon.ico`` on
+both hosts change from 405 to 200 with the ``GET`` headers, ``GET`` serving the
+same 477 bytes, and the anonymous front page rendering byte-identically after
+blanking the CSRF tokens and nonces, with a freshly issued CSRF token.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``313a0c0``). No database step and no static rebuild are needed.
+
 2026-11-21 webmention publish lookup and nonfatal delivery log
 --------------------------------------------------------------
 

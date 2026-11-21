@@ -1324,6 +1324,67 @@ def test_recover_completed_prefix_without_replaying_conversions(monkeypatch, tmp
     assert target.read_bytes() == previous
 
 
+def test_recovery_rejects_fifo_without_replacing_report(tmp_path):
+    import os
+    import subprocess
+    import sys
+
+    journal = tmp_path / "receipt.journal"
+    os.mkfifo(journal)
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "manage.py",
+            "convert_weeknote_links",
+            "--recover-receipt",
+            str(journal),
+            "--report",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    assert result.returncode == 1
+    assert "regular file" in result.stderr
+    assert target.read_text() == "previous report"
+
+
+@pytest.mark.parametrize("rewrite", [False, True], ids=["complete", "rewritten"])
+def test_recovery_requires_stable_receipt_generation(monkeypatch, tmp_path, rewrite):
+    journal = tmp_path / "receipt.journal"
+    header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 0, "through_pk": 0, "scope": {"slug": "old"}}
+    outcome = {"outcome": {"after_pk": 0, "through_pk": 0, "status": "complete"}}
+    original = json.dumps(header) + "\n" + json.dumps(outcome) + "\n"
+    journal.write_text(original)
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+    loads = json.loads
+
+    def rewrite_after_header(line):
+        frame = loads(line)
+        if "format" in frame:
+            journal.write_text(original.replace('"old"', '"new"'))
+        return frame
+
+    stdout = io.StringIO()
+    options = dict(recover_receipt=str(journal), report=str(target), stdout=stdout)
+    if rewrite:
+        monkeypatch.setattr(json, "loads", rewrite_after_header)
+        with pytest.raises(DjangoCommandError, match="changed while reading"):
+            call_command("convert_weeknote_links", **options)
+        assert target.read_text() == "previous report"
+    else:
+        call_command("convert_weeknote_links", **options)
+        assert loads(target.read_text()) == []
+        assert "status=complete" in stdout.getvalue()
+        assert journal.read_text() == original
+
+
 @pytest.mark.parametrize("damage", ["format", "order", "outcome", "budget", "rows", "trailing", "empty"])
 def test_receipt_recovery_refuses_invalid_frames(tmp_path, damage):
     header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 0, "through_pk": 2, "scope": {}}

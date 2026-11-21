@@ -285,9 +285,12 @@ Recover completed receipts without querying, saving or publishing posts::
 
    uv run python manage.py convert_weeknote_links --recover-receipt /tmp/.report.json.UNIQUE.journal --report /tmp/recovered.json
 
-Recovery validates the format, increasing page IDs, fixed upper bound, outcome
-and invocation post/receipt budgets (page frames against ``--max-report-bytes``;
-header and outcome frames get a fixed 64 KiB allowance), then atomically
+Recovery opens a regular journal file without blocking on a FIFO or following
+a symlink at the journal name. It checks that the opened file and its name
+still identify the same unchanged receipt after parsing. Recovery validates the
+format, increasing page IDs, fixed upper bound, outcome and invocation
+post/receipt budgets. Page frames count against ``--max-report-bytes``. Header
+and outcome frames get a fixed 64 KiB allowance. Recovery then atomically
 publishes the same JSON array.
 Increase ``--max-posts``/``--max-report-bytes`` explicitly if the original run used
 larger budgets. The original journal remains untouched. Recovery prints the
@@ -295,8 +298,8 @@ original scope/write/publish flags, status and exact continuation IDs. A missing
 outcome is explicitly partial; recovery never replays conversions. A complete
 outcome means traversal finished, not that every conflict/draft/warning was fixed.
 
-An incomplete final frame, invalid sequence or oversized journal is refused
-before replacing the report. Keep the original, inspect complete newline frames
+Recovery refuses changed or oversized journals, incomplete final frames and
+invalid sequences before replacing the report. Keep the original, inspect complete newline frames
 and stderr/revisions, and if needed make a separate verified copy containing only
 complete frames before recovery. Do not silently discard a tail or infer that an
 unacknowledged revision was never committed. Continuation skips processed page

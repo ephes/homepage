@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
@@ -41,13 +42,15 @@ def _purge_repaired_rendition(rendition, alias, synchronous_result: RepairResult
         if synchronous_result is not None:
             synchronous_result.cache_pending.append((alias, rendition.pk, rendition.file.name, repr(error)[:300]))
         else:
-            logger.warning(
-                "Rendition %s repaired; cache purge pending (%s). Retry with --retry-cache-purge %s --database=%s",
-                rendition.pk,
-                type(error).__name__,
-                rendition.pk,
-                quote(alias),
-            )
+            # A failed log handler must let later on-commit callbacks run.
+            with suppress(Exception):
+                logger.warning(
+                    "Rendition %s repaired; cache purge pending (%s). Retry with --retry-cache-purge %s --database=%s",
+                    rendition.pk,
+                    type(error).__name__,
+                    rendition.pk,
+                    quote(alias),
+                )
 
 
 def regenerate_renditions_for_image(image) -> RepairResult:
@@ -57,7 +60,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     Only a clear "does not exist" answer from the storage backend counts as missing.
     If the storage cannot say (throttling, an outage, denied access, ...) the rendition
     is reported as unknown and left alone. A missing rendition keeps its database row:
-    the new file is generated first and then attached inside a database savepoint.
+    the new file is generated and verified in storage before attachment in a savepoint.
     Failed saves retain the old row and compensate only owned, unreferenced output.
     Cache invalidation waits for the write transaction to commit. Within a caller's
     transaction, regenerated rows are provisional and later purge failures are logged.
@@ -94,9 +97,19 @@ def regenerate_renditions_for_image(image) -> RepairResult:
                 expected_name = rendition.file.field.generate_filename(rendition, filename)
                 if storage.exists(expected_name):
                     raise FileExistsError(f"Repair destination already exists: {expected_name}")
+                expected_size = new_file.size
                 rendition.file.save(filename, new_file, save=False)
                 allocated_name = rendition.file.name
                 owned_output = allocated_name == expected_name and allocated_name != stored_name
+            if not storage.exists(allocated_name):
+                raise FileNotFoundError(f"Published repair is missing: {allocated_name}")
+            try:
+                published_size = storage.size(allocated_name)
+            except NotImplementedError:
+                pass  # This backend can confirm existence but does not expose sizes.
+            else:
+                if published_size != expected_size:
+                    raise OSError(f"Published repair size is {published_size} bytes, expected {expected_size}")
             # Roll back even a save hook that writes the row and then raises. Cleanup queries
             # run after the savepoint exits, so a database failure cannot poison them.
             synchronous_result = result if transaction.get_autocommit(using=alias) else None

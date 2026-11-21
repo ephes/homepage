@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import tempfile
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
@@ -21,6 +22,18 @@ def _published_mode(target: Path) -> int:
         umask = os.umask(0)
         os.umask(umask)
         return 0o666 & ~umask
+
+
+def _sync_directory(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _receipt_generation(info: os.stat_result) -> tuple[int, int, int, int, int]:
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
 
 # Report value for a page that changed between reading it and saving its conversion.
@@ -208,6 +221,7 @@ class Command(BaseCommand):
             with stream:
                 # Private append-only JSONL frames: header, completed pages, outcome.
                 self._append_frame(stream, {"format": RECEIPT_FORMAT, **run, "scope": scope})
+                _sync_directory(target.parent)
                 yield stream
                 self._append_frame(stream, {"outcome": dict(run)})
             self._publish_report(target, report)
@@ -260,6 +274,11 @@ class Command(BaseCommand):
         except Exception:
             self.stderr.write(f"Staged JSON report retained at {stream.name!r} (may be incomplete).")
             raise
+        try:
+            _sync_directory(target.parent)
+        except OSError:
+            self.stderr.write(f"Report replaced at {str(target)!r}; durability uncertain.")
+            raise
 
     def _recover_receipt(self, options):
         if not options["report"] or any(
@@ -292,8 +311,19 @@ class Command(BaseCommand):
         limit = max_bytes + RECEIPT_FRAME_ALLOWANCE
         header = None
         finished = False
-        # Binary reads cap bytes even for non-ASCII warnings or malformed input.
-        with path.open("rb") as stream:
+
+        def open_journal(name: str, flags: int) -> int:
+            return os.open(name, flags | os.O_NONBLOCK | os.O_NOFOLLOW)
+
+        # Admit the opened descriptor before reading; binary reads bound raw bytes.
+        with open(path, "rb", opener=open_journal) as stream:
+            fd = stream.fileno()
+            admitted = os.fstat(fd)
+            if not stat.S_ISREG(admitted.st_mode):
+                raise ValueError("Receipt must be a regular file")
+            if admitted.st_size > limit:
+                raise ValueError("Receipt exceeds budget")
+            generation = _receipt_generation(admitted)
             while line := stream.readline(limit - consumed + 1):
                 consumed += len(line)
                 if consumed > limit or not line.endswith(b"\n"):
@@ -349,6 +379,12 @@ class Command(BaseCommand):
                     finished = True
             if header is None:
                 raise ValueError("Missing receipt header")
+            if (
+                consumed != admitted.st_size
+                or _receipt_generation(os.fstat(fd)) != generation
+                or _receipt_generation(path.stat(follow_symlinks=False)) != generation
+            ):
+                raise ValueError("Receipt changed while reading")
         run = {"after_pk": cursor, "through_pk": through, "status": outcome["status"] if finished else "partial"}
         return report, run, header["scope"]
 

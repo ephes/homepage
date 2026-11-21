@@ -137,6 +137,38 @@ def test_missing_rendition_is_regenerated_on_the_same_row():
     assert image.renditions.count() == 2
 
 
+@pytest.mark.parametrize("short", [False, True], ids=["missing", "short"])
+def test_repair_refuses_incomplete_storage_publication_and_continues(monkeypatch, repair_storage, short):
+    from django.core.files.base import ContentFile
+
+    image, first = missing_legacy_rendition()
+    second = make_rendition(image, "width-50")
+    remove_file(second)
+    originals = {r.pk: (r.file.name, r.width, r.height) for r in (first, second)}
+    save = repair_storage.save
+    allocated = []
+
+    def acknowledge(name, content, max_length=None):
+        if allocated:
+            return save(name, content, max_length=max_length)
+        allocated.append(name)
+        if short:
+            return save(name, ContentFile(b"short"), max_length=max_length)
+        return name
+
+    monkeypatch.setattr(repair_storage, "save", acknowledge)
+    result = repair.regenerate_renditions_for_image(image)
+
+    [(failed_pk, old_name, reason)] = result.failed
+    assert old_name == originals[failed_pk][0]
+    assert ("size" if short else "missing") in reason
+    fresh = type(first).objects.get(pk=failed_pk)
+    assert (fresh.file.name, fresh.width, fresh.height) == originals[failed_pk]
+    assert len(result.regenerated) == 1 and result.regenerated[0].pk != failed_pk
+    assert file_exists(result.regenerated[0])
+    assert not repair_storage.exists(allocated[0])
+
+
 def test_failed_regeneration_keeps_the_row_for_a_retry(monkeypatch):
     image = make_image("broken")
     rendition = make_rendition(image)
@@ -366,7 +398,10 @@ def test_failed_row_save_never_deletes_a_preexisting_returned_name(monkeypatch, 
     from django.core.files.base import ContentFile
 
     image, rendition = missing_legacy_rendition()
-    existing = repair_storage.save("images/preexisting.png", ContentFile(b"existing"))
+    with image.generate_rendition_file(rendition.filter) as generated:
+        generated.seek(0)
+        existing_bytes = generated.read()
+    existing = repair_storage.save("images/preexisting.png", ContentFile(existing_bytes))
     allocated = failed_row_save(monkeypatch, rendition, repair_storage)
 
     def reuse(*args, **kwargs):
@@ -377,7 +412,7 @@ def test_failed_row_save_never_deletes_a_preexisting_returned_name(monkeypatch, 
     result = repair.regenerate_renditions_for_image(image)
 
     assert allocated == [existing]
-    assert repair_storage.open(existing).read() == b"existing"
+    assert repair_storage.open(existing).read() == existing_bytes
     assert "row write failed" in result.failed[0][2]
     assert existing in result.failed[0][2]  # Recovery location when ownership cannot be proven.
 
@@ -560,6 +595,38 @@ def test_cache_purge_follows_the_outer_commit(monkeypatch, caplog, outcome):
     assert not result.incomplete
     retry = f"--retry-cache-purge {rendition.pk} --database=default"
     assert (retry in caplog.text) == (outcome == "purge-failure")
+
+
+@pytest.mark.django_db(transaction=True)
+def test_deferred_purge_warning_failure_keeps_repair_and_later_callback(monkeypatch):
+    image = make_image("failed-warning")
+    rendition = make_rendition(image)
+    remove_file(rendition)
+    warnings = []
+    sibling = []
+
+    def fail_purge(self):
+        raise RuntimeError("private cache details")
+
+    def fail_warning(message, *args):
+        warnings.append(message % args)
+        raise OSError("log sink unavailable")
+
+    monkeypatch.setattr(type(rendition), "purge_from_cache", fail_purge)
+    monkeypatch.setattr(repair.logger, "warning", fail_warning)
+
+    with transaction.atomic():
+        result = repair.regenerate_renditions_for_image(image)
+        transaction.on_commit(lambda: sibling.append("ran"))
+
+    [replacement] = result.regenerated
+    assert replacement.file.name != rendition.file.name
+    assert stored(rendition).file.name == replacement.file.name
+    assert file_exists(rendition)
+    assert sibling == ["ran"]
+    [warning] = warnings
+    assert f"cache purge pending (RuntimeError). Retry with --retry-cache-purge {rendition.pk}" in warning
+    assert "private cache details" not in warning
 
 
 @pytest.mark.django_db(transaction=True)

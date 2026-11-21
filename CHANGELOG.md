@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Recover weeknote receipts only from bounded regular files that stay unchanged while being read.
+
+- Sync the weeknote receipt directory before page writes and keep the journal until report publication is durable.
+
+- Preserve rendition repairs and later commit callbacks when a deferred cache purge and its warning both fail.
+
+- Verify the stored replacement name and available size before attaching a repaired rendition.
+
 - Fetch unresolved Micropub source images from the post's database for both
   live and draft content.
 

@@ -1171,6 +1171,67 @@ def test_receipt_serialization_work_is_linear(monkeypatch, tmp_path, count):
     assert work <= 5 * count + 10
 
 
+@pytest.mark.parametrize("failure", [None, "preflight", "publication"])
+def test_receipt_directory_sync_brackets_save_and_journal_unlink(monkeypatch, tmp_path, failure):
+    import os
+    import stat
+
+    post = FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)))
+    _patch_post_model(monkeypatch, [post])
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+    fsync, unlink = os.fsync, os.unlink
+    save = Command._save_conversion
+    events = []
+
+    def sync(fd):
+        if stat.S_ISDIR(os.fstat(fd).st_mode):
+            (journal,) = tmp_path.glob("*.journal")
+            assert journal.read_bytes().endswith(b"\n")
+            phase = "publication" if target.read_text() != "previous report" else "preflight"
+            events.append(phase)
+            if failure == phase:
+                raise OSError(f"{phase} directory sync failed")
+        return fsync(fd)
+
+    def record_save(self, *args, **kwargs):
+        events.append("save")
+        return save(self, *args, **kwargs)
+
+    def record_unlink(path, *args, **kwargs):
+        if str(path).endswith(".journal"):
+            events.append("unlink")
+        return unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "fsync", sync)
+    monkeypatch.setattr(os, "unlink", record_unlink)
+    monkeypatch.setattr(Command, "_save_conversion", record_save)
+    stderr = io.StringIO()
+    options = dict(write=True, report=str(target), stdout=io.StringIO(), stderr=stderr)
+    if failure:
+        with pytest.raises(DjangoCommandError, match=f"{failure} directory sync failed"):
+            call_command("convert_weeknote_links", **options)
+        (journal,) = tmp_path.glob("*.journal")
+        assert journal.name in stderr.getvalue()
+    else:
+        call_command("convert_weeknote_links", **options)
+
+    if failure == "preflight":
+        assert events == ["preflight"]
+        assert post.saved_revision is None
+        assert target.read_text() == "previous report"
+    elif failure == "publication":
+        assert events == ["preflight", "save", "publication"]
+        receipts, run, _ = Command._read_receipt(journal, 100, 4096)
+        assert run["status"] == "complete"
+        assert receipts == json.loads(target.read_text())
+        assert receipts[0]["revision_id"] == post.saved_revision.id
+        assert "durability uncertain" in stderr.getvalue()
+    else:
+        assert events == ["preflight", "save", "publication", "unlink"]
+        assert list(tmp_path.glob("*.journal")) == []
+
+
 @pytest.mark.parametrize("failure", ["short_write", "flush", "fsync", "close", "replace"])
 def test_journal_failure_preserves_previous_report_and_committed_ids(monkeypatch, tmp_path, failure):
     import os
@@ -1261,6 +1322,76 @@ def test_recover_completed_prefix_without_replaying_conversions(monkeypatch, tmp
     with pytest.raises(DjangoCommandError, match="incomplete final frame"):
         call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=io.StringIO())
     assert target.read_bytes() == previous
+
+
+def test_recovery_rejects_fifo_without_replacing_report(tmp_path):
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    journal = tmp_path / "receipt.journal"
+    os.mkfifo(journal)
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+
+    repo_root = Path(__file__).resolve().parents[3]
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "manage.py"),
+            "convert_weeknote_links",
+            "--recover-receipt",
+            str(journal),
+            "--report",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=repo_root,
+    )
+
+    assert result.returncode == 1
+    assert "regular file" in result.stderr
+    assert target.read_text() == "previous report"
+
+
+@pytest.mark.parametrize("rewrite", [False, True], ids=["complete", "rewritten"])
+def test_recovery_requires_stable_receipt_generation(monkeypatch, tmp_path, rewrite):
+    import os
+
+    journal = tmp_path / "receipt.journal"
+    header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 0, "through_pk": 0, "scope": {"slug": "old"}}
+    outcome = {"outcome": {"after_pk": 0, "through_pk": 0, "status": "complete"}}
+    original = json.dumps(header) + "\n" + json.dumps(outcome) + "\n"
+    journal.write_text(original)
+    target = tmp_path / "report.json"
+    target.write_text("previous report")
+    loads = json.loads
+
+    def rewrite_after_header(line):
+        frame = loads(line)
+        if "format" in frame:
+            # Same size and inode: only the forced mtime identifies the rewrite,
+            # independent of the filesystem's timestamp granularity.
+            before = journal.stat()
+            journal.write_text(original.replace('"old"', '"new"'))
+            os.utime(journal, ns=(before.st_atime_ns, before.st_mtime_ns + 5_000_000_000))
+        return frame
+
+    stdout = io.StringIO()
+    options = dict(recover_receipt=str(journal), report=str(target), stdout=stdout)
+    if rewrite:
+        monkeypatch.setattr(json, "loads", rewrite_after_header)
+        with pytest.raises(DjangoCommandError, match="changed while reading"):
+            call_command("convert_weeknote_links", **options)
+        assert target.read_text() == "previous report"
+    else:
+        call_command("convert_weeknote_links", **options)
+        assert loads(target.read_text()) == []
+        assert "status=complete" in stdout.getvalue()
+        assert journal.read_text() == original
 
 
 @pytest.mark.parametrize("damage", ["format", "order", "outcome", "budget", "rows", "trailing", "empty"])

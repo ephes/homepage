@@ -257,7 +257,9 @@ Report publication and interrupted runs
 ---------------------------------------
 
 With ``--report``, the command creates a unique private sibling ``.journal``
-(0600), writes a versioned header and flushes/fsyncs it before database changes.
+(0600), writes and fsyncs a versioned header, then fsyncs the containing
+directory before database changes. A failed directory sync stops conversion
+before any revisions are created.
 Each completed page appends one newline-framed JSON record, then flushes/fsyncs
 its revision ID and publication result. Header, page and outcome records are
 command-specific UTF-8 JSONL; embedded newlines are JSON-escaped. Work is linear
@@ -265,7 +267,10 @@ in completed receipt bytes, without rewriting the growing prefix. The bounded
 report list is serialized once at completion to a separate sibling ``.pending``
 file, fsynced, closed and atomically replaced over the target. Published reports
 remain JSON arrays and retain the previous report's mode or the umask-derived
-creation mode. Successful publication removes the redundant journal.
+creation mode. The command fsyncs the containing directory after replacement
+and removes the redundant journal only after that sync succeeds. A sync failure
+after replacement leaves the report visible with uncertain durability and
+retains the complete journal for recovery.
 
 On a handled conversion, write, flush, close or replace failure, the existing
 report survives. The command exits nonzero, retains the journal (and any staged
@@ -280,9 +285,15 @@ Recover completed receipts without querying, saving or publishing posts::
 
    uv run python manage.py convert_weeknote_links --recover-receipt /tmp/.report.json.UNIQUE.journal --report /tmp/recovered.json
 
-Recovery validates the format, increasing page IDs, fixed upper bound, outcome
-and invocation post/receipt budgets (page frames against ``--max-report-bytes``;
-header and outcome frames get a fixed 64 KiB allowance), then atomically
+Recovery opens a regular journal file without blocking on a FIFO or following
+a symlink at the journal name. It checks that the opened file and its name
+still identify the same unchanged receipt after parsing. This check compares
+device, inode, size and modification/change timestamps, so a same-size
+in-place rewrite within one filesystem timestamp tick can go unnoticed: keep
+the journal untouched while recovery runs. Recovery validates the
+format, increasing page IDs, fixed upper bound, outcome and invocation
+post/receipt budgets. Page frames count against ``--max-report-bytes``. Header
+and outcome frames get a fixed 64 KiB allowance. Recovery then atomically
 publishes the same JSON array.
 Increase ``--max-posts``/``--max-report-bytes`` explicitly if the original run used
 larger budgets. The original journal remains untouched. Recovery prints the
@@ -290,8 +301,8 @@ original scope/write/publish flags, status and exact continuation IDs. A missing
 outcome is explicitly partial; recovery never replays conversions. A complete
 outcome means traversal finished, not that every conflict/draft/warning was fixed.
 
-An incomplete final frame, invalid sequence or oversized journal is refused
-before replacing the report. Keep the original, inspect complete newline frames
+Recovery refuses changed or oversized journals, incomplete final frames and
+invalid sequences before replacing the report. Keep the original, inspect complete newline frames
 and stderr/revisions, and if needed make a separate verified copy containing only
 complete frames before recovery. Do not silently discard a tail or infer that an
 unacknowledged revision was never committed. Continuation skips processed page

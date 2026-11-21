@@ -76,7 +76,7 @@ function runtime(options = {}) {
     ready: Promise.resolve()};
   Object.defineProperty(d, 'hidden', {value: false, writable: true});
   const api = {w, d, dom, state, frames, timers, sizes, observers,
-    run: name => w.eval(readFileSync(resolve(assets, name), 'utf8')),
+    run: (name, target = w) => target.eval(readFileSync(resolve(assets, name), 'utf8')),
     tick() { for (const [id, cb] of [...frames]) if (frames.delete(id)) cb(16); },
     motion(reduce) { const mq = w.matchMedia('(prefers-reduced-motion: reduce)');
       mq.matches = reduce; mq.dispatchEvent(new w.Event('change')); },

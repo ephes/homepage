@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Synchronize the portfolio theme, checked option and switch label across open
+  tabs, including resets to System.
+
 - Paginate the staff account directory by username and keep the profile links
   on every page.
 

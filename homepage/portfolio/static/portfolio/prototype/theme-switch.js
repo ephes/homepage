@@ -1,6 +1,6 @@
 /* Darstellung: System, Hell oder Dunkel. Das Inline-Skript im Kopf setzt die gespeicherte
    Wahl schon vor dem ersten Zeichnen (data-theme-choice, bei Hell/Dunkel auch data-theme);
-   dieses Skript bedient Schalter und Menü unten links und speichert die Wahl. */
+   dieses Skript bedient Schalter und Menü unten links und synchronisiert die Wahl. */
 (() => {
   const STORAGE_KEY = "portfolio-theme";
   const root = document.documentElement;
@@ -28,6 +28,19 @@
       /* Ohne Speicher gilt die Wahl nur für diese Seite. */
     }
   };
+  const syncChoice = (event) => {
+    if (event && event.key !== STORAGE_KEY && event.key !== null) return;
+    let choice = root.dataset.themeChoice;
+    try {
+      const storage = window.localStorage;
+      if (event && event.storageArea !== storage) return;
+      /* Der aktuelle Wert kann neuer sein als ein wartendes Storage-Ereignis. */
+      choice = storage.getItem(STORAGE_KEY);
+    } catch (error) {
+      /* Ohne Speicher bleibt die bisherige Wahl erhalten. */
+    }
+    apply(options.some((option) => option.dataset.themeValue === choice) ? choice : "system");
+  };
 
   /* is-open hält Feld und Ecke im geöffneten Zustand, bis das Menü auch beim Schließen
      ganz eingefahren ist (Dauer wie in motion.css). */
@@ -50,7 +63,8 @@
     if (returnFocus) toggle.focus();
   };
 
-  apply(root.dataset.themeChoice || "system");
+  window.addEventListener("storage", syncChoice);
+  syncChoice();
 
   toggle.addEventListener("click", () => (isOpen() ? close(false) : open()));
   options.forEach((option, index) => {

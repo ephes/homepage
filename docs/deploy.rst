@@ -96,7 +96,7 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
     uv run python manage.py install_json_resume_catalog_themes
 
 2026-11-21 Portfolio theme sync across tabs and live reduced motion
-------------------------------------------------------------------
+-------------------------------------------------------------------
 
 Deployed ``8e49e38``: the theme menu script of the portfolio site
 (``homepage/portfolio/static/portfolio/prototype/theme-switch.js``) follows a

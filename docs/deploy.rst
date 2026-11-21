@@ -95,6 +95,35 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-21 Micropub source lookup races and image database
+----------------------------------------------------------
+
+Deployed ``e8d6b6d``: a Micropub ``q=source`` lookup whose post or content type
+disappears between the route lookup and the concrete page fetch gets the ordinary
+missing-target response (``400 invalid_request``) instead of a server error, and
+the source export fetches unresolved image IDs from the post's own database
+(``homepage/micropub/README.md``; production has a single page database, so its
+exported source is identical). No
+migration, no new static files and no settings or environment change.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``e8d6b6d``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200; the journal since the deploy holds no traceback. A read-only
+``manage.py shell`` probe (``PGOPTIONS`` with ``default_transaction_read_only=on``,
+``python -B``, inside a rolled-back transaction, all cache aliases replaced by
+process-local memory caches, file-cache and socket access refused and
+self-tested) resolved the live post ``/blogs/ephes_blog/out-of-yaml/``: the
+normal lookup returned the post before and after; with the content type lookup or
+the concrete post fetch made to raise ``DoesNotExist`` in-process, the lookup
+raised before the deploy and returned ``None`` afterwards; the source export
+produced HTML with the same image count and hash before and after and read its
+images through the post's database alias (``default``) afterwards.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``e81ca07``). No database step and no static rebuild are needed.
+
 2026-11-21 favicon HEAD and single-query homepage profiles
 ----------------------------------------------------------
 

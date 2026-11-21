@@ -287,7 +287,10 @@ Recover completed receipts without querying, saving or publishing posts::
 
 Recovery opens a regular journal file without blocking on a FIFO or following
 a symlink at the journal name. It checks that the opened file and its name
-still identify the same unchanged receipt after parsing. Recovery validates the
+still identify the same unchanged receipt after parsing. This check compares
+device, inode, size and modification/change timestamps, so a same-size
+in-place rewrite within one filesystem timestamp tick can go unnoticed: keep
+the journal untouched while recovery runs. Recovery validates the
 format, increasing page IDs, fixed upper bound, outcome and invocation
 post/receipt budgets. Page frames count against ``--max-report-bytes``. Header
 and outcome frames get a fixed 64 KiB allowance. Recovery then atomically

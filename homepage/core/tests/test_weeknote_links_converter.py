@@ -1328,16 +1328,18 @@ def test_recovery_rejects_fifo_without_replacing_report(tmp_path):
     import os
     import subprocess
     import sys
+    from pathlib import Path
 
     journal = tmp_path / "receipt.journal"
     os.mkfifo(journal)
     target = tmp_path / "report.json"
     target.write_text("previous report")
 
+    repo_root = Path(__file__).resolve().parents[3]
     result = subprocess.run(
         [
             sys.executable,
-            "manage.py",
+            str(repo_root / "manage.py"),
             "convert_weeknote_links",
             "--recover-receipt",
             str(journal),
@@ -1347,6 +1349,7 @@ def test_recovery_rejects_fifo_without_replacing_report(tmp_path):
         capture_output=True,
         text=True,
         timeout=10,
+        cwd=repo_root,
     )
 
     assert result.returncode == 1
@@ -1356,6 +1359,8 @@ def test_recovery_rejects_fifo_without_replacing_report(tmp_path):
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["complete", "rewritten"])
 def test_recovery_requires_stable_receipt_generation(monkeypatch, tmp_path, rewrite):
+    import os
+
     journal = tmp_path / "receipt.journal"
     header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 0, "through_pk": 0, "scope": {"slug": "old"}}
     outcome = {"outcome": {"after_pk": 0, "through_pk": 0, "status": "complete"}}
@@ -1368,7 +1373,11 @@ def test_recovery_requires_stable_receipt_generation(monkeypatch, tmp_path, rewr
     def rewrite_after_header(line):
         frame = loads(line)
         if "format" in frame:
+            # Same size and inode: only the forced mtime identifies the rewrite,
+            # independent of the filesystem's timestamp granularity.
+            before = journal.stat()
             journal.write_text(original.replace('"old"', '"new"'))
+            os.utime(journal, ns=(before.st_atime_ns, before.st_mtime_ns + 5_000_000_000))
         return frame
 
     stdout = io.StringIO()

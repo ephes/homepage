@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Sync the weeknote receipt directory before page writes and keep the journal until report publication is durable.
+
 - Preserve rendition repairs and later commit callbacks when a deferred cache purge and its warning both fail.
 
 - Verify the stored replacement name and available size before attaching a repaired rendition.

@@ -23,6 +23,14 @@ def _published_mode(target: Path) -> int:
         return 0o666 & ~umask
 
 
+def _sync_directory(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 # Report value for a page that changed between reading it and saving its conversion.
 CHANGED_SINCE_READ = "changed_since_read"
 # PostgreSQL's SQLSTATE for a row lock that NOWAIT could not get.
@@ -208,6 +216,7 @@ class Command(BaseCommand):
             with stream:
                 # Private append-only JSONL frames: header, completed pages, outcome.
                 self._append_frame(stream, {"format": RECEIPT_FORMAT, **run, "scope": scope})
+                _sync_directory(target.parent)
                 yield stream
                 self._append_frame(stream, {"outcome": dict(run)})
             self._publish_report(target, report)
@@ -259,6 +268,11 @@ class Command(BaseCommand):
             os.replace(stream.name, target)
         except Exception:
             self.stderr.write(f"Staged JSON report retained at {stream.name!r} (may be incomplete).")
+            raise
+        try:
+            _sync_directory(target.parent)
+        except OSError:
+            self.stderr.write(f"Report replaced at {str(target)!r}; durability uncertain.")
             raise
 
     def _recover_receipt(self, options):

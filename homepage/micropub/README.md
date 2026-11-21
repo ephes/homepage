@@ -63,6 +63,8 @@ bounded SQL and preserves denied branches and ambiguous-slug exclusion.
 
 `q=source` lookups resolve the URL through the Wagtail page tree and require
 Wagtail **edit** permission on the post (not mere ownership).
+A post or content type that disappears after the route lookup receives the
+ordinary missing-target response (`400 invalid_request`).
 
 Only creating posts and `q=source` lookups are supported. The Micropub
 `update`, `delete` and `undelete` actions are rejected with

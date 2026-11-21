@@ -48,6 +48,26 @@ def make_post(blog, blocks):
     return post
 
 
+@pytest.mark.parametrize("missing", ["post", "content_type"])
+def test_source_target_disappears_after_route_probe(source, blogs, monkeypatch, missing):  # noqa: F811
+    post = make_post(blogs["alpha"], [{"type": "paragraph", "value": "<p>Synthetic content</p>"}])
+    manager_class = type(ContentType.objects)
+    get_for_id = manager_class.get_for_id
+
+    def after_route_probe(manager, content_type_id):
+        assert content_type_id == post.content_type_id
+        if missing == "content_type":
+            raise ContentType.DoesNotExist
+        with patch.object(manager_class, "get_for_id", get_for_id):
+            Post.objects.get(pk=post.pk).delete()
+        return get_for_id(manager, content_type_id)
+
+    monkeypatch.setattr(manager_class, "get_for_id", after_route_probe)
+    response = source(post)
+    assert response.status_code == 400
+    assert response.content == b"invalid_request"
+
+
 def test_source_html_discriminator_and_real_creation_round_trip(source, blogs, users):  # noqa: F811
     original = (
         "<p>A &amp; B <strong>bold</strong> <em>emphasis</em> "

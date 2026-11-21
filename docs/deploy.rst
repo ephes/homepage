@@ -95,6 +95,34 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-21 Profile name save and staff account directory pages
+--------------------------------------------------------------
+
+Deployed ``a8bf1c8``: the profile form at ``/users/~update/`` saves only the
+display name with one update of that column for the signed-in account (404 if
+the account was deleted meanwhile), so concurrent changes to other account
+fields are kept; the staff directory at ``/users/`` lists 50 accounts per page
+in username order and answers invalid or out-of-range page values with 404
+(``README.rst``, user pages). Production has three accounts, so the directory
+stays one page without navigation. No migration, no new static files and no
+settings or environment change.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``a8bf1c8``; both units restarted after the source sync, got new PIDs and stayed
+on them for 120 seconds; the front page, the blog RSS feed and the portfolio
+host answered 200; the journal since the deploy holds no traceback. A read-only
+``manage.py shell`` probe (same isolation as the previous deploy, now in one
+repeatable-read snapshot) called the deployed views directly: the directory
+lists exactly all accounts on page 1 of 1 with a page size of 50, a page beyond
+the last gives 404 and non-staff users still get 403; a profile POST, with the
+update stubbed and every model save refused, ran one name-only update for the
+requesting account and no model save (before the deploy the same POST reached
+a full model save).
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``8d5093f``). No database step and no static rebuild are needed.
+
 2026-11-21 Webmention section ordering
 --------------------------------------
 

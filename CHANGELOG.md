@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the local Micropub article title draft when switching between Article and Note.
+
 - Publish both development ownership records atomically so cleanup always reads
   a complete record during startup.
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Publish both development ownership records atomically so cleanup always reads
+  a complete record during startup.
+
 - Respect live reduced-motion preferences when closing the portfolio theme menu.
 
 - Synchronize the portfolio theme, checked option and switch label across open

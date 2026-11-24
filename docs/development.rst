@@ -56,7 +56,10 @@ The ``dev`` commands will:
 
 ``./run_dev.sh`` uses the same runner as ``just dev-all``. These launchers record
 one runner per checkout in ``logs/dev.json`` and hold ``logs/dev.lock`` for the
-run. Cleanup validates PID, creation time, command and checkout before signalling
+run. The runner atomically publishes the initial record and the update with the
+group ID. If an update fails before publication, cleanup can still read the
+previous complete record while the runner retires its group. Cleanup validates
+PID, creation time, command and checkout before signalling
 the runner. The runner stops its owned process group on exit, including INT,
 TERM, HUP and QUIT; repeated interrupts do not interrupt teardown. Supervisor
 failures stay nonzero through logging (signals become 128 + signal number), and

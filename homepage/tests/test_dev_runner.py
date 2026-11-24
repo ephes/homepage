@@ -3,6 +3,7 @@
 import json
 import os
 import signal
+import stat
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -111,6 +112,43 @@ def test_start_failure_removes_state(state, fake_run):
         dev_runner.run([], state)
     assert not state.exists()
     fake_run.killpg.assert_not_called()
+
+
+@pytest.mark.parametrize("fail_replace", [False, True])
+def test_ownership_record_is_published_atomically(state, fake_run, owner, monkeypatch, fail_replace):
+    replace = Path.replace
+    first = {"pid": 4321, "created": 123.5}
+    second = {**first, "pgid": 5678}
+    publications = []
+
+    def inspect_before_replace(stage, destination):
+        assert destination == state
+        assert stage.parent == state.parent and stage != state
+        assert stat.S_IMODE(stage.stat().st_mode) == 0o600
+        publications.append(json.loads(stage.read_text()))
+        if len(publications) == 1:
+            assert not state.exists()
+        else:
+            assert json.loads(state.read_text()) == first
+            dev_runner.cleanup(state)
+            owner.send_signal.assert_called_once_with(signal.SIGTERM)
+            if fail_replace:
+                raise OSError("synthetic replace failure")
+        return replace(stage, destination)
+
+    def inspect_at_retirement(pgid, sig):
+        assert json.loads(state.read_text()) == (first if fail_replace else second)
+
+    monkeypatch.setattr(Path, "replace", inspect_before_replace)
+    fake_run.killpg.side_effect = inspect_at_retirement
+    if fail_replace:
+        with pytest.raises(OSError, match="synthetic replace failure"):
+            dev_runner.run([], state)
+    else:
+        assert dev_runner.run([], state) == 0
+    assert publications == [first, second]
+    assert not state.exists()
+    assert {path.name for path in state.parent.iterdir()} <= {"dev.lock", "dev.log"}
 
 
 def test_stale_record_is_not_overwritten(state, fake_run):

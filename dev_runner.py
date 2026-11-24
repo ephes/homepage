@@ -12,6 +12,7 @@ import signal
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -47,6 +48,21 @@ def cleanup(state=STATE):
         process.wait(timeout=15)
     except (KeyError, TypeError, ValueError, OSError, psutil.Error) as exc:
         raise RuntimeError(f"Refusing cleanup of stale/mismatching {state}: {exc}") from exc
+
+
+def publish_ownership(state, record):
+    """Publish a complete record without exposing writes to cleanup readers."""
+    stage = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=state.parent, prefix=f".{state.name}.", delete=False
+        ) as stream:
+            stage = Path(stream.name)
+            json.dump(record, stream)
+        stage.replace(state)
+    finally:
+        if stage is not None:
+            stage.unlink(missing_ok=True)
 
 
 def interrupted(signum, frame):
@@ -244,7 +260,7 @@ def run(processes, state=STATE):
         try:
             owner = psutil.Process()
             record = {"pid": owner.pid, "created": owner.create_time()}
-            state.write_text(json.dumps(record))
+            publish_ownership(state, record)
             child = subprocess.Popen(
                 ["uvx", "honcho", "start", *processes],
                 cwd=ROOT,
@@ -256,7 +272,7 @@ def run(processes, state=STATE):
             # Before anything can raise: teardown drains must never block on an escaped writer.
             os.set_blocking(child.stdout.fileno(), False)
             record["pgid"] = child.pid
-            state.write_text(json.dumps(record))
+            publish_ownership(state, record)
             with contextlib.closing(RotatingLog(state.parent / "dev.log")) as log:
                 output = OutputLogger(log)
                 try:

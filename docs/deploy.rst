@@ -95,6 +95,40 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-24 Micropub category limits and title draft
+---------------------------------------------------
+
+Deployed ``d9fb890``: the local Micropub form and the Micropub handler reject a
+category batch over 50 entries or 4,096 characters before validating single
+names, and the form template keeps the article title draft when switching to
+Note and back. The deploy also includes the development runner changes of
+``2671144`` and ``3810ef7`` (not used by the services). No migration, settings,
+static file or dependency change.
+
+The same deploy applied two infrastructure changes from ops-control main
+``3181d809``: uv 0.13.9 on the host (was 0.13.6), and ``homepage.service``
+with ``RuntimeDirectory=django-site/homepage`` and
+``XDG_RUNTIME_DIR=/run/django-site/homepage``, so Gunicorn 26 puts its control
+socket at ``/run/django-site/homepage/gunicorn.ctl`` instead of
+``~/.gunicorn/``.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``d9fb890``; the deploy log shows the source sync, collectstatic and both unit
+restarts in that order; both units got new PIDs and stayed on them for 120
+seconds; the front page, the blog RSS feed and the portfolio host answered
+200; the journal since the deploy holds no traceback. A read-only
+``manage.py shell`` probe (read-only database session, caches and network
+blocked, writes refused) showed the deployed form and handler rejecting 51
+entries and 4,097 characters without validating any name, still accepting the
+exact limits, and the template engine loading the new form template. A
+read-only host check showed uv 0.13.9, the runtime directory owned by
+``homepage`` and the Gunicorn master listening on the new control socket.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``8e49e38``). No database step and no static rebuild are
+needed. The uv and unit changes belong to ops-control and stay.
+
 2026-11-21 Portfolio theme sync across tabs and live reduced motion
 -------------------------------------------------------------------
 

@@ -26,7 +26,7 @@ from wagtail.log_actions import log as wagtail_log
 from homepage.core.page_lookup import find_page_for_url
 
 from .converters import ContentConverter
-from .validation import validate_category, validate_title
+from .validation import MAX_CATEGORY_COUNT, MAX_CATEGORY_TEXT_LENGTH, validate_category, validate_title
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -162,6 +162,7 @@ class CastPostMicropubHandler(MicropubContentHandler):
         # details, cause or context.
         failure: Exception
         try:
+            categories = self._get_categories(properties)
             # Extract basic properties
             title = self._get_title(properties)
             try:
@@ -170,7 +171,6 @@ class CastPostMicropubHandler(MicropubContentHandler):
                 raise MicropubContentError("Title is not valid") from None
             content = self._get_content(properties)
             published = self._get_published_date(properties)
-            categories = self._get_categories(properties)
 
             with transaction.atomic():
                 return self._create_post(properties, user, title, content, published, categories)
@@ -197,10 +197,19 @@ class CastPostMicropubHandler(MicropubContentHandler):
 
     def _get_categories(self, properties: dict[str, list[Any]]) -> list[str]:
         """Return the category names, rejecting values that cannot become tags."""
-        categories = []
-        for category in properties.get("category", []):
+        values = properties.get("category", [])
+        if len(values) > MAX_CATEGORY_COUNT:
+            raise MicropubContentError(f"Categories must contain at most {MAX_CATEGORY_COUNT} entries")
+        text_length = 0
+        for category in values:
             if not isinstance(category, str):
                 raise MicropubContentError("Categories must be given as text")
+            text_length += len(category)
+            if text_length > MAX_CATEGORY_TEXT_LENGTH:
+                raise MicropubContentError(f"Categories must fit in {MAX_CATEGORY_TEXT_LENGTH} characters")
+
+        categories = []
+        for category in values:
             if not category.strip():
                 continue
             try:

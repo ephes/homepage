@@ -194,6 +194,13 @@ surrogates are rejected, while valid multilingual text is accepted. Invalid
 values return `400 invalid_request` before page, revision, log or tag writes;
 the local form reports field errors. Values are never silently truncated.
 
+Each create accepts up to 50 category entries and 4,096 Unicode characters
+of category text in total. The local form counts every comma-separated slot
+and measures the raw field, including commas and whitespace, before splitting
+it. The handler counts every entry in the normalized list and measures the
+sum of their lengths before validating individual category names. Blank
+entries count toward the limits and are ignored when creating tags.
+
 ## Post identity and published dates
 
 Creation serializes Micropub writes to the selected blog within the publication

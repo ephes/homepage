@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 
 TITLE_FIELD = Post._meta.get_field("title")
 TAG_NAME_FIELD = Post._meta.get_field("tags").remote_field.model._meta.get_field("name")
+MAX_CATEGORY_COUNT = 50
+MAX_CATEGORY_TEXT_LENGTH = 4096
 
 
 def validate_title(value: str) -> None:

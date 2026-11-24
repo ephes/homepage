@@ -19,6 +19,8 @@ Target blog
    Wagtail's shared per-user permission cache. A database query-count regression
    compares one and fifty blogs with inherited group permissions, denied branches,
    inactive users, superusers, drafts and duplicate slugs; SQL stays bounded.
+   Switching the local form to Note hides the title and omits it from submission.
+   Switching back to Article restores the typed title.
 
 Permissions
    The posting user needs Wagtail page permission to add *and* publish pages
@@ -61,6 +63,11 @@ Content
    written; nothing is truncated. This applies to posts created from now on;
    stored posts are not converted again. Details are in
    ``homepage/micropub/README.md``.
+   Each create accepts up to 50 category entries and 4,096 Unicode characters
+   of category text. The form checks the raw field, including commas and
+   whitespace, before splitting it. The handler checks the sum of the lengths
+   of the normalized entries before validating individual names. Blank entries
+   count toward both limits.
 
 Logging
    The endpoint is authenticated and receives private text, so property

@@ -4,6 +4,9 @@
 
 - Keep the local Micropub article title draft when switching between Article and Note.
 
+- Reject Micropub category batches over 50 entries or 4,096 characters before
+  expanding the local form input or validating individual tags.
+
 - Publish both development ownership records atomically so cleanup always reads
   a complete record during startup.
 

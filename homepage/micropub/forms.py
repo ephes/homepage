@@ -7,7 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django import forms
 
-from .validation import TITLE_FIELD, validate_category, validate_title
+from .validation import MAX_CATEGORY_COUNT, MAX_CATEGORY_TEXT_LENGTH, TITLE_FIELD, validate_category, validate_title
 
 
 class MicropubPostForm(forms.Form):
@@ -49,8 +49,11 @@ class MicropubPostForm(forms.Form):
 
     category = forms.CharField(
         required=False,
+        strip=False,
         label="Tags/Categories",
-        help_text="Comma-separated list",
+        help_text=(
+            f"Comma-separated list of up to {MAX_CATEGORY_COUNT} entries and {MAX_CATEGORY_TEXT_LENGTH} characters"
+        ),
         widget=forms.TextInput(attrs={"placeholder": "indieweb, micropub, django"}),
     )
 
@@ -89,14 +92,16 @@ class MicropubPostForm(forms.Form):
         )
 
     def clean_category(self):
-        """Convert comma-separated categories to list."""
-        categories = self.cleaned_data.get("category", "")
-        if categories:
-            values = [cat.strip() for cat in categories.split(",") if cat.strip()]
-            for value in values:
-                validate_category(value)
-            return values
-        return []
+        """Check the raw input budget before splitting and validating names."""
+        categories = self.cleaned_data["category"]
+        if len(categories) > MAX_CATEGORY_TEXT_LENGTH:
+            raise forms.ValidationError(f"Categories must fit in {MAX_CATEGORY_TEXT_LENGTH} characters")
+        if categories.count(",") >= MAX_CATEGORY_COUNT:
+            raise forms.ValidationError(f"Enter at most {MAX_CATEGORY_COUNT} comma-separated categories")
+        values = [name for name in map(str.strip, categories.split(",")) if name]
+        for value in values:
+            validate_category(value)
+        return values
 
     def to_micropub_properties(self):
         """Convert form data to micropub properties."""

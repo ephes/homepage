@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Stage blog cover uploads from one bounded regular file before publication so
+  later changes to the source cannot change the uploaded bytes.
+
 - Serialize portfolio creation under the Wagtail parent and report a conflicting
   hostname and port without leaving a draft page behind.
 

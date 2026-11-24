@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 
 import pytest
 from cast.image_metadata import has_gps
@@ -294,6 +295,60 @@ def test_missing_image_file_is_rejected_before_anything_is_stored(blog, tmp_path
         run(tmp_path / "missing.png")
 
     assert stored_names(storage) == before
+
+
+@pytest.mark.parametrize("replace_inode", [False, True])
+def test_cover_uses_staged_bytes_if_the_source_changes_at_publication(
+    blog, new_cover_path, storage, monkeypatch, replace_inode
+):
+    admitted = new_cover_path.read_bytes()
+    replacement = get_test_image_file(filename="replacement.png", colour="red").file.getvalue()
+    atomic = transaction.atomic
+
+    def replace_before_publication(*args, **kwargs):
+        if kwargs.get("durable"):
+            if replace_inode:
+                replacement_path = new_cover_path.with_name("replacement.png")
+                replacement_path.write_bytes(replacement)
+                replacement_path.replace(new_cover_path)
+            else:
+                new_cover_path.write_bytes(replacement)
+        return atomic(*args, **kwargs)
+
+    monkeypatch.setattr(transaction, "atomic", replace_before_publication)
+    run(new_cover_path)
+
+    blog.refresh_from_db()
+    with storage.open(blog.cover_image.file.name) as stored:
+        assert stored.read() == admitted
+
+
+def test_fifo_is_rejected_before_publication(blog, tmp_path, storage, monkeypatch):
+    fifo = tmp_path / "cover.png"
+    os.mkfifo(fifo)
+    assert_source_rejected_before_publication(blog, fifo, storage, monkeypatch, "not a regular file")
+
+
+def test_oversized_cover_is_rejected_before_publication(blog, new_cover_path, storage, settings, monkeypatch):
+    settings.WAGTAILIMAGES_MAX_UPLOAD_SIZE = new_cover_path.stat().st_size - 1
+    assert_source_rejected_before_publication(blog, new_cover_path, storage, monkeypatch, "exceeds")
+
+
+def assert_source_rejected_before_publication(blog, path, storage, monkeypatch, message):
+    before = stored_names(storage)
+    cover_id = blog.cover_image_id
+    atomic = transaction.atomic
+
+    def no_publication(*args, **kwargs):
+        assert not kwargs.get("durable"), "Invalid source reached the publication transaction"
+        return atomic(*args, **kwargs)
+
+    monkeypatch.setattr(transaction, "atomic", no_publication)
+    with pytest.raises(CommandError, match=message):
+        run(path)
+    assert stored_names(storage) == before
+    blog.refresh_from_db()
+    assert blog.cover_image_id == cover_id
 
 
 def _jpeg_with_gps(path):

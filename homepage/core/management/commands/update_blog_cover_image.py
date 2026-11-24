@@ -1,9 +1,13 @@
+import os
+import stat
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
+from tempfile import TemporaryFile
 from unittest.mock import patch
 from uuid import uuid4
 
 from cast.models import Blog
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
@@ -13,6 +17,47 @@ from wagtail.images import get_image_model
 from wagtail.models import Page
 
 SOCIAL_COVER_RENDITION_SPEC = "fill-1200x630|format-jpeg|jpegquality-75"
+DEFAULT_MAX_SOURCE_SIZE = 60 * 1024 * 1024
+
+
+def _open_nonblocking(path, flags):
+    return os.open(path, flags | os.O_NONBLOCK)
+
+
+def _stage_source(path, staged):
+    limit = settings.WAGTAILIMAGES_MAX_UPLOAD_SIZE
+    if limit is None:
+        limit = DEFAULT_MAX_SOURCE_SIZE
+
+    try:
+        with open(path, "rb", opener=_open_nonblocking) as source:
+            before = os.fstat(source.fileno())
+            if not stat.S_ISREG(before.st_mode):
+                raise CommandError(f"Image path is not a regular file: {path}")
+            if before.st_size == 0:
+                raise CommandError(f"Image file is empty: {path}")
+            if before.st_size > limit:
+                raise CommandError(f"Image file exceeds the {limit}-byte limit: {path}")
+
+            remaining = before.st_size
+            while remaining:
+                chunk = source.read(min(remaining, 1024 * 1024))
+                if not chunk:
+                    raise CommandError(f"Image file changed while being read: {path}")
+                staged.write(chunk)
+                remaining -= len(chunk)
+            after = os.fstat(source.fileno())
+            if (after.st_size, after.st_mtime_ns, after.st_ctime_ns) != (
+                before.st_size,
+                before.st_mtime_ns,
+                before.st_ctime_ns,
+            ):
+                raise CommandError(f"Image file changed while being read: {path}")
+    except FileNotFoundError as exc:
+        raise CommandError(f"Image file does not exist: {path}") from exc
+    except OSError as exc:
+        raise CommandError(f"Could not stage image file {path}: {exc}") from exc
+    staged.seek(0)
 
 
 @contextmanager
@@ -68,11 +113,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         image_path = options["image_path"]
-        if not image_path.exists():
-            raise CommandError(f"Image file does not exist: {image_path}")
-        if not image_path.is_file():
-            raise CommandError(f"Image path is not a file: {image_path}")
+        with TemporaryFile() as staged:
+            _stage_source(image_path, staged)
+            self._publish(File(staged, name=image_path.name), options)
 
+    def _publish(self, source, options):
         alias = router.db_for_write(Blog)
         blog_slug = options["blog_slug"]
         try:
@@ -113,9 +158,8 @@ class Command(BaseCommand):
                 for backend, names in uploads:
                     stack.enter_context(_record_saved_names(backend, names))
                 # Keep model pre_save sanitization (including EXIF GPS stripping).
-                with image_path.open("rb") as image_file:
-                    image = Image(title=options["title"], file=File(image_file, name=image_path.name))
-                    image.save(using=alias)
+                image = Image(title=options["title"], file=source)
+                image.save(using=alias)
                 # A required rendition is part of the publication precondition.
                 rendition = image.get_rendition(SOCIAL_COVER_RENDITION_SPEC)
                 rendition_url = rendition.url

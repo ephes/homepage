@@ -338,6 +338,13 @@ command flags, including ``--title``, ``--alt-text``, ``--user`` and
 
     just manage update_blog_cover_image --help
 
+Before opening the publication transaction, the command opens the source once
+and stages its bytes privately. The source must be a nonempty regular file
+within ``WAGTAILIMAGES_MAX_UPLOAD_SIZE`` (60 MiB in this project and also the
+command's fallback if the setting is disabled). Special files and sources
+that change during staging are refused. Changes to the original file after
+staging do not affect the upload.
+
 The image is uploaded through the image model, so django-cast strips EXIF GPS
 data from it like from any other upload. The command stores the image file
 first and then changes the database: it creates the image row and saves (or, by default, publishes a revision of) the

@@ -355,7 +355,9 @@ not publish the page, recovery distinguishes database rollback from storage clea
 
 * the image row and the blog change are rolled back, so the blog keeps its
   previous cover image and alt text;
-* uploads use random operation basenames. A returned name is eligible for cleanup on
+* the cover and its required rendition use random operation basenames. Only
+  their storage receipts are tracked, so other uploads on the same backend are
+  unaffected. A returned name is eligible for cleanup on
   standard FileSystemStorage configured with ``allow_overwrite=False``. That
   backend guarantees exclusive creation even during a naming race. Generic,
   custom and overwrite-capable backends (including S3) do not provide that

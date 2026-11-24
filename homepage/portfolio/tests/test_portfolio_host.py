@@ -1,5 +1,7 @@
 import pytest
+from django.contrib.auth import SESSION_KEY
 from django.core.management import call_command
+from django.urls import reverse
 from wagtail.models import Locale, Page, Site
 
 from homepage.portfolio.models import PortfolioIndexPage
@@ -114,3 +116,26 @@ def test_missing_trailing_slash_still_redirects_on_the_portfolio_host(client, po
 
     assert response.status_code == 301
     assert response["Location"] == "/impressum/"
+
+
+def test_slashless_admin_login_preserves_the_post_body(client, portfolio_site, django_user_model):
+    password = "synthetic-test-password"
+    admin = django_user_model.objects.create_superuser("slash-test-admin", "slash@example.test", password)
+    canonical_url = reverse("wagtailadmin_login")
+    response = client.post(
+        canonical_url.rstrip("/"),
+        {"username": admin.username, "password": password},
+        HTTP_HOST=PORTFOLIO_HOST,
+        REMOTE_ADDR="203.0.113.88",
+        follow=True,
+    )
+
+    assert response.redirect_chain[0] == (canonical_url, 307)
+    assert client.session[SESSION_KEY] == str(admin.pk)
+
+
+def test_slashless_unresolvable_post_stays_a_portfolio_404(client, portfolio_site):
+    response = client.post("/unknown.json", {"value": "synthetic"}, HTTP_HOST=PORTFOLIO_HOST)
+
+    assert response.status_code == 404
+    assert "Seite nicht gefunden" in response.content.decode()

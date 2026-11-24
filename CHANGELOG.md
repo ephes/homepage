@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Preserve the request method and form body when redirecting slashless portfolio
+  POSTs.
+
+- Show the project creation shortcut to editors with Wagtail add permission
+  on a portfolio homepage they cannot edit.
+
+- Report portfolio page creation only after the database commits.
+
+- Keep unrelated uploads out of blog cover rollback even when they share the
+  same storage backend.
+
 - Stage blog cover uploads from one bounded regular file before publication so
   later changes to the source cannot change the uploaded bytes.
 

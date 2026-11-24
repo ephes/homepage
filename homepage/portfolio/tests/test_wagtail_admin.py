@@ -8,7 +8,7 @@ from django.urls import reverse
 from wagtail.models import GroupPagePermission
 from wagtail.rich_text.feature_registry import FeatureRegistry
 
-from homepage.portfolio.models import LegalPageSettings, ProjectCategory, ProjectPage
+from homepage.portfolio.models import LegalPageSettings, PortfolioIndexPage, ProjectCategory, ProjectPage
 from homepage.portfolio.wagtail_hooks import (
     PortfolioHomepageMenuItem,
     PortfolioProjectsMenuItem,
@@ -17,6 +17,7 @@ from homepage.portfolio.wagtail_hooks import (
 )
 
 from .test_models import add_project, make_portfolio_tree
+from .test_seed_command import make_default_site
 
 pytestmark = pytest.mark.django_db
 
@@ -126,6 +127,38 @@ def test_project_admin_menu_lists_drafts_and_exposes_direct_creation():
             reverse("wagtailadmin_pages:edit", args=[draft_project.pk]),
         ),
     ]
+
+
+def test_add_only_editor_can_open_the_native_project_form_from_the_sidebar(client):
+    owner = make_admin_request().user
+    editor = get_user_model().objects.create_user(username="add-only-editor")
+    root = make_default_site()
+    index = root.add_child(instance=PortfolioIndexPage(title="Test portfolio", slug="test-portfolio", owner=owner))
+    foreign_project = add_project(index, "Other editor project", publish=False)
+    foreign_project.owner = owner
+    foreign_project.save(update_fields=["owner"])
+
+    group = Group.objects.create(name="Add-only portfolio editors")
+    editor.groups.add(group)
+    group.permissions.add(Permission.objects.get(content_type__app_label="wagtailadmin", codename="access_admin"))
+    GroupPagePermission.objects.create(
+        group=group,
+        page=index,
+        permission=Permission.objects.get(content_type__app_label="wagtailcore", codename="add_page"),
+    )
+
+    add_url = reverse("wagtailadmin_pages:add", args=["portfolio", "projectpage", index.pk])
+    client.force_login(editor)
+    response = client.get(add_url)
+
+    assert response.status_code == 200
+    request = response.wsgi_request
+    assert not index.permissions_for_user(request.user).can_edit()
+    assert not PortfolioHomepageMenuItem("Startseite", "#").is_shown(request)
+    item = PortfolioProjectsMenuItem("Projekte", name="portfolio-projects")
+    assert item.is_shown(request)
+    component = item.render_component(request)
+    assert [(child.label, child.url) for child in component.menu_items] == [("Neues Projekt", add_url)]
 
 
 def test_project_admin_menu_items_are_cached_for_one_request(django_assert_num_queries):

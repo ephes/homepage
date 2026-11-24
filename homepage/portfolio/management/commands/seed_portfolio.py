@@ -92,4 +92,5 @@ class Command(BaseCommand):
             if site.root_page_id != page.pk:
                 raise CommandError(site_conflict)
         page.save_revision()
-        self.stdout.write(f"Created {page.title} ({page.url_path})")
+        receipt = f"Created {page.title} ({page.url_path})"
+        transaction.on_commit(lambda: self.stdout.write(receipt), using=alias)

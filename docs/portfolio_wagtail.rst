@@ -184,11 +184,16 @@ setting ``PORTFOLIO_HOSTS``) lists these hostnames, e.g. ``design.wersdoerfer.de
   main host keeps Wagtail's standard look. The theme is linked through
   ``/portfolio/admin-theme.css``, which redirects to the stylesheet on portfolio hosts and
   returns an empty stylesheet elsewhere. Sessions are per host, so editors log in
-  separately on each domain.
+  separately on each domain. The ``Projekte`` menu offers ``Neues Projekt`` when
+  Wagtail allows the editor to create a project under a portfolio homepage.
+  ``Startseite`` and individual project edit links still require change
+  permission for the respective pages.
   The admin login (``/cms/login/``) is throttled as on the main host and shares its
   counters, see :doc:`admin_login_throttle`.
-* Every other path is a 404; a path without trailing slash still redirects when the
-  slashed path exists. Blog, accounts, fediverse and all other routes are only served on
+* A path without a trailing slash redirects if the slashed path resolves on the
+  portfolio host. Safe methods use a permanent redirect (301). Other methods use
+  a temporary redirect (307) that preserves the method and body. Unresolved
+  paths return 404. Blog, accounts, fediverse and all other routes are only served on
   the main host. They are appended after that 404 fallback in
   ``config/urls_portfolio.py`` so that templates can still reverse them, but they never
   match there.
@@ -259,8 +264,9 @@ Create the page in the Wagtail admin, or let the seed command create it::
     uv run python manage.py seed_portfolio --create --hostname design.localhost --port 8000
 
 ``seed_portfolio`` creates the project categories and, with ``--create``, an empty,
-unpublished portfolio page at the requested target. Run it again to reuse the
-matching page without changing its content or revision. Without ``--hostname``,
+unpublished portfolio page at the requested target. The command reports page
+creation after its database transaction commits. A repeat run reuses the
+matching page without changing its content or revision and prints no creation receipt. Without ``--hostname``,
 the command uses the default site's root if it is already a portfolio, or looks
 for the requested ``--slug`` (default ``portfolio``) immediately beneath that root.
 

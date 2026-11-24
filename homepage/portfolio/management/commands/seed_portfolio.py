@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import router, transaction
 from wagtail.models import Page, Site
 
 from homepage.portfolio.models import PortfolioIndexPage, ProjectCategory
@@ -34,40 +34,51 @@ class Command(BaseCommand):
             help="Port of the Wagtail site created with --hostname (443 for HTTPS, e.g. 8000 locally).",
         )
 
-    @transaction.atomic
     def handle(self, *args, create, slug=None, hostname=None, port=443, **options):
-        for name in CATEGORIES:
-            ProjectCategory.objects.get_or_create(name=name)
+        alias = router.db_for_write(Page)
+        with transaction.atomic(using=alias):
+            self._seed(alias, create, slug, hostname, port)
 
-        portfolios = PortfolioIndexPage.objects.all()
+    def _seed(self, alias, create, slug, hostname, port):
+        for name in CATEGORIES:
+            ProjectCategory.objects.using(alias).get_or_create(name=name)
+
+        portfolios = PortfolioIndexPage.objects.using(alias)
         missing_page = "No portfolio page exists. Create one in the Wagtail admin or pass --create."
         if not create and not hostname:
             if not portfolios.exists():
                 raise CommandError(missing_page)
             return
 
+        sites = Site.objects.using(alias)
+        # Treebeard locks during insertion, but the destination check must also
+        # run while holding the parent lock.
         if hostname:
-            site = Site.objects.filter(hostname=hostname, port=port).first()
+            if create:
+                parent = Page.get_root_nodes().using(alias).select_for_update().first()
+                if parent is None:
+                    raise CommandError("No Wagtail page tree root configured.")
+            site_conflict = (
+                f"A Wagtail site for {hostname}:{port} already exists. "
+                "Its root does not match the requested portfolio."
+            )
+            site = sites.filter(hostname=hostname, port=port).first()
             if site is not None:
                 existing = portfolios.filter(pk=site.root_page_id)
                 if slug:
                     existing = existing.filter(slug=slug)
                 if existing.exists():
                     return
-                raise CommandError(
-                    f"A Wagtail site for {hostname}:{port} already exists. "
-                    "Its root does not match the requested portfolio."
-                )
+                raise CommandError(site_conflict)
             if not create:
                 raise CommandError(missing_page)
-            parent = Page.get_first_root_node()
-            if parent is None:
-                raise CommandError("No Wagtail page tree root configured.")
         else:
-            site = Site.objects.filter(is_default_site=True).select_related("root_page").first()
+            site = sites.filter(is_default_site=True).first()
             if site is None:
                 raise CommandError("No default Wagtail site configured.")
-            parent = site.root_page
+            parent = Page.objects.using(alias).select_for_update().filter(pk=site.root_page_id).first()
+            if parent is None:
+                raise CommandError("No default Wagtail site root configured.")
             slug = slug or "portfolio"
             if portfolios.filter(pk=parent.pk).exists() or portfolios.child_of(parent).filter(slug=slug).exists():
                 return
@@ -75,6 +86,10 @@ class Command(BaseCommand):
         # Wagtail assigns a unique sibling slug if none was supplied for a dedicated site.
         page = parent.add_child(instance=PortfolioIndexPage(title="Portfolio", slug=slug or "", live=False))
         if hostname:
-            Site.objects.create(hostname=hostname, port=port, root_page=page, site_name=page.title)
+            site, _ = sites.get_or_create(
+                hostname=hostname, port=port, defaults={"root_page": page, "site_name": page.title}
+            )
+            if site.root_page_id != page.pk:
+                raise CommandError(site_conflict)
         page.save_revision()
         self.stdout.write(f"Created {page.title} ({page.url_path})")

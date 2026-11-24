@@ -1,5 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
+from time import monotonic, sleep
+
 import pytest
 from django.core.management import CommandError, call_command
+from django.db import connection, transaction
 from wagtail.models import Locale, Page, Site
 
 from homepage.portfolio.management.commands.seed_portfolio import CATEGORIES
@@ -123,3 +128,90 @@ def test_seed_uses_host_and_port_and_refuses_an_occupied_pair():
         call_command("seed_portfolio", create=True, hostname=host, port=8001, slug="different")
     assert PortfolioIndexPage.objects.count() == 2
     assert dict(Site.objects.filter(hostname=host).values_list("port", "root_page_id")) == roots
+
+
+def test_seed_reuses_a_portfolio_created_while_acquiring_the_parent_lock(monkeypatch):
+    root = make_default_site()
+    queryset_class = type(Page.objects.all())
+    lock = queryset_class.select_for_update
+    winner = None
+    creating_winner = False
+
+    def acquire_parent(queryset, *args, **kwargs):
+        nonlocal winner, creating_winner
+        if queryset.model is Page and winner is None and not creating_winner:
+            # Simulate a competing bootstrap committing just before we take the lock.
+            creating_winner = True
+            winner = root.add_child(instance=PortfolioIndexPage(title="Winner", slug="shared", live=False))
+            winner.save_revision()
+        return lock(queryset, *args, **kwargs)
+
+    monkeypatch.setattr(queryset_class, "select_for_update", acquire_parent)
+    call_command("seed_portfolio", create=True, slug="shared")
+
+    assert winner is not None
+    assert PortfolioIndexPage.objects.get().pk == winner.pk
+    root.refresh_from_db()
+    assert root.numchild == root.get_children().count()
+
+
+def test_seed_rolls_back_its_page_when_a_foreign_site_claims_the_hostname(monkeypatch):
+    root = make_default_site()
+    add_child = Page.add_child
+    host = "competing.example.test"
+
+    def claim_hostname(parent, **kwargs):
+        page = add_child(parent, **kwargs)
+        Site.objects.create(hostname=host, port=443, root_page=root)
+        return page
+
+    monkeypatch.setattr(Page, "add_child", claim_hostname)
+    with pytest.raises(CommandError, match=r"competing\.example\.test:443 already exists"):
+        call_command("seed_portfolio", create=True, hostname=host)
+
+    assert not PortfolioIndexPage.objects.exists()
+    assert not ProjectCategory.objects.exists()
+    root.refresh_from_db()
+    assert root.numchild == root.get_children().count()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(connection.vendor != "postgresql", reason="Requires PostgreSQL parent row locks")
+def test_concurrent_bootstrap_reuses_the_committed_portfolio():
+    root = make_default_site()
+    ProjectCategory.objects.bulk_create([ProjectCategory(name=name) for name in CATEGORIES])
+    worker_pid = Queue()
+
+    def seed():
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_backend_pid()")
+                worker_pid.put(cursor.fetchone()[0])
+            call_command("seed_portfolio", create=True, slug="shared")
+        finally:
+            connection.close()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with transaction.atomic():
+            Page.objects.select_for_update().get(pk=root.pk)
+            competing = pool.submit(seed)
+            pid = worker_pid.get(timeout=10)
+            deadline = monotonic() + 10
+            with connection.cursor() as cursor:
+                while True:
+                    cursor.execute("SELECT pg_backend_pid() = ANY(pg_blocking_pids(%s))", [pid])
+                    if cursor.fetchone()[0]:
+                        break
+                    assert not competing.done() and monotonic() < deadline, "Bootstrap did not wait for the parent"
+                    sleep(0.01)
+            call_command("seed_portfolio", create=True, slug="shared")
+            winner = PortfolioIndexPage.objects.get(slug="shared")
+        competing.result(timeout=10)
+
+    call_command("seed_portfolio", create=True, slug="shared")
+    assert list(PortfolioIndexPage.objects.child_of(root).values_list("pk", "path", "latest_revision_id")) == [
+        (winner.pk, winner.path, winner.latest_revision_id)
+    ]
+    root.refresh_from_db()
+    assert winner.get_parent().pk == root.pk
+    assert root.numchild == root.get_children().count()

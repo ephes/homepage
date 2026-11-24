@@ -271,6 +271,11 @@ If the pair already exists, its root must be a portfolio and must match
 When ``--slug`` is omitted for a new dedicated site, Wagtail derives a unique
 sibling slug from the page title.
 
+On PostgreSQL, concurrent bootstrap commands for the same parent wait for its
+row lock before checking the destination. A second run reuses the matching
+portfolio after the first commits. If another site claims the requested host
+and port, the command reports the conflict and rolls back its draft page.
+
 The code holds no editorial content. Texts, services, about items, clients, projects,
 legal texts and images are entered in the Wagtail admin and live in the database (images
 in the media storage). Field defaults are neutral placeholders such as ``[Name]`` or empty

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Serialize portfolio creation under the Wagtail parent and report a conflicting
+  hostname and port without leaving a draft page behind.
+
 - Keep the local Micropub article title draft when switching between Article and Note.
 
 - Reject Micropub category batches over 50 entries or 4,096 characters before

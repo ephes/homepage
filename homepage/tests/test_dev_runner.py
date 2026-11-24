@@ -151,6 +151,39 @@ def test_ownership_record_is_published_atomically(state, fake_run, owner, monkey
     assert {path.name for path in state.parent.iterdir()} <= {"dev.lock", "dev.log"}
 
 
+@pytest.mark.parametrize("run_outcome", ["success", "nonzero", "interrupted"])
+def test_pipe_close_failure_restores_signal_handlers(state, fake_run, monkeypatch, run_outcome):
+    previous = {sig: Mock() for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT)}
+    handlers = previous.copy()
+
+    def install(sig, handler):
+        old = handlers[sig]
+        handlers[sig] = handler
+        return old
+
+    monkeypatch.setattr(dev_runner.signal, "signal", install)
+    stdout = Mock(wraps=fake_run.child.stdout)
+    stdout.close.side_effect = OSError("synthetic pipe close failure")
+    fake_run.child.stdout = stdout
+
+    if run_outcome == "nonzero":
+        fake_run.child.returncode = 23
+        assert dev_runner.run([], state) == 23
+    elif run_outcome == "interrupted":
+        interrupt = SystemExit(143)
+        monkeypatch.setattr(dev_runner, "stream_output", Mock(side_effect=interrupt))
+        with pytest.raises(SystemExit) as caught:
+            dev_runner.run([], state)
+        assert caught.value is interrupt
+        assert any("synthetic pipe close failure" in note for note in caught.value.__notes__)
+    else:
+        with pytest.raises(OSError, match="synthetic pipe close failure"):
+            dev_runner.run([], state)
+    assert handlers == previous
+    stdout.close.assert_called_once_with()
+    assert not state.exists()
+
+
 def test_stale_record_is_not_overwritten(state, fake_run):
     state.write_text("stale")
     with pytest.raises(RuntimeError, match="Refusing to overwrite"):

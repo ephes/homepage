@@ -61,13 +61,16 @@ group ID. If an update fails before publication, cleanup can still read the
 previous complete record while the runner retires its group. Cleanup validates
 PID, creation time, command and checkout before signalling
 the runner. The runner stops its owned process group on exit, including INT,
-TERM, HUP and QUIT; repeated interrupts do not interrupt teardown. Supervisor
-failures stay nonzero through logging (signals become 128 + signal number), and
-the record is removed only after confirmed group retirement. The leader remains
+TERM, HUP and QUIT. Repeated interrupts do not interrupt teardown. The runner
+restores the caller's signal handlers even when closing the output pipe fails.
+A pipe-close failure preserves an existing exception or nonzero child exit status.
+Supervisor failures stay nonzero through logging (signals become 128 + signal
+number), and the record is removed only after confirmed group retirement. The leader remains
 unreaped while TERM (up to ten seconds grace) and final KILL (two seconds for retirement)
 are sent, so a terminated leader cannot leave resistant descendants or release a
 reusable group ID before the last signal. Failed or uncertain cleanup retains
-``dev.json`` with its group ID for manual inspection. POSIX ``waitid(WNOWAIT)``
+``dev.json`` for manual inspection, with the group ID if that update was published.
+POSIX ``waitid(WNOWAIT)``
 (on macOS: Python 3.13 or newer; older interpreters are refused before start),
 process-table access, process groups and the locked development
 ``psutil`` dependency are required.

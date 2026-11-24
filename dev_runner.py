@@ -257,6 +257,8 @@ def run(processes, state=STATE):
             sig: signal.signal(sig, interrupted)
             for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT)
         }
+        result = 0
+        failure = None
         try:
             owner = psutil.Process()
             record = {"pid": owner.pid, "created": owner.create_time()}
@@ -290,6 +292,9 @@ def run(processes, state=STATE):
                         drain_output(child, output)
             result = child.returncode
             return result if result >= 0 else 128 - result
+        except BaseException as exc:
+            failure = exc
+            raise
         finally:
             # Repeated interrupts must not interrupt teardown or its escalation.
             for sig in previous:
@@ -301,11 +306,22 @@ def run(processes, state=STATE):
                     retired = True
                 if child is None or retired:
                     state.unlink(missing_ok=True)
+            except BaseException as exc:
+                failure = exc
+                raise
             finally:
-                if child is not None:
-                    child.stdout.close()
-                for sig, handler in previous.items():
-                    signal.signal(sig, handler)
+                try:
+                    if child is not None:
+                        child.stdout.close()
+                except Exception as exc:
+                    # Preserve an in-flight exception or a nonzero child status.
+                    if failure is not None:
+                        failure.add_note(f"Could not close development output pipe: {exc}")
+                    elif result == 0:
+                        raise
+                finally:
+                    for sig, handler in previous.items():
+                        signal.signal(sig, handler)
 
 
 def main():

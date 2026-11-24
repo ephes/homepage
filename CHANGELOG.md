@@ -5,6 +5,9 @@
 - Publish both development ownership records atomically so cleanup always reads
   a complete record during startup.
 
+- Restore development supervisor signal handlers after an output pipe close
+  failure and preserve any existing exception or nonzero child exit status.
+
 - Respect live reduced-motion preferences when closing the portfolio theme menu.
 
 - Synchronize the portfolio theme, checked option and switch label across open

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Show the project creation shortcut to editors with Wagtail add permission
+  on a portfolio homepage they cannot edit.
+
 - Report portfolio page creation only after the database commits.
 
 - Keep unrelated uploads out of blog cover rollback even when they share the

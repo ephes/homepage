@@ -105,6 +105,27 @@ def editable_portfolio_index(request):
     return index
 
 
+def _project_creation_index(request, preferred_index):
+    """Use the same parent and page-type checks as Wagtail's create view."""
+
+    def can_create(index):
+        return (
+            index.permissions_for_user(request.user).can_add_subpage()
+            and ProjectPage in index.creatable_subpage_models()
+            and ProjectPage.can_create_at(index)
+        )
+
+    if preferred_index is not None and can_create(preferred_index):
+        return preferred_index
+    candidates = (
+        page_permission_policy.instances_user_has_permission_for(request.user, "add")
+        .type(PortfolioIndexPage)
+        .specific()
+        .order_by("path")
+    )
+    return next((index for index in candidates if index != preferred_index and can_create(index)), None)
+
+
 class PortfolioHomepageMenuItem(MenuItem):
     """Direct editor shortcut to the portfolio homepage."""
 
@@ -133,21 +154,22 @@ class PortfolioProjectsMenuItem(SubmenuMenuItem):
         if hasattr(request, cache_name):
             return getattr(request, cache_name)
 
-        index = editable_portfolio_index(request)
+        editable_index = editable_portfolio_index(request)
+        creation_index = _project_creation_index(request, editable_index)
+        index = editable_index or creation_index
         if index is None:
             items = []
             setattr(request, cache_name, items)
             return items
 
         items = []
-        permissions = index.permissions_for_user(request.user)
-        if permissions.can_add_subpage() and ProjectPage.can_create_at(index):
+        if creation_index is not None:
             items.append(
                 MenuItem(
                     "Neues Projekt",
                     reverse(
                         "wagtailadmin_pages:add",
-                        args=["portfolio", "projectpage", index.pk],
+                        args=["portfolio", "projectpage", creation_index.pk],
                     ),
                     name="portfolio-project-add",
                     icon_name="plus",
@@ -155,7 +177,7 @@ class PortfolioProjectsMenuItem(SubmenuMenuItem):
                 )
             )
 
-        if permissions.can_reorder_children():
+        if index.permissions_for_user(request.user).can_reorder_children():
             items.append(
                 MenuItem(
                     "Reihenfolge",

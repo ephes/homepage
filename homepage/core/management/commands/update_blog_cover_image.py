@@ -1,9 +1,8 @@
 import os
 import stat
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryFile
-from unittest.mock import patch
 from uuid import uuid4
 
 from cast.models import Blog
@@ -13,6 +12,7 @@ from django.core.files import File
 from django.core.files.storage import FileSystemStorage
 from django.core.management.base import BaseCommand, CommandError
 from django.db import OperationalError, router, transaction
+from django.db.models.signals import pre_save
 from wagtail.images import get_image_model
 from wagtail.models import Page
 
@@ -60,30 +60,56 @@ def _stage_source(path, staged):
     staged.seek(0)
 
 
-@contextmanager
-def _record_saved_names(storage, saved_names: list[tuple[str, bool]]):
-    """Allocate operation names; compensate only a known exclusive-create backend.
+class _CoverUploadStorage:
+    """Record backend receipts for one operation-owned file field."""
 
-    Django's generic save() contract permits overwrite. FileSystemStorage with
-    allow_overwrite=False uses exclusive creation even if another writer races
-    its name selection. deconstruct() is its public constructor configuration API.
-    Unknown/custom backends are usable, but their returned names are retained.
-    """
-    original_save = storage.save
-    exclusive = False
-    if type(storage) is FileSystemStorage:
-        _, args, kwargs = storage.deconstruct()
-        exclusive = not kwargs.get("allow_overwrite", args[4] if len(args) > 4 else False)
+    def __init__(self, backend):
+        self.backend = backend
+        self.saved_names: list[tuple[str, bool]] = []
+        # Only this backend guarantees exclusive creation even during a naming race.
+        self.exclusive = False
+        if type(backend) is FileSystemStorage:
+            _, args, kwargs = backend.deconstruct()
+            self.exclusive = not kwargs.get("allow_overwrite", args[4] if len(args) > 4 else False)
 
-    def recording_save(name, content, max_length=None):
+    def save(self, name, content, max_length=None):
         path = Path(name)
         allocated = str(path.with_name(f"cover-{uuid4().hex}{path.suffix}"))
-        saved_name = original_save(allocated, content, max_length=max_length)
-        saved_names.append((saved_name, exclusive))
+        saved_name = self.backend.save(allocated, content, max_length=max_length)
+        self.saved_names.append((saved_name, self.exclusive))
         return saved_name
 
-    with patch.object(storage, "save", recording_save):
+    def __getattr__(self, name):
+        return getattr(self.backend, name)
+
+
+@contextmanager
+def _record_cover_uploads(image, uploads):
+    Image = type(image)
+    Rendition = Image.get_rendition_model()
+    attached = []
+
+    def attach_recorder(sender, instance, **kwargs):
+        if instance is not image:
+            if sender is not Rendition or instance.image_id != image.pk or instance.image is not image:
+                return
+        # Capture the final FieldFile after django-cast's GPS sanitization receiver
+        # has had a chance to replace the original upload.
+        file = instance.file
+        recorder = _CoverUploadStorage(file.storage)
+        uploads.append(recorder)
+        attached.append((file, recorder.backend))
+        file.storage = recorder
+
+    pre_save.connect(attach_recorder, sender=Image)
+    pre_save.connect(attach_recorder, sender=Rendition)
+    try:
         yield
+    finally:
+        pre_save.disconnect(attach_recorder, sender=Image)
+        pre_save.disconnect(attach_recorder, sender=Rendition)
+        for file, backend in reversed(attached):
+            file.storage = backend
 
 
 class Command(BaseCommand):
@@ -139,9 +165,6 @@ class Command(BaseCommand):
 
         Image = get_image_model()
         uploads = []
-        for field in (Image._meta.get_field("file"), Image.get_rendition_model()._meta.get_field("file")):
-            if all(field.storage is not backend for backend, _ in uploads):
-                uploads.append((field.storage, []))
 
         committed = False
         revision_id = None
@@ -153,15 +176,13 @@ class Command(BaseCommand):
         try:
             # Own the commit boundary. Register before any model/signal callbacks:
             # they can raise after the database has committed successfully.
-            with transaction.atomic(using=alias, durable=True), ExitStack() as stack:
+            with transaction.atomic(using=alias, durable=True):
                 transaction.on_commit(record_commit, using=alias)
-                for backend, names in uploads:
-                    stack.enter_context(_record_saved_names(backend, names))
-                # Keep model pre_save sanitization (including EXIF GPS stripping).
                 image = Image(title=options["title"], file=source)
-                image.save(using=alias)
-                # A required rendition is part of the publication precondition.
-                rendition = image.get_rendition(SOCIAL_COVER_RENDITION_SPEC)
+                with _record_cover_uploads(image, uploads):
+                    image.save(using=alias)
+                    # A required rendition is part of the publication precondition.
+                    rendition = image.get_rendition(SOCIAL_COVER_RENDITION_SPEC)
                 rendition_url = rendition.url
                 with self._current_blog(blog.pk, alias) as current:
                     if not options["no_publish"] and (
@@ -185,8 +206,8 @@ class Command(BaseCommand):
                     "Inspect the committed page and callback/cache state. Do not rerun the import or republish."
                 )
             else:
-                for backend, names in uploads:
-                    self._remove_saved_files(backend, names)
+                for upload in uploads:
+                    self._remove_saved_files(upload.backend, upload.saved_names)
             raise
 
         message = "Updated {} cover image to image {}; social rendition: {}".format(

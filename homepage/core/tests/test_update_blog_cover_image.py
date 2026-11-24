@@ -386,6 +386,29 @@ def test_failed_geotagged_import_removes_the_sanitized_upload(blog, tmp_path, st
     assert stored_names(storage) == before
 
 
+def test_failed_cover_leaves_an_interleaved_upload_on_shared_storage(blog, new_cover_path, storage, monkeypatch):
+    Rendition = get_image_model().get_rendition_model()
+    monkeypatch.setattr(Rendition._meta.get_field("file"), "storage", storage)
+    before = stored_names(storage)
+    unrelated_name = "original_images/unrelated.png"
+
+    save_table = Rendition._save_table
+
+    def fail_rendition_save(*args, **kwargs):
+        save_table(*args, **kwargs)
+        assert len(stored_names(storage) - before) == 2
+        storage.save(unrelated_name, ContentFile(b"unrelated upload"))
+        raise RuntimeError("rendition save failed")
+
+    monkeypatch.setattr(Rendition, "_save_table", fail_rendition_save)
+    with pytest.raises(RuntimeError, match="rendition save failed"):
+        run(new_cover_path)
+
+    assert stored_names(storage) == before | {unrelated_name}
+    with storage.open(unrelated_name) as uploaded:
+        assert uploaded.read() == b"unrelated upload"
+
+
 def test_storage_save_is_restored_after_the_command(blog, new_cover_path, storage):
     save_before = storage.save
 
@@ -395,17 +418,14 @@ def test_storage_save_is_restored_after_the_command(blog, new_cover_path, storag
     assert "save" not in vars(storage)
 
 
-def test_recorder_wraps_and_restores_the_lazy_default_storage():
-    # Production uses Django's lazily configured default storage object.
-    names: list[tuple[str, bool]] = []
+def test_recorder_uses_lazy_default_storage_without_intercepting_other_saves():
+    recorder = cover_command._CoverUploadStorage(default_storage)
 
-    with cover_command._record_saved_names(default_storage, names):
-        saved = default_storage.save("cover-recorder/probe.txt", ContentFile(b"probe"))
+    saved = recorder.save("cover-recorder/probe.txt", ContentFile(b"probe"))
+    other = default_storage.save("cover-recorder/other.txt", ContentFile(b"later"))
     try:
-        assert names == [(saved, False)]
-        assert "save" not in vars(default_storage._wrapped)
-        other = default_storage.save("cover-recorder/other.txt", ContentFile(b"later"))
-        assert names == [(saved, False)]
+        assert recorder.saved_names == [(saved, False)]
+        assert other == "cover-recorder/other.txt"
     finally:
         default_storage.delete(saved)
         default_storage.delete(other)
@@ -472,10 +492,9 @@ def test_recorder_preserves_a_competing_object_on_overwrite_storage(monkeypatch)
 
     monkeypatch.setattr(storage, "save", competing_save)
     monkeypatch.setattr(storage, "delete", deleted.append)
-    names = []
-    with cover_command._record_saved_names(storage, names):
-        returned = storage.save("original_images/cover.png", ContentFile(b"upload"))
-    cover_command.Command(stderr=io.StringIO())._remove_saved_files(storage, names)
+    recorder = cover_command._CoverUploadStorage(storage)
+    returned = recorder.save("original_images/cover.png", ContentFile(b"upload"))
+    cover_command.Command(stderr=io.StringIO())._remove_saved_files(storage, recorder.saved_names)
     assert deleted == []
     assert storage.open(returned).read() == b"external object"
     assert returned != "original_images/cover.png"
@@ -547,10 +566,9 @@ def test_exclusive_filesystem_cleanup_preserves_a_racing_creation(tmp_path, monk
         return result
 
     monkeypatch.setattr(storage, "get_available_name", race)
-    names = []
-    with cover_command._record_saved_names(storage, names):
-        uploaded = storage.save("original_images/cover.png", ContentFile(b"owned upload"))
-    cover_command.Command(stderr=io.StringIO())._remove_saved_files(storage, names)
+    recorder = cover_command._CoverUploadStorage(storage)
+    uploaded = recorder.save("original_images/cover.png", ContentFile(b"owned upload"))
+    cover_command.Command(stderr=io.StringIO())._remove_saved_files(storage, recorder.saved_names)
     assert storage.open(competing[0]).read() == b"external winner"
     assert uploaded != competing[0]
     assert not storage.exists(uploaded)

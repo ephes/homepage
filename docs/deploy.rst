@@ -95,6 +95,36 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Portfolio bootstrap lock and blog cover source staging
+-----------------------------------------------------------------
+
+Deployed ``df1c1ab``: ``seed_portfolio`` locks the Wagtail parent page before it
+checks for an existing portfolio and reports a site conflict without leaving a
+draft page (``39a3858``), and ``update_blog_cover_image`` stages the source once
+from a bounded regular file before the publication transaction (``df1c1ab``).
+Both are operator commands; the services do not call them. No migration,
+settings, static file, dependency or ops-control change; the pyinfra-check table
+was the steady one.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``df1c1ab``; right before deploy-one, the synced checkout held exactly the 437
+files of ``df1c1ab`` byte for byte; the deploy log shows the source sync,
+collectstatic and both unit restarts in that order; both units got new PIDs and
+stayed on them for 120 seconds; the front page, the blog RSS feed and the
+portfolio host answered 200; the journal since the deploy holds no traceback.
+A read-only ``manage.py shell`` probe (read-only database session with lock and
+statement timeouts, caches and network blocked, writes refused, no file
+written) showed the deployed cover staging accepting a regular file up to the
+exact limit and refusing oversized, empty, special, directory and missing
+sources, and the deployed ``seed_portfolio`` reaching its page lock by id after
+reading only the categories and the default site (the lock statement itself was
+not sent).
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``d9fb890``). No database step and no static rebuild are
+needed.
+
 2026-11-24 Micropub category limits and title draft
 ---------------------------------------------------
 

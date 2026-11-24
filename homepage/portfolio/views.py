@@ -205,5 +205,10 @@ def not_found_fallback(request, *args, **kwargs):
         except Resolver404:
             match = None
         if match is not None and match.func is not not_found_fallback:
-            return redirect(request.get_full_path(force_append_slash=True), permanent=True)
+            safe_method = request.method in {"GET", "HEAD", "OPTIONS", "TRACE"}
+            return redirect(
+                request.get_full_path(force_append_slash=True),
+                permanent=safe_method,
+                preserve_request=not safe_method,
+            )
     raise Http404

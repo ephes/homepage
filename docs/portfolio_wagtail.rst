@@ -190,8 +190,10 @@ setting ``PORTFOLIO_HOSTS``) lists these hostnames, e.g. ``design.wersdoerfer.de
   permission for the respective pages.
   The admin login (``/cms/login/``) is throttled as on the main host and shares its
   counters, see :doc:`admin_login_throttle`.
-* Every other path is a 404; a path without trailing slash still redirects when the
-  slashed path exists. Blog, accounts, fediverse and all other routes are only served on
+* A path without a trailing slash redirects if the slashed path resolves on the
+  portfolio host. Safe methods use a permanent redirect (301). Other methods use
+  a temporary redirect (307) that preserves the method and body. Unresolved
+  paths return 404. Blog, accounts, fediverse and all other routes are only served on
   the main host. They are appended after that 404 fallback in
   ``config/urls_portfolio.py`` so that templates can still reverse them, but they never
   match there.

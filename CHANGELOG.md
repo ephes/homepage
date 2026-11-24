@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve the request method and form body when redirecting slashless portfolio
+  POSTs.
+
 - Show the project creation shortcut to editors with Wagtail add permission
   on a portfolio homepage they cannot edit.
 

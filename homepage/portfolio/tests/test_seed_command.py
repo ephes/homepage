@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from io import StringIO
 from queue import Queue
 from time import monotonic, sleep
 
@@ -39,6 +40,29 @@ def test_seed_create_adds_an_empty_unpublished_page_below_the_default_site_root(
     assert not draft.homepage_services.all()
     assert not draft.about_items.all()
     assert not draft.clients.all()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("roll_back", [False, True])
+def test_seed_creation_receipt_waits_for_commit(roll_back):
+    make_default_site()
+    stdout = StringIO()
+
+    with transaction.atomic():
+        call_command("seed_portfolio", create=True, stdout=stdout)
+        page = PortfolioIndexPage.objects.get()
+        assert not page.live
+        assert stdout.getvalue() == ""
+        if roll_back:
+            transaction.set_rollback(True)
+
+    if roll_back:
+        assert not PortfolioIndexPage.objects.exists()
+        assert stdout.getvalue() == ""
+    else:
+        assert stdout.getvalue() == f"Created {page.title} ({page.url_path})\n"
+        call_command("seed_portfolio", create=True, stdout=stdout)
+        assert stdout.getvalue() == f"Created {page.title} ({page.url_path})\n"
 
 
 def test_seed_creates_the_categories_once():

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Report portfolio page creation only after the database commits.
+
 - Keep unrelated uploads out of blog cover rollback even when they share the
   same storage backend.
 

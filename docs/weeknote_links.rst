@@ -169,6 +169,10 @@ save completes afterwards and remains the latest revision.
 Conversion limits
 ~~~~~~~~~~~~~~~~~
 
+Only top-level ``h2`` and ``h3`` headings can start a link section. The
+converter skips blank text between the heading and its list and scans the
+following nodes in place.
+
 The converter never drops content it cannot represent. A heading and its list
 are converted together. A refused section stays in the surrounding rich-text
 paragraph in its original position, and the report gets a warning with the

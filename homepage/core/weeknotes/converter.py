@@ -144,8 +144,8 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             index += 1
             continue
 
-        next_index, next_node = _next_meaningful_node(nodes, index + 1)
-        if _is_heading(node) and isinstance(next_node, Tag) and next_node.name == "ul":
+        next_index, next_node = _next_meaningful_node(nodes, index + 1) if _is_heading(node) else (-1, None)
+        if isinstance(node, Tag) and isinstance(next_node, Tag) and next_node.name == "ul":
             heading = _normalized_text(node)
             if heading.lower() in AMBIGUOUS_HEADINGS:
                 flush_links()
@@ -431,7 +431,8 @@ def _is_blank_text(node: Any) -> bool:
 
 
 def _next_meaningful_node(nodes: list[Any], start: int) -> tuple[int, Any | None]:
-    for index, node in enumerate(nodes[start:], start=start):
+    for index in range(start, len(nodes)):
+        node = nodes[index]
         if not _is_blank_text(node):
             return index, node
     return -1, None

@@ -14,6 +14,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError as DjangoCommandError
 
 from homepage.core.management.commands.convert_weeknote_links import Command
+from homepage.core.weeknotes import converter
 from homepage.core.weeknotes.blocks import WeeknoteLinksBlock
 from homepage.core.weeknotes.converter import BodyConversion, convert_body, convert_paragraph_html
 
@@ -200,6 +201,55 @@ def test_convert_paragraph_html_preserves_section_fragment_targets(heading_attrs
     assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
         ("Articles", "Link section has a fragment anchor that the structured block cannot keep.")
     ]
+
+
+def test_convert_paragraph_html_only_looks_ahead_from_headings_without_slicing(monkeypatch):
+    class TrackedNodes(list):
+        reads = 0
+        slices = 0
+
+        def __getitem__(self, index):
+            if isinstance(index, slice):
+                self.slices += 1
+            else:
+                self.reads += 1
+            return super().__getitem__(index)
+
+    lookahead = converter._next_meaningful_node
+    tracked = None
+    lookahead_calls = 0
+
+    def track_lookahead(nodes, start):
+        nonlocal tracked, lookahead_calls
+        if tracked is None:
+            tracked = TrackedNodes(nodes)
+        lookahead_calls += 1
+        return lookahead(tracked, start)
+
+    monkeypatch.setattr(converter, "_next_meaningful_node", track_lookahead)
+    intro = "<p>Prose</p><h4>Other heading</h4>" * 500
+    article_list = '<ul><li><a href="https://example.com/a">Article</a></li></ul>'
+    tool_list = '<ul><li><a href="https://example.com/tool">Tool</a></li></ul>'
+    ambiguous_heading = "<h2>Podcasts / Videos</h2>"
+    trailing_heading = "<h3>Links</h3>"
+
+    conversion = convert_paragraph_html(
+        f"{intro}<h2>Articles</h2>\n  {article_list}<h3>Software</h3>\n\t{tool_list}"
+        f"{ambiguous_heading}\n  {article_list}{trailing_heading}"
+    )
+
+    assert conversion.converted_sections == 2
+    before, links, after = conversion.blocks
+    assert (before["type"], before["value"]) == ("paragraph", intro)
+    assert links["type"] == "weeknote_links"
+    assert [item["title"] for item in _weeknote_values(links)] == ["Article", "Tool"]
+    assert (after["type"], after["value"]) == ("paragraph", ambiguous_heading + article_list + trailing_heading)
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Podcasts / Videos", "Ambiguous link heading preserved.")
+    ]
+    assert tracked.slices == 0
+    assert lookahead_calls == 4
+    assert tracked.reads <= 8
 
 
 def test_convert_body_only_rewrites_overview_paragraphs():

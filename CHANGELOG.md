@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Scan legacy weeknote link headings without copying the remaining paragraph
+  nodes for each lookahead.
+
 - Keep legacy weeknote link sections with fragment targets on the heading or
   list, and warn while converting eligible neighboring sections.
 

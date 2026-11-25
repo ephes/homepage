@@ -14,8 +14,9 @@ The command checks every post of each blog, including gallery images, and prints
 summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` posts
 of each blog; without it nothing is skipped. Before accessing storage, the command
 checks that every requested slug identifies exactly one blog. After validation,
-it scans each distinct blog once in first-argument order. If a slug is shared
-across page trees, use the reported Wagtail page IDs and tree paths to identify
+it scans blogs in first-argument order, once per database alias and page ID.
+Each post scan uses its resolved blog's database. If a slug is shared across
+page trees, use the reported Wagtail page IDs and tree paths to identify
 the intended blog in the admin. Repair by slug requires a unique blog slug.
 
 The scan fetches direct images, galleries and gallery images in post batches of

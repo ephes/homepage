@@ -247,14 +247,15 @@ class Command(BaseCommand):
                     "Identify the intended blog in the Wagtail page tree and use a unique slug; nothing was changed."
                 ) from error
 
-            blogs.setdefault(blog.pk, blog)
+            blogs.setdefault((blog._state.db, blog.pk), blog)
 
         total = RepairResult()
         seen_images = set()
         for blog in blogs.values():
             self.stdout.write(f"Blog: {blog.slug} {blog.title}")
             post_queryset = (
-                Post.objects.descendant_of(blog)
+                Post.objects.using(blog._state.db)
+                .descendant_of(blog)
                 .order_by("-visible_date", "-pk")
                 .prefetch_related("images", "galleries__images")
             )

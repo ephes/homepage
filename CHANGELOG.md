@@ -25,8 +25,8 @@
 
 - Close the upstream Fediverse response stream when a bounded read fails.
 
-- Scan and report each blog once during rendition repair, even when its slug
-  is passed more than once.
+- Scan and report each blog once per database alias and page ID during
+  rendition repair. Read its posts from the same database.
 
 - Require database autocommit before repairing renditions so an outer rollback
   cannot orphan replacement files.

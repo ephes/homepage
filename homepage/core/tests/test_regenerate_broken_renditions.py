@@ -787,6 +787,50 @@ def test_command_batches_relationship_queries_and_checks_shared_images_once(
         assert stderr == ""
 
 
+@pytest.mark.django_db(databases=["default", "legacy"], transaction=True)
+def test_command_scans_same_key_blogs_on_their_own_databases(settings, monkeypatch):
+    class FixtureRouter:
+        def __init__(self, alias):
+            self.alias = alias
+
+        def db_for_read(self, model, **hints):
+            return self.alias
+
+        def db_for_write(self, model, **hints):
+            return self.alias
+
+    aliases = {"primary-blog": "default", "secondary-blog": "legacy"}
+    for slug, alias in aliases.items():
+        settings.DATABASE_ROUTERS = [FixtureRouter(alias)]
+        with transaction.atomic(using=alias):
+            Locale.objects.get_or_create(language_code="en")
+            root = Page.get_first_root_node() or Page.add_root(instance=Page(title="Root", slug="root"))
+            home = root.add_child(instance=Page(title="Home", slug="repair-home"))
+            blog = home.add_child(instance=Blog(pk=10000, title=slug, slug=slug))
+            make_post(blog, f"{slug}-post")
+    settings.DATABASE_ROUTERS = []
+
+    # Slug resolution has already selected a database. Unqualified Post reads use default.
+    def get_blog(*, slug):
+        return Blog.objects.using(aliases[slug]).get(slug=slug)
+
+    scanned = []
+
+    def record_post(post, *, seen_images):
+        scanned.append((post._state.db, post.slug))
+        return repair.RepairResult()
+
+    monkeypatch.setattr(Blog.objects, "get", get_blog)
+    monkeypatch.setattr(repair, "regenerate_renditions_for_post", record_post)
+
+    stdout, stderr = run_command("primary-blog", "secondary-blog", "secondary-blog")
+
+    assert scanned == [("default", "primary-blog-post"), ("legacy", "secondary-blog-post")]
+    assert stdout.count("Blog primary-blog: checked 1 posts") == 1
+    assert stdout.count("Blog secondary-blog: checked 1 posts") == 1
+    assert stderr == ""
+
+
 @pytest.mark.parametrize("outcome", ["missing", "unknown", "failed", "cache_pending"])
 def test_command_accounts_shared_image_outcome_once(site_root, monkeypatch, outcome):
     blog = site_root.add_child(instance=Blog(title="Shared outcome", slug="shared-outcome"))

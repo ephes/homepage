@@ -9,6 +9,7 @@ import pytest
 from cast.models import Audio, Blog, Episode, Post, Transcript
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.test import override_settings
 from wagtail.models import Collection, Locale, Page, PageViewRestriction
 from wagtail.models import Site as WagtailSite
@@ -225,7 +226,8 @@ def test_blog_post_and_visibility_come_from_selected_site_database(settings, req
     Site.objects.clear_cache()
     request.addfinalizer(Site.objects.clear_cache)
     default_blog, default_post = add_tree("Default")
-    with override_settings(DATABASE_ROUTERS=[FixtureRouter()]):
+    # Treebeard locks the parent row, so routed tree writes need a transaction there.
+    with override_settings(DATABASE_ROUTERS=[FixtureRouter()]), transaction.atomic(using="legacy"):
         blog, post = add_tree("Legacy")
 
     assert (post.pk, post.path) == (default_post.pk, default_post.path)
@@ -240,6 +242,6 @@ def test_blog_post_and_visibility_come_from_selected_site_database(settings, req
     PageViewRestriction.objects.using("default").create(page=default_blog, restriction_type="login")
     assert resolve("/blogs/alpha/shared/")._state.db == "legacy"
 
-    with override_settings(DATABASE_ROUTERS=[FixtureRouter()]):
+    with override_settings(DATABASE_ROUTERS=[FixtureRouter()]), transaction.atomic(using="legacy"):
         PageViewRestriction.objects.create(page=blog, restriction_type="login")
     assert resolve("/blogs/alpha/shared/") is None

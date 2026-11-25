@@ -124,10 +124,12 @@ lock:
 
 1. As root stop ``homepage.service`` and ``homepage-db-worker.service``.
 2. If ``indieweb.0033`` was applied: the old code does not know
-   ``failure_attempts``, so give the column a database default in the site's
-   PostgreSQL database, as a role that owns the table or a superuser
-   (``ALTER TABLE indieweb_webmentionoutboundtarget ALTER COLUMN
-   failure_attempts SET DEFAULT '{}'::jsonb``).
+   ``failure_attempts`` (a non-null column without a database default), so
+   reverse it with the new code that is still installed, as the ``homepage``
+   user with the site ``.env``: ``manage.py migrate indieweb 0032``. This
+   drops the per-attempt failure history and keeps the aggregate failure
+   count, so the old code can insert outbound targets again and a later
+   upgrade does not count stale attempts.
 3. As the ``homepage`` user empty ``/home/homepage/site/staticfiles`` (what
    ``collectstatic --clear`` does). The deploy's plain ``collectstatic`` skips
    source files that are not newer than the collected copy, and the older

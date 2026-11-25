@@ -126,6 +126,28 @@ class TestWebmentionIntegration:
         assert any("✗ Failed to send to https://external2.com" in call for call in print_calls)
         assert any("✓ Sent webmention to https://external3.com" in call for call in print_calls)
 
+    def test_target_diagnostics_escape_controls_and_bound_length(
+        self, mock_page_with_post, mock_webmention_sender, capsys
+    ):
+        url_prefix = "https://private-user:private-password@external.test:8443/"
+        url_suffix = "?token=private-query#private-fragment"
+        long_target = url_prefix + "long/" + "x" * 4096 + url_suffix
+        mock_webmention_sender.return_value.send_webmentions.return_value = [
+            {"target": url_prefix + "café\x1b\x7f\x85\u2028\u202e" + url_suffix, "success": True},
+            {"target": long_target, "success": False, "error": f"Failed to reach {long_target}"},
+        ]
+
+        _send_webmentions_for(mock_page_with_post.specific)
+
+        output = capsys.readouterr().out
+        summary, success, failure = output.splitlines()
+        assert summary == "Webmentions sent for page 23: 1 successful, 1 failed"
+        assert success == r"  ✓ Sent webmention to https://external.test:8443/café\x1b\x7f\x85\u2028\u202e"
+        assert failure.startswith("  ✗ Failed to send to https://external.test:8443/long/")
+        assert failure.endswith("... (error)")
+        assert len(failure.removeprefix("  ✗ Failed to send to ").removesuffix(" (error)")) <= 256
+        assert "private-" not in output
+
     def test_indieweb_not_installed(self, mock_page_with_post):
         """Test graceful handling when django-indieweb is not installed."""
         # Patch the import statement itself

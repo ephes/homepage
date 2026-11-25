@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Escape non-printable characters and cap outgoing Webmention target
+  diagnostics at 256 characters.
+
 - Recheck the live revision and Wagtail view restrictions after rendering an
   outgoing Webmention so changes during rendering can suppress delivery.
 

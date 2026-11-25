@@ -83,8 +83,10 @@ Logging
    message, cause or context: ``MicropubContentError`` for a ``ValueError``
    (``400``), ``MicropubInternalError`` otherwise (``500``). There is no
    setting that turns payload logging on. The webmention diagnostics name the
-   published page by id and each target reduced to scheme, host and path,
-   without query string, fragment, credentials or error text. Wagtail's own
+   published page by id and each target reduced to scheme, host, optional port
+   and path, without query string, fragment, credentials or error text. Target
+   diagnostics escape non-printable characters and fit in 256 characters,
+   including the trailing ``...`` when truncated. Wagtail's own
    ``INFO`` lines for a created or published page contain the page title, as
    they do for pages handled in the admin; production logs from ``WARNING`` up.
 

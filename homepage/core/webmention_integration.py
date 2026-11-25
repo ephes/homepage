@@ -30,6 +30,7 @@ from django.dispatch import receiver
 from wagtail.signals import page_published
 
 logger = logging.getLogger(__name__)
+MAX_TARGET_DIAGNOSTIC_LENGTH = 256
 
 # These will be imported inside the function to avoid circular imports
 Post = None
@@ -210,7 +211,7 @@ def _send_webmentions_for(post) -> None:
 
 
 def _loggable_url(url) -> str:
-    """Return ``url`` reduced to scheme, host, port and path."""
+    """Format a bounded, single-line target from the scheme, host, port and path."""
     try:
         parts = urlsplit(str(url))
         host = parts.hostname or ""
@@ -221,4 +222,15 @@ def _loggable_url(url) -> str:
         host = f"[{host}]"
     if port is not None:
         host = f"{host}:{port}"
-    return urlunsplit((parts.scheme, host, parts.path, "", ""))
+    target = urlunsplit((parts.scheme, host, parts.path, "", ""))
+    suffix = "..."
+    remaining = MAX_TARGET_DIAGNOSTIC_LENGTH - len(suffix)
+    display = []
+    for character in target:
+        escaped = character if character.isprintable() else ascii(character)[1:-1]
+        if len(escaped) > remaining:
+            display.append(suffix)
+            break
+        display.append(escaped)
+        remaining -= len(escaped)
+    return "".join(display)

@@ -5,8 +5,9 @@
 - Scan legacy weeknote link headings without copying the remaining paragraph
   nodes for each lookahead.
 
-- Keep legacy weeknote link sections with fragment targets on the heading or
-  list, and warn while converting eligible neighboring sections.
+- Keep legacy weeknote link sections with fragment targets on the heading, the
+  list or its items and links, and warn while converting eligible neighboring
+  sections.
 
 - Preserve literal escaped text in weeknote link sources and descriptions
   during legacy conversion.

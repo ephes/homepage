@@ -203,6 +203,37 @@ def test_convert_paragraph_html_preserves_section_fragment_targets(heading_attrs
     ]
 
 
+@pytest.mark.parametrize(
+    "item_html",
+    [
+        '<li id="saved-section"><a href="https://example.com/a">Article</a></li>',
+        '<li><a id="saved-section" href="https://example.com/a">Article</a></li>',
+        '<li><a name="saved-section" href="https://example.com/a">Article</a></li>',
+        '<li><a href="https://example.com/a">Article</a>'
+        ' (via <a id="saved-section" href="https://example.com/">Src</a>)</li>',
+    ],
+    ids=["item-id", "link-id", "link-name", "source-link-id"],
+)
+def test_convert_paragraph_html_preserves_fragment_targets_inside_the_list(item_html):
+    legacy = (
+        '<p><a href="#saved-section">Jump to article</a></p>'
+        f"<h2>Articles</h2><ul>{item_html}</ul>"
+        '<h3>Software</h3><ul><li><a href="https://example.com/tool">Tool</a></li></ul>'
+    )
+
+    conversion = convert_body(_overview(_paragraph(legacy)))
+
+    assert conversion.converted_sections == 1
+    paragraph, links = conversion.body[0]["value"]
+    assert paragraph["type"] == "paragraph"
+    preserved = BeautifulSoup(paragraph["value"], "html.parser")
+    assert preserved.find(id="saved-section") or preserved.find("a", attrs={"name": "saved-section"})
+    assert [item["title"] for item in _weeknote_values(links)] == ["Tool"]
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Articles", "Link section has a fragment anchor that the structured block cannot keep.")
+    ]
+
+
 def test_convert_paragraph_html_only_looks_ahead_from_headings_without_slicing(monkeypatch):
     class TrackedNodes(list):
         reads = 0

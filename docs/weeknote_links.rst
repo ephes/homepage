@@ -180,7 +180,9 @@ section heading. The following conditions prevent conversion.
 
 * the heading is ambiguous (``Podcasts / Videos``) or the items fail block
   validation (for example a relative link);
-* the heading or list has an ``id`` that can serve as a fragment target.
+* the heading, the list or anything inside the list (an item, a link) has an
+  ``id``, or a link inside the list has a ``name``, that can serve as a fragment
+  target;
 * the heading holds anything but plain text, for example an image, a link,
   emphasis or an HTML comment (``<h2><img ...>Articles</h2>``). The block
   renders its category heading from a fixed label, so that markup could not be

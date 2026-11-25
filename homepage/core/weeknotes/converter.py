@@ -164,7 +164,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             # The structured block generates its heading and list, so their
             # fragment targets and any markup inside the heading would be lost.
             heading_warning = None
-            if node.get("id") or next_node.get("id"):
+            if _has_fragment_target(node) or _has_fragment_target(next_node):
                 heading_warning = "Link section has a fragment anchor that the structured block cannot keep."
             elif _has_markup(node):
                 heading_warning = "Link heading has markup that the category heading cannot keep."
@@ -428,6 +428,13 @@ def _has_markup(node: Tag) -> bool:
 
 def _is_blank_text(node: Any) -> bool:
     return isinstance(node, NavigableString) and not str(node).strip()
+
+
+def _has_fragment_target(element: Tag) -> bool:
+    """Return whether the element or anything inside it can be a URL fragment target."""
+    if element.get("id") or (element.name == "a" and element.get("name")):
+        return True
+    return element.find(attrs={"id": True}) is not None or element.find("a", attrs={"name": True}) is not None
 
 
 def _next_meaningful_node(nodes: list[Any], start: int) -> tuple[int, Any | None]:

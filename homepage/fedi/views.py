@@ -83,8 +83,8 @@ def _resolve(host, port, remaining):
     def resolve():
         try:
             result["addresses"] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
-        except OSError as exc:
-            result["error"] = exc
+        except Exception:
+            result["failed"] = True
         finally:
             slots.release()
 
@@ -99,7 +99,7 @@ def _resolve(host, port, remaining):
     resolver.join(max(remaining, 0))
     if resolver.is_alive():
         raise UpstreamTimeout
-    if "error" in result:
+    if result.get("failed"):
         raise UpstreamError("cannot resolve upstream")
     return result["addresses"]
 

@@ -321,6 +321,33 @@ def test_unresolvable_host_returns_502(client, upstream, monkeypatch):
     assert response.status_code == 502
 
 
+def test_unexpected_resolver_failure_returns_private_502_and_releases_slot(client, upstream, monkeypatch, caplog):
+    slots = threading.BoundedSemaphore(1)
+    monkeypatch.setattr(views, "_resolver_slots", slots)
+    real_getaddrinfo = views.socket.getaddrinfo
+    secret = "synthetic-private-resolver-detail"
+
+    def fail(*args, **kwargs):
+        raise RuntimeError(secret)
+
+    monkeypatch.setattr(views.socket, "getaddrinfo", fail)
+    response = client.get(f"/.well-known/webfinger?resource={secret}")
+
+    assert response.status_code == 502
+    assert response.content == b"Bad gateway"
+    assert mail.outbox == []
+    assert upstream.requests == []
+    warnings = [record for record in caplog.records if record.name == views.__name__]
+    assert [record.getMessage() for record in warnings] == [
+        "Failed to fetch /.well-known/webfinger: upstream failure (502)"
+    ]
+    assert warnings[0].exc_info is None
+
+    monkeypatch.setattr(views.socket, "getaddrinfo", real_getaddrinfo)
+    assert client.get("/.well-known/webfinger").status_code == 200
+    assert len(upstream.requests) == 1
+
+
 @pytest.mark.parametrize(
     "raw_headers",
     [

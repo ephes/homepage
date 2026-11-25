@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Return a generic `502` when a Fediverse DNS lookup raises an unexpected
+  exception, and release its lookup slot.
+
 - Enforce the Fediverse proxy deadline after receiving upstream headers and
   after reading and closing the response stream, even if the shutdown timer
   runs late.

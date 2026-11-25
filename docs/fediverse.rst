@@ -52,8 +52,9 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
      until the resolver actually exits. There is no waiting queue: requests at
      capacity fail immediately with ``504``, and capacity recovers as lookups
      finish. Restart web processes to apply a changed limit.
-     A timeout returns ``504``; any other
-     connection or protocol error, a truncated body, a body larger than
+     A timeout returns ``504``. DNS resolver failures, including unexpected
+     exceptions during lookup, return ``502`` and release the resolver slot.
+     Connection and protocol errors, a truncated body, a body larger than
      1 MiB, or an invalid upstream status, header or redirect location returns
      ``502``. The upstream response stream is closed when the bounded body
      read finishes or fails, including when the response ends on socket close.

@@ -95,6 +95,50 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Webmention recheck after rendering and bounded target diagnostics
+----------------------------------------------------------------------------
+
+Deployed ``75ee1e3``: an outgoing Webmention checks again after rendering that
+the same revision is still live and publicly accessible on the publishing
+database, so a restriction or a newer publication arriving while the post is
+rendered suppresses the delivery (``ac24c90``); target diagnostics escape
+non-printable characters and stop at 256 characters (``4037fc1``);
+``5172904`` and ``75ee1e3`` only reword the rollback note of the previous
+entry. No migration, settings, static file, dependency or ops-control change.
+
+Gated under the shared production deploy lock, held from the first check to the
+end of verification. Before the lock, a local preflight rebuilt both manifests
+from the git objects of ``5385441`` and ``75ee1e3`` and compared them byte for
+byte with the staged ones. Under the lock, before deploy-one: all 437 tracked
+files of ``5385441`` matched on the host; the pyinfra-check table equalled the
+reviewed one row for row (only ``Install ca-certificates`` may vary with the
+apt cache); and a file-level rsync dry run with the deploy's arguments
+transferred exactly the six changed files. Verified after the deploy: all 437
+tracked files on the host equal ``75ee1e3``; both units got new PIDs and kept
+them for 120 seconds; the front page, the blog RSS feed and the portfolio host
+answered 200; the journal of both units since the deploy holds no traceback or
+error; and the Fediverse proxy on the gunicorn origin still answered like the
+fedi host. The changed code runs only when a post is published, so production
+did not exercise it; the new behaviour is covered by the tests only.
+
+Rollback, only after the owner authorizes it: back to ``5385441`` through the
+reviewed wrapper of this deploy (``deploy.sh rollback``), not through a bare
+``just deploy-one``. Under the shared production deploy lock the wrapper checks
+that every tracked host file equals ``5385441`` or is one of the six changed
+files at its ``75ee1e3`` content, that the pyinfra-check table lists the
+reviewed operations by name in the same order, and that a file-level rsync dry
+run transfers only those six files. In that table, operations that already
+showed a change in the reviewed forward table may differ; an operation that
+showed none must still show none, except ``Install ca-certificates`` (varies
+with the apt cache) and ``Start homepage.service`` /
+``Start homepage-db-worker.service`` (a failed forward run can leave a unit
+stopped, and starting it again is part of the recovery). It then runs
+deploy-one from a fresh ops-control worktree with ``PROJECTS_ROOT`` pointing
+at the parent of a clean checkout of ``5385441`` and repeats the post-deploy
+verification against ``5385441``. The wrapper belongs to this deploy's bundle;
+if that bundle is no longer available, a rollback needs a newly reviewed plan
+with the same gates. No database step and no static rebuild are needed.
+
 2026-11-25 Fediverse proxy late deadline and resolver failures
 --------------------------------------------------------------
 

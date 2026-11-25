@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from functools import partial
+from itertools import chain
 from pathlib import Path
 from shlex import quote
 from uuid import uuid4
@@ -29,6 +30,20 @@ class RepairResult:
     @property
     def incomplete(self) -> bool:
         return bool(self.unknown or self.failed or self.cache_pending)
+
+
+@dataclass
+class RepairCounts:
+    regenerated: int = 0
+    unknown: int = 0
+    failed: int = 0
+    cache_pending: int = 0
+
+    def add(self, other: "RepairCounts") -> None:
+        self.regenerated += other.regenerated
+        self.unknown += other.unknown
+        self.failed += other.failed
+        self.cache_pending += other.cache_pending
 
 
 def _purge_repaired_rendition(rendition, alias, result: RepairResult) -> None:
@@ -249,7 +264,7 @@ class Command(BaseCommand):
 
             blogs.setdefault((blog._state.db, blog.pk), blog)
 
-        total = RepairResult()
+        total = RepairCounts()
         seen_images = set()
         for blog in blogs.values():
             self.stdout.write(f"Blog: {blog.slug} {blog.title}")
@@ -261,34 +276,40 @@ class Command(BaseCommand):
             )
             if limit is not None:
                 post_queryset = post_queryset[:limit]
-            blog_result = RepairResult()
+            blog_counts = RepairCounts()
             post_count = 0
             for post in post_queryset.iterator(chunk_size=100):
                 post_count += 1
-                post_result = regenerate_renditions_for_post(post, seen_images=seen_images)
-                blog_result.extend(post_result)
-                self.stdout.write(
-                    f"  post {post.pk} {post}: regenerated {len(post_result.regenerated)}, "
-                    f"unknown {len(post_result.unknown)}, failed {len(post_result.failed)}"
-                )
-                for pk, stored_name, reason in [*post_result.unknown, *post_result.failed]:
-                    self.stderr.write(f"    rendition {pk} ({stored_name}) left unchanged: {reason}")
+                blog_counts.add(self._repair_and_report_post(post, seen_images))
             self.stdout.write(
-                f"Blog {blog.slug}: checked {post_count} posts, regenerated {len(blog_result.regenerated)}, "
-                f"unknown {len(blog_result.unknown)}, failed {len(blog_result.failed)}"
+                f"Blog {blog.slug}: checked {post_count} posts, regenerated {blog_counts.regenerated}, "
+                f"unknown {blog_counts.unknown}, failed {blog_counts.failed}"
             )
-            for alias, pk, stored_name, reason in blog_result.cache_pending:
-                self.stderr.write(
-                    f"rendition {pk} ({stored_name}) repaired; cache purge pending: {reason}. "
-                    f"Retry with --retry-cache-purge {pk} --database={quote(alias)}"
-                )
-            total.extend(blog_result)
+            total.add(blog_counts)
         self.stdout.write(f"checked images: {len(seen_images)}")
-        self.stdout.write(f"generated renditions: {len(total.regenerated)}")
-        if total.incomplete:
+        self.stdout.write(f"generated renditions: {total.regenerated}")
+        if total.unknown or total.failed or total.cache_pending:
             raise CommandError(
-                f"{len(total.unknown)} renditions could not be checked and {len(total.failed)} could not be "
+                f"{total.unknown} renditions could not be checked and {total.failed} could not be "
                 f"regenerated. They were left unchanged; rerun the command to retry. "
-                f"{len(total.cache_pending)} committed repairs have cache purge pending; "
+                f"{total.cache_pending} committed repairs have cache purge pending; "
                 "use --retry-cache-purge with the reported IDs and --database alias."
             )
+
+    def _repair_and_report_post(self, post, seen_images) -> RepairCounts:
+        result = regenerate_renditions_for_post(post, seen_images=seen_images)
+        counts = RepairCounts(
+            len(result.regenerated), len(result.unknown), len(result.failed), len(result.cache_pending)
+        )
+        self.stdout.write(
+            f"  post {post.pk} {post}: regenerated {counts.regenerated}, "
+            f"unknown {counts.unknown}, failed {counts.failed}"
+        )
+        for pk, stored_name, reason in chain(result.unknown, result.failed):
+            self.stderr.write(f"    rendition {pk} ({stored_name}) left unchanged: {reason}")
+        for alias, pk, stored_name, reason in result.cache_pending:
+            self.stderr.write(
+                f"rendition {pk} ({stored_name}) repaired; cache purge pending: {reason}. "
+                f"Retry with --retry-cache-purge {pk} --database={quote(alias)}"
+            )
+        return counts

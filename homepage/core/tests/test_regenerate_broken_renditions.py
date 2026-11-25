@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import gc
 import io
+import weakref
 from collections import Counter
 
 import pytest
@@ -733,6 +735,49 @@ def test_command_reports_cache_pending_separately(site_root, monkeypatch):
     assert file_exists(rendition)
     assert "generated renditions: 1" in stdout.getvalue()
     assert f"--retry-cache-purge {rendition.pk} --database=default" in stderr.getvalue()
+
+
+def test_command_reports_each_post_before_releasing_its_repair_result(site_root, monkeypatch):
+    blogs = []
+    for slug in ("first-repairs", "second-repairs"):
+        blog = site_root.add_child(instance=Blog(title=slug, slug=slug))
+        blogs.append(blog)
+        for index in range(8):
+            make_post(blog, f"post-{index}")
+
+    rendition_type = get_image_model().get_rendition_model()
+    stdout, stderr = io.StringIO(), io.StringIO()
+    repaired = {}
+
+    def repair_post(post, *, seen_images):
+        gc.collect()  # A rendition and its FieldFile reference each other.
+        for pk, reference in repaired.items():
+            assert reference() is None
+            assert f"--retry-cache-purge {pk} --database=default" in stderr.getvalue()
+        rendition = rendition_type(pk=post.pk)
+        repaired[post.pk] = weakref.ref(rendition)
+        return repair.RepairResult(
+            regenerated=[rendition],
+            unknown=[(post.pk, "unchecked.png", "storage unavailable")],
+            failed=[(post.pk, "missing.png", "generation failed")],
+            cache_pending=[("default", post.pk, "replacement.png", "cache unavailable")],
+        )
+
+    monkeypatch.setattr(repair, "regenerate_renditions_for_post", repair_post)
+    with pytest.raises(
+        CommandError,
+        match="16 renditions could not be checked and 16 could not be regenerated.*16 committed repairs",
+    ):
+        call_command("regenerate_broken_renditions", *(blog.slug for blog in blogs), stdout=stdout, stderr=stderr)
+
+    gc.collect()
+    assert len(repaired) == 16
+    assert all(reference() is None for reference in repaired.values())
+    for blog in blogs:
+        assert f"Blog {blog.slug}: checked 8 posts, regenerated 8, unknown 8, failed 8" in stdout.getvalue()
+    assert "generated renditions: 16" in stdout.getvalue()
+    assert stderr.getvalue().count("left unchanged:") == 32
+    assert stderr.getvalue().count("cache purge pending:") == 16
 
 
 def test_command_batches_relationship_queries_and_checks_shared_images_once(

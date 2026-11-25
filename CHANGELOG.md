@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Stream rendition repair diagnostics per post and keep only counts for blog
+  and invocation summaries.
+
 - Restore the Saira generator's handlers after partial signal setup failures.
 - Cap ffprobe JSON reports at 64 KiB and reap the child on refusal or timeout.
 

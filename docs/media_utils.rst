@@ -31,6 +31,10 @@ invocation checks them again. Calling ``regenerate_renditions_for_post(post)``
 directly still works and deduplicates that post's direct/gallery overlap; callers
 may pass a shared ``seen_images`` set to extend that scope across posts.
 
+The command reports repair problems and cache-purge retry IDs as each post is
+processed. Blog and invocation summaries keep counts, and the command releases
+the completed post's repair results before scanning the next post.
+
 A rendition is only regenerated when the storage backend reports that its file does
 not exist. If the storage cannot answer (throttling, an outage, denied access), the
 rendition is reported as ``unknown`` and neither deleted nor replaced. A missing

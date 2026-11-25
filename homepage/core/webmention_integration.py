@@ -154,8 +154,8 @@ def _load_specific_post(page_id, database):
     return model.objects.using(database).filter(pk=page_id).first()
 
 
-def _uncached_site_root_paths():
-    """Wagtail's site root paths read from the database, bypassing its shared cache.
+def _uncached_site_root_paths(database):
+    """Wagtail's site root paths read from the publishing database, bypassing the shared cache.
 
     Mirrors ``Site.get_site_root_paths()`` without ``WAGTAIL_I18N_ENABLED``
     (this project does not enable it): same query, ordering and tuple type.
@@ -166,8 +166,10 @@ def _uncached_site_root_paths():
 
     if getattr(settings, "WAGTAIL_I18N_ENABLED", False):
         raise RuntimeError("uncached site root paths do not support WAGTAIL_I18N_ENABLED")
-    sites = Site.objects.select_related("root_page", "root_page__locale").order_by(
-        "-root_page__url_path", "-is_default_site", "hostname"
+    sites = (
+        Site.objects.using(database)
+        .select_related("root_page", "root_page__locale")
+        .order_by("-root_page__url_path", "-is_default_site", "hostname")
     )
     return [
         SiteRootPath(site.id, site.root_page.url_path, site.root_url, site.root_page.locale.language_code)
@@ -189,7 +191,10 @@ def _send_webmentions_for(post) -> None:
             # django-indieweb not installed
             return
 
-    # Get the full URL of the post
+    # The post was loaded from the publishing database for this exact live revision.
+    page_id, live_revision_id, database = post.pk, post.live_revision_id, post._state.db
+    # Wagtail uses the page's cached paths before consulting the shared cache.
+    post._wagtail_cached_site_root_paths = _uncached_site_root_paths(database)
     full_url = post.get_full_url()
     if not full_url:
         # Not reachable through any site, so there is no source URL to announce.
@@ -201,8 +206,6 @@ def _send_webmentions_for(post) -> None:
     request_factory = RequestFactory()
     request = request_factory.get(full_url)
 
-    # The post was loaded from the publishing database for this exact live revision.
-    page_id, live_revision_id, database = post.pk, post.live_revision_id, post._state.db
     # Use get_description with render_detail=True to get the full content
     html_content = post.get_description(request=request, render_detail=True, escape_html=False, remove_newlines=False)
 
@@ -212,10 +215,8 @@ def _send_webmentions_for(post) -> None:
     # A site's hostname, port or root page may have changed during rendering, and
     # Wagtail's shared site-root-path cache can still name the old one (another
     # process may even refill it from a snapshot taken before the change
-    # committed). Resolve the recheck from site root paths read now, held only by
-    # this page instance: Wagtail consults the instance's own cache attribute
-    # before the shared cache, and the shared cache is neither read nor written.
-    current._wagtail_cached_site_root_paths = _uncached_site_root_paths()
+    # committed). Read the publishing database again for the recheck.
+    current._wagtail_cached_site_root_paths = _uncached_site_root_paths(database)
     if current.get_full_url() != full_url:
         return
 

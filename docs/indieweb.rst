@@ -175,10 +175,9 @@ Only committed publications
    revision, including changes during rendering. It also skips delivery if
    the canonical source URL changed or disappeared during rendering, for
    example when the page moves to another blog or its site gets another
-   hostname. This check reads the site root paths from the database instead
-   of Wagtail's shared cache, which another process may still hold or refill
-   with the old hostname. A newer publication has its
-   own delivery callback.
+   hostname. Both URL resolutions read the site root paths from the publishing
+   database directly, bypassing Wagtail's shared cache. A newer publication has
+   its own delivery callback.
 
 Delivery is best effort. A failure while rendering or sending does not fail or
 undo the publication. The delivery callback attempts to log

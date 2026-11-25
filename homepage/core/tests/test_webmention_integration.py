@@ -434,7 +434,7 @@ class TestPublicVisibility:
         Site.objects.create(hostname="other.test", port=8000, root_page=other_home)
         Site.clear_site_root_paths_cache()
 
-        assert _uncached_site_root_paths() == Site.get_site_root_paths()
+        assert _uncached_site_root_paths("default") == Site.get_site_root_paths()
 
     @pytest.mark.parametrize("change", ["unpublish", "republish"])
     def test_page_changed_while_the_delivery_loads_it_is_not_announced(
@@ -639,3 +639,44 @@ def test_secondary_delivery_reloads_the_publication_from_its_database(restricted
     assert delivered._state.db == "legacy"
     assert delivered.title == "Secondary"
     assert delivered.live
+
+
+@pytest.mark.django_db(transaction=True, databases=["default", "legacy"])
+@pytest.mark.parametrize("rename", [False, True], ids=["stable-host", "changed-host"])
+def test_secondary_delivery_resolves_the_source_on_the_publishing_database(outbound, monkeypatch, rename):
+    create_blog()
+    stale = Site.get_site_root_paths()
+    publishing_host = "publishing.test"
+    resolve = Post.get_full_url
+    resolved_urls = []
+
+    def record_source_url(self):
+        url = resolve(self)
+        resolved_urls.append(url)
+        return url
+
+    def render_then_maybe_rename(self, *args, **kwargs):
+        if rename:
+            Site.objects.using("legacy").filter(hostname=publishing_host).update(hostname="renamed.test")
+        return '<p><a href="https://external.test/article">Article</a></p>'
+
+    monkeypatch.setattr(Post, "get_full_url", record_source_url)
+    monkeypatch.setattr(Post, "get_description", render_then_maybe_rename)
+    with transaction.atomic(using="legacy"):
+        with override_settings(DATABASE_ROUTERS=[PublishingDatabaseRouter()]):
+            post = draft_post(create_blog())
+            Site.objects.using("legacy").filter(hostname=HOST).update(hostname=publishing_host)
+            post.save_revision().publish()
+        # Simulate a shared cache populated by default-database traffic before delivery.
+        cache.set(SITE_ROOT_PATHS_CACHE_KEY, stale, 3600, version=SITE_ROOT_PATHS_CACHE_VERSION)
+        assert outbound.sent == []
+
+    path = "/blogs/blog/linking-post/"
+    source = f"http://{publishing_host}{path}"
+    assert resolved_urls == [source, f"http://renamed.test{path}" if rename else source]
+    if rename:
+        assert outbound.sent == []
+    else:
+        ((source_url, _),) = outbound.sent
+        assert source_url == source
+    assert cache.get(SITE_ROOT_PATHS_CACHE_KEY, version=SITE_ROOT_PATHS_CACHE_VERSION) == stale

@@ -126,9 +126,18 @@ direct request to the fedi host. This is a regression check of the changed
 fetch path; the late-deadline ``504`` and the resolver ``502`` need fault
 injection and are covered by the tests only.
 
-Rollback: ``just deploy-one homepage production`` from a fresh ops-control
-worktree, with ``PROJECTS_ROOT`` pointing at the parent of a clean checkout of
-``2a2d4d4``. No database step and no static rebuild are needed.
+Rollback, only after the owner authorizes it: back to ``2a2d4d4`` through the
+reviewed wrapper of this deploy (``deploy.sh rollback``), not through a bare
+``just deploy-one``. Under the shared production deploy lock the wrapper checks
+that every tracked host file equals ``2a2d4d4`` or is one of the six changed
+files at its ``5385441`` content, that the pyinfra-check table keeps the
+reviewed operations unchanged, and that a file-level rsync dry run transfers
+only those six files. It then runs deploy-one from a fresh ops-control worktree
+with ``PROJECTS_ROOT`` pointing at the parent of a clean checkout of
+``2a2d4d4`` and repeats the post-deploy verification against ``2a2d4d4``. The
+wrapper belongs to this deploy's bundle; if that bundle is no longer available,
+a rollback needs a newly reviewed plan with the same gates. No database step
+and no static rebuild are needed.
 
 2026-11-25 Fediverse proxy cache directives and response close
 --------------------------------------------------------------

@@ -200,6 +200,43 @@ def test_seed_reuses_a_portfolio_created_while_acquiring_the_parent_lock(monkeyp
     assert root.numchild == root.get_children().count()
 
 
+@pytest.mark.parametrize("replace_site", [False, True], ids=["changed-root", "changed-default"])
+def test_seed_refuses_a_stale_default_site_selection(monkeypatch, replace_site):
+    root = make_default_site()
+    new_root = root.add_child(instance=Page(title="New home", slug="new-home"))
+    previous = Site.objects.get(is_default_site=True)
+    if replace_site:
+        Site.objects.filter(pk=previous.pk).update(is_default_site=False)
+        Site.objects.create(hostname="new.example.test", root_page=new_root, is_default_site=True)
+    else:
+        Site.objects.filter(pk=previous.pk).update(root_page=new_root)
+
+    # Simulate the command's first read returning the Site selected before the edit committed.
+    queryset_class = type(Site.objects.all())
+    first = queryset_class.first
+
+    def stale_selection(queryset):
+        if queryset.model is Site:
+            selection.setattr(queryset_class, "first", first)
+            return previous
+        return first(queryset)
+
+    revision_count = Revision.objects.count()
+    stdout = StringIO()
+    with monkeypatch.context() as selection:
+        selection.setattr(queryset_class, "first", stale_selection)
+        with pytest.raises(CommandError, match="The default Wagtail site or its root changed"):
+            call_command("seed_portfolio", create=True, stdout=stdout)
+
+    assert not PortfolioIndexPage.objects.exists()
+    assert not ProjectCategory.objects.exists()
+    assert Revision.objects.count() == revision_count
+    assert stdout.getvalue() == ""
+
+    call_command("seed_portfolio", create=True)
+    assert PortfolioIndexPage.objects.get().get_parent().pk == new_root.pk
+
+
 def test_seed_rolls_back_its_page_when_a_foreign_site_claims_the_hostname(monkeypatch):
     root = make_default_site()
     add_child = Page.add_child
@@ -222,9 +259,11 @@ def test_seed_rolls_back_its_page_when_a_foreign_site_claims_the_hostname(monkey
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.skipif(connection.vendor != "postgresql", reason="Requires PostgreSQL parent row locks")
-def test_concurrent_bootstrap_reuses_the_committed_portfolio():
+@pytest.mark.parametrize("change_root", [False, True], ids=["reuse-portfolio", "changed-root"])
+def test_concurrent_bootstrap_rechecks_the_destination(change_root):
     root = make_default_site()
     ProjectCategory.objects.bulk_create([ProjectCategory(name=name) for name in CATEGORIES])
+    new_root = root.add_child(instance=Page(title="New home", slug="new-home"))
     worker_pid = Queue()
 
     def seed():
@@ -249,8 +288,18 @@ def test_concurrent_bootstrap_reuses_the_committed_portfolio():
                         break
                     assert not competing.done() and monotonic() < deadline, "Bootstrap did not wait for the parent"
                     sleep(0.01)
+            if change_root:
+                Site.objects.filter(is_default_site=True).update(root_page=new_root)
+            else:
+                call_command("seed_portfolio", create=True, slug="shared")
+                winner = PortfolioIndexPage.objects.get(slug="shared")
+        if change_root:
+            with pytest.raises(CommandError, match="The default Wagtail site or its root changed"):
+                competing.result(timeout=10)
+            assert not PortfolioIndexPage.objects.exists()
             call_command("seed_portfolio", create=True, slug="shared")
-            winner = PortfolioIndexPage.objects.get(slug="shared")
+            assert PortfolioIndexPage.objects.get().get_parent().pk == new_root.pk
+            return
         competing.result(timeout=10)
 
     call_command("seed_portfolio", create=True, slug="shared")

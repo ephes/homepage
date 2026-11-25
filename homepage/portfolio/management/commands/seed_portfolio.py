@@ -76,6 +76,11 @@ class Command(BaseCommand):
             if site is None:
                 raise CommandError("No default Wagtail site configured.")
             parent = Page.objects.using(alias).select_for_update().filter(pk=site.root_page_id).first()
+            # Lock the page before the Site, as with dedicated-site creation.
+            # The default Site or its root may have changed while we waited for the page.
+            current_site = sites.select_for_update().filter(is_default_site=True).first()
+            if current_site is None or current_site.pk != site.pk or current_site.root_page_id != site.root_page_id:
+                raise CommandError("The default Wagtail site or its root changed during seeding. Retry the command.")
             if parent is None:
                 raise CommandError("No default Wagtail site root configured.")
             slug = slug or "portfolio"

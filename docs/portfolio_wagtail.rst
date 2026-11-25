@@ -284,8 +284,11 @@ sibling slug from the page title.
 
 On PostgreSQL, concurrent bootstrap commands for the same parent wait for its
 row lock before checking the destination. A second run reuses the matching
-portfolio after the first commits. If another site claims the requested host
-and port, the command reports the conflict and rolls back its draft page.
+portfolio after the first commits. When targeting the default site, the command
+locks and rechecks the site after locking the parent. If the default site or its
+root changed, the command stops before seeding. Run it again to use the current
+default root. If another site claims the requested host and port, the command
+reports the conflict and rolls back its draft page.
 
 The code holds no editorial content. Texts, services, about items, clients, projects,
 legal texts and images are entered in the Wagtail admin and live in the database (images

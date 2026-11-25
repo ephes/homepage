@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Stop portfolio seeding with a retryable error if the default Wagtail site
+  or its root changes while the command acquires the parent lock.
+
 - Resolve outgoing Webmention source URLs before and after rendering using
   fresh site root paths from the publishing database.
 

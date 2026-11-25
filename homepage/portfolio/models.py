@@ -672,7 +672,8 @@ def get_site_setting_or_default(setting_model, site, **unsaved_values):
 
     if site is None:
         return setting_model(**unsaved_values)
-    return setting_model.objects.filter(site=site).first() or setting_model(site=site, **unsaved_values)
+    saved = setting_model.objects.using(site._state.db).filter(site=site).first()
+    return saved or setting_model(site=site, **unsaved_values)
 
 
 PROJECT_CARD_IMAGE_FILTERS = (
@@ -1264,9 +1265,6 @@ class ProjectPage(PortfolioContextMixin, Page):
             projects = self.get_portfolio_projects()
         if not isinstance(projects, Sequence):
             projects = list(projects)
-        if len(projects) <= 1:
-            return []
-
         try:
             current_index = next(index for index, project in enumerate(projects) if project.pk == self.pk)
         except StopIteration:

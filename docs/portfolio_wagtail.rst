@@ -213,6 +213,9 @@ with a port. Django's ``ALLOWED_HOSTS`` validation still applies.
 
 Navigation and home links use Wagtail's request-aware ``pageurl`` tag, so they resolve
 against the site of the current request.
+Portfolio shell and legal settings are read from the database alias of the
+Wagtail site selected for that request. If that alias has no settings row for
+the site, the request uses unsaved defaults.
 
 Static assets
 -------------
@@ -343,8 +346,10 @@ content. Utility/legal menus load only project titles and routing fields in publ
 tree order. Detail pages reuse that menu list for the project counter and
 recommendations, loading card data only for up to two recommendations. The two cards
 follow public tree order, wrapping at the end. In a draft preview the menu and
-recommendations use public projects, and the counter includes the current
-draft. The 501 page loads card data separately for its first two projects.
+recommendations use public projects, including a sole public sibling, and the
+counter includes the current draft. A live project with no other public project
+has no recommendations. The 501 page loads card data separately for its first
+two projects.
 
 ``homepage/portfolio/tests/test_read_queries.py`` renders the actual card and shell
 templates with 1 and 20 synthetic projects. Its cold image/rendition-cache budget

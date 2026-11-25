@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Read portfolio shell and legal settings from the selected Wagtail site's
+  database alias, with unsaved defaults when that site has no settings row.
+- Recommend the sole public sibling in a draft portfolio project preview.
+
 - Resolve Cast Webmention targets and their view restrictions in the selected
   Wagtail site's database.
 

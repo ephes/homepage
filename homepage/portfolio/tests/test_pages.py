@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from django.contrib.staticfiles import finders
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from wagtail.images import get_image_model
 from wagtail.images.models import Filter
@@ -92,6 +92,48 @@ def add_project(index, *, title="Studio Website", live_url="", live_link_label="
     if publish:
         revision.publish()
     return project
+
+
+@pytest.mark.django_db(databases=["default", "legacy"])
+def test_portfolio_context_reads_settings_from_selected_site_database(settings):
+    class LegacyRouter:
+        def db_for_read(self, model, **hints):
+            return "legacy"
+
+        def db_for_write(self, model, **hints):
+            return "legacy"
+
+    class SiteRouter:
+        def db_for_read(self, model, **hints):
+            if model is Site:
+                return "legacy"
+            return None
+
+    index = make_portfolio_tree()
+    default_site = Site.objects.get(hostname="testserver")
+    PortfolioSiteSettings.objects.create(site=default_site, brand_name="Default brand")
+    LegalPageSettings.objects.create(site=default_site, imprint_title="Default title")
+
+    with override_settings(DATABASE_ROUTERS=[LegacyRouter()]):
+        Locale.objects.get_or_create(language_code="en")
+        legacy_root = Page.add_root(instance=Page(title="Routed root", slug="routed-root"))
+        legacy_site = Site.objects.create(
+            pk=default_site.pk, hostname="testserver", root_page=legacy_root, is_default_site=True
+        )
+        PortfolioSiteSettings.objects.create(site=legacy_site, brand_name="Routed brand")
+        legal_settings = LegalPageSettings.objects.create(site=legacy_site, imprint_title="Routed title")
+
+    settings.DATABASE_ROUTERS = [SiteRouter()]
+    context = index.get_context(RequestFactory().get("/"))
+    assert context["portfolio_site_settings"].brand_name == "Routed brand"
+    assert context["portfolio_legal_settings"].imprint_title == "Routed title"
+
+    legal_settings.delete(using="legacy")
+    defaults = index.get_context(RequestFactory().get("/"))["portfolio_legal_settings"]
+    assert defaults.pk is None
+    assert defaults.site == legacy_site
+    assert defaults._state.db == "legacy"
+    assert not LegalPageSettings.objects.using("legacy").exists()
 
 
 def make_image(title):
@@ -592,6 +634,19 @@ def test_unpublished_project_disappears_from_every_public_project_collection(cli
         assert second_successor.title in public_collection
     assert related_projects == {first_successor.title, second_successor.title}
     assert unpublished.title not in project_page.get_text(" ", strip=True)
+
+
+def test_draft_preview_recommends_the_only_public_sibling(client):
+    index = make_portfolio_tree()
+    public = add_project(index, title="Public project")
+    draft = add_project(index, title="Draft project", publish=False)
+
+    preview = draft.serve_preview(RequestFactory().get(draft.url), draft.default_preview_mode)
+    assert [project.pk for project in preview.context_data["other_projects"]] == [public.pk]
+
+    response = client.get(public.url)
+    assert response.status_code == 200
+    assert response.context["other_projects"] == []
 
 
 def test_homepage_project_teaser_is_derived_from_the_project_page(client, settings, tmp_path):

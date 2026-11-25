@@ -52,7 +52,8 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
      A timeout returns ``504``; any other
      connection or protocol error, a truncated body, a body larger than
      1 MiB, or an invalid upstream status, header or redirect location returns
-     ``502``.
+     ``502``. The upstream response stream is closed when the bounded body
+     read finishes or fails, including when the response ends on socket close.
    * These ``502``/``504`` responses are expected when the fedi host is slow,
      for example while many servers resolve the account at once after a reply
      to a large account. Each is logged as a warning

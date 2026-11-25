@@ -164,6 +164,54 @@ def test_fetch_transport_errors_have_safe_messages_and_no_displayed_chain(monkey
     assert caught.value.__suppress_context__ is True
 
 
+def test_fetch_closes_detached_response_after_read_failure(monkeypatch):
+    closed = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            self.close()
+
+        def read1(self, size):
+            raise OSError("read failed")
+
+        def close(self):
+            closed.append("response")
+
+    class Socket:
+        def close(self):
+            closed.append("socket")
+
+    class Connection:
+        sock = None
+
+        def __init__(self, *args):
+            pass
+
+        def request(self, *args, **kwargs):
+            pass
+
+        def getresponse(self):
+            return Response()
+
+        def close(self):
+            closed.append("connection")
+
+    def connect(conn, parts, deadline, deadline_hit, active):
+        # Simulate a close-delimited response whose socket is tracked separately.
+        active["sock"] = Socket()
+
+    monkeypatch.setattr(views.http.client, "HTTPConnection", Connection)
+    monkeypatch.setattr(views, "_connect", connect)
+
+    with pytest.raises(views.UpstreamError, match="upstream transport or protocol error"):
+        views._fetch("http://upstream.invalid/discovery", "application/json")
+
+    assert closed == ["response", "connection", "socket"]
+
+
 def test_dns_error_message_is_private(monkeypatch):
     def fail(*args, **kwargs):
         raise OSError(SECRET)

@@ -185,12 +185,12 @@ def _fetch(url, accept):
             target,
             headers={"Accept": accept, "Accept-Encoding": "identity", "User-Agent": "fedi-wellknown-proxy"},
         )
-        upstream = conn.getresponse()
-        body = _read_limited(upstream)
-        if deadline_hit.is_set():
-            # The shutdown may surface as a clean EOF; never return a truncated body.
-            raise UpstreamTimeout
-        return upstream.status, upstream.headers, body
+        with conn.getresponse() as upstream:
+            body = _read_limited(upstream)
+            if deadline_hit.is_set():
+                # The shutdown may surface as a clean EOF; never return a truncated body.
+                raise UpstreamTimeout
+            return upstream.status, upstream.headers, body
     except UpstreamTimeout:
         raise
     except UpstreamError:

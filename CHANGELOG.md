@@ -4,6 +4,8 @@
 
 - Preserve all upstream Fediverse `Cache-Control` directives in order.
 
+- Close the upstream Fediverse response stream when a bounded read fails.
+
 - Scan and report each blog once during rendition repair, even when its slug
   is passed more than once.
 

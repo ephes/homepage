@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Verify all affected Saira destinations and backups before beginning rollback.
+- Preserve the Saira generation result if closing its lock fails.
+
 - Read portfolio shell and legal settings from the selected Wagtail site's
   database alias, with unsaved defaults when that site has no settings row.
 - Recommend the sole public sibling in a draft portfolio project preview.

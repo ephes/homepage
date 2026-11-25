@@ -249,6 +249,73 @@ def test_rollback_failure_retains_recovery(generator, monkeypatch, capsys):
     assert_outputs(before)
 
 
+@pytest.mark.parametrize("divergent_file", ["target", "backup"])
+def test_rollback_preflights_all_files_before_restoring(generator, monkeypatch, capsys, divergent_file):
+    replace = Path.replace
+    first_font = generator.TARGET_DIR / "saira-latin.woff2"
+    initial = outputs(generator)
+    visible_at_failure = {}
+
+    def diverge(source, target):
+        result = replace(source, target)
+        if target == generator.CSS_FILE and not source.name.startswith("backup-"):
+            if divergent_file == "target":
+                first_font.write_bytes(b"newer font")
+            else:
+                (backup,) = source.parent.glob("backup-*-saira-latin.woff2")
+                replacement = source.parent / "replacement"
+                replacement.write_bytes(backup.read_bytes())
+                replace(replacement, backup)
+            visible_at_failure.update(outputs(generator))
+            raise OSError("failure after the final rename")
+        return result
+
+    monkeypatch.setattr(Path, "replace", diverge)
+    with pytest.raises(OSError, match="failure after the final rename"):
+        generator.main()
+
+    assert_outputs(visible_at_failure)
+    assert "recovery files retained" in capsys.readouterr().err
+    (stage,) = generator.TARGET_DIR.parent.glob(".saira-stage-*")
+    backup_bytes = {path.name.split("-", 2)[2]: path.read_bytes() for path in stage.glob("backup-*")}
+    assert backup_bytes == {path.name: data for path, data in initial.items()}
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_lock_close_error_preserves_generation_result(generator, monkeypatch, capsys, publish):
+    close = generator.os.close
+    lock_path = generator.TARGET_DIR / ".saira-generation.lock"
+    lock_inode = None
+    before = outputs(generator)
+
+    def close_with_error(fd):
+        nonlocal lock_inode
+        if lock_path.exists() and generator.os.fstat(fd).st_ino == lock_path.stat().st_ino:
+            lock_inode = lock_path.stat().st_ino
+            close(fd)
+            raise OSError("lock close failed")
+        close(fd)
+
+    monkeypatch.setattr(generator.os, "close", close_with_error)
+    if publish:
+        generator.main()
+        assert (generator.TARGET_DIR / "saira-latin.woff2").read_bytes() == b"[65, 66]"
+        captured = capsys.readouterr()
+        assert "Published four fonts" in captured.out
+        assert "lock close failed" in captured.err
+    else:
+
+        def fail(*args):
+            raise ValueError("staging failed")
+
+        monkeypatch.setattr(generator, "build_fonts", fail)
+        with pytest.raises(ValueError, match="staging failed") as caught:
+            generator.main()
+        assert "lock close failed" in " ".join(caught.value.__notes__)
+        assert_outputs(before)
+    assert lock_inode == lock_path.stat().st_ino
+
+
 def test_interrupt_removes_new_outputs(generator, monkeypatch):
     for path in generator.TARGET_DIR.iterdir():
         path.unlink()

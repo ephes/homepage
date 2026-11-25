@@ -205,6 +205,7 @@ def destination_lock():
     """Never unlink this stable inode: all generators must share the same lock."""
     path = TARGET_DIR / ".saira-generation.lock"
     fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    primary = None
     try:
         info = os.fstat(fd)
         if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
@@ -217,8 +218,18 @@ def destination_lock():
         if (named.st_dev, named.st_ino) != (info.st_dev, info.st_ino):
             raise RuntimeError(f"Font generation lock was replaced: {path}")
         yield
+    except BaseException as error:
+        primary = error
+        raise
     finally:
-        os.close(fd)
+        try:
+            os.close(fd)
+        except OSError as error:
+            diagnostic = f"Closing the font generation lock failed at {path}: {error}"
+            if primary is not None:
+                primary.add_note(diagnostic)
+            else:
+                print(f"Complete set published; {diagnostic}", file=sys.stderr)
 
 
 def generate() -> None:
@@ -237,8 +248,19 @@ def generate() -> None:
     published: list[Path] = []
     installed: dict[Path, tuple] = {}
     backups: dict[Path, Path | None] = {}
+    backup_generations: dict[Path, tuple] = {}
     keep_stage = False
     primary = None
+
+    def needs_rollback(target: Path) -> bool:
+        backup = backups[target]
+        if backup is not None:
+            require_current({backup: backup_generations[backup]})
+        if file_generation(target) == expected[target]:
+            return False  # The attempted replacement never became visible.
+        require_installed({target: installed[target]})
+        return True
+
     try:
         staged = build_fonts(inputs, stage)
         for index, (target, output) in enumerate(staged.items()):
@@ -249,6 +271,7 @@ def generate() -> None:
                 backup.chmod(identity[2] & 0o777)
                 output.chmod(identity[2] & 0o777)
                 backups[target] = backup
+                backup_generations[backup] = file_generation(backup)
             else:
                 backups[target] = None
         require_current(expected)
@@ -271,21 +294,26 @@ def generate() -> None:
         primary = error
         complete = False
         try:
-            rollback_failed = False
-            for target in reversed(published):
-                try:
-                    if file_generation(target) == expected[target]:
-                        continue  # The attempted replacement never became visible.
-                    require_installed({target: installed[target]})
-                    backup = backups[target]
-                    if backup is None:
-                        target.unlink()
-                    else:
-                        backup.replace(target)
-                except (OSError, RuntimeError) as rollback_error:
-                    rollback_failed = True
-                    error.add_note(f"Rollback failed for {target}: {rollback_error}")
-            complete = not rollback_failed
+            try:
+                for target in reversed(published):
+                    needs_rollback(target)
+            except (OSError, RuntimeError) as preflight_error:
+                error.add_note(f"Rollback preflight failed for {target}: {preflight_error}")
+            else:
+                rollback_failed = False
+                for target in reversed(published):
+                    try:
+                        if not needs_rollback(target):
+                            continue
+                        backup = backups[target]
+                        if backup is None:
+                            target.unlink()
+                        else:
+                            backup.replace(target)
+                    except (OSError, RuntimeError) as rollback_error:
+                        rollback_failed = True
+                        error.add_note(f"Rollback failed for {target}: {rollback_error}")
+                complete = not rollback_failed
         finally:
             # Also reached when a second interrupt escapes mid-rollback.
             if complete:

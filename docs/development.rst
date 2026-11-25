@@ -418,6 +418,9 @@ It requires POSIX file locking (Linux/macOS). A stable
 a second invocation fails immediately and can be retried after the first exits.
 Never delete or replace this ignored lock file, including after a failed run.
 The kernel releases the lock when the process exits.
+A lock close error after successful publication is reported separately on stderr
+and the command still succeeds. If generation fails, the close error is attached
+to the original failure.
 
 Before building, the generator reads both sources, the license and the CSS and
 requires exactly one ordered pair of CSS markers. It builds from those captured
@@ -434,9 +437,11 @@ collection/deployment idle during the short publication step: separate file
 replacements are not one atomic snapshot for readers or uncooperative writers.
 
 Handled build/validation failures leave the previous set intact. Handled
-publication failures (including KeyboardInterrupt, SIGTERM and SIGHUP) attempt to restore every
-replaced file, or remove outputs that did not previously exist. If restoration
-fails or would overwrite a newer edit, the original error remains primary and
+publication failures (including KeyboardInterrupt, SIGTERM and SIGHUP) preflight
+all affected destinations and backup identities before any rollback writes.
+Each restore or removal rechecks the corresponding files immediately before
+changing the destination. If the preflight or restoration fails, the original
+error remains primary and
 stderr reports an incomplete, potentially mixed visible set and the retained
 staging directory. Stop static collection/deployment, review its ``backup-N-name``
 files against the current destinations (the CSS backup belongs in

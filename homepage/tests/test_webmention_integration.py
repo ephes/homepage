@@ -22,6 +22,7 @@ class TestWebmentionIntegration(TestCase):
         mock_post = Mock()
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
+        committed_post.return_value = mock_post
 
         # Mock the get_description method
         mock_post.get_description = Mock(
@@ -69,6 +70,7 @@ class TestWebmentionIntegration(TestCase):
         mock_post.__class__ = MockPostClass
         mock_post.get_full_url.return_value = "https://example.com/post/1/"
         mock_post.pk = 17
+        committed_post.return_value = mock_post
 
         # Mock the get_description method
         mock_post.get_description = Mock(

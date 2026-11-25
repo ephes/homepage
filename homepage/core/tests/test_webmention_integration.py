@@ -56,8 +56,8 @@ class TestWebmentionIntegration:
         # Get the post from the page
         post = mock_page_with_post.specific
 
-        # Verify get_full_url was called
-        post.get_full_url.assert_called_once()
+        # The source URL is checked before and after rendering.
+        assert post.get_full_url.call_count == 2
 
         # Verify get_description was called with correct parameters
         # We don't check the exact request object, just that the method was called with the right params
@@ -352,6 +352,29 @@ class TestPublicVisibility:
         with patch.object(Post, "get_description", render_then_change):
             deliver()
 
+        assert outbound.rendered == [post.pk]
+        assert outbound.sent == []
+
+    def test_post_moved_during_render_is_not_announced(self, blog, outbound, django_capture_on_commit_callbacks):
+        post = draft_post(blog)
+        destination = blog.get_parent().add_child(instance=Blog(title="Other blog", slug="other-blog"))
+        with django_capture_on_commit_callbacks() as callbacks:
+            revision = post.save_revision()
+            revision.publish()
+        (deliver,) = deliveries(callbacks)
+        render = Post.get_description
+
+        def render_then_move(self, *args, **kwargs):
+            html = render(self, *args, **kwargs)
+            Post.objects.get(pk=post.pk).move(destination, pos="last-child")
+            return html
+
+        with patch.object(Post, "get_description", render_then_move):
+            deliver()
+
+        moved = Post.objects.get(pk=post.pk)
+        assert moved.live_revision_id == revision.pk
+        assert moved.get_full_url() == f"http://{HOST}/blogs/other-blog/linking-post/"
         assert outbound.rendered == [post.pk]
         assert outbound.sent == []
 

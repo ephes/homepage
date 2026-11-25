@@ -169,7 +169,9 @@ Only committed publications
    specific page and access restrictions are read from the publishing database
    before rendering and again just before invoking the sender. Delivery skips
    pages that were deleted, unpublished, restricted or replaced by a newer live
-   revision, including changes during rendering. A newer publication has its
+   revision, including changes during rendering. It also skips delivery if
+   the canonical source URL changed or disappeared during rendering, for
+   example when the page moves to another blog. A newer publication has its
    own delivery callback.
 
 Delivery is best effort. A failure while rendering or sending does not fail or

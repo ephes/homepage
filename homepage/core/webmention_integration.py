@@ -14,7 +14,8 @@ publication has been committed:
   a transaction that is rolled back announces nothing. Without an open
   transaction Django calls the callback at once, inside the signal receiver;
 * after rendering, the callback checks again that the same revision is live
-  and publicly accessible on the publishing database;
+  and publicly accessible on the publishing database and that its canonical
+  source URL is unchanged.
 * delivery and its failure logging are best effort and never fail the committed
   publication.
 """
@@ -183,7 +184,8 @@ def _send_webmentions_for(post) -> None:
     # Use get_description with render_detail=True to get the full content
     html_content = post.get_description(request=request, render_detail=True, escape_html=False, remove_newlines=False)
 
-    if _committed_public_post(page_id, live_revision_id, database) is None:
+    current = _committed_public_post(page_id, live_revision_id, database)
+    if current is None or current.get_full_url() != full_url:
         return
 
     # Send webmentions

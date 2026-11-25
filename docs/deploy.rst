@@ -95,6 +95,37 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-26 Weeknote link conversion fidelity
+--------------------------------------------
+
+Deployed ``cfc01db`` over ``e394eba`` on 2026-11-26 at 00:14 as a routine
+code-only deploy. The change sits in the legacy weeknote link converter, which
+only the manually run ``convert_weeknote_links`` command calls: escaped text in
+source labels and descriptions stays text (``1dd1480``), sections whose
+heading, list, items or links carry a fragment target stay legacy rich text with
+a warning (``80633bf``, ``cfc01db``), and the heading lookahead no longer copies
+the remaining nodes (``8838294``). No service code path changes. No migration,
+settings, static file, dependency or unit change; ops-control ran at
+``204ad6b6``, and the pyinfra-check table was byte-equal to the steady one of
+the previous deploy (only ``Sync homepage source`` changes content).
+
+Verified after the deploy: ``converter.py``, ``CHANGELOG.md``,
+``docs/weeknote_links.rst`` and ``uv.lock`` on the host equal ``cfc01db``; both
+units got new PIDs with ``NRestarts=0``; ``manage.py check`` under production
+settings reports no issue; a read-only shell probe
+(``default_transaction_read_only=on``) converts two synthetic in-memory
+paragraphs with the deployed converter and shows an item ``id`` keeping its
+section as rich text with the fragment-anchor warning; the front page, the blog,
+its RSS feed, a post, the facet API and the portfolio host answered 200; the
+journal of both units since the deploy holds no warning or error. No weeknote
+was converted.
+
+Rollback, only after the owner authorizes it: revert ``1dd1480``..``cfc01db``
+on main, then run ``just pyinfra-check homepage production`` and
+``just deploy-one homepage production`` with ``PROJECTS_ROOT`` pointing at the
+parent of a clean export of the reverted commit. No database step and no
+static rebuild are needed.
+
 2026-11-25 Webmention site paths on the publishing database, seeding site recheck
 ---------------------------------------------------------------------------------
 

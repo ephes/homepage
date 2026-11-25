@@ -312,7 +312,9 @@ def test_source_image_queries_reuse_wagtail_chooser_resolution(
     soup = BeautifulSoup(properties["content"][0]["html"], "html.parser")
     assert [img["src"] for img in soup.select("img")] == [image.file.url for image in images]
     assert [img["alt"] for img in soup.select("img")] == [image.default_alt_text for image in images]
-    with django_assert_num_queries(9):
+    # django-indieweb rechecks the bearer token on the write database right
+    # before the source handler runs, so the token is read twice.
+    with django_assert_num_queries(10):
         response = source(post)
     assert response.status_code == 200
     assert response.json()["properties"] == properties

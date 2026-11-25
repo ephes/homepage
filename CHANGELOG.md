@@ -5,9 +5,9 @@
 - Return a generic `502` when a Fediverse DNS lookup raises an unexpected
   exception, and release its lookup slot.
 
-- Enforce the Fediverse proxy deadline after receiving upstream headers and
-  after reading and closing the response stream, even if the shutdown timer
-  runs late.
+- Reject a Fediverse proxy response that completes after the deadline with a
+  `504`: the elapsed time is checked after receiving upstream headers and after
+  reading and closing the response stream, even if the shutdown timer runs late.
 
 - Preserve all upstream Fediverse `Cache-Control` directives in order.
 

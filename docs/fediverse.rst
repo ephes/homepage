@@ -44,7 +44,9 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
      thread), every connect attempt and the TLS handshake; when it passes, the
      upstream socket is shut down. The proxy checks elapsed time again after
      receiving the headers and after reading and closing the response stream,
-     so a delayed shutdown timer still leads to a ``504`` at the deadline.
+     so a response that completes after the deadline is rejected with a
+     ``504`` even when the shutdown timer runs late. A socket operation that is
+     still blocked at that point is bounded by its own connect or read timeout.
      Mastodon gives up on a lookup after about
      10 s without response headers, so a longer deadline would only hold a
      gunicorn worker. At most four DNS lookups may remain outstanding per web

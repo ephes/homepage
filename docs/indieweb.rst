@@ -247,8 +247,10 @@ site's domain (``localhost:8000`` when the Django site domain is ``localhost``):
   user exists).
 * ``/blogs/{blog}/`` – the blog, if it is a live, public child of the Wagtail
   site root.
-* ``/blogs/{blog}/{post}/`` (and sub-routes such as ``.../transcript/``) – the
-  live, public post with that slug *below that blog*.
+* ``/blogs/{blog}/{post}/`` – the live, public post with that slug *below that
+  blog*. For podcast episodes, Cast's registered ``.../twitter-player/`` and
+  ``.../transcript/`` routes also resolve to the post. The transcript route
+  requires a Podlove transcript artifact. Unknown subpaths are rejected.
 
 Drafts, pages with view restrictions (or below restricted pages), and posts
 with the same slug in another blog are not valid targets.

@@ -3,11 +3,14 @@ Webmention configuration for django-indieweb integration
 """
 
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
+from django.conf import settings
+from django.urls import Resolver404, resolve
 from indieweb.interfaces import URLResolver
 
 from homepage.core.page_lookup import get_wagtail_site, url_path_parts
+from homepage.portfolio.hosts import PORTFOLIO_URLCONF, is_portfolio_host
 
 
 class CastURLResolver(URLResolver):
@@ -16,7 +19,7 @@ class CastURLResolver(URLResolver):
     def resolve(self, target_url: str) -> Any | None:
         """Resolve a URL to a content object (Post, Blog, or Page)."""
         try:
-            from cast.models import Blog, Post
+            from cast.models import Blog, Episode, Post
             from django.contrib.sites.models import Site
 
             parsed = urlparse(target_url)
@@ -48,6 +51,16 @@ class CastURLResolver(URLResolver):
             # child of the site's root page and the post a live, public child of that
             # blog. Drafts, private pages and same-slug posts in other blogs never match.
             if len(path_parts) >= 2 and path_parts[0] == "blogs":
+                urlconf = PORTFOLIO_URLCONF if is_portfolio_host(parsed.hostname) else settings.ROOT_URLCONF
+                try:
+                    route = resolve(unquote(parsed.path), urlconf=urlconf)
+                except Resolver404:
+                    return None
+                is_page = route.url_name == "wagtail_serve" and len(path_parts) in (2, 3)
+                is_episode_route = route.view_name in {"cast:episode-transcript", "cast:twitter-player"}
+                if not (is_page or is_episode_route):
+                    return None
+
                 site = get_wagtail_site(parsed)
                 if site is None:
                     return None
@@ -59,9 +72,25 @@ class CastURLResolver(URLResolver):
                 if len(path_parts) == 2:
                     return blog
 
-                # Handle individual blog post (/blogs/{blog_slug}/{post_slug}/), including
-                # sub-routes such as /blogs/{blog_slug}/{episode_slug}/transcript/
-                return Post.objects.live().public().child_of(blog).filter(slug=path_parts[2]).first()
+                post = Post.objects.live().public().child_of(blog).filter(slug=path_parts[2]).first()
+                if post is None or is_page:
+                    return post
+
+                # The registered Cast subroutes serve episodes only. The transcript
+                # view also requires a Podlove transcript artifact.
+                episode = (
+                    Episode.objects.using(post._state.db)
+                    .select_related("podcast_audio__transcript")
+                    .filter(pk=post.pk)
+                    .first()
+                )
+                if episode is None:
+                    return None
+                if route.view_name == "cast:episode-transcript":
+                    transcript = episode.get_transcript_or_none()
+                    if transcript is None or not transcript.podlove:
+                        return None
+                return post
 
         except Exception as e:
             import logging

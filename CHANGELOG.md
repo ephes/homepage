@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Accept incoming Webmentions to canonical Cast posts and their supported
+  public episode routes. Reject unknown post subpaths.
+
 - Escape non-printable characters and cap outgoing Webmention target
   diagnostics at 256 characters.
 

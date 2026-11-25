@@ -6,9 +6,10 @@ the blog named in the URL, so same-slug posts in other blogs never match.
 """
 
 import pytest
-from cast.models import Blog, Post
+from cast.models import Audio, Blog, Episode, Post, Transcript
 from django.contrib.sites.models import Site
-from wagtail.models import Locale, Page, PageViewRestriction
+from django.core.files.base import ContentFile
+from wagtail.models import Collection, Locale, Page, PageViewRestriction
 from wagtail.models import Site as WagtailSite
 
 from homepage.portfolio.models import PortfolioIndexPage
@@ -82,8 +83,33 @@ def test_post_from_another_blog_does_not_resolve(tree):
     assert resolve("/blogs/alpha/only-in-beta/") is None
 
 
-def test_post_sub_route_resolves_to_post_of_that_blog(tree):
-    assert resolve("/blogs/beta/shared/transcript/") == tree["beta_shared"]
+def test_episode_routes_resolve_to_their_post(tree, client, settings, django_user_model):
+    settings.ALLOWED_HOSTS = [DOMAIN]
+    if Collection.get_first_root_node() is None:
+        Collection.add_root(name="Root")
+    audio = Audio.objects.create(
+        user=django_user_model.objects.create_user(username="synthetic"),
+        m4a="synthetic.m4a",
+    )
+    Transcript.objects.create(audio=audio, podlove=ContentFile(b'{"transcripts": []}', name="transcript.json"))
+    tree["beta"].template_base_dir = "bootstrap5"
+    tree["beta"].save(update_fields=["template_base_dir"])
+    episode = tree["beta"].add_child(instance=Episode(title="Episode", slug="episode", podcast_audio=audio))
+    post = Post.objects.get(pk=episode.pk)
+
+    for suffix in ("", "transcript/", "twitter-player/"):
+        path = f"/blogs/beta/episode/{suffix}"
+        assert client.get(path, secure=True, HTTP_HOST=DOMAIN).status_code == 200
+        assert resolve(path) == post
+
+
+@pytest.mark.parametrize("suffix", ["missing-subroute/", "transcript/", "twitter-player/"])
+def test_unserved_post_subroutes_do_not_resolve(tree, client, settings, suffix):
+    settings.ALLOWED_HOSTS = [DOMAIN]
+    path = f"/blogs/beta/shared/{suffix}"
+
+    assert client.get(path, secure=True, HTTP_HOST=DOMAIN).status_code == 404
+    assert resolve(path) is None
 
 
 def test_draft_post_does_not_resolve(tree):

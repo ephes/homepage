@@ -15,7 +15,7 @@ publication has been committed:
   transaction Django calls the callback at once, inside the signal receiver;
 * after rendering, the callback checks again that the same revision is live
   and publicly accessible on the publishing database and that its canonical
-  source URL is unchanged.
+  source URL, resolved from freshly loaded site root paths, is unchanged.
 * delivery and its failure logging are best effort and never fail the committed
   publication.
 """
@@ -185,7 +185,15 @@ def _send_webmentions_for(post) -> None:
     html_content = post.get_description(request=request, render_detail=True, escape_html=False, remove_newlines=False)
 
     current = _committed_public_post(page_id, live_revision_id, database)
-    if current is None or current.get_full_url() != full_url:
+    if current is None:
+        return
+    # A site's hostname, port or root page may have changed during rendering, and
+    # Wagtail's cached site root paths can still name the old one. Rebuild them
+    # from the database before comparing the source URL.
+    from wagtail.models import Site
+
+    Site.clear_site_root_paths_cache()
+    if current.get_full_url() != full_url:
         return
 
     # Send webmentions

@@ -378,6 +378,33 @@ class TestPublicVisibility:
         assert outbound.rendered == [post.pk]
         assert outbound.sent == []
 
+    def test_site_hostname_changed_during_render_is_not_announced(
+        self, blog, outbound, django_capture_on_commit_callbacks
+    ):
+        post = draft_post(blog)
+        with django_capture_on_commit_callbacks() as callbacks:
+            revision = post.save_revision()
+            revision.publish()
+        (deliver,) = deliveries(callbacks)
+        render = Post.get_description
+
+        def render_then_rename_host(self, *args, **kwargs):
+            html = render(self, *args, **kwargs)
+            # Another process renames the site; a queryset update sends no signal,
+            # so Wagtail's cached site root paths still name the old hostname.
+            Site.objects.filter(hostname=HOST).update(hostname="renamed.test")
+            return html
+
+        with patch.object(Post, "get_description", render_then_rename_host):
+            deliver()
+
+        assert outbound.rendered == [post.pk]
+        assert outbound.sent == []
+        Site.clear_site_root_paths_cache()
+        renamed = Post.objects.get(pk=post.pk)
+        assert renamed.live_revision_id == revision.pk
+        assert renamed.get_full_url() == "http://renamed.test/blogs/blog/linking-post/"
+
     @pytest.mark.parametrize("change", ["unpublish", "republish"])
     def test_page_changed_while_the_delivery_loads_it_is_not_announced(
         self, blog, outbound, django_capture_on_commit_callbacks, change

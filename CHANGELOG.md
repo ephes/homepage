@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Skip outgoing Webmentions if the canonical source URL changes during
-  rendering.
+  rendering, including a site hostname change that Wagtail's cached site
+  root paths do not show yet.
 
 - Refuse to seed a portfolio beneath the default site when a non-portfolio
   child already occupies the requested slug.

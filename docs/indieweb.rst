@@ -171,7 +171,9 @@ Only committed publications
    pages that were deleted, unpublished, restricted or replaced by a newer live
    revision, including changes during rendering. It also skips delivery if
    the canonical source URL changed or disappeared during rendering, for
-   example when the page moves to another blog. A newer publication has its
+   example when the page moves to another blog or its site gets another
+   hostname. This check rebuilds Wagtail's cached site root paths from the
+   database first. A newer publication has its
    own delivery callback.
 
 Delivery is best effort. A failure while rendering or sending does not fail or

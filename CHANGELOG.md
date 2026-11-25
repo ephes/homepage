@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve literal escaped text in weeknote link sources and descriptions
+  during legacy conversion.
+
 - Stop portfolio seeding with a retryable error if the default Wagtail site
   or its root changes while the command acquires the parent lock.
 

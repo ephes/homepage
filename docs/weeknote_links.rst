@@ -194,6 +194,9 @@ gets a warning with the section heading. A section is refused when:
   next to a link (``(via <a ...>Show</a>)``) or other markup inside the
   parentheses keep the section as HTML, so every source link stays clickable.
 
+Escaped text such as ``&lt;em&gt;`` or ``&amp;`` keeps its visible text in
+source labels and descriptions. Supported description markup retains its formatting.
+
 Fix the source HTML in the Wagtail editor (or leave the section as rich text)
 and run the command again; it picks up the legacy sections that are left.
 

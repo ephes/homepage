@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from bs4 import BeautifulSoup, NavigableString, Tag
-from bs4.element import PreformattedString
+from bs4.element import PageElement, PreformattedString
 from django.core.exceptions import ValidationError
 
 from .blocks import WeeknoteLinksBlock
@@ -302,6 +302,10 @@ def _convert_list_item(li: Tag, *, category: str, heading: str) -> dict[str, Any
     }
 
 
+def _serialize_node(node: PageElement) -> str:
+    return node.output_ready() if isinstance(node, NavigableString) else str(node)
+
+
 def _split_around_primary_link(li: Tag, primary_link: Tag) -> tuple[str, str]:
     before: list[str] = []
     after: list[str] = []
@@ -311,9 +315,9 @@ def _split_around_primary_link(li: Tag, primary_link: Tag) -> tuple[str, str]:
             seen_primary = True
             continue
         if seen_primary:
-            after.append(str(child))
+            after.append(_serialize_node(child))
         else:
-            before.append(str(child))
+            before.append(_serialize_node(child))
     return "".join(before), "".join(after)
 
 
@@ -342,27 +346,27 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | None:
         return "", "", after_html
 
     source_parts: list[str] = []
-    rest_parts: list[str] = [str(node) for node in contents[:first_index]]
+    rest_parts: list[str] = [_serialize_node(node) for node in contents[:first_index]]
     source_end_search_start = first_index + 1
     if ")" in source_text:
         source_before_close, rest_after_close = source_text.split(")", 1)
-        source_parts.append(source_before_close)
-        rest_parts.append(rest_after_close)
-        rest_parts.extend(str(node) for node in contents[source_end_search_start:])
+        source_parts.append(html.escape(source_before_close, quote=False))
+        rest_parts.append(html.escape(rest_after_close, quote=False))
+        rest_parts.extend(_serialize_node(node) for node in contents[source_end_search_start:])
     else:
-        source_parts.append(source_text)
+        source_parts.append(html.escape(source_text, quote=False))
         closed = False
         for node in contents[source_end_search_start:]:
             if not closed and type(node) is NavigableString and ")" in str(node):
                 source_before_close, rest_after_close = str(node).split(")", 1)
-                source_parts.append(source_before_close)
-                rest_parts.append(rest_after_close)
+                source_parts.append(html.escape(source_before_close, quote=False))
+                rest_parts.append(html.escape(rest_after_close, quote=False))
                 closed = True
                 continue
             if closed:
-                rest_parts.append(str(node))
+                rest_parts.append(_serialize_node(node))
             else:
-                source_parts.append(str(node))
+                source_parts.append(_serialize_node(node))
         if not closed:
             return "", "", after_html
 

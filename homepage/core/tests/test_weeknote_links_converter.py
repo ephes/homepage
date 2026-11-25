@@ -14,6 +14,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError as DjangoCommandError
 
 from homepage.core.management.commands.convert_weeknote_links import Command
+from homepage.core.weeknotes.blocks import WeeknoteLinksBlock
 from homepage.core.weeknotes.converter import BodyConversion, convert_body, convert_paragraph_html
 
 
@@ -76,6 +77,35 @@ def test_convert_paragraph_html_extracts_linked_source_and_limited_rich_descript
     assert item["source"] == "Show"
     assert item["source_url"] == "https://example.com/show"
     assert item["description"] == '<p>Listen with <a href="https://example.com/notes">notes</a></p>'
+
+
+@pytest.mark.parametrize(
+    "source_html",
+    [
+        "(&lt;em&gt;Source&lt;/em&gt; &amp;copy;)",
+        '(<a href="https://example.com/show">&lt;em&gt;Source&lt;/em&gt; &amp;copy;</a>)',
+    ],
+    ids=["plain-source", "linked-source"],
+)
+def test_convert_paragraph_html_preserves_escaped_text_in_rendered_links(source_html):
+    legacy = (
+        '<h2>Podcasts</h2><ul><li><a href="https://example.com/episode">Episode</a> '
+        f"{source_html} | &lt;em&gt;Description&lt;/em&gt; &amp;copy; <em>real emphasis</em>"
+        " &lt;em&gt;Tail&lt;/em&gt;</li></ul>"
+    )
+
+    conversion = convert_paragraph_html(legacy)
+
+    assert not conversion.warnings
+    (converted,) = conversion.blocks
+    assert converted["type"] == "weeknote_links"
+    block = WeeknoteLinksBlock()
+    rendered = BeautifulSoup(block.render(block.to_python(converted["value"])), "html.parser")
+    assert rendered.select_one(".weeknote-link-title").get_text() == "Episode"
+    assert rendered.select_one(".weeknote-link-source").get_text(strip=True) == "<em>Source</em> &copy;"
+    description = rendered.select_one(".weeknote-link-description p")
+    assert description.get_text() == "<em>Description</em> &copy; real emphasis <em>Tail</em>"
+    assert [element.get_text() for element in description.find_all("em")] == ["real emphasis"]
 
 
 def test_convert_paragraph_html_extracts_source_link_with_parenthesis_in_url():

@@ -149,33 +149,41 @@ def test_timeout_and_missing_binary_are_reported(ffprobe, capsys):
 
 
 @pytest.mark.parametrize(
-    ("output_size", "close_stdout", "message"),
+    ("output_size", "close_stdout", "timeout", "message"),
     [
-        (65537, False, "ffprobe JSON report exceeded 65536 bytes"),
-        (32, False, "ffprobe did not finish within"),
-        (32, True, "ffprobe did not finish within"),
+        # The size limit is hit without waiting, so a generous deadline keeps a
+        # slow interpreter start from turning this case into a timeout.
+        (65537, False, 30, "ffprobe JSON report exceeded 65536 bytes"),
+        (32, False, 0.75, "ffprobe did not finish within"),
+        (32, True, 0.75, "ffprobe did not finish within"),
     ],
     ids=["oversized", "stalled-reading", "stalled-after-eof"],
 )
-def test_probe_bounds_output_and_reaps_child(tmp_path, monkeypatch, output_size, close_stdout, message):
-    pid_file = tmp_path / "child.pid"
+def test_probe_bounds_output_and_reaps_child(monkeypatch, output_size, close_stdout, timeout, message):
     child = (
-        "import os, pathlib, sys, time; "
-        "pathlib.Path(sys.argv[1]).write_text(str(os.getpid())); "
-        "os.write(2, sys.argv[2].encode()); "
-        f"os.write(1, b'x' * {output_size}); " + ("os.close(1); " if close_stdout else "") + "time.sleep(3)"
+        "import os, sys, time; "
+        "os.write(2, sys.argv[1].encode()); "
+        f"os.write(1, b'x' * {output_size}); " + ("os.close(1); " if close_stdout else "") + "time.sleep(60)"
     )
-    monkeypatch.setattr(
-        get_video_data, "ffprobe_command", lambda source: [sys.executable, "-c", child, str(pid_file), source]
-    )
+    monkeypatch.setattr(get_video_data, "ffprobe_command", lambda source: [sys.executable, "-c", child, source])
+    started = []
+    real_popen = subprocess.Popen
+
+    def recording_popen(*args, **kwargs):
+        process = real_popen(*args, **kwargs)
+        started.append(process)
+        return process
+
+    monkeypatch.setattr(get_video_data.subprocess, "Popen", recording_popen)
 
     with pytest.raises(get_video_data.VideoProbeError, match=message) as caught:
-        get_video_data.probe(SIGNED_URL, timeout=0.75)
+        get_video_data.probe(SIGNED_URL, timeout=timeout)
 
     assert SIGNED_URL not in str(caught.value)
-    pid = int(pid_file.read_text())
+    [process] = started
+    assert process.returncode is not None
     with pytest.raises(ChildProcessError):
-        os.waitpid(pid, os.WNOHANG)
+        os.waitpid(process.pid, os.WNOHANG)
 
 
 def test_probe_accepts_a_valid_report_at_the_limit(monkeypatch):

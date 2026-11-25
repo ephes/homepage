@@ -253,14 +253,15 @@ def test_command_succeeds_for_an_empty_blog(site_root):
     assert "generated renditions: 0" in stdout
 
 
-def test_command_rejects_unknown_blog_before_changing_anything(site_root):
+def test_command_rejects_unknown_blog_before_changing_anything(site_root, monkeypatch):
     blog = site_root.add_child(instance=Blog(title="Known", slug="known"))
     rendition = make_rendition(make_image("known"))
     make_post(blog, "known-post", images=[rendition.image])
     remove_file(rendition)
 
+    monkeypatch.setattr(Post.objects, "descendant_of", lambda *args: pytest.fail("archive was scanned"))
     with pytest.raises(CommandError, match="'nope' does not exist"):
-        run_command("known", "nope")
+        run_command("known", "known", "nope")
 
     assert not file_exists(rendition)
 
@@ -746,7 +747,7 @@ def test_command_batches_relationship_queries_and_checks_shared_images_once(
     gallery.images.add(image, distinct.image)
     for blog in (first, second):
         for index in range(6):
-            post = make_post(blog, f"shared-post-{index}", images=[image])
+            post = make_post(blog, f"{blog.slug}-post-{index}", images=[image])
             post.galleries.add(gallery)
 
     storage = distinct.file.storage
@@ -758,14 +759,29 @@ def test_command_batches_relationship_queries_and_checks_shared_images_once(
         return exists(name)
 
     monkeypatch.setattr(storage, "exists", count_exists)
-    # Three blog lookups, three post scans, three relationship queries per scan,
-    # and two rendition queries for distinct image identities.
-    for limit in ("1", "6"):
+    scanned = []
+    queryset_type = type(Post.objects.all())
+    iterator = queryset_type.iterator
+
+    def record_posts(self, *args, **kwargs):
+        for post in iterator(self, *args, **kwargs):
+            if self.model is Post:
+                scanned.append(post.slug)
+            yield post
+
+    monkeypatch.setattr(queryset_type, "iterator", record_posts)
+    # Three slug lookups, two archive scans with three prefetches each, and two rendition queries.
+    for limit in (1, 6):
         checked.clear()
-        with django_assert_max_num_queries(17):
-            stdout, stderr = run_command("shared-first", "shared-second", "shared-first", "--limit", limit)
+        scanned.clear()
+        with django_assert_max_num_queries(13):
+            stdout, stderr = run_command("shared-second", "shared-first", "shared-second", "--limit", str(limit))
+        assert scanned == [
+            f"{blog.slug}-post-{index}" for blog in (second, first) for index in reversed(range(6 - limit, 6))
+        ]
         assert Counter(checked) == Counter({r.file.name: 1 for r in [*renditions, distinct]})
-        assert f"Blog shared-first: checked {limit} posts" in stdout
+        assert stdout.count(f"Blog shared-second: checked {limit} posts") == 1
+        assert stdout.count(f"Blog shared-first: checked {limit} posts") == 1
         assert "checked images: 2" in stdout
         assert "generated renditions: 0" in stdout
         assert stderr == ""

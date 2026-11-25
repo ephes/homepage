@@ -232,10 +232,10 @@ class Command(BaseCommand):
             raise CommandError("--database requires --retry-cache-purge")
         if not options["blog_slugs"]:
             raise CommandError("Provide blog slugs or --retry-cache-purge")
-        blogs = []
+        blogs = {}
         for slug in options["blog_slugs"]:
             try:
-                blogs.append(Blog.objects.get(slug=slug))
+                blog = Blog.objects.get(slug=slug)
             except Blog.DoesNotExist as error:
                 raise CommandError(f"Blog with slug {slug!r} does not exist; nothing was changed") from error
 
@@ -247,9 +247,11 @@ class Command(BaseCommand):
                     "Identify the intended blog in the Wagtail page tree and use a unique slug; nothing was changed."
                 ) from error
 
+            blogs.setdefault(blog.pk, blog)
+
         total = RepairResult()
         seen_images = set()
-        for blog in blogs:
+        for blog in blogs.values():
             self.stdout.write(f"Blog: {blog.slug} {blog.title}")
             post_queryset = (
                 Post.objects.descendant_of(blog)

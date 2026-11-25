@@ -13,7 +13,8 @@ When rendition files were deleted from s3, regenerate them for one or more blogs
 The command checks every post of each blog, including gallery images, and prints a
 summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` posts
 of each blog; without it nothing is skipped. Before accessing storage, the command
-checks that every requested slug identifies exactly one blog. If a slug is shared
+checks that every requested slug identifies exactly one blog. After validation,
+it scans each distinct blog once in first-argument order. If a slug is shared
 across page trees, use the reported Wagtail page IDs and tree paths to identify
 the intended blog in the admin. Repair by slug requires a unique blog slug.
 

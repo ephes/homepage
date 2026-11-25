@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Scan and report each blog once during rendition repair, even when its slug
+  is passed more than once.
+
 - Require database autocommit before repairing renditions so an outer rollback
   cannot orphan replacement files.
 

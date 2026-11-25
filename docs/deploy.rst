@@ -119,14 +119,25 @@ Local gates on PostgreSQL 17: audit, prek, npm test, pytest on Python 3.15.2
 and 3.14 (1367 passed each), the migration tests, 49 browser tests and the
 docs build; ``manage.py check`` reports no ``indieweb`` issue.
 
-Rollback: ``just deploy-one homepage production`` from a clean checkout of the
-live commit (``c356620``). The old code does not know
-``failure_attempts``: if ``indieweb.0033`` was applied, first stop
-``homepage.service`` and ``homepage-db-worker.service`` and give the column a
-database default in the site's PostgreSQL database, as a role that owns the
-table or a superuser (``ALTER TABLE indieweb_webmentionoutboundtarget ALTER
-COLUMN failure_attempts SET DEFAULT '{}'::jsonb``); the deploy starts both
-units again.
+Rollback to the live commit (``c356620``), under the shared production deploy
+lock:
+
+1. As root stop ``homepage.service`` and ``homepage-db-worker.service``.
+2. If ``indieweb.0033`` was applied: the old code does not know
+   ``failure_attempts``, so give the column a database default in the site's
+   PostgreSQL database, as a role that owns the table or a superuser
+   (``ALTER TABLE indieweb_webmentionoutboundtarget ALTER COLUMN
+   failure_attempts SET DEFAULT '{}'::jsonb``).
+3. As the ``homepage`` user empty ``/home/homepage/site/staticfiles`` (what
+   ``collectstatic --clear`` does). The deploy's plain ``collectstatic`` skips
+   source files that are not newer than the collected copy, and the older
+   packages come from the uv cache with older timestamps, so without this the
+   newer Vite manifests of django-cast and cast-bootstrap5 would stay next to a
+   ``staticfiles.json`` for the old lock and pages could fail with HTTP 500.
+4. In ops-control run ``just deploy-one homepage production`` with
+   ``PROJECTS_ROOT`` pointing at the parent of a clean checkout of
+   ``c356620``. Its ``collectstatic`` fills the empty directory from the old
+   packages, and the deploy starts both units again.
 
 2026-11-25 Portfolio settings per site database and parity-checked deploy
 -------------------------------------------------------------------------

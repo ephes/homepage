@@ -95,6 +95,39 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 django-cast d4f29f33, cast-bootstrap5 8a11f2b, django-indieweb 3faf52a
+---------------------------------------------------------------------------------
+
+``uv.lock`` moves django-cast ``develop`` from ``e0c632ad`` to ``d4f29f33``
+(0.2.70 development state), cast-bootstrap5 from ``b7f16729`` to ``8a11f2b``
+(gallery opening fixes) and django-indieweb ``develop`` from ``7ab7a8ef``
+(before 0.7.0) to ``3faf52a`` (0.7.1 plus the unreleased 0.7.2 changes).
+Nothing else in the lock changed. django-cast adds no migration in this range.
+django-indieweb adds ``indieweb.0032`` (two nullable columns) and
+``indieweb.0033`` (``failure_attempts``, a non-null JSON column without a
+database default) on ``WebmentionOutboundTarget``; the deploy's ``migrate``
+applies them. One homepage test changed: the Micropub source query budget
+counts the token recheck on the write database (9 → 10 queries).
+
+Migration window: between ``migrate`` and the unit restarts the old code
+still serves. If a post is published in that window, its outbound Webmention
+targets cannot be stored, the delivery failure is logged and swallowed, and
+the publication itself succeeds. Precondition for the deploy: nobody publishes
+while it runs, and no ``READY`` or ``RUNNING`` task result is queued.
+
+Local gates on PostgreSQL 17: audit, prek, npm test, pytest on Python 3.15.2
+and 3.14 (1367 passed each), the migration tests, 49 browser tests and the
+docs build; ``manage.py check`` reports no ``indieweb`` issue.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+live commit (``c356620``). The old code does not know
+``failure_attempts``: if ``indieweb.0033`` was applied, first stop
+``homepage.service`` and ``homepage-db-worker.service`` and give the column a
+database default in the site's PostgreSQL database, as a role that owns the
+table or a superuser (``ALTER TABLE indieweb_webmentionoutboundtarget ALTER
+COLUMN failure_attempts SET DEFAULT '{}'::jsonb``); the deploy starts both
+units again.
+
 2026-11-25 Portfolio settings per site database and parity-checked deploy
 -------------------------------------------------------------------------
 

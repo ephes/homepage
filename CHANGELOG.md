@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Relock django-cast to develop `d4f29f33` (0.2.70 development state; from
+  `e0c632ad`), cast-bootstrap5 to `8a11f2b` (gallery opening fixes; from
+  `b7f16729`) and django-indieweb to develop `3faf52a` (0.7.1 plus the
+  unreleased 0.7.2 changes; from `7ab7a8ef`). Micropub `q=source` now rechecks
+  the bearer token's identity, active owner, expiry and scope on the write
+  database right before returning source content. django-indieweb adds
+  migrations `indieweb.0032` and `indieweb.0033`; deploy precondition and
+  rollback step in `docs/deploy.rst` (2026-11-25 relock).
+
 - Skip outgoing Webmentions if the canonical source URL changes during
   rendering, including a site hostname change that Wagtail's cached site
   root paths do not show yet.

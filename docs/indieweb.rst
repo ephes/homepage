@@ -105,6 +105,9 @@ Source queries
    ``q=source&url=...`` resolves the URL through the Wagtail page tree (using
    Wagtail's hostname/port site selection and the percent-decoded path) and
    returns the post only when the token owner has Wagtail edit permission on it.
+   Right before the source handler runs, django-indieweb rechecks the bearer
+   token's identity, active owner, expiry and required scope on the write
+   database and refuses a revoked or changed token.
 
 Unsupported actions
    Only creating posts and ``q=source`` lookups are supported. The Micropub

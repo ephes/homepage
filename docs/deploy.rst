@@ -95,6 +95,59 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Portfolio settings per site database and parity-checked deploy
+-------------------------------------------------------------------------
+
+Deployed ``c356620`` over ``75ee1e3``. The only runtime change is in the
+portfolio (``7e0e198``): per-site shell and legal settings are read from the
+database alias of the request's Wagtail site, and a draft project preview with
+exactly one public sibling now recommends it. On production the site comes from
+the default database and nine projects are public, so public pages render as
+before. Also shipped, without a runtime caller: the ``CastURLResolver`` changes
+(``e42c22c``; django-indieweb does not call it), the manually run
+``regenerate_broken_renditions`` command (``9e2bbc5``), the contributor scripts
+``scripts/subset_saira_fonts.py`` and ``scripts/get_video_data.py``
+(``e446404``, ``5a9a421``), tests (``70395f2``) and a changelog wording fix
+(``c356620``). No migration, settings, static file, dependency or ops-control
+change; ops-control ran at ``bc906814``.
+
+Gated under the shared production deploy lock, held from the first check to the
+end of verification. Before the lock, a local preflight rebuilt both manifests
+from the git objects and compared them byte for byte with the staged ones.
+Under the lock, before deploy-one: all 437 tracked files of ``75ee1e3`` matched
+on the host; the pyinfra-check table equalled the reviewed one row for row (only
+``Install ca-certificates`` may vary with the apt cache); a file-level rsync dry
+run with the deploy's arguments transferred exactly the 16 changed files; and a
+read-only probe of the portfolio pages on the gunicorn origin
+(``127.0.0.1:10013``, ``Host: design.wersdoerfer.de``) recorded a baseline:
+status, body digest and length of the index, the eleven pages it links to and
+one missing path, with every listener owned by ``homepage.service``. Verified
+after the deploy: all 437 tracked files on the host equal ``c356620``; both
+units got new PIDs and kept them for 120 seconds; the front page, the blog RSS
+feed and the portfolio host answered 200; the same origin probe returned
+records identical to the baseline; the journal of both units since the deploy
+holds no traceback or error; and the Fediverse proxy on the origin still
+answered like the fedi host. The draft-preview recommendation and a routed site
+database are covered by tests only.
+
+Rollback, only after the owner authorizes it: back to ``75ee1e3`` through the
+reviewed wrapper of this deploy (``deploy.sh rollback``), not through a bare
+``just deploy-one``. Under the shared production deploy lock the wrapper checks
+that every tracked host file equals ``75ee1e3`` or is one of the 16 changed
+files at its ``c356620`` content, that the pyinfra-check table lists the
+reviewed operations by name in the same order, and that a file-level rsync dry
+run transfers only those files. In that table, operations that already showed
+a change in the reviewed forward table may differ; an operation that showed
+none must still show none, except ``Install ca-certificates`` (varies with the
+apt cache) and ``Start homepage.service`` / ``Start homepage-db-worker.service``
+(a failed forward run can leave a unit stopped). It then runs deploy-one with
+``PROJECTS_ROOT`` pointing at the parent of a clean checkout of ``75ee1e3`` and
+repeats the post-deploy verification against ``75ee1e3``, including the
+portfolio probe against the forward run's baseline. The wrapper belongs to
+this deploy's bundle; if that bundle is no longer available, a rollback needs a
+newly reviewed plan with the same gates. No database step and no static
+rebuild are needed.
+
 2026-11-25 Webmention recheck after rendering and bounded target diagnostics
 ----------------------------------------------------------------------------
 

@@ -1,6 +1,8 @@
 """Offline cache and diagnostic contracts, independent of database setup."""
 
 import http.client
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 from django.core.cache import cache
@@ -162,6 +164,38 @@ def test_fetch_transport_errors_have_safe_messages_and_no_displayed_chain(monkey
     assert SECRET not in str(caught.value)
     assert caught.value.__cause__ is None
     assert caught.value.__suppress_context__ is True
+
+
+@pytest.mark.parametrize("late_phase", ["headers", "body", "close"])
+def test_proxy_rejects_late_response_when_timer_has_not_fired(monkeypatch, request_factory, late_phase):
+    now = 0
+
+    def finish(phase, value=None):
+        nonlocal now
+        if phase == late_phase:
+            now = views.UPSTREAM_DEADLINE
+        return value
+
+    timer = MagicMock()
+    upstream = MagicMock(status=200, headers={}, length=0)
+    upstream.__enter__.return_value = upstream
+    upstream.__exit__.side_effect = lambda *exc: finish("close")
+    upstream.read1.side_effect = lambda size: finish("body", b"")
+    connection = MagicMock()
+    connection.getresponse.side_effect = lambda: finish("headers", upstream)
+    monkeypatch.setattr(views, "time", SimpleNamespace(monotonic=lambda: now))
+    monkeypatch.setattr(views.threading, "Timer", lambda *args: timer)
+    monkeypatch.setattr(views.http.client, "HTTPConnection", lambda *args: connection)
+    monkeypatch.setattr(views, "_connect", lambda *args: None)
+
+    response = views.wellknown_nodeinfo(request_factory.get("/.well-known/nodeinfo"))
+
+    assert response.status_code == 504
+    if late_phase == "headers":
+        upstream.read1.assert_not_called()
+    upstream.__exit__.assert_called_once()
+    timer.cancel.assert_called_once()
+    connection.close.assert_called_once()
 
 
 def test_fetch_closes_detached_response_after_read_failure(monkeypatch):

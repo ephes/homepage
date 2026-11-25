@@ -42,7 +42,10 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
    * Timeouts: 3 s per TCP connect attempt, 10 s per socket read and a hard
      10 s overall deadline that also bounds DNS resolution (done in a helper
      thread), every connect attempt and the TLS handshake; when it passes, the
-     upstream socket is shut down. Mastodon gives up on a lookup after about
+     upstream socket is shut down. The proxy checks elapsed time again after
+     receiving the headers and after reading and closing the response stream,
+     so a delayed shutdown timer still leads to a ``504`` at the deadline.
+     Mastodon gives up on a lookup after about
      10 s without response headers, so a longer deadline would only hold a
      gunicorn worker. At most four DNS lookups may remain outstanding per web
      process. A stalled lookup retains its slot after the request times out,

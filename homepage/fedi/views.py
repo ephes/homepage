@@ -175,6 +175,11 @@ def _fetch(url, accept):
                 pass
 
     deadline = time.monotonic() + UPSTREAM_DEADLINE
+
+    def expired():
+        # The timer can run late, so check elapsed time as well as socket shutdown.
+        return deadline_hit.is_set() or time.monotonic() >= deadline
+
     timer = threading.Timer(UPSTREAM_DEADLINE, abort)
     timer.daemon = True
     timer.start()
@@ -186,19 +191,21 @@ def _fetch(url, accept):
             headers={"Accept": accept, "Accept-Encoding": "identity", "User-Agent": "fedi-wellknown-proxy"},
         )
         with conn.getresponse() as upstream:
-            body = _read_limited(upstream)
-            if deadline_hit.is_set():
-                # The shutdown may surface as a clean EOF; never return a truncated body.
+            if expired():
                 raise UpstreamTimeout
-            return upstream.status, upstream.headers, body
+            body = _read_limited(upstream)
+            result = upstream.status, upstream.headers, body
+        if expired():
+            raise UpstreamTimeout
+        return result
     except UpstreamTimeout:
         raise
     except UpstreamError:
-        if deadline_hit.is_set():
+        if expired():
             raise UpstreamTimeout from None
         raise
     except (OSError, ValueError, http.client.HTTPException) as exc:
-        if deadline_hit.is_set() or isinstance(exc, TimeoutError):
+        if expired() or isinstance(exc, TimeoutError):
             raise UpstreamTimeout from None
         raise UpstreamError("upstream transport or protocol error") from None
     finally:

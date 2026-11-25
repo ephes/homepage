@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Enforce the Fediverse proxy deadline after receiving upstream headers and
+  after reading and closing the response stream, even if the shutdown timer
+  runs late.
+
 - Preserve all upstream Fediverse `Cache-Control` directives in order.
 
 - Close the upstream Fediverse response stream when a bounded read fails.

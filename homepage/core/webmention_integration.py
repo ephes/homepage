@@ -13,6 +13,8 @@ publication has been committed:
 * the outbound work runs in an ``on_commit`` callback, so a publication inside
   a transaction that is rolled back announces nothing. Without an open
   transaction Django calls the callback at once, inside the signal receiver;
+* after rendering, the callback checks again that the same revision is live
+  and publicly accessible on the publishing database;
 * delivery and its failure logging are best effort and never fail the committed
   publication.
 """
@@ -175,8 +177,13 @@ def _send_webmentions_for(post) -> None:
     request_factory = RequestFactory()
     request = request_factory.get(full_url)
 
+    # The post was loaded from the publishing database for this exact live revision.
+    page_id, live_revision_id, database = post.pk, post.live_revision_id, post._state.db
     # Use get_description with render_detail=True to get the full content
     html_content = post.get_description(request=request, render_detail=True, escape_html=False, remove_newlines=False)
+
+    if _committed_public_post(page_id, live_revision_id, database) is None:
+        return
 
     # Send webmentions
     sender = WebmentionSender()

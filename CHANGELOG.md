@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Recheck the live revision and Wagtail view restrictions after rendering an
+  outgoing Webmention so changes during rendering can suppress delivery.
+
 - Return a generic `502` when a Fediverse DNS lookup raises an unexpected
   exception, and release its lookup slot.
 

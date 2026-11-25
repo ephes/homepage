@@ -23,6 +23,7 @@ def mock_page_with_post():
     post = Mock(spec=Post)
     post.get_full_url.return_value = "https://example.com/post/test-post"
     post.pk = 23
+    post._state = SimpleNamespace(db="default")
 
     # Mock the get_description method
     post.get_description.return_value = "<p>This is a test post with a <a href='https://external.com'>link</a>.</p>"
@@ -31,7 +32,8 @@ def mock_page_with_post():
     page = Mock()
     page.specific = post
 
-    return page
+    with patch("homepage.core.webmention_integration._committed_public_post", return_value=post):
+        yield page
 
 
 @pytest.fixture
@@ -304,6 +306,32 @@ class TestPublicVisibility:
             Post.objects.get(pk=post.pk).unpublish()
 
         assert (outbound.rendered, outbound.sent) == ([], [])
+
+    @pytest.mark.parametrize("change", ["restrict", "republish"])
+    def test_page_changed_during_render_is_not_announced(
+        self, blog, outbound, django_capture_on_commit_callbacks, change
+    ):
+        post = draft_post(blog)
+        with django_capture_on_commit_callbacks() as callbacks:
+            revision = post.save_revision()
+            revision.publish()
+        (deliver,) = deliveries(callbacks)
+
+        render = Post.get_description
+
+        def render_then_change(self, *args, **kwargs):
+            html = render(self, *args, **kwargs)
+            if change == "restrict":
+                restrict(blog)
+            else:
+                Post.objects.get(pk=post.pk).save_revision().publish()
+            return html
+
+        with patch.object(Post, "get_description", render_then_change):
+            deliver()
+
+        assert outbound.rendered == [post.pk]
+        assert outbound.sent == []
 
     @pytest.mark.parametrize("change", ["unpublish", "republish"])
     def test_page_changed_while_the_delivery_loads_it_is_not_announced(

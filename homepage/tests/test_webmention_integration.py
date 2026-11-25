@@ -9,8 +9,9 @@ from django.test import TestCase
 from homepage.core import webmention_integration
 
 
+@patch.object(webmention_integration, "_committed_public_post")
 class TestWebmentionIntegration(TestCase):
-    def test_webmention_sending_uses_body_html_method(self):
+    def test_webmention_sending_uses_body_html_method(self, committed_post):
         """Test that webmention sending uses get_description with render_detail=True."""
 
         # Create a mock Post class
@@ -56,7 +57,7 @@ class TestWebmentionIntegration(TestCase):
                         html_content='<p>Test content with <a href="https://external.com">link</a></p>',
                     )
 
-    def test_webmention_sending_logs_results(self):
+    def test_webmention_sending_logs_results(self, committed_post):
         """Test that webmention sending logs success and failure results."""
 
         # Create a mock Post class

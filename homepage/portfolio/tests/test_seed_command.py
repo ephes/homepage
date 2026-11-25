@@ -6,7 +6,7 @@ from time import monotonic, sleep
 import pytest
 from django.core.management import CommandError, call_command
 from django.db import connection, transaction
-from wagtail.models import Locale, Page, Site
+from wagtail.models import Locale, Page, Revision, Site
 
 from homepage.portfolio.management.commands.seed_portfolio import CATEGORIES
 from homepage.portfolio.models import PortfolioIndexPage, ProjectCategory
@@ -128,6 +128,27 @@ def test_seed_default_site_uses_the_requested_parent_and_slug():
     local.refresh_from_db()
     assert local.latest_revision_id == revision
     assert PortfolioIndexPage.objects.count() == 2
+
+
+@pytest.mark.parametrize("slug", [None, "occupied"])
+def test_seed_refuses_a_nonportfolio_child_at_the_requested_slug(slug, rf):
+    root = make_default_site()
+    child_slug = slug or "portfolio"
+    existing = root.add_child(instance=Page(title="Existing page", slug=child_slug))
+    category = ProjectCategory.objects.create(name="Existing category")
+    revision_count = Revision.objects.count()
+    stdout = StringIO()
+
+    with pytest.raises(CommandError, match=rf"Slug '{child_slug}' is already occupied by page {existing.pk}\b"):
+        call_command("seed_portfolio", create=True, slug=slug, stdout=stdout)
+
+    request = rf.get(f"/{child_slug}/")
+    assert root.route(request, [child_slug]).page.pk == existing.pk
+    assert list(root.get_children().filter(slug=child_slug).values_list("pk", flat=True)) == [existing.pk]
+    assert Revision.objects.count() == revision_count
+    assert list(ProjectCategory.objects.all()) == [category]
+    assert not PortfolioIndexPage.objects.exists()
+    assert stdout.getvalue() == ""
 
 
 def test_seed_uses_host_and_port_and_refuses_an_occupied_pair():

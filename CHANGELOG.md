@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refuse to seed a portfolio beneath the default site when a non-portfolio
+  child already occupies the requested slug.
+
 - Stream rendition repair diagnostics per post and keep only counts for blog
   and invocation summaries.
 

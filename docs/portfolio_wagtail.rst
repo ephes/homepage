@@ -272,6 +272,8 @@ creation after its database transaction commits. A repeat run reuses the
 matching page without changing its content or revision and prints no creation receipt. Without ``--hostname``,
 the command uses the default site's root if it is already a portfolio, or looks
 for the requested ``--slug`` (default ``portfolio``) immediately beneath that root.
+If a non-portfolio child occupies that slug, the command reports the page ID
+and path before creating any categories, pages or revisions.
 
 With ``--hostname``, the target is the exact hostname and ``--port`` pair
 (default 443 for HTTPS). A new pair gets its own Wagtail site and portfolio root.

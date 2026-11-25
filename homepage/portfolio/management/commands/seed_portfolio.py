@@ -37,12 +37,11 @@ class Command(BaseCommand):
     def handle(self, *args, create, slug=None, hostname=None, port=443, **options):
         alias = router.db_for_write(Page)
         with transaction.atomic(using=alias):
-            self._seed(alias, create, slug, hostname, port)
+            self._ensure_portfolio(alias, create, slug, hostname, port)
+            for name in CATEGORIES:
+                ProjectCategory.objects.using(alias).get_or_create(name=name)
 
-    def _seed(self, alias, create, slug, hostname, port):
-        for name in CATEGORIES:
-            ProjectCategory.objects.using(alias).get_or_create(name=name)
-
+    def _ensure_portfolio(self, alias, create, slug, hostname, port):
         portfolios = PortfolioIndexPage.objects.using(alias)
         missing_page = "No portfolio page exists. Create one in the Wagtail admin or pass --create."
         if not create and not hostname:
@@ -80,7 +79,13 @@ class Command(BaseCommand):
             if parent is None:
                 raise CommandError("No default Wagtail site root configured.")
             slug = slug or "portfolio"
-            if portfolios.filter(pk=parent.pk).exists() or portfolios.child_of(parent).filter(slug=slug).exists():
+            if portfolios.filter(pk=parent.pk).exists():
+                return
+            children = parent.get_children().using(alias).filter(slug=slug)
+            occupied = children.exclude(pk__in=portfolios.values("pk")).first()
+            if occupied is not None:
+                raise CommandError(f"Slug {slug!r} is already occupied by page {occupied.pk} ({occupied.url_path}).")
+            if children.exists():
                 return
 
         # Wagtail assigns a unique sibling slug if none was supplied for a dedicated site.

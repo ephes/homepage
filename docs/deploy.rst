@@ -98,6 +98,19 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 2026-11-25 django-cast d4f29f33, cast-bootstrap5 8a11f2b, django-indieweb 3faf52a
 ---------------------------------------------------------------------------------
 
+Deployed ``22df569`` over ``c356620`` on 2026-11-25 at 17:31 (owner approval in
+chat the same day). Also shipped from main: the Webmention source URL recheck
+after rendering (``fbd36a4``, ``7ea3e90``) and the operator command changes
+``5cd2fe6`` and ``34e075f``. The pyinfra-check table was the steady one (no unit
+change). Before the deploy no task result was queued. Verified after the
+deploy: the host's ``uv.lock`` names the three new revisions; ``showmigrations``
+lists ``indieweb.0032`` and ``indieweb.0033`` as applied; ``manage.py check``
+under production settings reports no issue; both units got new PIDs with
+``NRestarts=0``; the front page, the blog, the RSS feed, a post, the portfolio
+host and ``/cms/login/`` answered 200 and the static CSS/JS they reference
+answered 200; the journal of both units held no warning or error for the
+first ten minutes.
+
 ``uv.lock`` moves django-cast ``develop`` from ``e0c632ad`` to ``d4f29f33``
 (0.2.70 development state), cast-bootstrap5 from ``b7f16729`` to ``8a11f2b``
 (gallery opening fixes) and django-indieweb ``develop`` from ``7ab7a8ef``

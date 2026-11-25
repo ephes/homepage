@@ -95,6 +95,33 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Rendition repair transaction guard and blog deduplication
+--------------------------------------------------------------------
+
+Deployed ``3151d42``: ``regenerate_broken_renditions`` refuses an enclosing
+transaction before it touches rendition storage and saves each repaired row in
+its own durable transaction (``711d73b``), and it scans each requested blog
+once even when its slug is passed more than once (``3151d42``). No migration,
+settings, static file, dependency or ops-control change; only the command, its
+tests and docs changed.
+
+Gated under the shared production deploy lock, held from the first check to the
+end of verification: before deploy-one, all 437 tracked files of ``6d129c0``
+matched on the host; the pyinfra-check table equalled the reviewed one row for
+row (only ``Install ca-certificates`` may vary with the apt cache); and a
+file-level rsync dry run with the deploy's arguments transferred exactly the six
+changed files. Verified after the deploy: all 437 tracked files on the host
+equal ``3151d42``; both units got new PIDs and kept them for 120 seconds; the
+front page, the blog RSS feed and the portfolio host answered 200; the journal
+of both units since the deploy holds no traceback or error; and
+``manage.py regenerate_broken_renditions --help`` loads with the site ``.env``
+(no repair was run).
+
+Rollback: ``just deploy-one homepage production`` from a fresh ops-control
+worktree, with ``PROJECTS_ROOT`` pointing at the parent of a clean checkout of
+``cc4a88c`` (code identical to ``6d129c0``). No database step and no static
+rebuild are needed.
+
 2026-11-25 Portfolio redirects, project shortcut and command receipts
 ---------------------------------------------------------------------
 

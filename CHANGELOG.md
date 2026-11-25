@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Require database autocommit before repairing renditions so an outer rollback
+  cannot orphan replacement files.
+
 - Preserve the request method and form body when redirecting slashless portfolio
   POSTs.
 

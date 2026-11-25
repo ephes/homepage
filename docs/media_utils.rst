@@ -36,8 +36,8 @@ rendition keeps its database row: the new file is generated first and then attac
 to that row. Before attachment the storage backend must confirm the saved
 name exists and, when it exposes sizes, that the byte count matches the
 generated file. A failed check leaves the row unchanged. Repairs use a distinct ``repair-<random-id>`` filename, preserving
-existing storage objects. The row save runs inside a database savepoint, so even
-a save hook that writes and then raises leaves the old row intact.
+existing storage objects. The row save runs inside a top-level database transaction,
+so even a save hook that writes and then raises leaves the old row intact.
 
 If verification or attachment fails, the command deletes the newly allocated file
 only after establishing ownership and checking that no rendition row references it. A storage backend that returns a different name makes ownership
@@ -74,13 +74,10 @@ retry each alias separately. Deleted rows are reported and skipped. The retry
 exits nonzero only for renewed purge failures and lists those IDs with the alias
 for the next attempt. Retry accepts no blog slugs or limit.
 
-When the repair helper runs inside a caller’s transaction, replacements are
-provisional until the outer transaction commits and a rollback discards the
-scheduled cache purge. Storage writes can outlive a database rollback. If a
-deferred purge fails after commit, a warning reports the rendition ID and
-database alias for a cache-only retry, with the exception class as the only
-error detail. The warning is best effort: a failed log handler leaves the
-committed repair intact and subsequent commit callbacks still run.
+Run the repair command and its helpers with autocommit enabled on the rendition
+database. An open transaction causes repair to raise ``CommandError`` before
+accessing rendition storage. Call the helper outside the transaction so each
+replacement commits before its cache is purged.
 
 Video width and height
 ======================

@@ -253,6 +253,9 @@ homepage/users/tests/test_signup_admission.py`` for these boundaries. Rendition
 fixtures use generated images and temporary local storage; database write faults
 occur after the real file write. They protect owned-output cleanup, shared and
 preexisting object preservation, recovery diagnostics, rollback and retry.
+The rendition suite uses real transaction boundaries to check that repair
+refuses an enclosing transaction before writing files and purges cache only
+after a successful autocommit repair.
 
 Signup tests render the real allauth local/social routes with a synthetic site and
 provider. Disabled registration offers no signup form and creates no User,

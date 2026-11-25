@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -45,17 +48,26 @@ def ffprobe(monkeypatch):
     calls = []
 
     def install(output=LANDSCAPE, returncode=0, error=None):
-        def run(cmd, **kwargs):
+        def popen(cmd, **kwargs):
             calls.append((cmd, kwargs))
-            if error is not None:
+            if isinstance(error, FileNotFoundError):
                 raise error
-            return subprocess.CompletedProcess(cmd, returncode, stdout=output)
+            process = MagicMock(returncode=returncode)
+            process.__enter__.return_value = process
+            process.wait.return_value = returncode
+            return process
+
+        def read_report(fd, deadline):
+            if isinstance(error, subprocess.TimeoutExpired):
+                raise error
+            return output
 
         def forbidden(*args, **kwargs):
-            raise AssertionError("only subprocess.run with an argument list may be used")
+            raise AssertionError("the probe must use Popen with an argument list")
 
-        monkeypatch.setattr(get_video_data.subprocess, "run", run)
-        for name in ("check_output", "call", "check_call", "Popen", "getoutput", "getstatusoutput"):
+        monkeypatch.setattr(get_video_data.subprocess, "Popen", popen)
+        monkeypatch.setattr(get_video_data, "read_probe_report", read_report)
+        for name in ("run", "check_output", "call", "check_call", "getoutput", "getstatusoutput"):
             monkeypatch.setattr(get_video_data.subprocess, name, forbidden)
         return calls
 
@@ -72,9 +84,8 @@ def test_input_is_one_unchanged_argument_without_a_shell(ffprobe, capsys, source
     assert isinstance(cmd, list)
     assert cmd == [*EXPECTED_OPTIONS, source]
     assert not kwargs.get("shell", False)
-    assert kwargs["timeout"] == get_video_data.FFPROBE_TIMEOUT_SECONDS
-    assert 0 < kwargs["timeout"] <= 300
     assert kwargs["stdin"] is subprocess.DEVNULL
+    assert kwargs["stdout"] is subprocess.PIPE
     assert kwargs["stderr"] is subprocess.DEVNULL  # ffprobe's messages repeat the input
     assert capsys.readouterr().out == "1920 1080\n"
 
@@ -135,6 +146,43 @@ def test_timeout_and_missing_binary_are_reported(ffprobe, capsys):
     ffprobe(error=FileNotFoundError(2, "No such file or directory", "ffprobe"))
     assert get_video_data.main(["clip.mp4"]) == 1
     assert "could not be started" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("output_size", "close_stdout", "message"),
+    [
+        (65537, False, "ffprobe JSON report exceeded 65536 bytes"),
+        (32, False, "ffprobe did not finish within"),
+        (32, True, "ffprobe did not finish within"),
+    ],
+    ids=["oversized", "stalled-reading", "stalled-after-eof"],
+)
+def test_probe_bounds_output_and_reaps_child(tmp_path, monkeypatch, output_size, close_stdout, message):
+    pid_file = tmp_path / "child.pid"
+    child = (
+        "import os, pathlib, sys, time; "
+        "pathlib.Path(sys.argv[1]).write_text(str(os.getpid())); "
+        "os.write(2, sys.argv[2].encode()); "
+        f"os.write(1, b'x' * {output_size}); " + ("os.close(1); " if close_stdout else "") + "time.sleep(3)"
+    )
+    monkeypatch.setattr(
+        get_video_data, "ffprobe_command", lambda source: [sys.executable, "-c", child, str(pid_file), source]
+    )
+
+    with pytest.raises(get_video_data.VideoProbeError, match=message) as caught:
+        get_video_data.probe(SIGNED_URL, timeout=0.75)
+
+    assert SIGNED_URL not in str(caught.value)
+    pid = int(pid_file.read_text())
+    with pytest.raises(ChildProcessError):
+        os.waitpid(pid, os.WNOHANG)
+
+
+def test_probe_accepts_a_valid_report_at_the_limit(monkeypatch):
+    child = f"import sys; sys.stdout.buffer.write({LANDSCAPE!r}.ljust(65536))"
+    monkeypatch.setattr(get_video_data, "ffprobe_command", lambda source: [sys.executable, "-c", child])
+
+    assert get_video_data.probe("clip.mp4") == (1920, 1080)
 
 
 @pytest.mark.parametrize(

@@ -13,15 +13,19 @@ Only the first video stream's width, height and display aspect ratio are
 requested, as JSON, so nothing is guessed from text that could contain the
 file name. The input itself is never printed and ffprobe's messages, which
 repeat it, are discarded: a signed URL (query string with credentials) does
-not end up in terminal scrollback or logs. ffprobe gets 60 seconds; a hanging
-remote source ends with an error.
+not end up in terminal scrollback or logs. ffprobe gets 60 seconds and a 64 KiB
+JSON report limit. A timeout or oversized report ends with an error.
 """
 
 import json
+import os
+import selectors
 import subprocess
 import sys
+import time
 
 FFPROBE_TIMEOUT_SECONDS = 60
+FFPROBE_REPORT_LIMIT = 64 * 1024
 
 
 class VideoProbeError(Exception):
@@ -68,26 +72,61 @@ def parse_dimensions(output: bytes | str) -> tuple[int, int] | None:
     return width, height
 
 
+def remaining_time(deadline: float) -> float:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError
+    return remaining
+
+
+def read_probe_report(fd: int, deadline: float) -> bytes:
+    report = bytearray()
+    with selectors.DefaultSelector() as selector:
+        selector.register(fd, selectors.EVENT_READ)
+        while selector.select(remaining_time(deadline)):
+            remaining_time(deadline)
+            chunk = os.read(fd, min(16 * 1024, FFPROBE_REPORT_LIMIT + 1 - len(report)))
+            remaining_time(deadline)
+            if not chunk:
+                return bytes(report)
+            report.extend(chunk)
+            if len(report) > FFPROBE_REPORT_LIMIT:
+                raise VideoProbeError(f"ffprobe JSON report exceeded {FFPROBE_REPORT_LIMIT} bytes")
+    raise TimeoutError
+
+
 def probe(source: str, timeout: float = FFPROBE_TIMEOUT_SECONDS) -> tuple[int, int]:
     if not source or "\x00" in source:
         raise VideoProbeError("the input must be a non-empty path or URL")
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             ffprobe_command(source),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
-            timeout=timeout,
-            check=False,
         )
-    except subprocess.TimeoutExpired:
-        raise VideoProbeError(f"ffprobe did not finish within {timeout:g} seconds") from None
     except OSError as error:
         raise VideoProbeError(f"ffprobe could not be started ({error.strerror or type(error).__name__})") from None
+    deadline = time.monotonic() + timeout
+    try:
+        with process:
+            try:
+                assert process.stdout is not None
+                report = read_probe_report(process.stdout.fileno(), deadline)
+                returncode = process.wait(timeout=remaining_time(deadline))
+                remaining_time(deadline)
+            finally:
+                if process.returncode is None:
+                    process.kill()
+                    process.wait()
+    except (TimeoutError, subprocess.TimeoutExpired):
+        raise VideoProbeError(f"ffprobe did not finish within {timeout:g} seconds") from None
+    except OSError:
+        raise VideoProbeError("ffprobe could not finish reading the JSON report") from None
     # ffprobe's messages repeat the input, so they are discarded and never shown.
-    if result.returncode != 0:
-        raise VideoProbeError(f"ffprobe failed with exit status {result.returncode}")
-    dimensions = parse_dimensions(result.stdout)
+    if returncode != 0:
+        raise VideoProbeError(f"ffprobe failed with exit status {returncode}")
+    dimensions = parse_dimensions(report)
     if dimensions is None:
         raise VideoProbeError("ffprobe reported no video stream with a size for the input")
     return dimensions

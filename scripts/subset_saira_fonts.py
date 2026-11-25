@@ -305,11 +305,11 @@ def generate() -> None:
                     try:
                         if not needs_rollback(target):
                             continue
-                        backup = backups[target]
-                        if backup is None:
+                        rollback_backup = backups[target]
+                        if rollback_backup is None:
                             target.unlink()
                         else:
-                            backup.replace(target)
+                            rollback_backup.replace(target)
                     except (OSError, RuntimeError) as rollback_error:
                         rollback_failed = True
                         error.add_note(f"Rollback failed for {target}: {rollback_error}")
@@ -343,18 +343,30 @@ def _terminate(signum: int, _frame) -> None:
 
 def main() -> None:
     # Respect an inherited SIG_IGN (e.g. nohup) instead of turning it into an abort.
-    previous = {
-        signum: signal.signal(signum, _terminate)
-        for signum in (signal.SIGTERM, signal.SIGHUP)
-        if signal.getsignal(signum) is not signal.SIG_IGN
-    }
+    previous = {}
+    primary = None
     try:
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            if signal.getsignal(signum) is not signal.SIG_IGN:
+                previous[signum] = signal.signal(signum, _terminate)
         TARGET_DIR.mkdir(parents=True, exist_ok=True)
         with destination_lock():
             generate()
+    except BaseException as error:
+        primary = error
+        raise
     finally:
+        failure = primary
         for signum, handler in previous.items():
-            signal.signal(signum, handler)
+            try:
+                signal.signal(signum, handler)
+            except BaseException as error:
+                if failure is None:
+                    failure = error
+                else:
+                    failure.add_note(f"Could not restore {signum.name}: {error}")
+        if primary is None and failure is not None:
+            raise failure
 
 
 def _copy(font: TTFont) -> BytesIO:

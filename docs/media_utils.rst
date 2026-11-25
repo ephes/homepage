@@ -97,11 +97,12 @@ and a value starting with ``-`` is still the input. Use a path or URL you trust 
 ffprobe opens whatever it names.
 
 Only the first video stream's width, height and display aspect ratio are requested from
-ffprobe, as JSON. A file without a video stream has no size, whatever its name looks
-like.
+ffprobe, as JSON. The script uses POSIX pipes and accepts reports of up to 64 KiB.
+A file without a video stream has no size, whatever its name looks like.
 
 The input is never printed and ffprobe's own messages (which repeat it) are discarded, so
 a signed URL does not end up in the terminal scrollback or in logs. Errors go to stderr
 without the input and the exit status is 1: ffprobe missing, ffprobe failing, no video
-stream with a size, or no answer within 60 seconds. Exactly one argument is expected
-(exit status 2 otherwise).
+stream with a size, an oversized report, or no answer within 60 seconds. On a
+timeout or oversized report the script stops and reaps ffprobe before reporting
+the error. Exactly one argument is expected (exit status 2 otherwise).

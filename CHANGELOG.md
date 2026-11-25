@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restore the Saira generator's handlers after partial signal setup failures.
+- Cap ffprobe JSON reports at 64 KiB and reap the child on refusal or timeout.
+
 - Verify all affected Saira destinations and backups before beginning rollback.
 - Preserve the Saira generation result if closing its lock fails.
 

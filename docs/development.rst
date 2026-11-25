@@ -441,21 +441,23 @@ publication failures (including KeyboardInterrupt, SIGTERM and SIGHUP) preflight
 all affected destinations and backup identities before any rollback writes.
 Each restore or removal rechecks the corresponding files immediately before
 changing the destination. If the preflight or restoration fails, the original
-error remains primary and
-stderr reports an incomplete, potentially mixed visible set and the retained
-staging directory. Stop static collection/deployment, review its ``backup-N-name``
+error remains primary. Stderr reports an incomplete, potentially mixed visible
+set and the retained staging directory. Stop static collection/deployment, review its ``backup-N-name``
 files against the current destinations (the CSS backup belongs in
 ``homepage/static/css/``; font/license backups in ``homepage/static/fonts/``),
 and restore the chosen complete set before retrying. Do not discard the recovery
 directory until the set is reconciled. Cleanup failures also report the directory.
 
+The generator respects inherited ignored signals (e.g. SIGHUP under ``nohup``). If installing a termination
+handler fails, it restores the handlers installed so far before exiting. Each
+installed handler gets a restoration attempt even if another restoration fails.
+
 This is rollback for handled failures, not a crash-durable multi-file transaction.
 SIGKILL or power loss can leave a partial set and staging backups; inspect and
 reconcile them before using the outputs. A second interrupt during rollback
 stops restoration but keeps the git-ignored recovery directory and reports it on
-stderr like a failed rollback. SIGTERM/SIGHUP are only handled when not inherited
-as ignored (``nohup`` keeps ignoring SIGHUP). No generated assets are changed merely
-by running tests. Synthetic failure/conflict tests run with::
+stderr like a failed rollback. The tests leave generated assets untouched.
+Run synthetic failure/conflict tests with::
 
     uv run --locked pytest homepage/tests/test_saira_generator.py
 

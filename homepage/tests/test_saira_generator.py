@@ -316,6 +316,47 @@ def test_lock_close_error_preserves_generation_result(generator, monkeypatch, ca
     assert lock_inode == lock_path.stat().st_ino
 
 
+def test_signal_installation_failure_restores_first_handler_without_generating(generator, monkeypatch):
+    sigterm, sighup = generator.signal.SIGTERM, generator.signal.SIGHUP
+    default_handler = generator.signal.SIG_DFL
+    handlers = dict.fromkeys((sigterm, sighup), default_handler)
+
+    def install(signum, handler):
+        if signum == sighup:
+            raise OSError("second signal installation failed")
+        previous = handlers[signum]
+        handlers[signum] = handler
+        return previous
+
+    monkeypatch.setattr(generator.signal, "getsignal", handlers.__getitem__)
+    monkeypatch.setattr(generator.signal, "signal", install)
+    with pytest.raises(OSError, match="second signal installation failed"):
+        generator.main()
+
+    assert handlers[sigterm] == default_handler
+    assert not (generator.TARGET_DIR / ".saira-generation.lock").exists()
+
+
+def test_signal_restoration_failure_does_not_prevent_restoring_other_handler(generator, monkeypatch):
+    sigterm, sighup = generator.signal.SIGTERM, generator.signal.SIGHUP
+    default_handler = generator.signal.SIG_DFL
+    handlers = dict.fromkeys((sigterm, sighup), default_handler)
+
+    def install(signum, handler):
+        if signum == sigterm and handler == default_handler:
+            raise OSError("first signal restoration failed")
+        previous = handlers[signum]
+        handlers[signum] = handler
+        return previous
+
+    monkeypatch.setattr(generator.signal, "getsignal", handlers.__getitem__)
+    monkeypatch.setattr(generator.signal, "signal", install)
+    with pytest.raises(OSError, match="first signal restoration failed"):
+        generator.main()
+
+    assert handlers[sighup] == default_handler
+
+
 def test_interrupt_removes_new_outputs(generator, monkeypatch):
     for path in generator.TARGET_DIR.iterdir():
         path.unlink()

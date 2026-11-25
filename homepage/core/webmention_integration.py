@@ -15,7 +15,8 @@ publication has been committed:
   transaction Django calls the callback at once, inside the signal receiver;
 * after rendering, the callback checks again that the same revision is live
   and publicly accessible on the publishing database and that its canonical
-  source URL, resolved from freshly loaded site root paths, is unchanged.
+  source URL, resolved from site root paths read from the database instead of
+  Wagtail's shared cache, is unchanged.
 * delivery and its failure logging are best effort and never fail the committed
   publication.
 """
@@ -153,6 +154,27 @@ def _load_specific_post(page_id, database):
     return model.objects.using(database).filter(pk=page_id).first()
 
 
+def _uncached_site_root_paths():
+    """Wagtail's site root paths read from the database, bypassing its shared cache.
+
+    Mirrors ``Site.get_site_root_paths()`` without ``WAGTAIL_I18N_ENABLED``
+    (this project does not enable it): same query, ordering and tuple type.
+    """
+    from django.conf import settings
+    from wagtail.models import Site
+    from wagtail.models.sites import SiteRootPath
+
+    if getattr(settings, "WAGTAIL_I18N_ENABLED", False):
+        raise RuntimeError("uncached site root paths do not support WAGTAIL_I18N_ENABLED")
+    sites = Site.objects.select_related("root_page", "root_page__locale").order_by(
+        "-root_page__url_path", "-is_default_site", "hostname"
+    )
+    return [
+        SiteRootPath(site.id, site.root_page.url_path, site.root_url, site.root_page.locale.language_code)
+        for site in sites
+    ]
+
+
 def _send_webmentions_for(post) -> None:
     """Render ``post`` and send webmentions to the external URLs it links to."""
     global WebmentionSender
@@ -188,11 +210,12 @@ def _send_webmentions_for(post) -> None:
     if current is None:
         return
     # A site's hostname, port or root page may have changed during rendering, and
-    # Wagtail's cached site root paths can still name the old one. Rebuild them
-    # from the database before comparing the source URL.
-    from wagtail.models import Site
-
-    Site.clear_site_root_paths_cache()
+    # Wagtail's shared site-root-path cache can still name the old one (another
+    # process may even refill it from a snapshot taken before the change
+    # committed). Resolve the recheck from site root paths read now, held only by
+    # this page instance: Wagtail consults the instance's own cache attribute
+    # before the shared cache, and the shared cache is neither read nor written.
+    current._wagtail_cached_site_root_paths = _uncached_site_root_paths()
     if current.get_full_url() != full_url:
         return
 

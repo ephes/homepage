@@ -5,13 +5,16 @@ from unittest.mock import Mock, patch
 
 import pytest
 from cast.models import Blog, Post
+from django.core.cache import cache, caches
 from django.db import transaction
 from django.test import override_settings
 from wagtail.models import Locale, Page, PageViewRestriction, Site
+from wagtail.models.sites import SITE_ROOT_PATHS_CACHE_KEY, SITE_ROOT_PATHS_CACHE_VERSION
 
 from homepage.core.webmention_integration import (
     _deliver_webmentions,
     _send_webmentions_for,
+    _uncached_site_root_paths,
     send_webmentions_on_publish,
 )
 
@@ -32,7 +35,11 @@ def mock_page_with_post():
     page = Mock()
     page.specific = post
 
-    with patch("homepage.core.webmention_integration._committed_public_post", return_value=post):
+    with (
+        patch("homepage.core.webmention_integration._committed_public_post", return_value=post),
+        # The mocked post resolves its own URL; no site root paths are read.
+        patch("homepage.core.webmention_integration._uncached_site_root_paths", return_value=[]),
+    ):
         yield page
 
 
@@ -387,23 +394,47 @@ class TestPublicVisibility:
             revision.publish()
         (deliver,) = deliveries(callbacks)
         render = Post.get_description
+        stale = Site.get_site_root_paths()
 
         def render_then_rename_host(self, *args, **kwargs):
             html = render(self, *args, **kwargs)
-            # Another process renames the site; a queryset update sends no signal,
-            # so Wagtail's cached site root paths still name the old hostname.
+            # Another process renames the site. A queryset update sends no signal,
+            # and a concurrent worker refills the shared cache from a snapshot
+            # taken before the rename committed: it still names the old hostname.
             Site.objects.filter(hostname=HOST).update(hostname="renamed.test")
+            cache.set(SITE_ROOT_PATHS_CACHE_KEY, stale, 3600, version=SITE_ROOT_PATHS_CACHE_VERSION)
             return html
 
-        with patch.object(Post, "get_description", render_then_rename_host):
+        shared = caches["default"]
+        delete = shared.delete
+
+        def delete_then_refill(key, *args, **kwargs):
+            # The concurrent worker refills the entry right after any clear.
+            result = delete(key, *args, **kwargs)
+            shared.set(SITE_ROOT_PATHS_CACHE_KEY, stale, 3600, version=SITE_ROOT_PATHS_CACHE_VERSION)
+            return result
+
+        with (
+            patch.object(Post, "get_description", render_then_rename_host),
+            patch.object(shared, "delete", delete_then_refill),
+        ):
             deliver()
 
         assert outbound.rendered == [post.pk]
         assert outbound.sent == []
+        # The recheck neither cleared nor refilled the shared cache.
+        assert cache.get(SITE_ROOT_PATHS_CACHE_KEY, version=SITE_ROOT_PATHS_CACHE_VERSION) == stale
         Site.clear_site_root_paths_cache()
         renamed = Post.objects.get(pk=post.pk)
         assert renamed.live_revision_id == revision.pk
         assert renamed.get_full_url() == "http://renamed.test/blogs/blog/linking-post/"
+
+    def test_uncached_site_root_paths_match_wagtail(self, blog):
+        other_home = Page.get_first_root_node().add_child(instance=Page(title="Other", slug="other-home"))
+        Site.objects.create(hostname="other.test", port=8000, root_page=other_home)
+        Site.clear_site_root_paths_cache()
+
+        assert _uncached_site_root_paths() == Site.get_site_root_paths()
 
     @pytest.mark.parametrize("change", ["unpublish", "republish"])
     def test_page_changed_while_the_delivery_loads_it_is_not_announced(

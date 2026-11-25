@@ -257,6 +257,11 @@ with the same slug in another blog are not valid targets.
 The resolver looks up the blog, post, and view restrictions in the database
 of the selected Wagtail site.
 
+django-indieweb does not call this resolver: it never reads
+``INDIEWEB_URL_RESOLVER``, and no homepage code loads the class yet. Received
+Webmentions are therefore not checked against these rules; so far only the
+tests use them.
+
 Displaying webmentions
 ----------------------
 

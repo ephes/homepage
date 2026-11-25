@@ -95,6 +95,34 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Portfolio redirects, project shortcut and command receipts
+---------------------------------------------------------------------
+
+Deployed ``6d129c0``: slashless non-GET requests on the portfolio host get a
+307 redirect that keeps method and body (``da1e03e``), the ``Projekte`` menu
+offers ``Neues Projekt`` to editors with add permission on a portfolio
+homepage they cannot edit (``fffc7e7``), ``seed_portfolio`` prints its creation
+receipt after the commit (``0630e90``), and ``update_blog_cover_image`` tracks
+only its own cover and rendition uploads for rollback (``8a692f2``). No
+migration, settings, static file, dependency or ops-control change. The
+pyinfra-check table was the steady one, with ``Install ca-certificates``
+unchanged because the host's apt cache was less than an hour old.
+
+Verified after the deploy: sha256 of the 259 tracked ``homepage/`` and
+``config/`` sources plus ``pyproject.toml`` and ``uv.lock`` on the host equals
+``6d129c0``; right before deploy-one, the synced checkout held exactly the 437
+files of ``6d129c0`` byte for byte; the deploy log shows the source sync,
+collectstatic and both unit restarts in that order; both units got new PIDs and
+stayed on them for 120 seconds; the front page, the blog RSS feed and the
+portfolio host answered 200; the journal since the deploy holds no traceback.
+A POST with a valid CSRF token to the slashless ``/cms/login`` on the portfolio
+host answered 301 before the deploy and 307 to ``/cms/login/`` after it, while
+the slashless GET ``/impressum`` stayed 301; neither request logged in.
+
+Rollback: ``just deploy-one homepage production`` from a clean checkout of the
+previous commit (``df1c1ab``). No database step and no static rebuild are
+needed.
+
 2026-11-25 Portfolio bootstrap lock and blog cover source staging
 -----------------------------------------------------------------
 

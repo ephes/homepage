@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve all upstream Fediverse `Cache-Control` directives in order.
+
 - Scan and report each blog once during rendition repair, even when its slug
   is passed more than once.
 

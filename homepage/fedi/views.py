@@ -25,10 +25,9 @@ READ_TIMEOUT = 10
 UPSTREAM_DEADLINE = 10
 # .well-known documents are small; refuse anything larger than this.
 MAX_UPSTREAM_BYTES = 1024 * 1024
-# Besides Content-Type (and Location on redirects) only these upstream response
-# headers are passed back to the client. Everything else, notably Set-Cookie,
-# is dropped.
-PASSED_RESPONSE_HEADERS = ("Cache-Control", "Access-Control-Allow-Origin", "Content-Encoding")
+# Besides Content-Type, Cache-Control and Location on redirects, only these
+# upstream response headers are passed through. Everything else is dropped.
+PASSED_RESPONSE_HEADERS = ("Access-Control-Allow-Origin", "Content-Encoding")
 
 # No pending queue: timed-out requests leave the slot with the underlying DNS
 # lookup until it actually exits. The limit is per web process.
@@ -260,6 +259,9 @@ def _build_response(request, url, status, headers, content):
         status=status,
         content_type=headers.get("Content-Type") or "application/octet-stream",
     )
+    cache_control = [value for name, value in headers.items() if name.lower() == "cache-control"]
+    if cache_control:
+        response["Cache-Control"] = ", ".join(cache_control)
     for name in PASSED_RESPONSE_HEADERS:
         value = headers.get(name)
         if value is not None:

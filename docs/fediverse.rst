@@ -27,7 +27,9 @@ domain while the actual server runs at ``https://fedi.wersdoerfer.de``.
      nodeinfo takes no query).
    * Only the upstream status, ``Content-Type``, ``Cache-Control``,
      ``Access-Control-Allow-Origin`` and ``Content-Encoding`` are returned.
-     Upstream ``Set-Cookie`` and all other headers are dropped.
+     Repeated ``Cache-Control`` fields are combined in upstream order so all
+     directives reach the client. Upstream ``Set-Cookie`` and all other headers
+     are dropped.
    * Responses vary on ``Accept``, including ``HEAD`` and redirects, so caches
      keep negotiated representations separate. An upstream ``Vary: *`` is
      preserved to forbid reuse. Other upstream variation names are dropped:

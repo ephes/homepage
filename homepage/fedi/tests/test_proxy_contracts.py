@@ -59,6 +59,17 @@ def test_proxy_variation_allowlist(monkeypatch, request_factory, method, status,
         assert response["Location"] == views.FEDI_BASE_URL + "/discovery"
 
 
+def test_proxy_preserves_repeated_cache_control_in_order(monkeypatch, request_factory):
+    headers = http.client.HTTPMessage()
+    headers["Cache-Control"] = "max-age=60"
+    headers["cache-control"] = "private"
+    monkeypatch.setattr(views, "_fetch", lambda *args: (200, headers, b"document"))
+
+    response = views.wellknown_nodeinfo(request_factory.get("/.well-known/nodeinfo"))
+
+    assert response["Cache-Control"] == "max-age=60, private"
+
+
 def test_upstream_vary_star_prevents_cache_reuse(monkeypatch, request_factory):
     calls = []
 

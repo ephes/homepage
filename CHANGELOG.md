@@ -12,11 +12,12 @@
   database alias, with unsaved defaults when that site has no settings row.
 - Recommend the sole public sibling in a draft portfolio project preview.
 
-- Resolve Cast Webmention targets and their view restrictions in the selected
-  Wagtail site's database.
+- `CastURLResolver` resolves Cast targets and their view restrictions in the
+  selected Wagtail site's database.
 
-- Accept incoming Webmentions to canonical Cast posts and their supported
-  public episode routes. Reject unknown post subpaths.
+- `CastURLResolver` accepts canonical Cast posts and their supported public
+  episode routes and rejects unknown post subpaths. django-indieweb does not
+  call this resolver, so incoming Webmention handling is unchanged.
 
 - Escape non-printable characters and cap outgoing Webmention target
   diagnostics at 256 characters.

@@ -173,6 +173,35 @@ def test_convert_paragraph_html_warns_and_preserves_section_that_fails_block_val
     assert conversion.warnings[0].message == "List section failed structured block validation."
 
 
+@pytest.mark.parametrize(
+    ("heading_attrs", "list_attrs"),
+    [(' id="saved-section"', ""), ("", ' id="saved-section"')],
+    ids=["heading-id", "list-id"],
+)
+def test_convert_paragraph_html_preserves_section_fragment_targets(heading_attrs, list_attrs):
+    legacy = (
+        '<p><a href="#saved-section">Jump to articles</a></p>'
+        f"<h2{heading_attrs}>Articles</h2><ul{list_attrs}>"
+        '<li><a href="https://example.com/a">Article</a></li></ul>'
+        '<h3 class="legacy-heading">Software</h3><ul class="legacy-list">'
+        '<li><a href="https://example.com/tool">Tool</a></li></ul>'
+    )
+
+    conversion = convert_body(_overview(_paragraph(legacy)))
+
+    assert conversion.converted_sections == 1
+    paragraph, links = conversion.body[0]["value"]
+    assert paragraph["type"] == "paragraph"
+    preserved = BeautifulSoup(paragraph["value"], "html.parser")
+    jump = preserved.find("a", href="#saved-section")
+    assert preserved.find(id=jump["href"][1:]).name == ("h2" if heading_attrs else "ul")
+    assert links["type"] == "weeknote_links"
+    assert [item["title"] for item in _weeknote_values(links)] == ["Tool"]
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Articles", "Link section has a fragment anchor that the structured block cannot keep.")
+    ]
+
+
 def test_convert_body_only_rewrites_overview_paragraphs():
     body = _overview(
         _paragraph('<p>Intro.</p><h2>Weeknotes</h2><ul><li><a href="https://example.com/w">Weeklog</a></li></ul>'),

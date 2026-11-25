@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep legacy weeknote link sections with fragment targets on the heading or
+  list, and warn while converting eligible neighboring sections.
+
 - Preserve literal escaped text in weeknote link sources and descriptions
   during legacy conversion.
 

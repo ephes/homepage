@@ -161,17 +161,18 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 index += 1
                 continue
 
-            if _has_markup(node):
-                # The block renders its category heading from a fixed label, so an
-                # image, link or emphasis inside the heading has nowhere to go.
+            # The structured block generates its heading and list, so their
+            # fragment targets and any markup inside the heading would be lost.
+            heading_warning = None
+            if node.get("id") or next_node.get("id"):
+                heading_warning = "Link section has a fragment anchor that the structured block cannot keep."
+            elif _has_markup(node):
+                heading_warning = "Link heading has markup that the category heading cannot keep."
+            if heading_warning:
                 flush_links()
                 pending_html.append(str(node))
                 pending_html.append(str(next_node))
-                warnings.append(
-                    ConversionWarning(
-                        "Link heading has markup that the category heading cannot keep.", heading=heading
-                    )
-                )
+                warnings.append(ConversionWarning(heading_warning, heading=heading))
                 index = next_index + 1
                 continue
 

@@ -170,12 +170,13 @@ Conversion limits
 ~~~~~~~~~~~~~~~~~
 
 The converter never drops content it cannot represent. A heading and its list
-are converted together or not at all; a refused section stays in the surrounding
-rich-text paragraph exactly as written, in its original position, and the report
-gets a warning with the section heading. A section is refused when:
+are converted together. A refused section stays in the surrounding rich-text
+paragraph in its original position, and the report gets a warning with the
+section heading. The following conditions prevent conversion.
 
 * the heading is ambiguous (``Podcasts / Videos``) or the items fail block
   validation (for example a relative link);
+* the heading or list has an ``id`` that can serve as a fragment target.
 * the heading holds anything but plain text, for example an image, a link,
   emphasis or an HTML comment (``<h2><img ...>Articles</h2>``). The block
   renders its category heading from a fixed label, so that markup could not be

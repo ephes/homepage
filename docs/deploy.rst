@@ -95,6 +95,36 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Webmention site paths on the publishing database, seeding site recheck
+---------------------------------------------------------------------------------
+
+Deployed ``e394eba`` over ``22df569`` on 2026-11-25 at 22:54 as a routine
+code-only deploy. Runtime change: an outgoing Webmention resolves its source
+URL before and after rendering from site root paths read on the publishing
+database (``b5112c1``, building on ``896fcb7``, which this deploy ships too).
+Also shipped, without a service caller: ``seed_portfolio`` rechecks the default
+site after locking its parent page (``e394eba``). No migration, settings,
+static file, dependency or unit change; ops-control ran at ``204ad6b6``. Before
+the deploy no task result was queued or running, and the pyinfra-check table
+was the steady one (only ``Sync homepage source`` changes content).
+
+Verified after the deploy: the changed files and ``uv.lock`` on the host equal
+``e394eba``; both units got new PIDs with ``NRestarts=0``; ``manage.py check``
+under production settings reports no issue; a read-only shell probe
+(``default_transaction_read_only=on``) shows the new
+``_uncached_site_root_paths(database)`` signature and returns the two live site
+roots; the front page, the blog, its RSS feed, a post, the portfolio host and
+``/cms/login/`` answered 200, as did the CSS and JS the blog references; the
+journal of both units since the deploy holds no warning or error. The
+publishing-alias resolution itself runs only when a post is published and is
+covered by tests only.
+
+Rollback, only after the owner authorizes it: revert ``b5112c1`` and
+``e394eba`` on main, then run ``just pyinfra-check homepage production`` and
+``just deploy-one homepage production`` with ``PROJECTS_ROOT`` pointing at the
+parent of a clean export of the reverted commit. No database step and no
+static rebuild are needed.
+
 2026-11-25 django-cast d4f29f33, cast-bootstrap5 8a11f2b, django-indieweb 3faf52a
 ---------------------------------------------------------------------------------
 

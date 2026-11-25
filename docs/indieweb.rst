@@ -254,6 +254,8 @@ site's domain (``localhost:8000`` when the Django site domain is ``localhost``):
 
 Drafts, pages with view restrictions (or below restricted pages), and posts
 with the same slug in another blog are not valid targets.
+The resolver looks up the blog, post, and view restrictions in the database
+of the selected Wagtail site.
 
 Displaying webmentions
 ----------------------

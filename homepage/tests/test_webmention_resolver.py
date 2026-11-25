@@ -9,6 +9,7 @@ import pytest
 from cast.models import Audio, Blog, Episode, Post, Transcript
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
+from django.test import override_settings
 from wagtail.models import Collection, Locale, Page, PageViewRestriction
 from wagtail.models import Site as WagtailSite
 
@@ -184,4 +185,61 @@ def test_percent_encoded_unicode_slugs_resolve(tree):
 def test_no_matching_wagtail_site_does_not_resolve(tree):
     WagtailSite.objects.update(hostname="other.example", is_default_site=False)
 
+    assert resolve("/blogs/alpha/shared/") is None
+
+
+def test_cast_path_on_portfolio_host_uses_its_own_wagtail_mount(tree, client, settings):
+    settings.ALLOWED_HOSTS = [DOMAIN]
+    settings.PORTFOLIO_HOSTS = [DOMAIN]
+    path = "/blogs/alpha/shared/"
+
+    assert client.get(path, secure=True, HTTP_HOST=DOMAIN).status_code == 404
+    assert resolve(path) is None
+
+
+@pytest.mark.django_db(transaction=True, reset_sequences=True, databases=["default", "legacy"])
+def test_blog_post_and_visibility_come_from_selected_site_database(settings, request):
+    class FixtureRouter:
+        def db_for_read(self, model, **hints):
+            return "legacy"
+
+        def db_for_write(self, model, **hints):
+            return "legacy"
+
+    class SiteRouter:
+        def db_for_read(self, model, **hints):
+            if model is WagtailSite:
+                return "legacy"
+            return None
+
+    def add_tree(label):
+        home = get_or_create_root().add_child(instance=Page(title=f"{label} home", slug="resolver-home"))
+        blog = home.add_child(instance=Blog(title=f"{label} blog", slug="alpha"))
+        post = blog.add_child(instance=Post(title=f"{label} post", slug="shared"))
+        WagtailSite.objects.create(hostname=DOMAIN, port=443, root_page=home, is_default_site=True)
+        return blog, post
+
+    site = Site.objects.get_current()
+    site.domain = DOMAIN
+    site.save()
+    Site.objects.clear_cache()
+    request.addfinalizer(Site.objects.clear_cache)
+    default_blog, default_post = add_tree("Default")
+    with override_settings(DATABASE_ROUTERS=[FixtureRouter()]):
+        blog, post = add_tree("Legacy")
+
+    assert (post.pk, post.path) == (default_post.pk, default_post.path)
+    settings.DATABASE_ROUTERS = [SiteRouter()]
+    for path, page in (("/blogs/alpha/", blog), ("/blogs/alpha/shared/", post)):
+        found = resolve(path)
+        assert found is not None
+        assert found.pk == page.pk
+        assert found._state.db == "legacy"
+        assert found.title == page.title
+
+    PageViewRestriction.objects.using("default").create(page=default_blog, restriction_type="login")
+    assert resolve("/blogs/alpha/shared/")._state.db == "legacy"
+
+    with override_settings(DATABASE_ROUTERS=[FixtureRouter()]):
+        PageViewRestriction.objects.create(page=blog, restriction_type="login")
     assert resolve("/blogs/alpha/shared/") is None

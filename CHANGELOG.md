@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Resolve Cast Webmention targets and their view restrictions in the selected
+  Wagtail site's database.
+
 - Accept incoming Webmentions to canonical Cast posts and their supported
   public episode routes. Reject unknown post subpaths.
 

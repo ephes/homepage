@@ -8,9 +8,17 @@ from urllib.parse import unquote, urlparse
 from django.conf import settings
 from django.urls import Resolver404, resolve
 from indieweb.interfaces import URLResolver
+from wagtail.models import Page, PageViewRestriction
 
 from homepage.core.page_lookup import get_wagtail_site, url_path_parts
 from homepage.portfolio.hosts import PORTFOLIO_URLCONF, is_portfolio_host
+
+
+def _is_public(page: Page, alias: str | None) -> bool:
+    # Wagtail's queryset public() reads restrictions through their default
+    # manager even when the page queryset has an explicit database alias.
+    ancestors = page.get_ancestors(inclusive=True).using(alias)
+    return not PageViewRestriction.objects.using(alias).filter(page__in=ancestors).exists()
 
 
 class CastURLResolver(URLResolver):
@@ -56,7 +64,12 @@ class CastURLResolver(URLResolver):
                     route = resolve(unquote(parsed.path), urlconf=urlconf)
                 except Resolver404:
                     return None
-                is_page = route.url_name == "wagtail_serve" and len(path_parts) in (2, 3)
+                is_page = (
+                    route.url_name == "wagtail_serve"
+                    and len(path_parts) in (2, 3)
+                    and route.args
+                    and route.args[0].strip("/") == "/".join(path_parts[1:])
+                )
                 is_episode_route = route.view_name in {"cast:episode-transcript", "cast:twitter-player"}
                 if not (is_page or is_episode_route):
                     return None
@@ -64,25 +77,25 @@ class CastURLResolver(URLResolver):
                 site = get_wagtail_site(parsed)
                 if site is None:
                     return None
-                blog = Blog.objects.live().public().child_of(site.root_page).filter(slug=path_parts[1]).first()
-                if blog is None:
+                alias = site._state.db
+                blog = Blog.objects.using(alias).live().child_of(site.root_page).filter(slug=path_parts[1]).first()
+                if blog is None or not _is_public(blog, alias):
                     return None
 
                 # Handle blog overview page (/blogs/{blog_slug}/)
                 if len(path_parts) == 2:
                     return blog
 
-                post = Post.objects.live().public().child_of(blog).filter(slug=path_parts[2]).first()
-                if post is None or is_page:
+                post = Post.objects.using(alias).live().child_of(blog).filter(slug=path_parts[2]).first()
+                if post is None or not _is_public(post, alias):
+                    return None
+                if is_page:
                     return post
 
                 # The registered Cast subroutes serve episodes only. The transcript
                 # view also requires a Podlove transcript artifact.
                 episode = (
-                    Episode.objects.using(post._state.db)
-                    .select_related("podcast_audio__transcript")
-                    .filter(pk=post.pk)
-                    .first()
+                    Episode.objects.using(alias).select_related("podcast_audio__transcript").filter(pk=post.pk).first()
                 )
                 if episode is None:
                     return None

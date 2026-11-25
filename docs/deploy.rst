@@ -95,6 +95,41 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-25 Fediverse proxy late deadline and resolver failures
+--------------------------------------------------------------
+
+Deployed ``5385441``: the Fediverse ``.well-known`` proxy rejects a response
+that completes after the 10 s deadline with ``504``, even when the shutdown
+timer runs late, by checking the elapsed time after the upstream headers and
+after reading and closing the response stream (``2a6dfe5``); an unexpected
+exception in the DNS resolver thread now returns ``502`` and releases the
+resolver slot instead of failing the request with a server error
+(``7f7cd5e``); ``5385441`` corrects the wording in the docs and changelog. No
+migration, settings, static file, dependency or ops-control change. On
+production Traefik sends the public ``.well-known`` paths straight to Mastodon,
+so public requests do not reach this proxy; it is the fallback when that route
+is switched off.
+
+Gated under the shared production deploy lock, held from the first check to the
+end of verification: before deploy-one, all 437 tracked files of ``2a2d4d4``
+matched on the host; the pyinfra-check table equalled the reviewed one row for
+row (only ``Install ca-certificates`` may vary with the apt cache); and a
+file-level rsync dry run with the deploy's arguments transferred exactly the
+six changed files. Verified after the deploy: all 437 tracked files on the host
+equal ``5385441``; both units got new PIDs and kept them for 120 seconds; the
+front page, the blog RSS feed and the portfolio host answered 200; the journal
+of both units since the deploy holds no traceback or error; and a GET of
+``/.well-known/nodeinfo`` on the gunicorn origin (``127.0.0.1:10013``, every
+listener in ``homepage.service``) answered 200 from the Django proxy
+(``Vary: Accept``) with the upstream's ``Cache-Control`` and the same body as a
+direct request to the fedi host. This is a regression check of the changed
+fetch path; the late-deadline ``504`` and the resolver ``502`` need fault
+injection and are covered by the tests only.
+
+Rollback: ``just deploy-one homepage production`` from a fresh ops-control
+worktree, with ``PROJECTS_ROOT`` pointing at the parent of a clean checkout of
+``2a2d4d4``. No database step and no static rebuild are needed.
+
 2026-11-25 Fediverse proxy cache directives and response close
 --------------------------------------------------------------
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Read only the requested development log tail and accept zero lines as an
+  empty view. Reject negative line counts.
+
 - Reject incomplete cover image staging before creating an image or updating
   the blog cover.
 - Disconnect both temporary cover upload receivers if registration fails

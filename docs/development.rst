@@ -95,9 +95,9 @@ Viewing Logs
 ~~~~~~~~~~~~
 
 * ``just logs`` - View last 50 lines of the log file
-* ``just logs -n 100`` - View last 100 lines
+* ``just logs -n 100`` - View last 100 lines (use ``-n 0`` for no output)
 * ``just logs-follow`` - Follow logs in real-time (like ``tail -f``)
-* ``just logs-grep ERROR`` - Filter logs for specific patterns
+* ``just logs-grep ERROR`` - Filter the last 50 lines for literal text, ignoring case
 
 Django Management
 ~~~~~~~~~~~~~~~~~

@@ -108,7 +108,10 @@ Terminal output stays live.
 The active log rotates at 5 MiB into ``dev.log.1`` and ``dev.log.2``: at most
 three files and 15 MiB of log content, with UTF-8 boundaries preserved. These
 names belong to the runner. Startup resets the active log; backups remain until
-rotation replaces them. ``just logs`` reads the active file; reopen or restart
+rotation replaces them. ``just logs`` shows the last 50 lines of the active file
+by default. Use ``just logs -n 0`` for an empty view. Counts must be non-negative,
+and ``just logs -g TEXT`` applies a case-insensitive literal filter to the selected
+lines. Reopen or restart
 ``just logs-follow`` after rotation to follow the new active file.
 
 ``just cleanup`` signals only the runner recorded in ``logs/dev.json`` after

@@ -11,7 +11,7 @@ from django.core.files.storage import FileSystemStorage, InMemoryStorage, defaul
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import transaction
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from PIL import Image as PILImage
 from wagtail.actions.publish_page_revision import PublishPagePermissionError
 from wagtail.images import get_image_model
@@ -334,6 +334,20 @@ def test_oversized_cover_is_rejected_before_publication(blog, new_cover_path, st
     assert_source_rejected_before_publication(blog, new_cover_path, storage, monkeypatch, "exceeds")
 
 
+@pytest.mark.parametrize("reports_full_write", [False, True], ids=["short-write", "short-extent"])
+def test_incomplete_stage_is_rejected_before_publication(
+    blog, new_cover_path, storage, monkeypatch, reports_full_write
+):
+    class ShortStage(io.BytesIO):
+        def write(self, chunk):
+            written = super().write(chunk[:-1])
+            return len(chunk) if reports_full_write else written
+
+    with ShortStage() as staged:
+        monkeypatch.setattr(cover_command, "TemporaryFile", lambda: staged)
+        assert_source_rejected_before_publication(blog, new_cover_path, storage, monkeypatch, "Could not stage")
+
+
 def assert_source_rejected_before_publication(blog, path, storage, monkeypatch, message):
     before = stored_names(storage)
     cover_id = blog.cover_image_id
@@ -416,6 +430,54 @@ def test_storage_save_is_restored_after_the_command(blog, new_cover_path, storag
 
     assert storage.save == save_before
     assert "save" not in vars(storage)
+
+
+@pytest.mark.parametrize("register_rendition", [False, True], ids=["before-connect", "after-connect"])
+def test_failed_cover_signal_registration_retires_receivers(
+    blog, new_cover_path, storage, monkeypatch, register_rendition
+):
+    Image = get_image_model()
+    Rendition = Image.get_rendition_model()
+    cover_id = blog.cover_image_id
+    before = stored_names(storage)
+    connect = pre_save.connect
+    registered = []
+    error = RuntimeError("rendition receiver registration failed")
+
+    def fail_rendition_connect(receiver, sender, **kwargs):
+        registered.append((receiver, sender))
+        if sender is not Rendition or register_rendition:
+            connect(receiver, sender=sender, **kwargs)
+        if sender is Rendition:
+            raise error
+
+    with monkeypatch.context() as patch:
+        patch.setattr(pre_save, "connect", fail_rendition_connect)
+        with pytest.raises(RuntimeError, match="rendition receiver registration failed") as caught:
+            run(new_cover_path)
+
+    # Django returns True only if a receiver was still registered and had to be removed.
+    leaked = [sender for receiver, sender in registered if pre_save.disconnect(receiver, sender=sender)]
+    assert leaked == []
+    assert caught.value is error
+    assert stored_names(storage) == before
+    blog.refresh_from_db()
+    assert blog.cover_image_id == cover_id
+
+    recorders = []
+    make_recorder = cover_command._CoverUploadStorage
+
+    def record_storage(backend):
+        recorder = make_recorder(backend)
+        recorders.append(recorder)
+        return recorder
+
+    monkeypatch.setattr(cover_command, "_CoverUploadStorage", record_storage)
+    run(new_cover_path)
+    blog.refresh_from_db()
+
+    assert blog.cover_image_id != cover_id
+    assert [len(recorder.saved_names) for recorder in recorders] == [1, 1]
 
 
 def test_recorder_uses_lazy_default_storage_without_intercepting_other_saves():

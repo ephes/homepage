@@ -342,8 +342,10 @@ Before opening the publication transaction, the command opens the source once
 and stages its bytes privately. The source must be a nonempty regular file
 within ``WAGTAILIMAGES_MAX_UPLOAD_SIZE`` (60 MiB in this project and also the
 command's fallback if the setting is disabled). Special files and sources
-that change during staging are refused. Changes to the original file after
-staging do not affect the upload.
+that change during staging are refused. Each staging write must accept the
+full chunk, and the staged file must match the source byte count before the
+command hands it to Wagtail. Changes to the original file after staging do
+not affect the upload.
 
 The image is uploaded through the image model, so django-cast strips EXIF GPS
 data from it like from any other upload. The command stores the image file
@@ -357,7 +359,9 @@ not publish the page, recovery distinguishes database rollback from storage clea
   previous cover image and alt text;
 * the cover and its required rendition use random operation basenames. Only
   their storage receipts are tracked, so other uploads on the same backend are
-  unaffected. A returned name is eligible for cleanup on
+  unaffected. The command disconnects both temporary upload recorders even if
+  registration fails partway and reports the registration error. A returned
+  name is eligible for cleanup on
   standard FileSystemStorage configured with ``allow_overwrite=False``. That
   backend guarantees exclusive creation even during a naming race. Generic,
   custom and overwrite-capable backends (including S3) do not provide that

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Reject incomplete cover image staging before creating an image or updating
+  the blog cover.
+- Disconnect both temporary cover upload receivers if registration fails
+  partway through.
+
 - Bind weeknote scans, locks and reloads to one writer and reject routes that
   conflict with Wagtail's revision API.
 

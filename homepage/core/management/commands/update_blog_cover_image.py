@@ -44,7 +44,8 @@ def _stage_source(path, staged):
                 chunk = source.read(min(remaining, 1024 * 1024))
                 if not chunk:
                     raise CommandError(f"Image file changed while being read: {path}")
-                staged.write(chunk)
+                if staged.write(chunk) != len(chunk):
+                    raise CommandError(f"Could not stage image file {path}: short write")
                 remaining -= len(chunk)
             after = os.fstat(source.fileno())
             if (after.st_size, after.st_mtime_ns, after.st_ctime_ns) != (
@@ -53,11 +54,13 @@ def _stage_source(path, staged):
                 before.st_ctime_ns,
             ):
                 raise CommandError(f"Image file changed while being read: {path}")
+            if staged.seek(0, os.SEEK_END) != before.st_size:
+                raise CommandError(f"Could not stage image file {path}: staged size does not match source")
+            staged.seek(0)
     except FileNotFoundError as exc:
         raise CommandError(f"Image file does not exist: {path}") from exc
     except OSError as exc:
         raise CommandError(f"Could not stage image file {path}: {exc}") from exc
-    staged.seek(0)
 
 
 class _CoverUploadStorage:
@@ -101,9 +104,9 @@ def _record_cover_uploads(image, uploads):
         attached.append((file, recorder.backend))
         file.storage = recorder
 
-    pre_save.connect(attach_recorder, sender=Image)
-    pre_save.connect(attach_recorder, sender=Rendition)
     try:
+        pre_save.connect(attach_recorder, sender=Image)
+        pre_save.connect(attach_recorder, sender=Rendition)
         yield
     finally:
         pre_save.disconnect(attach_recorder, sender=Image)

@@ -113,6 +113,10 @@ def convert_overview_blocks(blocks: list[dict[str, Any]]) -> OverviewConversion:
     )
 
 
+# ASCII whitespace as defined by HTML; ``str.strip()`` would also remove U+00A0.
+HTML_WHITESPACE = " \t\n\r\f"
+
+
 def convert_paragraph_html(source_html: str) -> OverviewConversion:
     soup = BeautifulSoup(source_html, "html.parser")
     nodes = list(soup.contents)
@@ -125,7 +129,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
     index = 0
 
     def flush_html() -> None:
-        html_fragment = "".join(pending_html).strip()
+        html_fragment = "".join(pending_html).strip(HTML_WHITESPACE)
         pending_html.clear()
         if html_fragment:
             output.append(_block("paragraph", html_fragment))
@@ -438,7 +442,8 @@ def _has_markup(node: Tag) -> bool:
 
 
 def _is_blank_text(node: Any) -> bool:
-    return type(node) is NavigableString and not node.strip()
+    # Only collapsible HTML whitespace is blank; a nonbreaking space is visible content.
+    return type(node) is NavigableString and not node.strip(HTML_WHITESPACE)
 
 
 def _has_fragment_target(element: Tag) -> bool:

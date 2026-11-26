@@ -53,6 +53,23 @@ def test_convert_paragraph_html_merges_consecutive_link_sections_and_preserves_s
     assert values[1]["source"] == "Example"
 
 
+@pytest.mark.parametrize(
+    ("prose", "expected"),
+    [
+        ("&nbsp;Indented text", "\xa0Indented text"),
+        ("&nbsp;", "\xa0"),
+        ("Trailing space&nbsp;", "Trailing space\xa0"),
+    ],
+)
+def test_convert_paragraph_html_keeps_nonbreaking_spaces_in_top_level_prose(prose, expected):
+    conversion = convert_paragraph_html(
+        f'{prose}<h2>Articles</h2><ul><li><a href="https://example.com/a">Article A</a></li></ul>'
+    )
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    assert conversion.blocks[0]["value"] == expected
+
+
 def test_convert_paragraph_html_does_not_collapse_across_intervening_prose():
     conversion = convert_paragraph_html(
         '<h2>Articles</h2><ul><li><a href="https://example.com/a">Article A</a></li></ul>'

@@ -182,7 +182,8 @@ Only top-level ``h2`` and ``h3`` headings can start a link section. The
 converter skips blank text between the heading and its list and scans the
 following nodes in place. Comments are preserved as HTML and interrupt this
 lookahead. When nearby sections convert, top-level prose keeps escaped
-characters as literal text and comments remain hidden.
+characters as literal text, comments remain hidden and nonbreaking spaces at
+the edges of the prose are kept; only HTML whitespace counts as blank.
 
 The converter never drops content it cannot represent. A heading and its list
 are converted together. A refused section stays in the surrounding rich-text

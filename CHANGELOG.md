@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Keep a weeknote link section as rich text when a nonbreaking, em or other
+  visible space sits directly between its list items, instead of dropping that
+  space during conversion. Only HTML whitespace between items still counts as
+  blank.
+
 - Keep the order and headings of adjacent weeknote link sections when
   converting them: every converted section becomes its own structured block, so
   a Software, Articles, Software sequence no longer turns into Articles,

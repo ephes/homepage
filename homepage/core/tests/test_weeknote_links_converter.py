@@ -509,13 +509,39 @@ def test_convert_paragraph_html_keeps_stray_list_content_next_to_converted_secti
 def test_convert_paragraph_html_allows_whitespace_between_list_items():
     conversion = convert_paragraph_html(
         "<h2>Articles</h2>\n<ul>\n  "
-        '<li><a href="https://example.test/a">A</a></li>\n\t&nbsp;'
+        '<li><a href="https://example.test/a">A</a></li>\n\t\r\f '
         '<li><a href="https://example.test/b">B</a></li>\n</ul>'
     )
 
     assert conversion.changed is True
     assert conversion.warnings == []
     assert [item["title"] for item in _weeknote_values(conversion.blocks[0])] == ["A", "B"]
+
+
+@pytest.mark.parametrize(
+    ("visible_space", "character"),
+    [("&nbsp;", "\xa0"), ("&emsp;", "\u2003"), ("\u3000", "\u3000"), ("\n&nbsp;\n", "\xa0")],
+)
+def test_convert_paragraph_html_keeps_list_with_visible_space_between_items_as_prose(visible_space, character):
+    visible_list = (
+        "<h2>Articles</h2><ul>"
+        '<li><a href="https://example.test/a">A</a></li>'
+        f"{visible_space}"
+        '<li><a href="https://example.test/b">B</a></li></ul>'
+    )
+    source = visible_list + '<h2>Software</h2><ul><li><a href="https://example.test/tool">Tool</a></li></ul>'
+
+    conversion = convert_paragraph_html(source)
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    preserved = conversion.blocks[0]["value"]
+    assert preserved == str(BeautifulSoup(visible_list, "html.parser"))
+    assert character in BeautifulSoup(preserved, "html.parser").ul.get_text()
+    assert [item["title"] for item in _weeknote_values(conversion.blocks[1])] == ["Tool"]
+    assert conversion.converted_sections == 1
+    assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
+        ("Articles", "List section has text outside list items.")
+    ]
 
 
 @pytest.mark.parametrize(

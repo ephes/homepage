@@ -189,10 +189,11 @@ converter skips blank text between the heading and its list and scans the
 following nodes in place. Comments are preserved as HTML and interrupt this
 lookahead. When nearby sections convert, top-level prose keeps escaped
 characters as literal text, comments remain hidden and nonbreaking spaces at
-the edges of the prose are kept. Between top-level nodes only HTML whitespace
-counts as blank, so a nonbreaking space between a heading and its list keeps the
-section as rich text. Inside a list, a nonbreaking space between items is still
-ignored.
+the edges of the prose are kept. Between top-level nodes and between list items
+only HTML whitespace (space, tab, line feed, carriage return, form feed) counts
+as blank, so a nonbreaking space, an em space or another visible space between
+a heading and its list or between two list items keeps the section as rich
+text.
 
 The converter never drops content it cannot represent. A heading and its list
 are converted together. A refused section, including the blank text between its
@@ -213,8 +214,8 @@ section heading. The following conditions prevent conversion.
   renders its category heading from a fixed label, so that markup could not be
   kept;
 * the list holds anything but list items as direct children: text, another
-  element such as a ``div`` or a link, or an HTML comment. Whitespace between
-  items is fine;
+  element such as a ``div`` or a link, an HTML comment, or a visible space such
+  as ``&nbsp;``. HTML whitespace between items is fine;
 * an item's primary link holds anything but plain text (an image, ``code``,
   emphasis, a comment): ``title`` is a plain-text field;
 * an item has no primary link, rich markup before its primary link, or a

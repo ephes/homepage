@@ -119,7 +119,7 @@ parent of a clean checkout of the reverted commit. No database step and no
 static rebuild are needed.
 
 2026-11-26 Lossless weeknote prose and attributed sections
----------------------------------------------------------
+----------------------------------------------------------
 
 Deployed ``3d35925`` (last recorded deploy ``7b5d19e``) on 2026-11-26 at 13:08
 as a routine code-only deploy. The change sits in the manually run

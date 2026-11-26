@@ -95,6 +95,32 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-26 Lossless weeknote prose and attributed sections
+---------------------------------------------------------
+
+Deployed ``3d35925`` (last recorded deploy ``7b5d19e``) on 2026-11-26 at 13:08
+as a routine code-only deploy. The change sits in the manually run
+``convert_weeknote_links`` command: top-level prose next to a converted section
+keeps escaped text, HTML comments and nonbreaking spaces; a refused section
+keeps the blank text between its heading and list; sections whose heading,
+list, items, primary or source links carry attributes the structured block
+cannot keep stay rich text. No service code path changes. No migration,
+settings, static file, dependency or unit change; ops-control ran at
+``8bb3ca0d``.
+
+Verified after the deploy: ``converter.py``, ``CHANGELOG.md``,
+``docs/weeknote_links.rst`` and ``uv.lock`` on the host equal ``3d35925``; both
+units are active with new PIDs and ``NRestarts=0``; the journal of both units
+since the deploy holds no warning or error; the front page, the blog and its
+RSS feed answered 200. The command was not run.
+
+Rollback, only after the owner authorizes it: revert the commits from
+``81ce3c7`` to ``3d35925`` on main, then run
+``just pyinfra-check homepage production`` and
+``just deploy-one homepage production`` with ``PROJECTS_ROOT`` pointing at the
+parent of a clean export of the reverted commit. No database step and no
+static rebuild are needed.
+
 2026-11-26 Cover image staging checks
 -------------------------------------
 

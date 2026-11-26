@@ -291,6 +291,28 @@ def test_convert_paragraph_html_keeps_attributed_section_as_prose(tag, attrs):
     assert [warning.heading for warning in conversion.warnings] == ["Articles"]
 
 
+def test_convert_paragraph_html_extracts_source_after_blank_comment():
+    conversion = convert_paragraph_html(
+        '<h2>Articles</h2><ul><li><a href="https://example.test/a">A</a><!-- -->'
+        ' (<a href="https://example.test/source">Source</a>)</li></ul>'
+    )
+
+    item = _weeknote_values(conversion.blocks[0])[0]
+    assert (item["source"], item["source_url"]) == ("Source", "https://example.test/source")
+
+
+def test_convert_paragraph_html_keeps_attributed_source_after_blank_comment_as_prose():
+    section = (
+        '<h2>Articles</h2><ul><li><a href="https://example.test/a">A</a><!-- -->'
+        ' (<a href="https://example.test/source" hreflang="fr">Source</a>)</li></ul>'
+    )
+
+    conversion = convert_paragraph_html(section)
+
+    assert conversion.changed is False
+    assert conversion.converted_sections == 0
+
+
 def test_convert_paragraph_html_only_looks_ahead_from_headings_without_slicing(monkeypatch):
     class TrackedNodes(list):
         reads = 0

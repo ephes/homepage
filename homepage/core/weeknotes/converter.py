@@ -467,8 +467,10 @@ def _next_meaningful_node(nodes: list[Any], start: int) -> tuple[int, Any | None
 
 
 def _first_nonblank_index(nodes: list[Any]) -> int | None:
+    # A whitespace-only comment before the parenthesized source does not hide
+    # the source; it stays in the description HTML.
     for index, node in enumerate(nodes):
-        if not _is_blank_text(node):
+        if not (isinstance(node, NavigableString) and not str(node).strip()):
             return index
     return None
 

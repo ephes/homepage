@@ -5,6 +5,8 @@ Shows the last N lines from dev.log and can filter by patterns.
 """
 
 import argparse
+import subprocess
+from collections.abc import Iterable
 from io import StringIO
 from os import SEEK_END
 from pathlib import Path
@@ -39,7 +41,27 @@ def read_tail(log_file: Path, lines: int) -> str:
     return b"".join(reversed(chunks)).decode("utf-8")
 
 
-def view_logs(lines=50, grep=None, follow=False):
+def print_matches(lines: Iterable[str], pattern: str, *, flush: bool = False) -> None:
+    needle = pattern.lower()
+    for line in lines:
+        if needle in line.lower():
+            print(line, end="", flush=flush)
+
+
+def follow_log(log_file: Path, lines: int, grep: str | None) -> int:
+    cmd = ["tail", "-n", str(lines), "-F", str(log_file)]
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE if grep else None, encoding="utf-8", errors="replace") as tail:
+        try:
+            if grep and tail.stdout is not None:
+                print_matches(tail.stdout, grep, flush=True)
+            return tail.wait()
+        finally:
+            if tail.poll() is None:
+                tail.terminate()
+                tail.wait()
+
+
+def view_logs(lines: int = 50, grep: str | None = None, follow: bool = False) -> int:
     if lines < 0:
         raise ValueError("line count must be non-negative")
     log_file = Path("logs/dev.log")
@@ -47,35 +69,29 @@ def view_logs(lines=50, grep=None, follow=False):
     if not log_file.exists():
         print(f"No log file found at {log_file}")
         print("Run ./run_dev.sh first to start logging")
-        return
+        return 0
 
     if follow:
-        # For following, we'll use tail
-        import subprocess
+        return follow_log(log_file, lines, grep)
 
-        cmd = ["tail", "-f", str(log_file)]
-        if grep:
-            # Add grep to filter
-            cmd = ["tail", "-f", str(log_file), "|", "grep", "--line-buffered", grep]
-            cmd = " ".join(cmd)
-            subprocess.run(cmd, shell=True)
-        else:
-            subprocess.run(cmd)
+    tail = read_tail(log_file, lines)
+    if grep:
+        print_matches(StringIO(tail), grep)
     else:
-        tail = read_tail(log_file, lines)
-        if grep:
-            needle = grep.lower()
-            tail = "".join(line for line in StringIO(tail) if needle in line.lower())
         print(tail, end="")
+    return 0
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="View development logs")
     parser.add_argument("-n", "--lines", type=int, default=50, help="Number of lines to show")
     parser.add_argument("-g", "--grep", help="Filter lines containing this pattern")
-    parser.add_argument("-f", "--follow", action="store_true", help="Follow log file (like tail -f)")
+    parser.add_argument("-f", "--follow", action="store_true", help="Follow the active log through rotation")
 
     args = parser.parse_args()
     if args.lines < 0:
         parser.error("line count must be non-negative")
-    view_logs(args.lines, args.grep, args.follow)
+    try:
+        raise SystemExit(view_logs(args.lines, args.grep, args.follow))
+    except KeyboardInterrupt:
+        raise SystemExit(130) from None

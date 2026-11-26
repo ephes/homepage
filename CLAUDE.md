@@ -10,8 +10,8 @@ When you need to debug issues or see what's happening:
 - Use the provided commands:
   - `just logs` - View last 50 lines
   - `just logs -n 100` - View last 100 lines
-  - `just logs-follow` - Watch logs in real-time
-  - `just logs-grep ERROR` - Filter for specific patterns
+  - `just logs-follow` - Watch the active log through rotation
+  - `just logs-grep ERROR` - Filter the last 50 lines for literal text, ignoring case
 - The log file contains output from all services with ANSI colors stripped
 - Browser console messages can be accessed via Playwright MCP's `browser_console_messages()` function
 

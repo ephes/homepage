@@ -82,20 +82,19 @@ jupyter:
     uv run python commands.py jupyterlab
 
 # View logs
+[positional-arguments]
 logs *ARGS:
-    @if [ -f logs/dev.log ]; then \
-        python view_logs.py {{ARGS}}; \
-    else \
-        echo "No log file found. Run 'just dev' first."; \
-    fi
+    @exec python3 view_logs.py "$@"
 
 # Follow logs in real-time
-logs-follow:
-    @just logs -f
+[positional-arguments]
+logs-follow *ARGS:
+    @exec just logs -f "$@"
 
 # Filter logs
+[positional-arguments]
 logs-grep PATTERN:
-    @just logs -g "{{PATTERN}}"
+    @exec just logs --grep="$1"
 
 # Run Django management commands
 manage *ARGS:

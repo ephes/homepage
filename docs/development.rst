@@ -96,7 +96,8 @@ Viewing Logs
 
 * ``just logs`` - View last 50 lines of the log file
 * ``just logs -n 100`` - View last 100 lines (use ``-n 0`` for no output)
-* ``just logs-follow`` - Follow logs in real-time (like ``tail -f``)
+* ``just logs-follow`` - Show the last 50 lines and follow the active file through rotation
+* ``just logs-follow -n 0 -g 'error [django]'`` - Follow new lines containing the quoted text, ignoring case
 * ``just logs-grep ERROR`` - Filter the last 50 lines for literal text, ignoring case
 
 Django Management
@@ -520,8 +521,8 @@ Terminal output stays live.
 The active log rotates at 5 MiB into ``dev.log.1`` and ``dev.log.2``: at most
 three files and 15 MiB of log content, with UTF-8 boundaries preserved. These
 names belong to the runner. Startup resets the active log; backups remain until
-rotation replaces them. ``just logs`` reads the active file; reopen or restart
-``just logs-follow`` after rotation to follow the new active file.
+rotation replaces them. ``just logs`` reads the active file.
+``just logs-follow`` switches to the replacement as it appears.
 
 The log file is git-ignored and perfect for debugging or for AI assistants to read when helping with development.
 

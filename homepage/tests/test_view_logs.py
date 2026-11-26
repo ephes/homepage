@@ -1,6 +1,10 @@
+import os
+import signal
 import subprocess
 import sys
+from contextlib import suppress
 from pathlib import Path
+from select import select
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -65,3 +69,38 @@ def test_filter_is_literal_and_limited_to_selected_tail(log_path, capsys):
     view_logs.view_logs(lines=2, grep="[match]")
 
     assert capsys.readouterr().out == "[MATCH] selected\n"
+
+
+@pytest.mark.parametrize("filtered", [False, True])
+def test_follow_reopens_rotated_log_and_limits_initial_tail(log_path, filtered):
+    log_path.write_text(
+        "[match] tag outside backlog\nmatch tag without brackets\n[MATCH] TAG initial\n" if filtered else "initial\n",
+        encoding="utf-8",
+    )
+    args = ["-n", "2", "-g", "[match] tag"] if filtered else ["-n", "1"]
+    with subprocess.Popen(
+        [sys.executable, view_logs.__file__, "-f", *args],
+        stdout=subprocess.PIPE,
+        bufsize=0,
+        start_new_session=True,
+    ) as viewer:
+        try:
+            assert select([viewer.stdout], [], [], 8)[0], "viewer did not print the initial tail"
+            assert viewer.stdout.readline() == (b"[MATCH] TAG initial\n" if filtered else b"initial\n")
+
+            log_path.rename(log_path.with_suffix(".log.1"))
+            log_path.write_text(
+                "match tag without brackets\n[MaTcH] tAg replacement\n" if filtered else "replacement\n",
+                encoding="utf-8",
+            )
+            assert select([viewer.stdout], [], [], 8)[0], "viewer did not reopen the active path"
+            assert viewer.stdout.readline() == (b"[MaTcH] tAg replacement\n" if filtered else b"replacement\n")
+
+            # Signal only Python so the test requires the viewer to retire its own tail.
+            viewer.send_signal(signal.SIGINT)
+            assert viewer.wait(timeout=5) == 130
+            assert select([viewer.stdout], [], [], 1)[0], "tail still holds the output pipe open"
+            assert viewer.stdout.read(1) == b""
+        finally:
+            with suppress(ProcessLookupError):
+                os.killpg(viewer.pid, signal.SIGKILL)

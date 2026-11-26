@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Follow the active development log through rotation with the requested initial
+  line count and a case-insensitive literal filter.
+
 - Read only the requested development log tail and accept zero lines as an
   empty view. Reject negative line counts.
 

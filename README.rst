@@ -111,8 +111,10 @@ names belong to the runner. Startup resets the active log; backups remain until
 rotation replaces them. ``just logs`` shows the last 50 lines of the active file
 by default. Use ``just logs -n 0`` for an empty view. Counts must be non-negative,
 and ``just logs -g TEXT`` applies a case-insensitive literal filter to the selected
-lines. Reopen or restart
-``just logs-follow`` after rotation to follow the new active file.
+lines. ``just logs-follow`` starts with the same 50-line window and keeps
+following the active path when the runner rotates it. Pass ``-n 0`` to show only
+new output, and ``-g TEXT`` to filter the initial window and subsequent lines.
+Quote filter text that contains spaces or shell punctuation.
 
 ``just cleanup`` signals only the runner recorded in ``logs/dev.json`` after
 checking its PID, creation time, command and checkout. The runner stops its own

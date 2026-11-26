@@ -2,11 +2,13 @@
 
 ## Unreleased
 
-- Keep crawlers that honour `robots.txt` out of the blog index filter URLs
-  (`Disallow: /*?*_facets=`). Filter URLs (every `date_facets`/`tag_facets`/
-  `category_facets` combination) were about 40% of all requests, and about 45%
-  of those came from such crawlers. Unfiltered blog indexes, their pagination,
-  posts and feeds stay crawlable.
+- Keep crawlers that honour `robots.txt` out of the blog index filter URLs:
+  `robots.txt` now disallows the `date_facets`, `tag_facets` and
+  `category_facets` query parameters, as first (`/*?tag_facets=`) or later
+  (`/*?*&tag_facets=`) parameter. Filter URLs were about 40% of all requests,
+  and about 45% of those came from such crawlers. Unfiltered blog indexes, their
+  pagination, posts, feeds and other query parameters (such as
+  `utm_tag_facets`) stay crawlable.
 
 - Keep weeknote sections as rich text when their heading, list, items or
   primary or source links carry attributes the structured block would discard.

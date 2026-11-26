@@ -183,7 +183,10 @@ converter skips blank text between the heading and its list and scans the
 following nodes in place. Comments are preserved as HTML and interrupt this
 lookahead. When nearby sections convert, top-level prose keeps escaped
 characters as literal text, comments remain hidden and nonbreaking spaces at
-the edges of the prose are kept; only HTML whitespace counts as blank.
+the edges of the prose are kept. Between top-level nodes only HTML whitespace
+counts as blank, so a nonbreaking space between a heading and its list keeps the
+section as rich text. Inside a list, a nonbreaking space between items is still
+ignored.
 
 The converter never drops content it cannot represent. A heading and its list
 are converted together. A refused section stays in the surrounding rich-text

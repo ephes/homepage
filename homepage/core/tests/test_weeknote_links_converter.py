@@ -70,6 +70,15 @@ def test_convert_paragraph_html_keeps_nonbreaking_spaces_in_top_level_prose(pros
     assert conversion.blocks[0]["value"] == expected
 
 
+def test_convert_paragraph_html_keeps_section_with_nonbreaking_space_before_list_as_prose():
+    source = '<h2>Articles</h2>&nbsp;<ul><li><a href="https://example.com/a">Article A</a></li></ul>'
+
+    conversion = convert_paragraph_html(source)
+
+    assert conversion.changed is False
+    assert conversion.converted_sections == 0
+
+
 def test_convert_paragraph_html_does_not_collapse_across_intervening_prose():
     conversion = convert_paragraph_html(
         '<h2>Articles</h2><ul><li><a href="https://example.com/a">Article A</a></li></ul>'

@@ -142,7 +142,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
 
     while index < len(nodes):
         node = nodes[index]
-        if _is_blank_text(node):
+        if _is_top_level_blank_text(node):
             if pending_html:
                 pending_html.append(_serialize_node(node))
             index += 1
@@ -442,7 +442,12 @@ def _has_markup(node: Tag) -> bool:
 
 
 def _is_blank_text(node: Any) -> bool:
-    # Only collapsible HTML whitespace is blank; a nonbreaking space is visible content.
+    return type(node) is NavigableString and not node.strip()
+
+
+def _is_top_level_blank_text(node: Any) -> bool:
+    # Top-level prose is kept verbatim, so only collapsible HTML whitespace is
+    # blank there; a nonbreaking space is visible content.
     return type(node) is NavigableString and not node.strip(HTML_WHITESPACE)
 
 
@@ -456,7 +461,7 @@ def _has_fragment_target(element: Tag) -> bool:
 def _next_meaningful_node(nodes: list[Any], start: int) -> tuple[int, Any | None]:
     for index in range(start, len(nodes)):
         node = nodes[index]
-        if not _is_blank_text(node):
+        if not _is_top_level_blank_text(node):
             return index, node
     return -1, None
 

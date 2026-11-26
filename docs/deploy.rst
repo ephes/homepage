@@ -95,6 +95,35 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-26 Cover image staging checks
+-------------------------------------
+
+Deployed ``7b5d19e`` over ``7cdbd2b`` on 2026-11-26 at 04:01 as a routine
+code-only deploy. The change sits in the manually run
+``update_blog_cover_image`` command: every staging write must accept the full
+chunk and the staged file must match the source byte count before the image is
+handed to Wagtail, and both temporary ``pre_save`` upload receivers are
+disconnected even if registering the second one fails. No service code path
+changes. No migration, settings, static file, dependency or unit change;
+ops-control ran at ``204ad6b6``, and the pyinfra-check table was byte-equal to
+the one of the previous deploy.
+
+Verified after the deploy: ``update_blog_cover_image.py``, ``CHANGELOG.md``,
+``docs/development.rst`` and ``uv.lock`` on the host equal ``7b5d19e``; both
+units got new PIDs with ``NRestarts=0``; ``manage.py check`` under production
+settings reports no issue; a read-only import probe
+(``default_transaction_read_only=on``) shows the deployed command carries the
+short-write and staged-size checks and connects the receivers inside the
+``try`` block; the front page, the blog, its RSS feed, a post and the portfolio
+host answered 200; the journal of both units since the deploy holds no warning
+or error. The command was not run.
+
+Rollback, only after the owner authorizes it: revert ``7b5d19e`` on main, then
+run ``just pyinfra-check homepage production`` and
+``just deploy-one homepage production`` with ``PROJECTS_ROOT`` pointing at the
+parent of a clean export of the reverted commit. No database step and no
+static rebuild are needed.
+
 2026-11-26 Weeknote link conversion fidelity
 --------------------------------------------
 

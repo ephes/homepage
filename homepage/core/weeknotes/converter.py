@@ -134,6 +134,11 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
         if html_fragment:
             output.append(_block("paragraph", html_fragment))
 
+    def preserve_section() -> None:
+        # Keep the heading, the list and the blank text between them verbatim.
+        for position in range(index, next_index + 1):
+            pending_html.append(_serialize_node(nodes[position]))
+
     def flush_links() -> None:
         if not pending_links:
             return
@@ -153,8 +158,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             heading = _normalized_text(node)
             if heading.lower() in AMBIGUOUS_HEADINGS:
                 flush_links()
-                pending_html.append(_serialize_node(node))
-                pending_html.append(_serialize_node(next_node))
+                preserve_section()
                 warnings.append(ConversionWarning("Ambiguous link heading preserved.", heading=heading))
                 index = next_index + 1
                 continue
@@ -176,8 +180,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 heading_warning = "Link heading has markup that the category heading cannot keep."
             if heading_warning:
                 flush_links()
-                pending_html.append(_serialize_node(node))
-                pending_html.append(_serialize_node(next_node))
+                preserve_section()
                 warnings.append(ConversionWarning(heading_warning, heading=heading))
                 index = next_index + 1
                 continue
@@ -185,16 +188,14 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             section = _convert_list(next_node, category=category, heading=heading)
             if section.warnings:
                 flush_links()
-                pending_html.append(_serialize_node(node))
-                pending_html.append(_serialize_node(next_node))
+                preserve_section()
                 warnings.extend(section.warnings)
                 index = next_index + 1
                 continue
             validation_warning = _validation_warning(section.items, heading=heading)
             if validation_warning is not None:
                 flush_links()
-                pending_html.append(_serialize_node(node))
-                pending_html.append(_serialize_node(next_node))
+                preserve_section()
                 warnings.append(validation_warning)
                 index = next_index + 1
                 continue

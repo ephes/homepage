@@ -291,6 +291,16 @@ def test_convert_paragraph_html_keeps_attributed_section_as_prose(tag, attrs):
     assert [warning.heading for warning in conversion.warnings] == ["Articles"]
 
 
+def test_convert_paragraph_html_keeps_whitespace_inside_refused_section():
+    refused = '<h2 lang="de">Articles</h2> <ul dir="rtl"><li><a href="https://example.test/a">A</a></li></ul>'
+    plain = '<h3>Software</h3><ul><li><a href="https://example.test/tool">Tool</a></li></ul>'
+
+    conversion = convert_paragraph_html(refused + plain)
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    assert conversion.blocks[0]["value"] == refused
+
+
 def test_convert_paragraph_html_extracts_source_after_blank_comment():
     conversion = convert_paragraph_html(
         '<h2>Articles</h2><ul><li><a href="https://example.test/a">A</a><!-- -->'
@@ -353,7 +363,7 @@ def test_convert_paragraph_html_only_looks_ahead_from_headings_without_slicing(m
     assert (before["type"], before["value"]) == ("paragraph", intro)
     assert links["type"] == "weeknote_links"
     assert [item["title"] for item in _weeknote_values(links)] == ["Article", "Tool"]
-    assert (after["type"], after["value"]) == ("paragraph", ambiguous_heading + article_list + trailing_heading)
+    assert (after["type"], after["value"]) == ("paragraph", ambiguous_heading + "\n" + article_list + trailing_heading)
     assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
         ("Podcasts / Videos", "Ambiguous link heading preserved.")
     ]

@@ -189,7 +189,8 @@ section as rich text. Inside a list, a nonbreaking space between items is still
 ignored.
 
 The converter never drops content it cannot represent. A heading and its list
-are converted together. A refused section stays in the surrounding rich-text
+are converted together. A refused section, including the blank text between its
+heading and list, stays in the surrounding rich-text
 paragraph in its original position, and the report gets a warning with the
 section heading. The following conditions prevent conversion.
 

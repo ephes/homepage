@@ -6,7 +6,8 @@
   primary or source links carry attributes the structured block would discard.
 
 - Preserve escaped top-level prose, HTML comments and nonbreaking spaces when
-  converting weeknotes.
+  converting weeknotes, and keep the blank text between the heading and list of
+  a section that stays rich text.
 
 - Follow the active development log through rotation with the requested initial
   line count and a case-insensitive literal filter.

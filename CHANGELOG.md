@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use the rendition writer database for the entire missing-rendition repair.
+
 - Recover complete weeknote receipt frames before a torn final frame.
 
 - Report retained weeknote journals and known committed revisions on Ctrl-C.

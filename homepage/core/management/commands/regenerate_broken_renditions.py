@@ -5,9 +5,11 @@ from pathlib import Path
 from shlex import quote
 from uuid import uuid4
 
-from cast.models import Blog, Post
+from cast.models import Blog, Gallery, Post
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connections, transaction
+from django.db import connections, router, transaction
+from django.db.models import Prefetch
+from wagtail.images import get_image_model
 
 
 @dataclass
@@ -53,6 +55,21 @@ def _purge_repaired_rendition(rendition, alias, result: RepairResult) -> None:
         result.cache_pending.append((alias, rendition.pk, rendition.file.name, repr(error)[:300]))
 
 
+def _repair_alias(rendition_model, *, instance=None):
+    alias = (
+        router.db_for_write(rendition_model)
+        if instance is None
+        else router.db_for_write(rendition_model, instance=instance)
+    )
+    if alias not in connections:
+        raise CommandError(f"Unknown rendition writer database alias: {alias!r}")
+    if instance is not None and instance._state.db != alias:
+        raise CommandError(f"Rendition repair requires the source to be loaded from writer database {alias!r}")
+    if not transaction.get_autocommit(using=alias):
+        raise CommandError(f"Rendition repair requires autocommit on database {alias!r}; run it outside a transaction")
+    return alias
+
+
 def regenerate_renditions_for_image(image) -> RepairResult:
     """
     Regenerate the renditions of an image whose file is definitely missing from storage.
@@ -65,13 +82,9 @@ def regenerate_renditions_for_image(image) -> RepairResult:
     Repair requires autocommit on the rendition database so attachment commits
     independently. Cache invalidation follows that commit.
     """
-    renditions = image.renditions.all()
-    alias = renditions.db
-    if not transaction.get_autocommit(using=alias):
-        raise CommandError(f"Rendition repair requires autocommit on database {alias!r}; run it outside a transaction")
-
+    alias = _repair_alias(image.renditions.model, instance=image)
     result = RepairResult()
-    for rendition in renditions.using(alias):
+    for rendition in image.renditions.using(alias):
         stored_name = rendition.file.name
         observed = (
             stored_name,
@@ -117,7 +130,13 @@ def regenerate_renditions_for_image(image) -> RepairResult:
             # Roll back even a save hook that writes the row and then raises. Cleanup queries
             # run after the transaction exits, so a database failure cannot poison them.
             with transaction.atomic(using=alias, durable=True):
-                current = type(rendition).objects.using(alias).select_for_update().get(pk=rendition.pk)
+                current = (
+                    type(rendition)
+                    .objects.using(alias)
+                    .select_related("image")
+                    .select_for_update(of=("self",))
+                    .get(pk=rendition.pk)
+                )
                 identity = (
                     current.file.name,
                     current.image_id,
@@ -161,6 +180,7 @@ def regenerate_renditions_for_image(image) -> RepairResult:
 
 def regenerate_renditions_for_post(post, *, seen_images: set | None = None) -> RepairResult:
     """Repair each image once, optionally sharing invocation-wide identities."""
+    alias = _repair_alias(get_image_model().get_rendition_model(), instance=post)
     if seen_images is None:
         seen_images = set()
     result = RepairResult()
@@ -173,10 +193,10 @@ def regenerate_renditions_for_post(post, *, seen_images: set | None = None) -> R
         result.extend(regenerate_renditions_for_image(image))
         seen_images.add(identity)
 
-    for image in post.images.all():
+    for image in post.images.db_manager(alias).all():
         repair_once(image)
-    for gallery in post.galleries.all():
-        for image in gallery.images.all():
+    for gallery in post.galleries.db_manager(alias).all():
+        for image in gallery.images.db_manager(alias).all():
             repair_once(image)
     return result
 
@@ -222,8 +242,6 @@ class Command(BaseCommand):
                 raise CommandError("--retry-cache-purge requires the reported --database alias")
             if alias not in connections:
                 raise CommandError(f"Unknown database alias: {alias!r}")
-            from wagtail.images import get_image_model
-
             Rendition = get_image_model().get_rendition_model()
             renditions = Rendition.objects.using(alias).select_related("image")
             pending = []
@@ -247,32 +265,39 @@ class Command(BaseCommand):
             raise CommandError("--database requires --retry-cache-purge")
         if not options["blog_slugs"]:
             raise CommandError("Provide blog slugs or --retry-cache-purge")
+        image_model = get_image_model()
+        alias = _repair_alias(image_model.get_rendition_model())
+        blog_queryset = Blog.objects.using(alias)
         blogs = {}
         for slug in options["blog_slugs"]:
             try:
-                blog = Blog.objects.get(slug=slug)
+                blog = blog_queryset.get(slug=slug)
             except Blog.DoesNotExist as error:
                 raise CommandError(f"Blog with slug {slug!r} does not exist; nothing was changed") from error
 
             except Blog.MultipleObjectsReturned as error:
-                matches = Blog.objects.filter(slug=slug).values_list("pk", "url_path")
+                matches = blog_queryset.filter(slug=slug).values_list("pk", "url_path")
                 candidates = ", ".join(f"page {pk} ({path})" for pk, path in matches)
                 raise CommandError(
                     f"Blog slug {slug!r} is ambiguous: {candidates}. "
                     "Identify the intended blog in the Wagtail page tree and use a unique slug; nothing was changed."
                 ) from error
 
-            blogs.setdefault((blog._state.db, blog.pk), blog)
+            blogs.setdefault(blog.pk, blog)
 
         total = RepairCounts()
         seen_images = set()
         for blog in blogs.values():
             self.stdout.write(f"Blog: {blog.slug} {blog.title}")
             post_queryset = (
-                Post.objects.using(blog._state.db)
+                Post.objects.using(alias)
                 .descendant_of(blog)
                 .order_by("-visible_date", "-pk")
-                .prefetch_related("images", "galleries__images")
+                .prefetch_related(
+                    Prefetch("images", queryset=image_model.objects.using(alias)),
+                    Prefetch("galleries", queryset=Gallery.objects.using(alias)),
+                    Prefetch("galleries__images", queryset=image_model.objects.using(alias)),
+                )
             )
             if limit is not None:
                 post_queryset = post_queryset[:limit]

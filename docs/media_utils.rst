@@ -14,9 +14,10 @@ The command checks every post of each blog, including gallery images, and prints
 summary per post and per blog. Use ``--limit N`` to check only the newest ``N`` posts
 of each blog; without it nothing is skipped. Before accessing storage, the command
 checks that every requested slug identifies exactly one blog. After validation,
-it scans blogs in first-argument order, once per database alias and page ID.
-Each post scan uses its resolved blog's database. If a slug is shared across
-page trees, use the reported Wagtail page IDs and tree paths to identify
+it scans blogs in first-argument order, once per page ID. Slug lookup, posts,
+images, galleries, rendition reads and attachment use the rendition model's
+Django write route. That database must contain the full page and media data.
+If a slug is shared across page trees, use the reported Wagtail page IDs and tree paths to identify
 the intended blog in the admin. Repair by slug requires a unique blog slug.
 
 The scan fetches direct images, galleries and gallery images in post batches of
@@ -83,7 +84,8 @@ for the next attempt. Retry accepts no blog slugs or limit.
 Run the repair command and its helpers with autocommit enabled on the rendition
 database. An open transaction causes repair to raise ``CommandError`` before
 accessing rendition storage. Call the helper outside the transaction so each
-replacement commits before its cache is purged.
+replacement commits before its cache is purged. Standalone helpers also require
+the source post or image to have been loaded from the rendition writer.
 
 Video width and height
 ======================

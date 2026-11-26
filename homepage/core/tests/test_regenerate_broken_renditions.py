@@ -833,47 +833,74 @@ def test_command_batches_relationship_queries_and_checks_shared_images_once(
 
 
 @pytest.mark.django_db(databases=["default", "legacy"], transaction=True)
-def test_command_scans_same_key_blogs_on_their_own_databases(settings, monkeypatch):
-    class FixtureRouter:
-        def __init__(self, alias):
-            self.alias = alias
+def test_command_repairs_writer_renditions_and_never_touches_replica(settings, monkeypatch):
+    from django.db import connections
+    from django.test.utils import CaptureQueriesContext, override_settings
+
+    class Route:
+        def __init__(self, read, write):
+            self.read = read
+            self.write = write
 
         def db_for_read(self, model, **hints):
-            return self.alias
+            return self.read
 
         def db_for_write(self, model, **hints):
-            return self.alias
+            return self.write
 
-    aliases = {"primary-blog": "default", "secondary-blog": "legacy"}
-    for slug, alias in aliases.items():
-        settings.DATABASE_ROUTERS = [FixtureRouter(alias)]
-        with transaction.atomic(using=alias):
+    renditions = {}
+    for alias in ("default", "legacy"):
+        with override_settings(DATABASE_ROUTERS=[Route(alias, alias)]):
             Locale.objects.get_or_create(language_code="en")
+            if Collection.get_first_root_node() is None:
+                Collection.add_root(instance=Collection(name="Root"))
             root = Page.get_first_root_node() or Page.add_root(instance=Page(title="Root", slug="root"))
-            home = root.add_child(instance=Page(title="Home", slug="repair-home"))
-            blog = home.add_child(instance=Blog(pk=10000, title=slug, slug=slug))
-            make_post(blog, f"{slug}-post")
-    settings.DATABASE_ROUTERS = []
+            blog = root.add_child(instance=Blog(title="Routed", slug="routed"))
+            image = make_image(f"source-{alias}")
+            rendition = make_rendition(image)
+            make_post(blog, f"post-{alias}", gallery_images=[image])
+            remove_file(rendition)
+            renditions[alias] = (rendition.pk, rendition.file.name)
 
-    # Slug resolution has already selected a database. Unqualified Post reads use default.
-    def get_blog(*, slug):
-        return Blog.objects.using(aliases[slug]).get(slug=slug)
+    image_model = get_image_model()
+    rendition_model = image_model.get_rendition_model()
+    storage = rendition_model._meta.get_field("file").storage
+    seen_sources, deleted = [], []
+    generate, delete = image_model.generate_rendition_file, storage.delete
 
-    scanned = []
+    def generate_from(self, *args, **kwargs):
+        seen_sources.append((self._state.db, self.title))
+        return generate(self, *args, **kwargs)
 
-    def record_post(post, *, seen_images):
-        scanned.append((post._state.db, post.slug))
-        return repair.RepairResult()
+    def record_delete(name):
+        deleted.append(name)
+        return delete(name)
 
-    monkeypatch.setattr(Blog.objects, "get", get_blog)
-    monkeypatch.setattr(repair, "regenerate_renditions_for_post", record_post)
+    def fail_purge(self):
+        assert self._state.db == self.image._state.db == "legacy"
+        raise RuntimeError("cache unavailable")
 
-    stdout, stderr = run_command("primary-blog", "secondary-blog", "secondary-blog")
+    monkeypatch.setattr(image_model, "generate_rendition_file", generate_from)
+    monkeypatch.setattr(storage, "delete", record_delete)
+    monkeypatch.setattr(rendition_model, "purge_from_cache", fail_purge)
 
-    assert scanned == [("default", "primary-blog-post"), ("legacy", "secondary-blog-post")]
-    assert stdout.count("Blog primary-blog: checked 1 posts") == 1
-    assert stdout.count("Blog secondary-blog: checked 1 posts") == 1
-    assert stderr == ""
+    settings.DATABASE_ROUTERS = [Route("default", "legacy")]
+    stdout, stderr = io.StringIO(), io.StringIO()
+    with (
+        CaptureQueriesContext(connections["default"]) as reads,
+        pytest.raises(CommandError, match="cache purge pending"),
+    ):
+        call_command("regenerate_broken_renditions", "routed", stdout=stdout, stderr=stderr)
+
+    replica_pk, replica_name = renditions["default"]
+    writer_pk, writer_name = renditions["legacy"]
+    assert not reads.captured_queries
+    assert seen_sources == [("legacy", "source-legacy")]
+    assert not deleted
+    assert rendition_model.objects.using("default").get(pk=replica_pk).file.name == replica_name
+    attached = rendition_model.objects.using("legacy").get(pk=writer_pk).file
+    assert attached.name != writer_name and storage.exists(attached.name)
+    assert f"--retry-cache-purge {writer_pk} --database=legacy" in stderr.getvalue()
 
 
 @pytest.mark.parametrize("outcome", ["missing", "unknown", "failed", "cache_pending"])

@@ -225,7 +225,7 @@ class Command(BaseCommand):
                 yield stream
                 self._append_frame(stream, {"outcome": dict(run)})
             self._publish_report(target, report)
-        except Exception as error:
+        except (Exception, KeyboardInterrupt) as error:
             self.stderr.write(f"Conversion receipt retained at {stream.name!r} (may be incomplete).")
             for entry in report:
                 if entry["revision_id"] is not None:
@@ -233,6 +233,8 @@ class Command(BaseCommand):
                         f"Committed revision: {entry['slug']} revision_id={entry['revision_id']} "
                         f"published={entry['published']}"
                     )
+            if isinstance(error, KeyboardInterrupt):
+                raise
             raise CommandError(
                 f"Conversion/report failed: {error}. Any completed revisions remain committed; "
                 "inspect the retained receipt and reported revision IDs before retrying."
@@ -271,7 +273,7 @@ class Command(BaseCommand):
                 stream.flush()
                 os.fsync(stream.fileno())
             os.replace(stream.name, target)
-        except Exception:
+        except (Exception, KeyboardInterrupt):
             self.stderr.write(f"Staged JSON report retained at {stream.name!r} (may be incomplete).")
             raise
         try:

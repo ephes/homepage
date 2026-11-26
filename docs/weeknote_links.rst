@@ -282,6 +282,11 @@ and removes the redundant journal only after that sync succeeds. A sync failure
 after replacement leaves the report visible with uncertain durability and
 retains the complete journal for recovery.
 
+On a keyboard interrupt, the command reports the retained journal and any known
+committed revision IDs on stderr, then propagates the interrupt without printing
+a success summary. An interrupt while staging or replacing the final JSON also
+reports the staged path.
+
 On a handled conversion, write, flush, close or replace failure, the existing
 report survives. The command exits nonzero, retains the journal (and any staged
 JSON), and prints every committed revision ID, slug and publication flag on

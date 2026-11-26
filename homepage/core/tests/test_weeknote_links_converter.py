@@ -1717,3 +1717,50 @@ def test_after_pk_beyond_last_eligible_page_keeps_a_valid_boundary(monkeypatch, 
     assert "Complete through page ID 5." in stdout.getvalue()
     assert json.loads(target.read_text()) == []
     assert all(post.saved_revision is None for post in posts)
+
+
+@pytest.mark.parametrize("interrupt_at", ["second_save", "replace"])
+def test_interrupted_conversion_reports_recoverable_receipt(monkeypatch, tmp_path, interrupt_at):
+    from homepage.core.management.commands import convert_weeknote_links as command_module
+
+    posts = [FakePost(body=_overview(_paragraph(LEGACY_ARTICLES)), slug=f"weeknotes-{i}") for i in (1, 2)]
+    for i, post in enumerate(posts, 1):
+        post.pk = i
+    _patch_post_model(monkeypatch, posts)
+    interruption = KeyboardInterrupt()
+    original_save = Command._save_conversion
+    original_replace = command_module.os.replace
+
+    def save(self, post, *args, **kwargs):
+        if post.pk == 2:
+            raise interruption
+        return original_save(self, post, *args, **kwargs)
+
+    def replace(*args):
+        raise interruption
+
+    if interrupt_at == "second_save":
+        monkeypatch.setattr(Command, "_save_conversion", save)
+    else:
+        monkeypatch.setattr(command_module.os, "replace", replace)
+    target = tmp_path / "report.json"
+    target.write_text("old report")
+    stdout, stderr = io.StringIO(), io.StringIO()
+    with pytest.raises(KeyboardInterrupt) as error:
+        call_command("convert_weeknote_links", write=True, report=str(target), stdout=stdout, stderr=stderr)
+    assert error.value is interruption
+    assert "Complete through" not in stdout.getvalue()
+    assert target.read_text() == "old report"
+    (journal,) = tmp_path.glob("*.journal")
+    assert journal.stat().st_mode & 0o777 == 0o600
+    assert str(journal) in stderr.getvalue()
+    assert "weeknotes-1 revision_id=42" in stderr.getvalue()
+    if interrupt_at == "replace":
+        (pending,) = tmp_path.glob("*.pending")
+        assert str(pending) in stderr.getvalue()
+        assert "weeknotes-2 revision_id=42" in stderr.getvalue()
+
+    monkeypatch.setattr(command_module.os, "replace", original_replace)
+    call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=io.StringIO())
+    entries = json.loads(target.read_text())
+    assert [entry["page_id"] for entry in entries] == ([1] if interrupt_at == "second_save" else [1, 2])

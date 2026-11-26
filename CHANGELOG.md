@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Recover complete weeknote receipt frames before a torn final frame.
+
 - Report retained weeknote journals and known committed revisions on Ctrl-C.
 
 - Scan legacy weeknote link headings without copying the remaining paragraph

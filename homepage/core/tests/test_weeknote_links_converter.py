@@ -1422,8 +1422,9 @@ def test_journal_failure_preserves_previous_report_and_committed_ids(monkeypatch
     (journal,) = tmp_path.glob("*.journal")
     assert journal.stat().st_mode & 0o777 == 0o600
     if failure == "short_write":
-        with pytest.raises(ValueError, match="incomplete"):
-            Command._read_receipt(journal, 100, 4 * 1024 * 1024)
+        entries, run, _ = Command._read_receipt(journal, 100, 4 * 1024 * 1024)
+        assert entries == []
+        assert run == {"after_pk": 0, "through_pk": post.pk, "status": "partial"}
 
 
 def test_recover_completed_prefix_without_replaying_conversions(monkeypatch, tmp_path):
@@ -1456,12 +1457,52 @@ def test_recover_completed_prefix_without_replaying_conversions(monkeypatch, tmp
     assert "--after-pk 1 --through-pk 2" in stdout.getvalue()
     assert journal.read_bytes() == original
     assert posts[1].saved_revision is None
-    # Incomplete tails are refused before replacing even the recovered JSON.
-    journal.write_bytes(original + b'{"entry":')
-    previous = target.read_bytes()
-    with pytest.raises(DjangoCommandError, match="incomplete final frame"):
-        call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=io.StringIO())
-    assert target.read_bytes() == previous
+
+
+@pytest.mark.parametrize("malformed_interior", [False, True])
+def test_recovery_salvages_complete_entries_before_torn_tail(tmp_path, malformed_interior):
+    header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 1, "through_pk": 9, "scope": {}}
+    entries = [
+        {
+            "page_id": pk,
+            "through_pk": 9,
+            "slug": f"weeknotes-{pk}",
+            "revision_id": 40 + pk,
+            "published": True,
+            "changed": True,
+            "warnings": [],
+            "skipped": "",
+            "converted_sections": 1,
+        }
+        for pk in (3, 7)
+    ]
+    frames = [header, *({"entry": entry} for entry in entries)]
+    lines = [json.dumps(frame).encode() + b"\n" for frame in frames]
+    if malformed_interior:
+        lines.insert(2, b'{"entry":\n')
+    original = b"".join(lines) + b'{"entry": {"page_id": 8, "slug": "\xc3'
+    journal = tmp_path / "receipt.journal"
+    journal.write_bytes(original)
+    target = tmp_path / "report.json"
+    target.write_text("old report")
+    stdout, stderr = io.StringIO(), io.StringIO()
+
+    def recover():
+        call_command(
+            "convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=stdout, stderr=stderr
+        )
+
+    if malformed_interior:
+        with pytest.raises(DjangoCommandError, match="Cannot recover receipt"):
+            recover()
+        assert target.read_text() == "old report"
+    else:
+        recover()
+        assert json.loads(target.read_text()) == entries
+        assert "status=partial" in stdout.getvalue()
+        assert "--after-pk 7 --through-pk 9" in stdout.getvalue()
+        assert "commit after its last complete frame" in stderr.getvalue()
+    assert journal.read_bytes() == original
 
 
 def test_recovery_rejects_fifo_without_replacing_report(tmp_path):
@@ -1534,7 +1575,9 @@ def test_recovery_requires_stable_receipt_generation(monkeypatch, tmp_path, rewr
         assert journal.read_text() == original
 
 
-@pytest.mark.parametrize("damage", ["format", "order", "outcome", "budget", "rows", "trailing", "empty"])
+@pytest.mark.parametrize(
+    "damage", ["format", "order", "outcome", "budget", "rows", "trailing", "trailing_torn", "torn_header", "empty"]
+)
 def test_receipt_recovery_refuses_invalid_frames(tmp_path, damage):
     header = {"format": "homepage-weeknote-receipt-v1", "after_pk": 0, "through_pk": 2, "scope": {}}
     entry = {
@@ -1562,10 +1605,11 @@ def test_receipt_recovery_refuses_invalid_frames(tmp_path, damage):
         max_posts = 0
     elif damage == "trailing":
         frames.append({"entry": entry})
-    else:
+    elif damage in {"torn_header", "empty"}:
         frames = []
     path = tmp_path / "receipt.journal"
-    path.write_text("".join(json.dumps(frame) + "\n" for frame in frames))
+    tail = '{"format":' if damage in {"torn_header", "trailing_torn"} else ""
+    path.write_text("".join(json.dumps(frame) + "\n" for frame in frames) + tail)
     with pytest.raises(ValueError):
         Command._read_receipt(path, max_posts, max_bytes)
 

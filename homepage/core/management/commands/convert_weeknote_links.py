@@ -301,7 +301,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Recovered {len(report)} completed page receipt(s); status={run['status']}; scope={scope}.")
         self.stdout.write(f"Continuation: --after-pk {run['after_pk']} --through-pk {run['through_pk']}.")
         self.stderr.write(
-            "Check stderr/revisions from the failed run for a commit after its last durable frame. "
+            "Check stderr/revisions from the failed run for a commit after its last complete frame. "
             "Recovery never retries or publishes database revisions."
         )
 
@@ -328,8 +328,12 @@ class Command(BaseCommand):
             generation = _receipt_generation(admitted)
             while line := stream.readline(limit - consumed + 1):
                 consumed += len(line)
-                if consumed > limit or not line.endswith(b"\n"):
-                    raise ValueError("Receipt exceeds budget or has an incomplete final frame")
+                if consumed > limit:
+                    raise ValueError("Receipt exceeds budget")
+                if not line.endswith(b"\n"):
+                    if finished:
+                        raise ValueError("Unexpected bytes after outcome")
+                    break  # Stable EOF is checked below before publishing the validated prefix.
                 frame = json.loads(line)
                 if not isinstance(frame, dict):
                     raise ValueError("Receipt frame must be an object")

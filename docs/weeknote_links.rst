@@ -316,10 +316,12 @@ original scope/write/publish flags, status and exact continuation IDs. A missing
 outcome is explicitly partial; recovery never replays conversions. A complete
 outcome means traversal finished, not that every conflict/draft/warning was fixed.
 
-Recovery refuses changed or oversized journals, incomplete final frames and
-invalid sequences before replacing the report. Keep the original, inspect complete newline frames
-and stderr/revisions, and if needed make a separate verified copy containing only
-complete frames before recovery. Do not silently discard a tail or infer that an
-unacknowledged revision was never committed. Continuation skips processed page
-IDs, so revisit conflicts and drafts separately and inspect the first unprocessed
-page after an interrupted run before using ``--write --publish`` again.
+A stable journal with a complete header and an unterminated final frame before
+the outcome recovers the validated newline-terminated prefix as partial. Its
+continuation cursor comes from the last complete entry, or the header if there
+are no complete entries. Recovery refuses changed or oversized journals, invalid
+complete frames and any bytes after a complete outcome before replacing the
+report. Keep the original journal and check stderr and the database for a commit
+beyond the last complete frame. Continuation skips processed page IDs, so
+revisit conflicts and drafts separately and inspect the first unprocessed page
+after an interrupted run before using ``--write --publish`` again.

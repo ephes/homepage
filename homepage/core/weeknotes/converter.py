@@ -162,10 +162,12 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 continue
 
             # The structured block generates its heading and list, so their
-            # fragment targets and any markup inside the heading would be lost.
+            # attributes and any markup inside the heading would be lost.
             heading_warning = None
             if _has_fragment_target(node) or _has_fragment_target(next_node):
                 heading_warning = "Link section has a fragment anchor that the structured block cannot keep."
+            elif node.attrs or next_node.attrs:
+                heading_warning = "Link heading or list has attributes that the structured block cannot keep."
             elif _has_markup(node):
                 heading_warning = "Link heading has markup that the category heading cannot keep."
             if heading_warning:
@@ -263,9 +265,17 @@ def _convert_list(ul: Tag, *, category: str, heading: str) -> _ListConversion:
 
 
 def _convert_list_item(li: Tag, *, category: str, heading: str) -> dict[str, Any] | ConversionWarning:
+    if li.attrs:
+        return ConversionWarning("List item has attributes that the structured block cannot keep.", heading=heading)
+
     primary_link = li.find("a")
     if primary_link is None or not primary_link.get("href"):
         return ConversionWarning("List item has no primary link.", heading=heading)
+
+    if primary_link.attrs.keys() != {"href"}:
+        return ConversionWarning(
+            "List item primary link has attributes that the structured block cannot keep.", heading=heading
+        )
 
     if _has_markup(primary_link):
         # ``title`` is plain text: an image, <code> or emphasis in the link would be lost.
@@ -284,7 +294,7 @@ def _convert_list_item(li: Tag, *, category: str, heading: str) -> dict[str, Any
     extracted_source = _extract_source(after_html)
     if extracted_source is None:
         return ConversionWarning(
-            "List item source has several links or rich markup that the source fields cannot keep.",
+            "List item source has several links, rich markup or attributes that the source fields cannot keep.",
             heading=heading,
         )
     source, source_url, rest_html = extracted_source
@@ -328,7 +338,7 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | None:
     Returns ``(source, source_url, rest_html)``; ``source`` is empty when there
     is no leading parenthesized source. The structured item stores one plain
     source label and at most one source URL, so a source is only extracted when
-    it is plain text or exactly one link. ``None`` means the source holds more
+    it is plain text or exactly one link with only an href. ``None`` means the source holds more
     than that (several links, text next to a link, other markup) and must not be
     flattened.
     """
@@ -383,7 +393,8 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | None:
             isinstance(link, Tag)
             and link.name == "a"
             and link.get("href")
-            and all(type(node) is NavigableString for node in link.descendants)
+            and link.attrs.keys() == {"href"}
+            and not _has_markup(link)
         ):
             return link.get_text(" ", strip=True), link["href"], rest_html
     return None

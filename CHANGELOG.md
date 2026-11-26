@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep weeknote sections as rich text when their heading, list, items or
+  primary or source links carry attributes the structured block would discard.
+
 - Preserve escaped top-level prose and HTML comments when converting weeknotes.
 
 - Follow the active development log through rotation with the requested initial

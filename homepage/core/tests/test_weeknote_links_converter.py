@@ -184,7 +184,7 @@ def test_convert_paragraph_html_preserves_section_fragment_targets(heading_attrs
         '<p><a href="#saved-section">Jump to articles</a></p>'
         f"<h2{heading_attrs}>Articles</h2><ul{list_attrs}>"
         '<li><a href="https://example.com/a">Article</a></li></ul>'
-        '<h3 class="legacy-heading">Software</h3><ul class="legacy-list">'
+        "<h3>Software</h3><ul>"
         '<li><a href="https://example.com/tool">Tool</a></li></ul>'
     )
 
@@ -232,6 +232,37 @@ def test_convert_paragraph_html_preserves_fragment_targets_inside_the_list(item_
     assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
         ("Articles", "Link section has a fragment anchor that the structured block cannot keep.")
     ]
+
+
+@pytest.mark.parametrize(
+    ("tag", "attrs"),
+    [
+        ("h2", ' lang="de"'),
+        ("ul", ' dir="rtl"'),
+        ("ul", ' class="custom-list"'),
+        ("li", ' value="3"'),
+        ("primary", ' title="Article title"'),
+        ("source", ' hreflang="fr"'),
+    ],
+    ids=["heading-lang", "list-dir", "list-class", "item-value", "primary-title", "source-hreflang"],
+)
+def test_convert_paragraph_html_keeps_attributed_section_as_prose(tag, attrs):
+    attributes = {tag: attrs}
+    section = (
+        f'<h2{attributes.get("h2", "")}>Articles</h2><ul{attributes.get("ul", "")}>'
+        f'<li{attributes.get("li", "")}><a href="https://example.test/a"{attributes.get("primary", "")}>A</a>'
+        f' (<a href="https://example.test/source"{attributes.get("source", "")}>Source</a>)</li></ul>'
+    )
+    plain = '<h3>Software</h3><ul><li><a href="https://example.test/tool">Tool</a></li></ul>'
+
+    conversion = convert_body(_overview(_paragraph(plain + section + plain)))
+
+    assert conversion.converted_sections == 2
+    before, preserved, after = conversion.body[0]["value"]
+    assert [before["type"], preserved["type"], after["type"]] == ["weeknote_links", "paragraph", "weeknote_links"]
+    assert preserved["value"] == str(BeautifulSoup(section, "html.parser"))
+    assert [_weeknote_values(block)[0]["title"] for block in (before, after)] == ["Tool", "Tool"]
+    assert [warning.heading for warning in conversion.warnings] == ["Articles"]
 
 
 def test_convert_paragraph_html_only_looks_ahead_from_headings_without_slicing(monkeypatch):
@@ -387,7 +418,10 @@ def test_convert_paragraph_html_preserves_section_with_unrepresentable_source(so
     assert conversion.changed is False
     assert conversion.blocks == []
     assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
-        ("Podcasts", "List item source has several links or rich markup that the source fields cannot keep.")
+        (
+            "Podcasts",
+            "List item source has several links, rich markup or attributes that the source fields cannot keep.",
+        )
     ]
 
 
@@ -480,7 +514,10 @@ def test_realistic_weeknote_round_trip_keeps_every_link_and_word():
     ]
     assert conversion.converted_sections == 2
     assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
-        ("Podcasts", "List item source has several links or rich markup that the source fields cannot keep."),
+        (
+            "Podcasts",
+            "List item source has several links, rich markup or attributes that the source fields cannot keep.",
+        ),
         ("Software", "List section has text outside list items."),
     ]
     preserved = conversion.blocks[2]["value"]

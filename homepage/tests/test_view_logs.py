@@ -78,8 +78,13 @@ def test_follow_reopens_rotated_log_and_limits_initial_tail(log_path, filtered):
         encoding="utf-8",
     )
     args = ["-n", "2", "-g", "[match] tag"] if filtered else ["-n", "1"]
+    # Restore Python's SIGINT handler: a background job may inherit SIG_IGN, which Python would keep.
+    launcher = (
+        "import runpy, signal, sys; signal.signal(signal.SIGINT, signal.default_int_handler); "
+        "sys.argv = sys.argv[1:]; runpy.run_path(sys.argv[0], run_name='__main__')"
+    )
     with subprocess.Popen(
-        [sys.executable, view_logs.__file__, "-f", *args],
+        [sys.executable, "-c", launcher, view_logs.__file__, "-f", *args],
         stdout=subprocess.PIPE,
         bufsize=0,
         start_new_session=True,

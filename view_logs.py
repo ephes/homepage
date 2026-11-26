@@ -4,6 +4,8 @@ Simple log viewer for development.
 Shows the last N lines from dev.log and can filter by patterns.
 """
 
+from __future__ import annotations
+
 import argparse
 import subprocess
 from collections.abc import Iterable

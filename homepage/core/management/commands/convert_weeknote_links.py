@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db import DEFAULT_DB_ALIAS, connections, router, transaction
 from django.db.models import Func, IntegerField, TextField
 from django.db.models.functions import Cast
 
@@ -95,8 +96,10 @@ class Command(BaseCommand):
 
         from cast.models import Post
 
+        alias = self._writer_alias(Post, write=options["write"])
         queryset = (
-            Post.objects.filter(slug__startswith="weeknotes-")
+            Post.objects.using(alias)
+            .filter(slug__startswith="weeknotes-")
             .annotate(
                 _body_bytes=Func(Cast("body", TextField()), function="OCTET_LENGTH", output_field=IntegerField())
             )
@@ -394,6 +397,62 @@ class Command(BaseCommand):
         run = {"after_pk": cursor, "through_pk": through, "status": outcome["status"] if finished else "partial"}
         return report, run, header["scope"]
 
+    @staticmethod
+    def _writer_alias(post_model, *, write):
+        alias = router.db_for_write(post_model)
+        if alias not in connections:
+            raise CommandError(f"Unknown weeknote writer database alias: {alias!r}")
+        if not write:
+            return alias
+
+        # Wagtail's public revision API takes no using= and Page.save() and
+        # save_revision() open atomic blocks on default. Its implicit ORM
+        # operations must agree with our explicit scan, locks and reload.
+        if alias != DEFAULT_DB_ALIAS:
+            raise CommandError(f"Weeknote revision saves require the default database; writer is {alias!r}.")
+
+        from django.contrib.contenttypes.models import ContentType
+        from wagtail.models import (
+            Comment,
+            Page,
+            PageLogEntry,
+            ReferenceIndex,
+            Revision,
+            Site,
+            TaskState,
+            WorkflowState,
+        )
+
+        models = dict.fromkeys(
+            (
+                post_model,
+                Page,
+                Revision,
+                ContentType,
+                Site,
+                Comment,
+                ReferenceIndex,
+                PageLogEntry,
+                WorkflowState,
+                TaskState,
+                post_model.tags.through,
+                *(
+                    field.related_model
+                    for field in (*post_model._meta.fields, *post_model._meta.many_to_many)
+                    if field.is_relation
+                ),
+            )
+        )
+        for model in models:
+            for operation, route in (("read", router.db_for_read), ("write", router.db_for_write)):
+                routed_alias = route(model)
+                if routed_alias != alias:
+                    raise CommandError(
+                        f"Weeknote revision saves require {model._meta.label} on database {alias!r}; "
+                        f"The {operation} router selects {routed_alias!r}."
+                    )
+        return alias
+
     def _report_entry(self, post, conversion: BodyConversion) -> dict[str, Any]:
         return {
             "slug": post.slug,
@@ -461,22 +520,27 @@ class Command(BaseCommand):
         deleted or is being saved by somebody else right now.
         """
         from cast.models import Post
-        from django.db import transaction
 
-        with transaction.atomic():
-            if not self._lock_rows(post):
+        alias = post._state.db
+        with transaction.atomic(using=alias):
+            if not self._lock_rows(post, alias):
                 yield None
                 return
-            current = Post.objects.filter(pk=post.pk)
+            current = Post.objects.using(alias).filter(pk=post.pk)
             if hasattr(post, "_body_bytes"):
                 # Do not hydrate an unadmitted replacement body while checking conflicts.
                 current = current.annotate(
                     _body_bytes=Func(Cast("body", TextField()), function="OCTET_LENGTH", output_field=IntegerField())
                 ).filter(_body_bytes__lte=post._body_bytes)
-            yield current.first()
+            current = current.first()
+            if current is not None:
+                writer = router.db_for_write(Post, instance=current)
+                if writer != alias:
+                    raise CommandError(f"Weeknote page {current.pk} is routed to {writer!r}, expected {alias!r}.")
+            yield current
 
     @staticmethod
-    def _lock_rows(post) -> bool:
+    def _lock_rows(post, alias) -> bool:
         """Lock the page's revisions and its page row without waiting; ``False`` when busy.
 
         Wagtail takes these locks in no single order: overwriting a draft updates the
@@ -492,20 +556,22 @@ class Command(BaseCommand):
         ``no_key`` asks for the lock an UPDATE takes, so only real changes to the
         rows count as busy, not a foreign key check that merely references them.
         """
-        from django.db import OperationalError, transaction
+        from django.db import OperationalError
         from wagtail.models import Page
 
         try:
             # A refused lock fails the statement; the savepoint keeps the surrounding
             # transaction usable.
-            with transaction.atomic():
+            with transaction.atomic(using=alias):
                 list(
-                    post.revisions.select_for_update(nowait=True, no_key=True)
+                    post.revisions.using(alias)
+                    .select_for_update(nowait=True, no_key=True)
                     .order_by("pk")
                     .values_list("pk", flat=True)
                 )
                 list(
-                    Page.objects.select_for_update(nowait=True, no_key=True)
+                    Page.objects.using(alias)
+                    .select_for_update(nowait=True, no_key=True)
                     .filter(pk=post.pk)
                     .values_list("pk", flat=True)
                 )

@@ -628,6 +628,9 @@ class FakeQuerySet:
     def __init__(self, posts):
         self.posts = posts
 
+    def using(self, alias):
+        return self
+
     def filter(self, **kwargs):
         posts = self.posts
         for field, expected in kwargs.items():
@@ -781,7 +784,7 @@ def test_suppress_webmentions_disconnects_and_reconnects_signal(monkeypatch):
 def _patch_post_model(monkeypatch, posts):
     import cast.models
 
-    monkeypatch.setattr(cast.models, "Post", SimpleNamespace(objects=FakeQuerySet(posts)))
+    monkeypatch.setattr(cast.models.Post, "objects", FakeQuerySet(posts))
     _patch_locked_current_post(monkeypatch)
 
 
@@ -795,7 +798,7 @@ def _patch_locked_current_post(monkeypatch):
     monkeypatch.setattr(Command, "_locked_current_post", locked_current_post)
 
 
-def _weeknote_post(*, slug, overview_html):
+def _weeknote_post(*, slug, overview_html, pk=None):
     from cast.models import Blog, Post
     from wagtail.models import Locale, Page
 
@@ -805,7 +808,7 @@ def _weeknote_post(*, slug, overview_html):
         root = Page.add_root(instance=Page(title="Root", slug="root"))
     blog = root.add_child(instance=Blog(title="Weeknote blog", slug=f"blog-{slug}"))
     body = json.dumps([{"type": "overview", "value": [{"type": "paragraph", "value": overview_html}]}])
-    return blog.add_child(instance=Post(title=slug, slug=slug, body=body))
+    return blog.add_child(instance=Post(pk=pk, title=slug, slug=slug, body=body))
 
 
 def _overview_blocks(page):
@@ -1808,3 +1811,102 @@ def test_interrupted_conversion_reports_recoverable_receipt(monkeypatch, tmp_pat
     call_command("convert_weeknote_links", recover_receipt=str(journal), report=str(target), stdout=io.StringIO())
     entries = json.loads(target.read_text())
     assert [entry["page_id"] for entry in entries] == ([1] if interrupt_at == "second_save" else [1, 2])
+
+
+@pytest.mark.django_db(databases=["default", "legacy"])
+def test_weeknote_conversion_inventory_and_revision_use_writer(tmp_path, settings):
+    from cast.models import Post
+    from django.contrib.sessions.models import Session
+    from django.db import connections
+    from django.test.utils import CaptureQueriesContext, override_settings
+    from wagtail.models import Page, Revision
+
+    class ReadRoute:
+        def __init__(self, alias, model=None):
+            self.alias = alias
+            self.model = model
+
+        def db_for_read(self, model, **hints):
+            if self.model is None or model is self.model:
+                return self.alias
+
+        def db_for_write(self, model, **hints):
+            if self.model is None:
+                return self.alias
+
+    slug = "weeknotes-routed"
+    writer = _weeknote_post(slug=slug, overview_html=LEGACY_ARTICLES, pk=10000)
+    writer.save_revision(changed=False)
+    with override_settings(DATABASE_ROUTERS=[ReadRoute("legacy")]):
+        replica = _weeknote_post(slug=slug, overview_html="<p>Replica-only content</p>", pk=10000)
+        replica.save_revision(changed=False)
+
+    assert writer.pk == replica.pk
+    settings.DATABASE_ROUTERS = [ReadRoute("legacy", Post)]
+    stdout = io.StringIO()
+    with CaptureQueriesContext(connections["legacy"]) as replica_queries:
+        call_command("convert_weeknote_links", slug=slug, stdout=stdout)
+    assert "would convert 1 post(s)" in stdout.getvalue()
+    assert not replica_queries.captured_queries
+
+    # Wagtail publication itself re-reads Posts and revisions through its router.
+    # Its implicit routes must agree with the writer even when it has a replica.
+    settings.DATABASE_ROUTERS = [ReadRoute("legacy", Post)]
+    target = tmp_path / "report.json"
+    with pytest.raises(DjangoCommandError, match="cast.Post.*legacy"):
+        call_command("convert_weeknote_links", slug=slug, write=True, publish=True, report=str(target))
+    assert not list(tmp_path.iterdir())
+
+    class InstanceRoute:
+        def db_for_write(self, model, instance=None, **hints):
+            if model is Post and getattr(instance, "pk", None) == writer.pk:
+                return "legacy"
+
+    settings.DATABASE_ROUTERS = [InstanceRoute()]
+    with pytest.raises(DjangoCommandError, match="routed to 'legacy', expected 'default'"):
+        call_command("convert_weeknote_links", slug=slug, write=True, stdout=io.StringIO())
+    assert Revision.objects.using("default").filter(object_id=str(writer.pk)).count() == 1
+
+    settings.DATABASE_ROUTERS = [ReadRoute("legacy", Session)]
+    with (
+        CaptureQueriesContext(connections["default"]) as writer_queries,
+        CaptureQueriesContext(connections["legacy"]) as replica_queries,
+    ):
+        call_command(
+            "convert_weeknote_links",
+            slug=slug,
+            write=True,
+            publish=True,
+            suppress_webmentions=True,
+            report=str(target),
+            stdout=io.StringIO(),
+        )
+    assert not replica_queries.captured_queries
+    if connections["default"].vendor == "postgresql":
+        locks = [row["sql"] for row in writer_queries if "FOR NO KEY UPDATE" in row["sql"]]
+        assert len(locks) == 2
+        assert Revision._meta.db_table in locks[0] and Page._meta.db_table in locks[1]
+    writer.refresh_from_db(using="default")
+    replica.refresh_from_db(using="legacy")
+    assert _overview_blocks(writer)[0][0] == "weeknote_links"
+    assert _overview_blocks(replica) == [("paragraph", "<p>Replica-only content</p>")]
+    assert writer.live_revision_id == json.loads(target.read_text())[0]["revision_id"]
+    revisions = Revision.objects.filter(object_id=str(writer.pk))
+    assert revisions.using("default").count() == 2
+    assert revisions.using("legacy").count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("misrouted_model", ["post", "revision"])
+def test_weeknote_conversion_rejects_unsupported_write_route_before_opening_receipt(
+    tmp_path, settings, misrouted_model
+):
+    class SplitWriter:
+        def db_for_write(self, model, **hints):
+            if model._meta.model_name == misrouted_model:
+                return "legacy"
+
+    settings.DATABASE_ROUTERS = [SplitWriter()]
+    with pytest.raises(DjangoCommandError, match="database.*legacy"):
+        call_command("convert_weeknote_links", write=True, through_pk=0, report=str(tmp_path / "report.json"))
+    assert not list(tmp_path.iterdir())

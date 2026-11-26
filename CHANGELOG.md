@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Bind weeknote scans, locks and reloads to one writer and reject routes that
+  conflict with Wagtail's revision API.
+
 - Use the rendition writer database for the entire missing-rendition repair.
 
 - Recover complete weeknote receipt frames before a torn final frame.

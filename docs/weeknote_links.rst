@@ -166,6 +166,15 @@ which the revision is written and then completes. A new revision that another
 database transaction has inserted but not committed yet cannot be seen; that
 save completes afterwards and remains the latest revision.
 
+The dry run and conversion scan the Post writer selected by Django's database
+router. Write mode keeps the scan, revision and Page locks, refreshed Post and
+revision writes on one database. Wagtail's revision and Page save APIs open
+transactions on ``default`` and perform implicit database reads and writes, so
+write mode requires those routes to agree with the default writer. A routing
+mismatch in the model routes stops the command before it opens a receipt.
+An instance-specific Post write route is checked again under the lock before
+saving the revision.
+
 Conversion limits
 ~~~~~~~~~~~~~~~~~
 

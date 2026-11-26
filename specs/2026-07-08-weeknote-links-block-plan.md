@@ -253,8 +253,8 @@ Conversion rules:
   - Extra inline rich content in the description is preserved as limited rich text when it only uses allowed tags; otherwise warn and preserve the original section.
 - Non-convertible sections remain in a paragraph block unchanged.
 - Surrounding prose before, between, and after converted sections remains as paragraph blocks.
-- Consecutive converted sections in the same old paragraph collapse into one `weeknote_links` block at the first converted section position, preserving category and item ordering.
-- If meaningful prose, unsupported HTML, media embeds, or preserved non-convertible sections appear between converted sections, do not collapse across that boundary. Emit separate paragraph/`weeknote_links`/paragraph blocks in the original order.
+- Every converted section becomes its own `weeknote_links` block at the section's source position. Consecutive converted sections are not merged, because a block renders its items grouped in the fixed category order: merging would reorder the sections and drop a repeated heading.
+- Prose, unsupported HTML, media embeds, or preserved non-convertible sections between converted sections stay in paragraph blocks between those `weeknote_links` blocks, in the original order.
 - The command report lists converted sections, preserved sections, warnings, and per-post changes.
 
 This is deliberately semi-automated. A clean dry-run on production/staging data is required before `--write`.

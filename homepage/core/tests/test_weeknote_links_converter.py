@@ -991,6 +991,28 @@ def test_convert_weeknote_links_command_converts_and_publishes_unchanged_page():
     assert stderr.getvalue() == ""
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("comment", ["<!-- hidden note -->", "<!-- -->"], ids=["comment", "blank-comment"])
+def test_convert_weeknote_links_command_preserves_top_level_prose_on_publish(comment):
+    from cast.models import Post
+
+    prose = f"Literal &lt;em&gt;text&lt;/em&gt; &amp; copy. {comment}"
+    post = _weeknote_post(slug="weeknotes-top-level-prose", overview_html=prose + LEGACY_ARTICLES)
+    post.save_revision().publish()
+
+    call_command("convert_weeknote_links", "--write", "--publish", "--suppress-webmentions", stdout=io.StringIO())
+
+    stored = Post.objects.get(pk=post.pk)
+    assert stored.live_revision_id == stored.latest_revision_id
+    paragraph, links = stored.body[0].value
+    assert (paragraph.block_type, links.block_type) == ("paragraph", "weeknote_links")
+    rendered = paragraph.render()
+    assert comment in rendered
+    soup = BeautifulSoup(rendered, "html.parser")
+    assert soup.get_text(strip=True) == "Literal <em>text</em> & copy."
+    assert soup.find("em") is None
+
+
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize("flags", [("--write",), ("--write", "--publish", "--suppress-webmentions")])
 def test_convert_weeknote_links_command_does_not_block_or_roll_back_an_editor_overwrite(tmp_path, flags):

@@ -140,7 +140,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
         node = nodes[index]
         if _is_blank_text(node):
             if pending_html:
-                pending_html.append(str(node))
+                pending_html.append(_serialize_node(node))
             index += 1
             continue
 
@@ -149,15 +149,15 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             heading = _normalized_text(node)
             if heading.lower() in AMBIGUOUS_HEADINGS:
                 flush_links()
-                pending_html.append(str(node))
-                pending_html.append(str(next_node))
+                pending_html.append(_serialize_node(node))
+                pending_html.append(_serialize_node(next_node))
                 warnings.append(ConversionWarning("Ambiguous link heading preserved.", heading=heading))
                 index = next_index + 1
                 continue
             category = HEADING_ALIASES.get(heading.lower())
             if category is None:
                 flush_links()
-                pending_html.append(str(node))
+                pending_html.append(_serialize_node(node))
                 index += 1
                 continue
 
@@ -170,8 +170,8 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 heading_warning = "Link heading has markup that the category heading cannot keep."
             if heading_warning:
                 flush_links()
-                pending_html.append(str(node))
-                pending_html.append(str(next_node))
+                pending_html.append(_serialize_node(node))
+                pending_html.append(_serialize_node(next_node))
                 warnings.append(ConversionWarning(heading_warning, heading=heading))
                 index = next_index + 1
                 continue
@@ -179,16 +179,16 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             section = _convert_list(next_node, category=category, heading=heading)
             if section.warnings:
                 flush_links()
-                pending_html.append(str(node))
-                pending_html.append(str(next_node))
+                pending_html.append(_serialize_node(node))
+                pending_html.append(_serialize_node(next_node))
                 warnings.extend(section.warnings)
                 index = next_index + 1
                 continue
             validation_warning = _validation_warning(section.items, heading=heading)
             if validation_warning is not None:
                 flush_links()
-                pending_html.append(str(node))
-                pending_html.append(str(next_node))
+                pending_html.append(_serialize_node(node))
+                pending_html.append(_serialize_node(next_node))
                 warnings.append(validation_warning)
                 index = next_index + 1
                 continue
@@ -201,7 +201,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             continue
 
         flush_links()
-        pending_html.append(str(node))
+        pending_html.append(_serialize_node(node))
         index += 1
 
     flush_html()
@@ -427,7 +427,7 @@ def _has_markup(node: Tag) -> bool:
 
 
 def _is_blank_text(node: Any) -> bool:
-    return isinstance(node, NavigableString) and not str(node).strip()
+    return type(node) is NavigableString and not node.strip()
 
 
 def _has_fragment_target(element: Tag) -> bool:

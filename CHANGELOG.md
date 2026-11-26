@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve escaped top-level prose and HTML comments when converting weeknotes.
+
 - Follow the active development log through rotation with the requested initial
   line count and a case-insensitive literal filter.
 

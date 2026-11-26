@@ -850,7 +850,9 @@ def test_command_repairs_writer_renditions_and_never_touches_replica(settings, m
 
     renditions = {}
     for alias in ("default", "legacy"):
-        with override_settings(DATABASE_ROUTERS=[Route(alias, alias)]):
+        # Treebeard locks tree rows inside an atomic block on the default alias only,
+        # so the legacy setup needs its own transaction on PostgreSQL.
+        with override_settings(DATABASE_ROUTERS=[Route(alias, alias)]), transaction.atomic(using=alias):
             Locale.objects.get_or_create(language_code="en")
             if Collection.get_first_root_node() is None:
                 Collection.add_root(instance=Collection(name="Root"))

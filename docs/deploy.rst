@@ -95,6 +95,29 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-26 robots.txt for the blog filter URLs
+----------------------------------------------
+
+Deployed ``9e32eac`` (last recorded deploy ``3d35925``) on 2026-11-26 at 16:42
+as a routine code-only deploy. ``robots.txt`` now disallows the blog index
+filter parameters ``date_facets``, ``tag_facets`` and ``category_facets``, as
+first (``/*?tag_facets=``) or later (``/*?*&tag_facets=``) query parameter;
+crawlers walked every filter combination (about 40% of all requests). The only
+other change since ``3d35925`` is documentation. No migration, settings, static
+file, dependency or unit change; ``just pyinfra-check homepage production``
+showed only the source sync; ops-control ran at ``8ff629a4``.
+
+Verified after the deploy: ``https://wersdoerfer.de/robots.txt`` serves the new
+rules; the front page, the blog, its second page and its RSS feed answered 200;
+both units are active with new PIDs and ``NRestarts=0``; the journal of both
+units since the deploy holds no warning or error.
+
+Rollback, only after the owner authorizes it: revert ``9e32eac`` on main, then
+run ``just pyinfra-check homepage production`` and
+``just deploy-one homepage production`` with ``PROJECTS_ROOT`` pointing at the
+parent of a clean checkout of the reverted commit. No database step and no
+static rebuild are needed.
+
 2026-11-26 Lossless weeknote prose and attributed sections
 ---------------------------------------------------------
 

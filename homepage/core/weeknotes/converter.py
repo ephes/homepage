@@ -122,7 +122,6 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
     nodes = list(soup.contents)
     output: list[dict[str, Any]] = []
     pending_html: list[str] = []
-    pending_links: list[dict[str, Any]] = []
     warnings: list[ConversionWarning] = []
     changed = False
     converted_sections = 0
@@ -139,12 +138,6 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
         for position in range(index, next_index + 1):
             pending_html.append(_serialize_node(nodes[position]))
 
-    def flush_links() -> None:
-        if not pending_links:
-            return
-        output.append(_block("weeknote_links", _prepared_weeknote_links(pending_links)))
-        pending_links.clear()
-
     while index < len(nodes):
         node = nodes[index]
         if _is_top_level_blank_text(node):
@@ -157,14 +150,12 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
         if isinstance(node, Tag) and isinstance(next_node, Tag) and next_node.name == "ul":
             heading = _normalized_text(node)
             if heading.lower() in AMBIGUOUS_HEADINGS:
-                flush_links()
                 preserve_section()
                 warnings.append(ConversionWarning("Ambiguous link heading preserved.", heading=heading))
                 index = next_index + 1
                 continue
             category = HEADING_ALIASES.get(heading.lower())
             if category is None:
-                flush_links()
                 pending_html.append(_serialize_node(node))
                 index += 1
                 continue
@@ -179,7 +170,6 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             elif _has_markup(node):
                 heading_warning = "Link heading has markup that the category heading cannot keep."
             if heading_warning:
-                flush_links()
                 preserve_section()
                 warnings.append(ConversionWarning(heading_warning, heading=heading))
                 index = next_index + 1
@@ -187,32 +177,31 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
 
             section = _convert_list(next_node, category=category, heading=heading)
             if section.warnings:
-                flush_links()
                 preserve_section()
                 warnings.extend(section.warnings)
                 index = next_index + 1
                 continue
             validation_warning = _validation_warning(section.items, heading=heading)
             if validation_warning is not None:
-                flush_links()
                 preserve_section()
                 warnings.append(validation_warning)
                 index = next_index + 1
                 continue
 
+            # One block per source section: a block renders its items grouped
+            # in the fixed category order, so merging adjacent sections would
+            # reorder them and drop a repeated heading.
             flush_html()
-            pending_links.extend(section.items)
+            output.append(_block("weeknote_links", _prepared_weeknote_links(section.items)))
             changed = True
             converted_sections += 1
             index = next_index + 1
             continue
 
-        flush_links()
         pending_html.append(_serialize_node(node))
         index += 1
 
     flush_html()
-    flush_links()
 
     if not changed:
         return OverviewConversion(blocks=[], changed=False, warnings=warnings)

@@ -31,7 +31,7 @@ def _weeknote_values(block):
     return [item["value"] for item in block["value"]]
 
 
-def test_convert_paragraph_html_merges_consecutive_link_sections_and_preserves_surrounding_prose():
+def test_convert_paragraph_html_keeps_one_block_per_consecutive_link_section_and_surrounding_prose():
     conversion = convert_paragraph_html(
         "<p>Intro.</p><h2>Articles</h2><ul>"
         '<li><a href="https://example.com/a">Article A</a> | Useful</li>'
@@ -42,15 +42,81 @@ def test_convert_paragraph_html_merges_consecutive_link_sections_and_preserves_s
 
     assert conversion.changed is True
     assert conversion.converted_sections == 2
-    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links", "paragraph"]
+    assert [block["type"] for block in conversion.blocks] == [
+        "paragraph",
+        "weeknote_links",
+        "weeknote_links",
+        "paragraph",
+    ]
     assert conversion.blocks[0]["value"] == "<p>Intro.</p>"
-    assert conversion.blocks[2]["value"] == "<p>Outro.</p>"
-    values = _weeknote_values(conversion.blocks[1])
-    assert [item["category"] for item in values] == ["articles", "software"]
-    assert [item["kind"] for item in values] == ["article", "link"]
-    assert values[0]["title"] == "Article A"
-    assert values[0]["description"] == "<p>Useful</p>"
-    assert values[1]["source"] == "Example"
+    assert conversion.blocks[3]["value"] == "<p>Outro.</p>"
+    articles = _weeknote_values(conversion.blocks[1])
+    software = _weeknote_values(conversion.blocks[2])
+    assert [(item["category"], item["kind"]) for item in articles] == [("articles", "article")]
+    assert [(item["category"], item["kind"]) for item in software] == [("software", "link")]
+    assert articles[0]["title"] == "Article A"
+    assert articles[0]["description"] == "<p>Useful</p>"
+    assert software[0]["source"] == "Example"
+
+
+def _rendered_sections(blocks):
+    """Category headings and link URLs of the rendered stream, in reading order."""
+    block = WeeknoteLinksBlock()
+    rendered_html = "".join(
+        block.render(block.to_python(item["value"])) if item["type"] == "weeknote_links" else item["value"]
+        for item in blocks
+    )
+    soup = BeautifulSoup(rendered_html, "html.parser")
+    return [
+        element.get_text(strip=True) if element.name == "h2" else element["href"]
+        for element in soup.find_all(["h2", "a"])
+    ]
+
+
+@pytest.mark.parametrize(
+    "headings",
+    [
+        ["Software", "Articles", "Software"],  # a category repeated after another one
+        ["Videos", "Articles"],  # adjacent sections against the display order
+        ["Links", "Open Source", "Software"],  # an alias next to its own category
+    ],
+)
+def test_convert_paragraph_html_renders_adjacent_sections_in_source_order(headings):
+    source = "".join(
+        f'<h2>{heading}</h2><ul><li><a href="https://example.test/{position}">Item {position}</a></li></ul>'
+        for position, heading in enumerate(headings)
+    )
+    labels = {"Open Source": "Software"}
+
+    conversion = convert_paragraph_html(source)
+
+    assert conversion.converted_sections == len(headings)
+    assert conversion.warnings == []
+    assert _rendered_sections(conversion.blocks) == [
+        part
+        for position, heading in enumerate(headings)
+        for part in (labels.get(heading, heading), f"https://example.test/{position}")
+    ]
+
+
+def test_convert_paragraph_html_keeps_refused_section_between_converted_runs_in_place():
+    source = (
+        '<h2>Software</h2><ul><li><a href="https://example.test/one">One</a></li></ul>'
+        '<h2>Articles</h2><ul>KEEP<li><a href="https://example.test/two">Two</a></li></ul>'
+        '<h2>Software</h2><ul><li><a href="https://example.test/three">Three</a></li></ul>'
+    )
+
+    conversion = convert_paragraph_html(source)
+
+    assert [block["type"] for block in conversion.blocks] == ["weeknote_links", "paragraph", "weeknote_links"]
+    assert _rendered_sections(conversion.blocks) == [
+        "Software",
+        "https://example.test/one",
+        "Articles",
+        "https://example.test/two",
+        "Software",
+        "https://example.test/three",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -359,10 +425,11 @@ def test_convert_paragraph_html_only_looks_ahead_from_headings_without_slicing(m
     )
 
     assert conversion.converted_sections == 2
-    before, links, after = conversion.blocks
+    before, articles, software, after = conversion.blocks
     assert (before["type"], before["value"]) == ("paragraph", intro)
-    assert links["type"] == "weeknote_links"
-    assert [item["title"] for item in _weeknote_values(links)] == ["Article", "Tool"]
+    assert [articles["type"], software["type"]] == ["weeknote_links", "weeknote_links"]
+    assert [item["title"] for item in _weeknote_values(articles)] == ["Article"]
+    assert [item["title"] for item in _weeknote_values(software)] == ["Tool"]
     assert (after["type"], after["value"]) == ("paragraph", ambiguous_heading + "\n" + article_list + trailing_heading)
     assert [(warning.heading, warning.message) for warning in conversion.warnings] == [
         ("Podcasts / Videos", "Ambiguous link heading preserved.")

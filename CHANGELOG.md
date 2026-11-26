@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Keep the order and headings of adjacent weeknote link sections when
+  converting them: every converted section becomes its own structured block, so
+  a Software, Articles, Software sequence no longer turns into Articles,
+  Software with the second Software heading lost.
+
 - Keep crawlers that honour `robots.txt` out of the blog index filter URLs:
   `robots.txt` now disallows the `date_facets`, `tag_facets` and
   `category_facets` query parameters, as first (`/*?tag_facets=`) or later

@@ -175,6 +175,12 @@ mismatch in the model routes stops the command before it opens a receipt.
 An instance-specific Post write route is checked again under the lock before
 saving the revision.
 
+Each converted section becomes its own ``weeknote_links`` block, placed where
+the section was. A block renders its items grouped in the fixed category order
+above, so the converter never merges adjacent sections into one block: a
+``Software``, ``Articles``, ``Software`` sequence keeps its order and both
+``Software`` headings after conversion.
+
 Conversion limits
 ~~~~~~~~~~~~~~~~~
 

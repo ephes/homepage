@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Offer the React theme (cast-react `v0.0.2`, from its Git tag; not on PyPI)
+- Offer the React theme (cast-react `v0.0.3`, from its Git tag; not on PyPI)
   in the theme chooser next to Vue.js and Bootstrap 5. It is installed as
   `cast_react`, ships its built bundle (no Node.js build on the server) and is
   only used where a reader picks it or a blog sets it as its theme. Rollback

@@ -42,3 +42,21 @@ def test_blog_and_post_render_with_the_react_theme(client):
     detail = client.get(post.url)
     assert detail.status_code == 200
     assert 'data-route-name="PostDetail"' in detail.content.decode()
+
+
+@pytest.mark.django_db
+def test_theme_chooser_page_renders_with_react_selected(client):
+    from django.urls import reverse
+    from wagtail.models import Locale, Page, Site
+
+    Locale.objects.get_or_create(language_code="en")
+    root = Page.get_first_root_node() or Page.add_root(instance=Page(title="Root", slug="root"))
+    Site.objects.all().delete()
+    Site.objects.create(hostname="testserver", root_page=root, is_default_site=True)
+
+    chooser = reverse("cast:select-theme")
+    assert client.post(chooser, {"template_base_dir": "react", "next": "/"}).status_code == 302
+    response = client.get(chooser)
+    assert response.status_code == 200
+    assert 'class="cr-plain"' in response.content.decode()
+    assert "<title>Select Theme</title>" in response.content.decode()

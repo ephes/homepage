@@ -9,7 +9,7 @@ import typer
 
 import commands
 
-DEV_PACKAGES = ("cast-vue", "cast-bootstrap5", "django-cast", "django-indieweb", "django-resume")
+DEV_PACKAGES = ("cast-vue", "cast-react", "cast-bootstrap5", "django-cast", "django-indieweb", "django-resume")
 PYPROJECT = '[project]\nname = "example"\n\n[tool.uv.sources]\ncast-vue = { git = "https://example.invalid/x" }\n'
 SUCCESS_MARKERS = ("activated", "editable mode", "Switched back", "installed from their git")
 
@@ -100,3 +100,16 @@ def test_successful_sync_keeps_source_edits_and_reports_success(project, uv_sync
     output = capsys.readouterr().out
     assert ("Development environment activated!" in output) == (command == "switch_to_dev_environment")
     assert ("Switched back to git sources!" in output) == (command == "switch_to_git_sources")
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        ("switch_to_dev_environment", 'cast-react = { path = "../cast-react", editable = true }'),
+        ("switch_to_git_sources", 'cast-react = { git = "https://github.com/ephes/cast-react", tag = "v0.0.3" }'),
+    ],
+)
+def test_cast_react_source_switches_between_checkout_and_tag(project, uv_sync, command, expected):
+    uv_sync()
+    getattr(commands, command)()
+    assert expected in (project / "pyproject.toml").read_text(encoding="utf-8")

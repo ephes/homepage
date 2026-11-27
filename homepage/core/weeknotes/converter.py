@@ -287,11 +287,8 @@ def _convert_list_item(li: Tag, *, category: str, heading: str) -> dict[str, Any
         title = f"{prefix_text} {title}".strip()
 
     extracted_source = _extract_source(after_html)
-    if extracted_source is None:
-        return ConversionWarning(
-            "List item source has several links, rich markup or attributes that the source fields cannot keep.",
-            heading=heading,
-        )
+    if isinstance(extracted_source, str):
+        return ConversionWarning(extracted_source, heading=heading)
     source, source_url, rest_html = extracted_source
     description = _extract_description(rest_html)
     if description is None:
@@ -327,15 +324,14 @@ def _split_around_primary_link(li: Tag, primary_link: Tag) -> tuple[str, str]:
     return "".join(before), "".join(after)
 
 
-def _extract_source(after_html: str) -> tuple[str, str, str] | None:
+def _extract_source(after_html: str) -> tuple[str, str, str] | str:
     """Split a leading ``(source)`` off the text that follows the primary link.
 
     Returns ``(source, source_url, rest_html)``; ``source`` is empty when there
     is no leading parenthesized source. The structured item stores one plain
     source label and at most one source URL, so a source is only extracted when
-    it is plain text or exactly one link with only an href. ``None`` means the source holds more
-    than that (several links, text next to a link, other markup) and must not be
-    flattened.
+    it is plain text or exactly one link with only an href. A warning string
+    means the source is unclosed or cannot be represented in those fields.
     """
     soup = BeautifulSoup(after_html, "html.parser")
     contents = list(soup.contents)
@@ -352,30 +348,34 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | None:
         return "", "", after_html
 
     source_parts: list[str] = []
-    rest_parts: list[str] = [_serialize_node(node) for node in contents[:first_index]]
-    source_end_search_start = first_index + 1
-    if ")" in source_text:
-        source_before_close, rest_after_close = source_text.split(")", 1)
-        source_parts.append(html.escape(source_before_close, quote=False))
-        rest_parts.append(html.escape(rest_after_close, quote=False))
-        rest_parts.extend(_serialize_node(node) for node in contents[source_end_search_start:])
+    depth = 1
+    for index in range(first_index, len(contents)):
+        node = contents[index]
+        # Only plain text outside tags can delimit the source. In particular,
+        # parentheses in a link's label or URL cannot close the outer group.
+        if type(node) is not NavigableString:
+            source_parts.append(_serialize_node(node))
+            continue
+        text = source_text if index == first_index else str(node)
+        for offset, char in enumerate(text):
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+        if depth == 0:
+            source_parts.append(html.escape(text[:offset], quote=False))
+            break
+        source_parts.append(html.escape(text, quote=False))
     else:
-        source_parts.append(html.escape(source_text, quote=False))
-        closed = False
-        for node in contents[source_end_search_start:]:
-            if not closed and type(node) is NavigableString and ")" in str(node):
-                source_before_close, rest_after_close = str(node).split(")", 1)
-                source_parts.append(html.escape(source_before_close, quote=False))
-                rest_parts.append(html.escape(rest_after_close, quote=False))
-                closed = True
-                continue
-            if closed:
-                rest_parts.append(_serialize_node(node))
-            else:
-                source_parts.append(_serialize_node(node))
-        if not closed:
-            return "", "", after_html
+        return "List item source has unbalanced parentheses."
 
+    rest_start = offset + 1
+    next_index = index + 1
+    rest_parts = [_serialize_node(node) for node in contents[:first_index]]
+    rest_parts.append(html.escape(text[rest_start:], quote=False))
+    rest_parts.extend(_serialize_node(node) for node in contents[next_index:])
     source_html = "".join(source_parts)
     rest_html = "".join(rest_parts)
     source_soup = BeautifulSoup(source_html, "html.parser")
@@ -392,7 +392,7 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | None:
             and not _has_markup(link)
         ):
             return link.get_text(" ", strip=True), link["href"], rest_html
-    return None
+    return "List item source has several links, rich markup or attributes that the source fields cannot keep."
 
 
 def _extract_description(rest_html: str) -> str | None:

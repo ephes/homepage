@@ -227,6 +227,52 @@ def test_convert_paragraph_html_keeps_parentheses_after_source_in_description():
     assert item["description"] == '<p>See <a href="https://example.com/notes">notes</a> (now)</p>'
 
 
+@pytest.mark.parametrize(
+    ("source_markup", "source_label", "source_url"),
+    [
+        ("Example (English)", "Example (English)", ""),
+        ("Example (English (UK))", "Example (English (UK))", ""),
+        (
+            '<a href="https://example.test/show(uk)">Show (English (UK))</a>',
+            "Show (English (UK))",
+            "https://example.test/show(uk)",
+        ),
+    ],
+    ids=["plain", "nested", "linked"],
+)
+def test_convert_paragraph_html_keeps_balanced_parentheses_in_source(source_markup, source_label, source_url):
+    conversion = convert_paragraph_html(
+        '<h2>Podcasts</h2><ul><li><a href="https://example.test/episode">Episode</a> '
+        f'({source_markup}) | See <a href="https://example.test/notes">notes</a> (now)</li></ul>'
+    )
+
+    assert not conversion.warnings
+    (block,) = conversion.blocks
+    assert block["type"] == "weeknote_links"
+    (item,) = _weeknote_values(block)
+    assert (item["source"], item["source_url"]) == (source_label, source_url)
+    assert item["description"] == '<p>See <a href="https://example.test/notes">notes</a> (now)</p>'
+
+
+@pytest.mark.parametrize(
+    "source_markup",
+    ["Example (English) | Listen (now)", '<a href="https://example.test/show">Show (English)</a> | Listen'],
+    ids=["plain", "linked"],
+)
+def test_convert_paragraph_html_preserves_section_with_unclosed_source(source_markup):
+    section = (
+        '<h2>Podcasts</h2><ul><li><a href="https://example.test/episode">Episode</a> ' f"({source_markup}</li></ul>"
+    )
+    conversion = convert_paragraph_html(
+        section + '<h2>Software</h2><ul><li><a href="https://example.test/tool">Tool</a></li></ul>'
+    )
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    assert conversion.blocks[0]["value"] == section
+    (warning,) = conversion.warnings
+    assert (warning.heading, warning.message) == ("Podcasts", "List item source has unbalanced parentheses.")
+
+
 def test_convert_paragraph_html_preserves_blank_text_between_preserved_inline_nodes():
     conversion = convert_paragraph_html(
         'Read <a href="https://example.com/a">A</a> <a href="https://example.com/b">B</a>'

@@ -5,6 +5,9 @@
 - Reuse the prepared Wagtail value from the first validation pass when
   converting legacy weeknote link sections.
 
+- Keep nested parentheses in converted weeknote source labels and preserve
+  the original rich text with a warning when the source is unclosed.
+
 - Offer the React theme (cast-react `v0.0.3`, from its Git tag; not on PyPI)
   in the theme chooser next to Vue.js and Bootstrap 5. It is installed as
   `cast_react`, ships its built bundle (no Node.js build on the server) and is

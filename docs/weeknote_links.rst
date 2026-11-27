@@ -225,9 +225,13 @@ section heading. The following conditions prevent conversion.
   ``code``;
 * the parenthesized source after the primary link is more than the ``source``
   and ``source_url`` fields can hold. Plain text (``(LF Energy)``) and exactly
-  one link (``(<a href="...">Show</a>)``) are converted. Several links, text
-  next to a link (``(via <a ...>Show</a>)``) or other markup inside the
-  parentheses keep the section as HTML, so every source link stays clickable.
+  one link (``(<a href="...">Show</a>)``) are converted. Nested parentheses in
+  plain text (``(Example (English))``) remain part of the source label, as do
+  parentheses inside the link text. A leading source with no matching outer
+  closing parenthesis keeps the section as HTML and produces a warning.
+  Several links, text next to a link (``(via <a ...>Show</a>)``) or other markup
+  inside the parentheses keep the section as HTML, so every source link stays
+  clickable.
 
 Escaped text such as ``&lt;em&gt;`` or ``&amp;`` keeps its visible text in
 source labels and descriptions. Supported description markup retains its formatting.

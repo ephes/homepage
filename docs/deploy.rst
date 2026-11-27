@@ -108,6 +108,17 @@ which the Vue.js router used as its base, so every in-app link started with
 Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
 commit before this change.
 
+Deployed ``018e0db`` on 2026-11-27 at 19:16 with ``just pyinfra-check homepage
+production`` first, from an isolated clean ``PROJECTS_ROOT`` and ops-control
+``14aae132`` (``caa1386`` went live at 18:44 as ``cb3ddbd``, with the broken
+links). Verified after it in a browser with Vue.js chosen (phone and desktop,
+light and dark) on ``/blogs/ephes_blog/`` (list, search filter, post, feed
+page), ``/blogs/das_claas_und_nora_blog/`` and ``/blogs/select-theme/``: all
+answer 200, no in-app link starts with ``/https://``, clicking a title, the
+back link, Next and a category filter navigates correctly, the footer theme
+menu switches to Bootstrap 5 and back; no console errors and no horizontal
+overflow.
+
 2026-11-27 cast-vue caa1386
 ---------------------------
 

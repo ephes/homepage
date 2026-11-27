@@ -95,6 +95,19 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-vue f71c75d
+---------------------------
+
+``uv.lock`` moves cast-vue from ``caa13867`` to ``f71c75d5`` (pinned Git
+commit, not on PyPI; the version stays ``0.0.28``). Nothing else in the lock
+changed. No migration and no settings change. This site delivers absolute
+Wagtail URLs (``data-blog-url="https://wersdoerfer.de/blogs/ephes_blog/"``),
+which the Vue.js router used as its base, so every in-app link started with
+``/https://``. The router now uses the URL's path. Static bundle only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change.
+
 2026-11-27 cast-vue caa1386
 ---------------------------
 

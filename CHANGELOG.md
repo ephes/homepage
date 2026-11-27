@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Move the Vue.js theme to cast-vue `f71c75d` (from `caa1386`; Git commit,
+  not on PyPI). Post titles, the header logo, the back link and the page
+  buttons link to `/blogs/<blog>/...` again instead of a broken
+  `/https://wersdoerfer.de/...` address. Rollback in `docs/deploy.rst`
+  (2026-11-27 cast-vue f71c75d).
+
 - Move the Vue.js theme to cast-vue `caa1386` (from `b82a2e6`; Git commit,
   not on PyPI, now pinned instead of following `main`). Readers who choose
   Vue.js get the redesigned theme: own typography and colours with light and

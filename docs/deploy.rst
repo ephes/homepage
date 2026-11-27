@@ -95,6 +95,19 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-react v0.0.6
+----------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.5`` (``b82b43cb``) to ``v0.0.6``
+(``e9beabd0``, from its Git tag). Nothing else in the lock changed. No
+migration and no settings change. List rows show only the post's overview
+with a "Read more" link to the post page; the post page shows overview and
+detail. Static assets only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change; a reader who chose React then sees the 0.0.5 list
+again.
+
 2026-11-27 cast-react v0.0.5
 ----------------------------
 

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.6` (from `v0.0.5`). Blog lists
+  show each post's overview with a "Read more" link to the full post, and
+  list rows never show a post's detail part. Rollback in `docs/deploy.rst`
+  (2026-11-27 cast-react v0.0.6).
+
 - Move the React theme to cast-react `v0.0.5` (from `v0.0.4`). The tag filter
   shows the ten most-used tags and opens the rest as a searchable A-Z index
   instead of one pill per tag; the custom date range folds below the month

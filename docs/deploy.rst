@@ -107,7 +107,25 @@ The upgrade actions in django-cast 0.2.70 concern the editor API, Voxhelm
 settings clients and primary/replica routers; this site uses none of them (no
 ``DATABASE_ROUTERS``).
 
-Rollback to the previous commit, under the shared production deploy lock:
+Local gates on PostgreSQL 17: dependency audit, prek, npm test (25 passed),
+pytest on Python 3.15.2 and 3.14 (1454 passed each), the migration tests (8
+passed), 49 browser tests and the docs build with ``-W``.
+
+Deployed ``4c732aa`` over ``7ed91ed`` on 2026-11-27 at 08:44 (owner approval
+in chat the same day; the only other change since ``7ed91ed`` is the deploy
+history). No task result was ``READY`` or ``RUNNING`` before it; ``just
+pyinfra-check homepage production`` showed only the source sync; ops-control
+ran at ``49b3ab74``. Verified after it: the host's ``uv.lock`` names the three
+new revisions; both units are active with new PIDs and ``NRestarts=0``; the
+front page, the blog, a post, the blog RSS feed, the Claas und Nora blog, one
+of its posts and its RSS feed, ``/cms/login/`` and ``robots.txt`` answered
+200 and the static CSS/JS of a post and the front page answered 200; the
+journal of both units held no error for the first ten minutes and no warning
+that was not already logged before the deploy (CSP report-only notices on
+``/blogs/`` and 404s for unknown URLs). The Claas und Nora RSS feed still takes about
+3.2 s uncached; its cost is not the storage size lookup.
+
+Rollback to ``7ed91ed``, under the shared production deploy lock:
 
 1. As root stop ``homepage.service`` and ``homepage-db-worker.service``.
 2. As the ``homepage`` user empty ``/home/homepage/site/staticfiles`` (what

@@ -111,6 +111,20 @@ Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
 commit before this change; a reader who chose Vue.js then sees the old
 ``b82a2e6`` theme again.
 
+2026-11-27 cast-react v0.0.9
+----------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.8`` (``14dd4f6d``) to ``v0.0.9``
+(``6eee93f4``, from its Git tag). Nothing else in the lock changed. No
+migration and no settings change. In browsers with customizable selects
+(current Chrome and Safari) the Month, Order and Site theme menus open on a
+solid surface in the theme's light or dark colours instead of the translucent
+system menu; older browsers keep their built-in menus. Static assets only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change; a reader who chose React then sees the system
+menus again.
+
 2026-11-27 cast-react v0.0.8
 ----------------------------
 

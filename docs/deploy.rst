@@ -113,6 +113,15 @@ dialogs in post bodies from covering the page. Templates and static bundles only
 Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
 commit before this change.
 
+Deployed ``9d05f9b`` on 2026-11-27 at 20:02 with ``just pyinfra-check homepage
+production`` first, from an isolated clean ``PROJECTS_ROOT`` and ops-control
+``14aae132``. Verified after it in Chrome and WebKit (phone and desktop, light and
+dark) with React and Vue.js chosen on ``/blogs/ephes_blog/``: the header button
+shows the setting and only opens the menu; Light, Dark and System apply,
+persist and are set before the page paints on reload; keyboard selection
+works; a choice made in React carries over to Vue.js; no console errors;
+units active with ``NRestarts=0`` and no new journal warnings.
+
 2026-11-27 cast-vue f71c75d
 ---------------------------
 

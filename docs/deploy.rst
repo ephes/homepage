@@ -95,6 +95,21 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-react v0.0.5
+----------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.4`` (``8030bdad``) to ``v0.0.5``
+(``b82b43cb``, from its Git tag). Nothing else in the lock changed. No
+migration and no settings change. Tags and categories show the ten most-used
+choices as pills; the rest open as a compact alphabetical index with counts
+and a filter field. The custom date range folds below the month menu, list
+rows show a cover only once, the phone header keeps navigation on one
+scrolling line, and server pages use a centered column. Static assets only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change; a reader who chose React then sees the 0.0.4 look
+again.
+
 2026-11-27 cast-react v0.0.4
 ----------------------------
 
@@ -111,6 +126,11 @@ plain page.
 
 Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the commit before this change; a
 reader who chose React then sees the 0.0.3 look again.
+
+Deployed ``5a0be16`` on 2026-11-27 at 13:12 with ``just pyinfra-check homepage
+production`` first. Verified after it in a browser with React chosen: the blog's
+post list with the filter panel (top tags and month menu), a post, and the
+theme chooser render in the theme's look.
 
 2026-11-27 React theme (cast-react v0.0.3)
 ------------------------------------------

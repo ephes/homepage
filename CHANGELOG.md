@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.5` (from `v0.0.4`). The tag filter
+  shows the ten most-used tags and opens the rest as a searchable A-Z index
+  instead of one pill per tag; the custom date range folds below the month
+  menu; list rows no longer show the cover twice; the phone header keeps its
+  links on one line. Rollback in `docs/deploy.rst` (2026-11-27 cast-react v0.0.5).
+
 - Move the React theme to cast-react `v0.0.4` (from `v0.0.3`). Tags and
   categories are ordered by post count, months are one select grouped by
   year, and the theme chooser, feed and account pages get the theme's header

@@ -61,6 +61,7 @@ This is a Django-based personal website/blog implementing IndieWeb standards wit
 ## Frontend Development
 - Bootstrap 5 theme via cast-bootstrap5
 - Vue.js components via cast-vue
+- React theme via cast-react (pinned to a Git tag)
 - Static files in `homepage/static/`
 - Templates in `homepage/templates/`
 

@@ -9,6 +9,7 @@
 # The 'just dev' command preserves editable installs (doesn't run uv sync)
 
 -e ../cast-vue
+-e ../cast-react
 -e ../cast-bootstrap5
 -e ../django-cast
 -e ../django-indieweb

@@ -8,7 +8,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-GIT_SOURCES = frozenset({"cast-bootstrap5", "cast-vue", "django-cast", "django-indieweb", "django-resume"})
+GIT_SOURCES = frozenset(
+    {"cast-bootstrap5", "cast-react", "cast-vue", "django-cast", "django-indieweb", "django-resume"}
+)
 
 
 def registry_requirements(export):
@@ -25,7 +27,7 @@ def registry_requirements(export):
         else:
             raise ValueError("Unexpected requirement in frozen export; refusing an incomplete audit")
     if set(skipped) != GIT_SOURCES or not registry:
-        raise ValueError("Frozen export must contain registry dependencies and all five expected Git sources")
+        raise ValueError("Frozen export must contain registry dependencies and all six expected Git sources")
     for name, commit in sorted(skipped.items()):
         print(f"Not registry-audited: {name} @ {commit}", flush=True)
     return "\n".join(registry) + "\n"

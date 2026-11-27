@@ -11,6 +11,7 @@ dependencies = [
     "boto3",
     "certifi>=2026.10.19",
     "cast-vue",
+    "cast-react",
     "cast-bootstrap5",
     "django-resume",
     "django-tasks==0.12.0",
@@ -64,6 +65,7 @@ dev = [
 [tool.uv.sources]
 cast-vue = { git = "https://github.com/ephes/cast-vue" }
 cast-bootstrap5 = { git = "https://github.com/ephes/cast-bootstrap5" }
+cast-react = { git = "https://github.com/ephes/cast-react", tag = "v0.0.2" }
 django-cast = { git = "https://github.com/ephes/django-cast", branch = "develop" }
 django-indieweb = { git = "https://github.com/ephes/django-indieweb", branch = "develop" }
 django-resume = { git = "https://github.com/ephes/django-resume", branch = "main" }

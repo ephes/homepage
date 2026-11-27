@@ -507,6 +507,7 @@ def switch_to_dev_environment():
     # Define local package mappings
     packages = [
         ("cast-vue", projects_dir / "cast-vue"),
+        ("cast-react", projects_dir / "cast-react"),
         ("cast-bootstrap5", projects_dir / "cast-bootstrap5"),
         ("django-cast", projects_dir / "django-cast"),
         ("django-indieweb", projects_dir / "django-indieweb"),
@@ -549,6 +550,7 @@ def switch_to_git_sources():
     # Define default git sources
     default_sources = {
         "cast-vue": {"git": "https://github.com/ephes/cast-vue"},
+        "cast-react": {"git": "https://github.com/ephes/cast-react", "tag": "v0.0.2"},
         "cast-bootstrap5": {"git": "https://github.com/ephes/cast-bootstrap5"},
         "django-cast": {"git": "https://github.com/ephes/django-cast", "branch": "develop"},
         "django-indieweb": {"git": "https://github.com/ephes/django-indieweb", "branch": "develop"},

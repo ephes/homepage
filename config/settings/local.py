@@ -9,6 +9,10 @@ Local settings
 - Add django-extensions as app
 """
 
+from pathlib import Path
+
+import cast_react
+
 from .base import *  # noqa
 
 # DEBUG
@@ -134,6 +138,12 @@ DJANGO_VITE_ASSETS_PATH = "need to be set but doesn't matter"
 DJANGO_VITE = {
     "cast_vue": {
         "dev_mode": True,
+    },
+    # The React theme ships its built bundle; no Vite dev server needed.
+    "cast_react": {
+        "dev_mode": False,
+        "static_url_prefix": "cast_react/",
+        "manifest_path": Path(cast_react.__file__).parent / "static" / "cast_react" / "manifest.json",
     },
     "cast-bootstrap5": {
         "dev_mode": True,

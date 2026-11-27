@@ -22,7 +22,7 @@ def test_only_allowlisted_git_sources_are_excluded(exported, capsys):
         "tornado==6.6",
         "registry-transitive==1.0 ; sys_platform == 'win32'",
     ]
-    assert capsys.readouterr().out.count("Not registry-audited:") == 5
+    assert capsys.readouterr().out.count("Not registry-audited:") == len(audit_dependencies.GIT_SOURCES)
 
 
 @pytest.mark.parametrize(

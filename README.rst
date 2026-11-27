@@ -150,8 +150,8 @@ requirements retain their interpreter/platform markers, so the audit covers the
 current environment (CI uses Linux/Python 3.15.2). Optional groups and separately
 resolved prek hook environments are outside this export.
 
-The five first-party Git requirements (cast-bootstrap5, cast-vue, django-cast,
-django-indieweb and django-resume) are printed with their locked commits and
+The six first-party Git requirements (cast-bootstrap5, cast-react, cast-vue,
+django-cast, django-indieweb and django-resume) are printed with their locked commits and
 excluded from registry matching; their registry transitives remain audited.
 Unexpected sources fail closed. This is not an advisory audit of the Git source
 code. ``PIP_AUDIT_CACHE_DIR`` can override the default ``.cache/pip-audit`` cache.

@@ -78,7 +78,8 @@ THIRD_PARTY_APPS = [
     "cast_bootstrap5.apps.CastBootstrap5Config",  # cast_bootstrap5 theme
     "cast",  # blog/podcast package
     "cast_vue.apps.CastVueConfig",  # cast_vue theme
-    "django_vite",  # cast_vue theme
+    "cast_react.apps.CastReactConfig",  # cast_react theme
+    "django_vite",  # cast_vue and cast_react themes
     "django_resume.apps.ResumeConfig",  # django-resume
 ]
 
@@ -503,6 +504,7 @@ CSRF_FAILURE_VIEW = "cast.views.defaults.csrf_failure"
 CAST_CUSTOM_THEMES = [
     ("vue", "Vue.js"),
     ("bootstrap5", "Bootstrap 5"),
+    ("react", "React"),
 ]
 
 CAST_PODLOVE_PLAYER_THEMES = {

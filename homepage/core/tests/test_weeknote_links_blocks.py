@@ -257,6 +257,7 @@ def _render_post_body_template(template_name, *, render_detail=True, render_for_
         "cast/bootstrap4/post_body.html",
         "cast/plain/post_body.html",
         "cast/vue/post_body.html",
+        "cast/react/post_body.html",
     ],
 )
 def test_weeknote_links_render_through_post_body_themes(template_name):

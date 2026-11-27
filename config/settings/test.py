@@ -4,7 +4,13 @@ Test settings
 - Used to run tests fast on the continuous integration server and locally
 """
 
+from pathlib import Path
+
+import cast_react
+
 from .base import *  # noqa
+
+_CAST_REACT_MANIFEST = Path(cast_react.__file__).parent / "static" / "cast_react" / "manifest.json"
 
 # DEBUG
 # ------------------------------------------------------------------------------
@@ -66,6 +72,7 @@ DJANGO_VITE = {
     # Lets views that extend the cast-bootstrap5 base template render in tests
     # without a built manifest (dev mode only emits dev-server script tags).
     "cast-bootstrap5": {"dev_mode": True},
+    "cast_react": {"dev_mode": False, "static_url_prefix": "cast_react/", "manifest_path": _CAST_REACT_MANIFEST},
 }
 
 # STORAGE

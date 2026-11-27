@@ -95,6 +95,20 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-react v0.0.7
+----------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.6`` (``e9beabd0``) to ``v0.0.7``
+(``78ecc24a``, from its Git tag). Nothing else in the lock changed. No
+migration and no settings change. Dropdowns draw their own arrow with room
+to the right edge; the footer Site theme menu aligns with the header, stacks
+on phones and also appears on Django-rendered pages (feed, transcript, plain
+pages), except on the full theme chooser. Static assets and templates only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change; a reader who chose React then sees the 0.0.6
+controls again.
+
 2026-11-27 cast-react v0.0.6
 ----------------------------
 

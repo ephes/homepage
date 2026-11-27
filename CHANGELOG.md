@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.7` (from `v0.0.6`). Dropdown
+  arrows sit inside the field with room to the edge in light and dark mode,
+  and the footer theme switcher lines up with the header and stacks on
+  phones. Rollback in `docs/deploy.rst` (2026-11-27 cast-react v0.0.7).
+
 - Move the React theme to cast-react `v0.0.6` (from `v0.0.5`). Blog lists
   show each post's overview with a "Read more" link to the full post, and
   list rows never show a post's detail part. Rollback in `docs/deploy.rst`

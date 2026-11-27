@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Relock django-cast to develop `766c225f` (from `d4f29f33`), cast-bootstrap5
+  to `44aece3` (from `8a11f2b`) and django-indieweb to develop `47a983a` (from
+  `3faf52a`). Uncached podcast feeds no longer ask the media storage for every
+  enclosure size, the "Cache file sizes" admin action keeps concurrent editor
+  changes, chapter saves no longer overwrite unrelated chapters on retry,
+  replaced theme-switcher controls show the current colour mode, and
+  Webmentions with an out-of-range date or a `#author` link to another page
+  are stored correctly. No migration; rollback in `docs/deploy.rst`
+  (2026-11-27 relock).
+
 - Keep a weeknote link section as rich text when a nonbreaking, em or other
   visible space sits directly between its list items, instead of dropping that
   space during conversion. Only HTML whitespace between items still counts as

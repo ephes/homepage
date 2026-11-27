@@ -95,6 +95,30 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 django-cast 766c225f, cast-bootstrap5 44aece3, django-indieweb 47a983a
+---------------------------------------------------------------------------------
+
+``uv.lock`` moves django-cast ``develop`` from ``d4f29f33`` to ``766c225f``
+(still 0.2.70 development state), cast-bootstrap5 from ``8a11f2b`` to
+``44aece3`` and django-indieweb ``develop`` from ``3faf52a`` to ``47a983a``.
+Nothing else in the lock changed. No package adds a migration in these
+ranges; django-cast and cast-bootstrap5 ship new Vite bundles and manifests.
+The upgrade actions in django-cast 0.2.70 concern the editor API, Voxhelm
+settings clients and primary/replica routers; this site uses none of them (no
+``DATABASE_ROUTERS``).
+
+Rollback to the previous commit, under the shared production deploy lock:
+
+1. As root stop ``homepage.service`` and ``homepage-db-worker.service``.
+2. As the ``homepage`` user empty ``/home/homepage/site/staticfiles`` (what
+   ``collectstatic --clear`` does), for the reason given in step 3 of the
+   2026-11-25 relock rollback below.
+3. In ops-control run ``just pyinfra-check homepage production`` and
+   ``just deploy-one homepage production`` with ``PROJECTS_ROOT`` pointing at
+   the parent of a clean checkout of the previous commit.
+
+No database step is needed.
+
 2026-11-26 Weeknote link sections keep order and visible spaces
 ---------------------------------------------------------------
 

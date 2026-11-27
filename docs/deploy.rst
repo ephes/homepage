@@ -107,6 +107,19 @@ so ``collectstatic`` picks it up and no Node.js build runs on the host. No
 migration. No blog changes its theme: React is only used where a reader picks
 it in the theme chooser (stored in the session) or an editor sets it.
 
+Deployed ``9c70913`` over ``ebc7f51`` on 2026-11-27 at 11:44. No task result
+was ``READY`` or ``RUNNING`` before it; ``just pyinfra-check homepage
+production`` showed the source sync and its dependent steps; ops-control ran at
+``9c555d76``. Verified after it: the host's ``uv.lock`` names cast-react
+``v0.0.3`` (``6a949de5``) and ``staticfiles/cast_react/`` holds the bundle;
+both units are active with ``NRestarts=0``; ``/``, the blog, its RSS feed and
+``robots.txt`` answered 200. In a browser the theme chooser offers React;
+choosing it shows the blog's post list and a post in the React theme, the
+chooser page itself and the account pages still render, and choosing Bootstrap
+5 again restores the previous look. The other themes answer 200 unchanged
+(``?theme=`` for bootstrap5, vue, bootstrap4 and plain). The journal since the
+deploy holds only the known CSP report-only notices on ``/blogs/``.
+
 Rollback: the sequence under "2026-11-27 django-cast 766c225f" below, with
 the commit before this change, including the emptied ``staticfiles``. No
 database step is needed, unless an editor has since saved React as a theme:

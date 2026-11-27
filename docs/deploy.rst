@@ -95,6 +95,21 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-react v0.0.8
+----------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.7`` (``78ecc24a``) to ``v0.0.8``
+(``14dd4f6d``, from its Git tag). Nothing else in the lock changed. No
+migration and no settings change. The header shows a labelled Subscribe link
+(Feeds for written blogs), podcast blogs get app links (from
+``CAST_FOLLOW_LINKS``; Overcast, Pocket Casts and Castro derived from the Apple
+Podcasts id) on lists and episodes, the footer lists follow links, and the feed
+page becomes a subscribe page. Static assets and templates only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change; a reader who chose React then sees the 0.0.7
+feed icon and plain feed page again.
+
 2026-11-27 cast-react v0.0.7
 ----------------------------
 

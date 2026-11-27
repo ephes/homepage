@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.8` (from `v0.0.7`). Readers
+  see a labelled "Subscribe" link in the header (written blogs: "Feeds"),
+  podcast app links on the post list and episode pages, and follow links in the
+  footer; the feed page becomes a subscribe page with app buttons, a copyable
+  MP3 feed address, the other formats and the blog feeds. Rollback in
+  `docs/deploy.rst` (2026-11-27 cast-react v0.0.8).
+
 - Move the React theme to cast-react `v0.0.7` (from `v0.0.6`). Dropdown
   arrows sit inside the field with room to the edge in light and dark mode,
   and the footer theme switcher lines up with the header and stacks on

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.4` (from `v0.0.3`). Tags and
+  categories are ordered by post count, months are one select grouped by
+  year, and the theme chooser, feed and account pages get the theme's header
+  and styles instead of a bare fallback. Rollback in `docs/deploy.rst`
+  (2026-11-27 cast-react v0.0.4).
+
 - Reuse the prepared Wagtail value from the first validation pass when
   converting legacy weeknote link sections.
 

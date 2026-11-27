@@ -95,6 +95,23 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-react v0.0.4
+----------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.3`` (``6a949de5``) to ``v0.0.4``
+(``8030bdad``, from its Git tag). Nothing else in the lock changed. No
+migration and no settings change. The release orders the tag and category
+filters by post count (12 shown, the rest behind "Show all"), shows months as
+one select grouped by year, and renders the feed page, transcript pages, the
+theme chooser and pages without a blog (imprint, account pages) with the
+theme's header and styles. These pages load a small ``page`` entry from the
+same Vite manifest instead of the React app; ``collectstatic`` picks it up.
+``test_cast_react_theme.py`` checks for the new page layout instead of the old
+plain page.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the commit before this change; a
+reader who chose React then sees the 0.0.3 look again.
+
 2026-11-27 React theme (cast-react v0.0.3)
 ------------------------------------------
 

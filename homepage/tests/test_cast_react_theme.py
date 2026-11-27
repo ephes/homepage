@@ -58,5 +58,7 @@ def test_theme_chooser_page_renders_with_react_selected(client):
     assert client.post(chooser, {"template_base_dir": "react", "next": "/"}).status_code == 302
     response = client.get(chooser)
     assert response.status_code == 200
-    assert 'class="cr-plain"' in response.content.decode()
+    content = response.content.decode()
+    assert "cr-page-content" in content  # cast-react's server-rendered page layout
+    assert "cast-react-configuration" not in content  # without the React app
     assert "<title>Select Theme</title>" in response.content.decode()

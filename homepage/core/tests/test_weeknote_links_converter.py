@@ -273,6 +273,31 @@ def test_convert_paragraph_html_preserves_section_with_unclosed_source(source_ma
     assert (warning.heading, warning.message) == ("Podcasts", "List item source has unbalanced parentheses.")
 
 
+@pytest.mark.parametrize(
+    "source_markup",
+    [
+        '(<a href="https://example.test/show">Show (English</a>)) | Listen',
+        '(<a href="https://example.test/show">Show English)</a> | Listen',
+    ],
+    ids=["open-inside-link", "close-inside-link"],
+)
+def test_convert_paragraph_html_preserves_section_when_source_parentheses_cross_a_link(source_markup):
+    section = (
+        '<h2>Podcasts</h2><ul><li><a href="https://example.test/episode">Episode</a> ' f"{source_markup}</li></ul>"
+    )
+    conversion = convert_paragraph_html(
+        section + '<h2>Software</h2><ul><li><a href="https://example.test/tool">Tool</a></li></ul>'
+    )
+
+    assert [block["type"] for block in conversion.blocks] == ["paragraph", "weeknote_links"]
+    assert conversion.blocks[0]["value"] == section
+    (warning,) = conversion.warnings
+    assert (warning.heading, warning.message) == (
+        "Podcasts",
+        "List item source has parentheses that cross a link or markup boundary.",
+    )
+
+
 def test_convert_paragraph_html_preserves_blank_text_between_preserved_inline_nodes():
     conversion = convert_paragraph_html(
         'Read <a href="https://example.com/a">A</a> <a href="https://example.com/b">B</a>'

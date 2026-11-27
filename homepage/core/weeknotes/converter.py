@@ -354,6 +354,8 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | str:
         # Only plain text outside tags can delimit the source. In particular,
         # parentheses in a link's label or URL cannot close the outer group.
         if type(node) is not NavigableString:
+            if not _has_balanced_parentheses(node.get_text()):
+                return "List item source has parentheses that cross a link or markup boundary."
             source_parts.append(_serialize_node(node))
             continue
         text = source_text if index == first_index else str(node)
@@ -393,6 +395,18 @@ def _extract_source(after_html: str) -> tuple[str, str, str] | str:
         ):
             return link.get_text(" ", strip=True), link["href"], rest_html
     return "List item source has several links, rich markup or attributes that the source fields cannot keep."
+
+
+def _has_balanced_parentheses(text: str) -> bool:
+    depth = 0
+    for char in text:
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth < 0:
+                return False
+    return depth == 0
 
 
 def _extract_description(rest_html: str) -> str | None:

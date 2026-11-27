@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.10` and the Vue.js theme to cast-vue
+  `c52e95c` (Git tag/commit, not on PyPI). Both themes now offer the same
+  Appearance menu in the header: the button shows the current choice and opens
+  Light, Dark and System (default: follow the device). The choice is shared
+  between both themes and applied before the page paints. On the Vue.js theme,
+  hidden gallery dialogs no longer dim the page and block clicks. Rollback in
+  `docs/deploy.rst` (2026-11-27 Appearance menu).
+
 - Move the Vue.js theme to cast-vue `f71c75d` (from `caa1386`; Git commit,
   not on PyPI). Post titles, the header logo, the back link and the page
   buttons link to `/blogs/<blog>/...` again instead of a broken

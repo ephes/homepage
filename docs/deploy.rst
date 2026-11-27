@@ -95,6 +95,24 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 Appearance menu (cast-react v0.0.10, cast-vue c52e95c)
+-----------------------------------------------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.9`` (``6eee93f4``) to ``v0.0.10``
+(``febd84bb``, Git tag, not on PyPI) and cast-vue from ``f71c75d5`` to
+``c52e95c2`` (Git commit, not on PyPI; the version stays ``0.0.28``). Nothing
+else in the lock changed. No migration and no settings change. Both themes
+replace their light/dark cycle button with the same Appearance menu: the
+header button shows the current choice (sun, moon or monitor) and opens Light,
+Dark and System; System is the default and follows the device. The choice is
+stored under the shared ``localStorage`` key ``cast-color-scheme`` and applied
+by a small inline script before styles load; inline scripts carry
+``csp_nonce`` when Django provides one. cast-vue also stops hidden gallery
+dialogs in post bodies from covering the page. Templates and static bundles only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change.
+
 2026-11-27 cast-vue f71c75d
 ---------------------------
 

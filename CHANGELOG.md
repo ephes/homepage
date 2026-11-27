@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reuse the prepared Wagtail value from the first validation pass when
+  converting legacy weeknote link sections.
+
 - Offer the React theme (cast-react `v0.0.3`, from its Git tag; not on PyPI)
   in the theme chooser next to Vue.js and Bootstrap 5. It is installed as
   `cast_react`, ships its built bundle (no Node.js build on the server) and is

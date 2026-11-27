@@ -181,10 +181,11 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
                 warnings.extend(section.warnings)
                 index = next_index + 1
                 continue
-            validation_warning = _validation_warning(section.items, heading=heading)
-            if validation_warning is not None:
+            try:
+                prepared_items = _prepared_weeknote_links(section.items)
+            except ValidationError:
                 preserve_section()
-                warnings.append(validation_warning)
+                warnings.append(ConversionWarning("List section failed structured block validation.", heading=heading))
                 index = next_index + 1
                 continue
 
@@ -192,7 +193,7 @@ def convert_paragraph_html(source_html: str) -> OverviewConversion:
             # in the fixed category order, so merging adjacent sections would
             # reorder them and drop a repeated heading.
             flush_html()
-            output.append(_block("weeknote_links", _prepared_weeknote_links(section.items)))
+            output.append(_block("weeknote_links", prepared_items))
             changed = True
             converted_sections += 1
             index = next_index + 1
@@ -408,14 +409,6 @@ def _prepared_weeknote_links(items: list[dict[str, Any]]) -> list[dict[str, Any]
     block = WeeknoteLinksBlock()
     value = block.clean(block.to_python(items))
     return block.get_prep_value(value)
-
-
-def _validation_warning(items: list[dict[str, Any]], *, heading: str) -> ConversionWarning | None:
-    try:
-        _prepared_weeknote_links(items)
-    except ValidationError:
-        return ConversionWarning("List section failed structured block validation.", heading=heading)
-    return None
 
 
 def _block(block_type: str, value: Any) -> dict[str, Any]:

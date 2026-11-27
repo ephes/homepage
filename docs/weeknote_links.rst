@@ -196,7 +196,9 @@ a heading and its list or between two list items keeps the section as rich
 text.
 
 The converter never drops content it cannot represent. A heading and its list
-are converted together. A refused section, including the blank text between its
+are converted together. Each candidate list goes through Wagtail block
+validation once, and the converter uses the resulting prepared value directly.
+A refused section, including the blank text between its
 heading and list, stays in the surrounding rich-text
 paragraph in its original position, and the report gets a warning with the
 section heading. The following conditions prevent conversion.

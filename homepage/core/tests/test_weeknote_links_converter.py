@@ -266,6 +266,30 @@ def test_convert_paragraph_html_warns_and_preserves_section_that_fails_block_val
     assert conversion.warnings[0].message == "List section failed structured block validation."
 
 
+def test_convert_paragraph_html_prepares_each_section_once(monkeypatch):
+    cleaned_sizes = []
+    original_clean = WeeknoteLinksBlock.clean
+
+    def record_clean(block, value):
+        cleaned_sizes.append(len(value))
+        return original_clean(block, value)
+
+    monkeypatch.setattr(WeeknoteLinksBlock, "clean", record_clean)
+    invalid_section = '<h2>Software</h2><ul><li><a href="/relative">Tool</a></li></ul>'
+    items = "".join(f'<li><a href="https://example.test/{i}">Article {i}</a></li>' for i in range(100))
+
+    conversion = convert_paragraph_html(f"<h2>Articles</h2><ul>{items}</ul>{invalid_section}")
+
+    assert [block["type"] for block in conversion.blocks] == ["weeknote_links", "paragraph"]
+    prepared = conversion.blocks[0]["value"]
+    assert all(item["type"] == "item" and item["id"] for item in prepared)
+    assert [item["title"] for item in _weeknote_values(conversion.blocks[0])] == [f"Article {i}" for i in range(100)]
+    assert conversion.blocks[1]["value"] == invalid_section
+    (warning,) = conversion.warnings
+    assert (warning.heading, warning.message) == ("Software", "List section failed structured block validation.")
+    assert cleaned_sizes == [100, 1]
+
+
 @pytest.mark.parametrize(
     ("heading_attrs", "list_attrs"),
     [(' id="saved-section"', ""), ("", ' id="saved-section"')],

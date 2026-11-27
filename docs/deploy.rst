@@ -95,6 +95,22 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-27 cast-vue caa1386
+---------------------------
+
+``pyproject.toml`` pins cast-vue to the redesign commit ``caa13867`` (Git
+commit, not on PyPI; the version stays ``0.0.28``) instead of following
+``main``, and ``uv.lock`` moves it from ``b82a2e62``. Nothing else in the lock
+changed. No migration and no settings change. Readers who choose Vue.js get the
+redesigned theme (typography and colour tokens, light and dark mode, search,
+filters, sort and numbered pagination, the theme's own audio player instead of
+the Podlove Web Player, Subscribe links and a subscribe feed page, and a footer
+on the page background). Templates, a template tag and static assets only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change; a reader who chose Vue.js then sees the old
+``b82a2e6`` theme again.
+
 2026-11-27 cast-react v0.0.8
 ----------------------------
 

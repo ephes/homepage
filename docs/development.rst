@@ -600,7 +600,8 @@ Work on Local Package Checkouts
 
 ``django-cast``, ``cast-bootstrap5``, ``cast-vue``, ``cast-react``,
 ``django-indieweb`` and ``django-resume`` are installed from Git by default
-(cast-react from a version tag). Two commands rewrite their
+(cast-vue pinned to the redesign commit ``caa1386``, cast-react from a version
+tag). Two commands rewrite their
 entries in ``[tool.uv.sources]`` of ``pyproject.toml`` and then run ``uv sync``::
 
     uv run commands.py switch-to-dev-environment   # editable ../<package> checkouts

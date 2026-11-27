@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Move the Vue.js theme to cast-vue `caa1386` (from `b82a2e6`; Git commit,
+  not on PyPI, now pinned instead of following `main`). Readers who choose
+  Vue.js get the redesigned theme: own typography and colours with light and
+  dark mode, search, filters, sort and numbered pages in the post list, a
+  lightweight audio player, Subscribe links and a subscribe page, and a footer
+  that sits on the page background. Rollback in `docs/deploy.rst`
+  (2026-11-27 cast-vue caa1386).
+
 - Move the React theme to cast-react `v0.0.8` (from `v0.0.7`). Readers
   see a labelled "Subscribe" link in the header (written blogs: "Feeds"),
   podcast app links on the post list and episode pages, and follow links in the

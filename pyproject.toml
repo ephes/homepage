@@ -64,9 +64,9 @@ dev = [
 
 [tool.uv.sources]
 # Vue theme redesign, pinned to a commit (not on PyPI).
-cast-vue = { git = "https://github.com/ephes/cast-vue", rev = "79283784fa86ce362d4dbef6b655d838810bae8f" }
+cast-vue = { git = "https://github.com/ephes/cast-vue", rev = "3f2733324736b6d5704995626285c3b19eaa9e17" }
 cast-bootstrap5 = { git = "https://github.com/ephes/cast-bootstrap5" }
-cast-react = { git = "https://github.com/ephes/cast-react", tag = "v0.0.11" }
+cast-react = { git = "https://github.com/ephes/cast-react", tag = "v0.0.12" }
 django-cast = { git = "https://github.com/ephes/django-cast", branch = "develop" }
 django-indieweb = { git = "https://github.com/ephes/django-indieweb", branch = "develop" }
 django-resume = { git = "https://github.com/ephes/django-resume", branch = "main" }

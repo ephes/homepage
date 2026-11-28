@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Move the React theme to cast-react `v0.0.12` and the Vue.js theme to cast-vue
+  `3f27333` (Git tag/commit, not on PyPI). The two themes get their own
+  post-list layouts (React: show column and episode cards; Vue.js: centred
+  magazine column), and configured follow links appear near the top and on
+  the feeds page. Rollback in `docs/deploy.rst` (2026-11-28 Theme layouts).
+
 - Move the React theme to cast-react `v0.0.11` and the Vue.js theme to cast-vue
   `7928378` (Git tag/commit, not on PyPI). The podcast subscribe page of both
   themes recommends the M4A feed instead of MP3 when M4A covers every episode;

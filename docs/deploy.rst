@@ -95,6 +95,21 @@ django-resume renders a resume with JSON Resume themes from a pinned catalog
 
     uv run python manage.py install_json_resume_catalog_themes
 
+2026-11-28 M4A recommendation (cast-react v0.0.11, cast-vue 7928378)
+--------------------------------------------------------------------
+
+``uv.lock`` moves cast-react from ``v0.0.10`` (``febd84bb``) to ``v0.0.11``
+(``68b56333``, Git tag, not on PyPI) and cast-vue from ``c52e95c2`` to
+``79283784`` (Git commit, not on PyPI; the version stays ``0.0.28``). Nothing
+else in the lock changed. No migration and no settings change. The subscribe
+page of both themes recommends the most complete podcast feed and prefers M4A
+(AAC) over MP3 when both cover every published episode; MP3 moves to the other
+formats. The theme template tags run one extra aggregate query over the
+podcast's episodes. Templates, template tags and the cast-vue static bundle only.
+
+Rollback: as under "2026-11-27 React theme (cast-react v0.0.3)" below, with the
+commit before this change.
+
 2026-11-27 Appearance menu (cast-react v0.0.10, cast-vue c52e95c)
 -----------------------------------------------------------------
 
